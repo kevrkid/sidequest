@@ -4,6 +4,7 @@
 # only (nothing old is renamed or removed).
 require 'json'
 require 'cgi'
+require_relative 'webpush'
 
 # ---------------------------------------------------------------------------------------------
 # Notifications: per person, newest last, capped. Never across a block; never about yourself.
@@ -21,6 +22,51 @@ def notify!(d, to, type, from: nil, ref: nil, text: nil)
   list << { 'id' => "n#{SecureRandom.hex(5)}", 't' => type, 'from' => from, 'ref' => ref, 'text' => text.to_s[0, 160],
             'at' => now_ms, 'read' => false }
   list.shift while list.size > NOTIF_MAX
+  PUSH_Q << [to, type, ref, text.to_s[0, 160]] if (d['push'] || {})[to]&.any?   # phones that said yes get it too
+end
+
+# ---------------------------------------------------------------------------------------------
+# Push to phones (Web Push): the server's VAPID key lives in data/vapid.json (only this server can read it); each
+# person's subscriptions in d['push'][h] (max 5 devices). Sending happens on a background thread.
+VAPID_FILE = File.join(__dir__, 'data', 'vapid.json')
+PUSH_Q = Queue.new
+PUSH_SUBJECT = ENV['SQ_PUSH_CONTACT'] || 'mailto:kevrkid@gmail.com'
+def vapid_key
+  @vapid_key ||= begin
+    if File.file?(VAPID_FILE)
+      WebPush.key_from_private(WebPush.unb64u(JSON.parse(File.read(VAPID_FILE))['private']))
+    else
+      k = WebPush.new_key
+      FileUtils.mkdir_p(File.dirname(VAPID_FILE))
+      File.open(VAPID_FILE, 'w', 0o600) { |f| f.write(JSON.generate(private: WebPush.b64u(k.private_key.to_s(2).rjust(32, "\x00".b)), public: WebPush.b64u(WebPush.pub_raw(k)))) }
+      k
+    end
+  end
+end
+def vapid_public() WebPush.b64u(WebPush.pub_raw(vapid_key)) end
+
+def push_url(type, ref)
+  r = ref.to_s
+  return "/?ev=#{r.sub('e:', '')}" if r.start_with?('e:')
+  return "/?g=#{r.sub('g:', '')}" if r.start_with?('g:')
+  type == 'quest' ? '/?quests=1' : '/?inbox=1'
+end
+
+def push_worker
+  Thread.new do
+    loop do
+      to, type, ref, text = PUSH_Q.pop
+      begin
+        subs = store(write: false) { |d| ((d['push'] || {})[to] || []).map(&:dup) }
+        gone = subs.select do |sub|
+          WebPush.deliver(sub, { title: 'Side Quest', body: text, tag: "#{type}:#{ref}", url: push_url(type, ref) }, vapid_key, PUSH_SUBJECT) == :gone
+        end
+        store { |d| (d['push'][to] || []).reject! { |x| gone.any? { |g| g['endpoint'] == x['endpoint'] } } } unless gone.empty?
+      rescue StandardError => e
+        warn "[push] #{e.message[0, 120]}"
+      end
+    end
+  end
 end
 
 # ---------------------------------------------------------------------------------------------
@@ -283,6 +329,7 @@ def weekly_recap!(force: false)
 end
 
 def v2_background
+  push_worker
   Thread.new do
     loop do
       sleep 60
@@ -437,6 +484,25 @@ def mount_v2(server)
       end
       track!('event_invite', h)
       { ok: true, sent: ok.size }
+    end
+  end
+
+  # Phone notifications: save / forget this device's push subscription.
+  route(server, '/api/push') do |b, h|
+    limit!("push:#{h}", 30, 3600)
+    sub = b['sub']
+    store do |d|
+      list = ((d['push'] ||= {})[h] ||= [])
+      if b['action'] == 'off'
+        list.reject! { |x| x['endpoint'] == (sub.is_a?(Hash) ? sub['endpoint'] : b['endpoint']).to_s }
+      else
+        raise 'That browser gave an address Side Quest does not send to.' unless WebPush.valid_sub?(sub)
+        list.reject! { |x| x['endpoint'] == sub['endpoint'] }
+        list << { 'endpoint' => sub['endpoint'].to_s[0, 800], 'keys' => { 'p256dh' => sub['keys']['p256dh'].to_s[0, 200], 'auth' => sub['keys']['auth'].to_s[0, 60] }, 'at' => now_ms }
+        list.shift while list.size > 5
+        track!('push_on', h)
+      end
+      { ok: true, devices: list.size }
     end
   end
 

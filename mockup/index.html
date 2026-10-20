@@ -1016,6 +1016,8 @@ const ES = {
   'How does Meet work?':'¿Cómo funciona Conocer?', 'Who can see my answers?':'¿Quién ve mis respuestas?',
   "Voice isn't available in this browser, so type below.":'La voz no funciona en este navegador; escribe abajo.',
   "You're level 1.":'Eres nivel 1.', 'Check in at places around town to level up: a historical marker, a taco spot, a park.':'Registra visitas por la ciudad para subir de nivel: una placa histórica, una taquería, un parque.', 'See quests':'Ver misiones',
+  "Done. You'll get notifications on this phone, even with Side Quest closed.":'Listo. Te llegarán notificaciones en este teléfono, aunque Side Quest esté cerrado.',
+  'On iPhone, add Side Quest to your Home Screen (Share → Add to Home Screen) to get them with the app closed.':'En iPhone, agrega Side Quest a tu pantalla de inicio (Compartir → Agregar a inicio) para recibirlas con la app cerrada.',
   "You're offline. Showing what this phone already has; live stuff comes back with signal.":'Estás sin conexión. Ves lo que ya tiene este teléfono; lo en vivo vuelve con señal.', 'Back online.':'Conectado de nuevo.',
   'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
   'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
@@ -4829,12 +4831,26 @@ function notifGo(n){
   if(n.t==='freq'){ meetTab='friends'; tab('meet'); return renderMeet(); }
   if(n.from&&user(n.from)) return openProfile(n.from);
 }
+// Real push (app closed) when the browser supports it and the server has a VAPID key; otherwise heads-ups while open.
+const canPush = () => 'serviceWorker' in navigator && 'PushManager' in window && !!CFG.vapid;
+const vapidBytes = k => Uint8Array.from(atob(k.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-k.length%4)%4)),c=>c.charCodeAt(0));
 async function togglePush(){
   if(!('Notification' in window)) return;
-  if(S.pushOn&&Notification.permission==='granted'){ S.pushOn=false; save(); return renderNotifs(); }
+  if(S.pushOn&&Notification.permission==='granted'){
+    S.pushOn=false; save(); renderNotifs();
+    try{ const reg=await navigator.serviceWorker?.getRegistration(); const sub=await reg?.pushManager.getSubscription();
+      if(sub){ await api('/api/push',{action:'off', endpoint:sub.endpoint}); await sub.unsubscribe(); } }catch(e){}
+    return;
+  }
   const p=await Notification.requestPermission(); S.pushOn=p==='granted'; save(); renderNotifs();
-  if(S.pushOn){ track('push_on'); toast(`🔔 ${T("Done. You'll get a heads-up while Side Quest is open in the background.")}`,'green',[],3500); }
-  else toast(T('Your browser said no. You can allow notifications for this site in its settings.'),'orange');
+  if(!S.pushOn) return toast(T('Your browser said no. You can allow notifications for this site in its settings.'),'orange');
+  if(canPush()) try{
+    const reg=await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:vapidBytes(CFG.vapid)});
+    await api('/api/push',{sub:sub.toJSON()});
+    return toast(`🔔 ${T("Done. You'll get notifications on this phone, even with Side Quest closed.")}`,'green',[],3500);
+  }catch(e){ console.warn('push', e); }
+  toast(`🔔 ${T("Done. You'll get a heads-up while Side Quest is open in the background.")}`+(/iPhone|iPad/.test(navigator.userAgent)&&!navigator.standalone?`<br><span class="meta">${T('On iPhone, add Side Quest to your Home Screen (Share → Add to Home Screen) to get them with the app closed.')}</span>`:''),'green',[],6000);
 }
 
 /* ---- 🎟️ event details ---- */
@@ -5006,7 +5022,10 @@ function inviteLink(){
 }
 function handleDeepLink(){
   const q=new URLSearchParams(location.search); if(![...q.keys()].length) return;
-  const ev=q.get('ev'), sg=q.get('sight'), ref=q.get('ref');
+  const ev=q.get('ev'), sg=q.get('sight'), ref=q.get('ref'), g=q.get('g');
+  if(g) setTimeout(()=>{ if(groupOf?.(g)) openGroup(g); },600);
+  if(q.get('quests')) setTimeout(()=>openQuests(),600);
+  if(q.get('inbox')) setTimeout(()=>openNotifs(),600);
   if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
   if(ev) openEvent(ev.startsWith('e:')?ev:'e:'+ev);
   if(sg) setTimeout(()=>{ loadSights(); const t=setInterval(()=>{ if(SG.data){ clearInterval(t); focusSight(sg); } },200); setTimeout(()=>clearInterval(t),8000); },300);

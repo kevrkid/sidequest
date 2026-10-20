@@ -1,6 +1,6 @@
 // Side Quest service worker (V2): the app shell opens instantly and still loads with no signal; everything live
 // (events, people, chats) always comes from the network. Only same-origin static files are ever cached.
-const CACHE = 'sq-shell-v2-1';
+const CACHE = 'sq-shell-v2-2';
 const SHELL = ['/', '/logo.png', '/icon-192.png', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
 
 self.addEventListener('install', e => {
@@ -25,8 +25,18 @@ self.addEventListener('fetch', e => {
     })));
   }
 });
-// Tapping a system notification brings the app forward.
+// Web Push from the server (encrypted for this phone only): show it, even with the app closed.
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Side Quest', {
+    body: d.body || '', icon: '/icon-192.png', badge: '/icon-192.png', tag: d.tag || undefined, data: { url: d.url || '/' } }));
+});
+// Tapping a notification opens the app on that thing (an event, a group, the inbox).
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  e.waitUntil(self.clients.matchAll({ type: 'window' }).then(ws => ws.length ? ws[0].focus() : self.clients.openWindow('/')));
+  const url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil(self.clients.matchAll({ type: 'window' }).then(ws => {
+    const w = ws.find(x => new URL(x.url).origin === location.origin);
+    return w ? w.focus().then(x => x.navigate(url)) : self.clients.openWindow(url);
+  }));
 });

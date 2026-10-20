@@ -14,6 +14,10 @@ EVENTS = [
 ]
 ev = WEBrick::HTTPServer.new(Port: EV_PORT, BindAddress: '127.0.0.1', Logger: WEBrick::Log.new('/dev/null'), AccessLog: [])
 ev.mount_proc('/api/events') { |_q, r| r['Content-Type'] = 'application/json'; r.body = JSON.generate(count: EVENTS.size, events: EVENTS) }
+# a fake push service: records what arrives
+$pushes = []
+ev.mount_proc('/push') { |q, r| $pushes << { auth: q['Authorization'], enc: q['Content-Encoding'], ttl: q['TTL'], body: q.body.b }; r.status = 201 }
+ev.mount_proc('/push-gone') { |_q, r| r.status = 410 }
 Thread.new { ev.start }
 
 dir = $dir = Dir.mktmpdir('sq-v2-test')
@@ -21,7 +25,7 @@ FileUtils.cp(Dir[File.join(__dir__, '*.{rb,md,json,html}')], dir)
 log = File.join(dir, 'server.log')
 pid = spawn({ 'PORT' => PORT.to_s, 'SQ_MODERATE' => '0', 'SQ_DEMO' => '0', 'SQ_PLACES_FILE' => 'test_places.json', 'SQ_OUTDOORS_FILE' => 'test_outdoors.json',
               'SQ_SIGHTS_FILE' => 'test_sights.json', 'SQ_EVENTS_API' => "http://127.0.0.1:#{EV_PORT}", 'SQ_ADMIN_TOKEN' => 'adm',
-              'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_PLACES_KEY' => nil, 'SQ_GOOGLE_TTS_KEY' => nil },
+              'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_PLACES_KEY' => nil, 'SQ_GOOGLE_TTS_KEY' => nil, 'SQ_PUSH_TEST_HOST' => "127.0.0.1:#{EV_PORT}" },
             'ruby', 'server.rb', chdir: dir, out: log, err: log)
 at_exit { Process.kill('TERM', pid) rescue nil; FileUtils.rm_rf(dir) }
 
@@ -58,6 +62,14 @@ def check(c, m = 'failed') raise m.to_s unless c end
 amy, bo, cy = Who.new('amy_v2'), Who.new('bo_v2'), Who.new('cy_v2')
 amy.signup; bo.signup
 
+require_relative 'webpush'
+UA_KEY = WebPush.new_key; UA_AUTH = SecureRandom.random_bytes(16)
+t('push: a phone subscribes; only real push services (or the test one) are accepted') {
+  sub = { endpoint: "http://127.0.0.1:#{EV_PORT}/push", keys: { p256dh: WebPush.b64u(WebPush.pub_raw(UA_KEY)), auth: WebPush.b64u(UA_AUTH) } }
+  c1, j1 = bo.post('/api/push', sub: sub)
+  c2, = bo.post('/api/push', sub: sub.merge(endpoint: 'https://169.254.169.254/latest/meta-data'))
+  check(c1 == 200 && j1['devices'] == 1 && c2 == 400, [c1, j1, c2])
+}
 t('a wave notifies the other person; waving back makes friends and tells the first') {
   amy.post('/api/friend', to: 'bo_v2', action: 'request')
   _, n = bo.post('/api/notifs')
@@ -65,6 +77,35 @@ t('a wave notifies the other person; waving back makes friends and tells the fir
   bo.post('/api/friend', to: 'amy_v2', action: 'accept')
   _, n2 = amy.post('/api/notifs')
   check(n2['notifs'].any? { |x| x['t'] == 'friend' && x['from'] == 'bo_v2' }, n2)
+}
+t('push: the wave reached the phone, encrypted for it alone, signed with the server\'s VAPID key') {
+  20.times { break unless $pushes.empty?; sleep 0.1 }
+  pz = $pushes.first or raise 'nothing pushed'
+  body = pz[:body]
+  salt, as_pub, ct = body[0, 16], body[21, 65], body[86..-1]
+  shared = UA_KEY.dh_compute_key(WebPush.point(as_pub))
+  ikm = WebPush.hkdf(UA_AUTH, shared, "WebPush: info\x00".b + WebPush.pub_raw(UA_KEY) + as_pub, 32)
+  cek = WebPush.hkdf(salt, ikm, "Content-Encoding: aes128gcm\x00".b, 16); nonce = WebPush.hkdf(salt, ikm, "Content-Encoding: nonce\x00".b, 12)
+  plain = WebPush.gcm_by_hand(cek, nonce, ct[0..-17])[0, ct.size - 16]
+  tag_ok = WebPush.gcm_by_hand(cek, nonce, plain) == ct
+  msg = JSON.parse(plain.chomp("\x02"))
+  key = Net::HTTP.get(URI("#{BASE}/config.js"))[/"vapid":"([^"]+)"/, 1]
+  check(tag_ok && msg['body'].include?('amy_v2') && msg['url'] == '/?inbox=1' && pz[:enc] == 'aes128gcm' && pz[:auth].include?("k=#{key}") &&
+        pz[:auth] =~ /vapid t=[\w-]+\.[\w-]+\.[\w-]+/, [msg, pz[:auth][0, 40], tag_ok])
+  msg['body']
+}
+t('push: an expired subscription (410) is dropped') {
+  bo.post('/api/push', sub: { endpoint: "http://127.0.0.1:#{EV_PORT}/push-gone", keys: { p256dh: WebPush.b64u(WebPush.pub_raw(UA_KEY)), auth: WebPush.b64u(UA_AUTH) } })
+  amy.post('/api/friend', to: 'bo_v2', action: 'remove'); amy.post('/api/friend', to: 'bo_v2', action: 'request')   # another notification
+  sleep 1
+  d = JSON.parse(File.read(File.join($dir, 'data', 'app.json')))
+  check(d['push']['bo_v2'].map { |x| x['endpoint'] }.none? { |e| e.end_with?('push-gone') } && d['push']['bo_v2'].size == 1, d['push'])
+  bo.post('/api/friend', to: 'amy_v2', action: 'accept')
+}
+t('the VAPID private key stays on the server (not in config.js, not readable by others)') {
+  f = File.join($dir, 'data', 'vapid.json')
+  priv = JSON.parse(File.read(f))['private']
+  check(!Net::HTTP.get(URI("#{BASE}/config.js")).include?(priv) && (File.stat(f).mode & 0o077).zero?, File.stat(f).mode.to_s(8))
 }
 t('the unread count rides along with /api/state; mark all read clears it') {
   _, s = bo.get('/api/state')

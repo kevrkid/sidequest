@@ -984,7 +984,7 @@ def delete_user!(d, h)
   d['freqs'].reject! { |f| f['from'] == h || f['to'] == h }
   d['groups'].each_value { |g| g['owner'] = nil if g['owner'] == h }
   d['dms'].delete_if { |k, _| k.split('|').include?(h) }
-  %w[notifs quest saves].each { |k| (d[k] || {}).delete(h) }
+  %w[notifs quest saves push].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
   (d['ev_chat'] || {}).each_value { |l| l.reject! { |m| m['u'] == h } }
   STATS[:lock].synchronize { (STATS[:d]['active'] || {}).delete(h); STATS[:dirty] = true }
@@ -1061,7 +1061,7 @@ def mount_app(server)
   server.mount_proc('/config.js') do |_req, res|
     res['Content-Type'] = 'application/javascript'
     res['Cache-Control'] = 'no-cache'
-    res.body = "window.SQ_CONFIG=#{JSON.generate(demo: DEMO, beta: BETA, invite: INVITES.any?, terms: TERMS_VERSION, livekit: LIVEKIT, google: GOOGLE, gmapKey: GOOGLE_MAPS_KEY, gclient: GOOGLE_CLIENT_ID, voice: !GOOGLE_TTS_KEY.empty?)};"
+    res.body = "window.SQ_CONFIG=#{JSON.generate(demo: DEMO, beta: BETA, invite: INVITES.any?, terms: TERMS_VERSION, livekit: LIVEKIT, google: GOOGLE, gmapKey: GOOGLE_MAPS_KEY, gclient: GOOGLE_CLIENT_ID, voice: !GOOGLE_TTS_KEY.empty?, vapid: (vapid_public rescue nil))};"
   end
 
   server.mount_proc('/api/health') do |_req, res|

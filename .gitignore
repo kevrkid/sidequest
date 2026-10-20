@@ -8,3 +8,5 @@ mockup/data/places_tiles/
 mockup/__pycache__/
 *.log
 .DS_Store
+mockup/data/vapid.json
+mockup/data/stats.json
