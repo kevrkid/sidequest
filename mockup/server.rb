@@ -18,6 +18,8 @@ require 'fileutils'
 require 'securerandom'
 require 'digest'
 require 'set'
+require 'zlib'
+require 'stringio'
 ENV['TZ'] ||= 'America/Chicago'   # opening hours, "tonight" and Scout's clock are Austin time
 require_relative 'places'
 require_relative 'sights'
@@ -1044,6 +1046,7 @@ def admin_ok?(req)
   !ADMIN_TOKEN.empty? && secure_compare(req['X-Admin-Token'].to_s, ADMIN_TOKEN)
 end
 
+GZ_CACHE = {}   # [file, etag] => gzipped bytes
 def mount_app(server)
   # Only the app's own pages are served; code and the data folder never are.
   server.mount_proc('/') do |req, res|
@@ -1053,7 +1056,21 @@ def mount_app(server)
       res['Content-Type'] = PUBLIC_FILES[name]
       res['Cache-Control'] = name.end_with?('.png') || name.start_with?('vendor/') ? 'public, max-age=604800' : 'no-cache'
       res['Service-Worker-Allowed'] = '/' if name == 'sw.js'
-      res.body = File.binread(File.join(ROOT, name))
+      # V2: repeat visits get "not changed" (ETag), and text goes out gzipped (~4x smaller on a phone connection)
+      path = File.join(ROOT, name); st = File.stat(path)
+      etag = %("#{st.mtime.to_i.to_s(36)}-#{st.size.to_s(36)}")
+      res['ETag'] = etag
+      next res.status = 304 if req['If-None-Match'].to_s.split(/\s*,\s*/).include?(etag)
+      body = File.binread(path)
+      if PUBLIC_FILES[name] !~ /\Aimage/ && body.bytesize > 1024 && req['Accept-Encoding'].to_s =~ /\bgzip\b/
+        res['Vary'] = 'Accept-Encoding'
+        res['Content-Encoding'] = 'gzip'
+        body = GZ_CACHE[[name, etag]] ||= begin
+          GZ_CACHE.clear if GZ_CACHE.size > 40
+          io = StringIO.new(''.b); gz = Zlib::GzipWriter.new(io, 6); gz.write(body); gz.close; io.string
+        end
+      end
+      res.body = body
     else
       res.status = 404
       res.body = 'not found'

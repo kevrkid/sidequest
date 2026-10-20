@@ -237,6 +237,7 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Live safety on the server**: `/api/screen` signs a 10-minute pass for the exact request text; the relay refuses
   requests without one (when moderation is on) and applies the hard rules itself (`LIVE_HARD_NO`); stream titles show
   only after a check (`live_title`); accepted visit requests hide the place while the location delay is on.
+- **Static files**: ETag + 304 for repeat visits, gzip for text over 1 KB (`GZ_CACHE`; Caddy also compresses in production).
 - **Admin**: Growth panel, flagged event/group chat under "Needs a human look", chat reports with author + text.
 - Run V2: `cd mockup && ./start_v2.sh` (http://localhost:8797, phones https://<Wi-Fi IP>:8444; `--keys` adds the paid
   Google / LiveKit keys). Same host as V1, so the browser shares the login cookie between ports.

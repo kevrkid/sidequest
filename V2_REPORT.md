@@ -73,6 +73,7 @@ against the real codebase).
 10. **Offline app shell** (service worker): the installed app opens instantly and still loads with no signal. It never caches live data, and shows offline / back-online notices.
 
 ### Improved existing features
+- **Faster loads**: the app page is served gzipped when the browser accepts it (479 KB → 156 KB on local or LAN use; production Caddy already compressed). Every static file gets an ETag, so a repeat visit downloads nothing (304).
 - **Live safety** (both V1 gaps closed on the server):
   - viewer requests now need a signed pass from the server's safety check, and the server applies the hard rules itself;
   - stream titles appear only after they're checked;
