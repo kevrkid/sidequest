@@ -73,6 +73,48 @@
   .sgtext{margin:6px 0;font-size:13px;line-height:1.45;max-height:150px;overflow:auto}
   .sgtext.open{max-height:260px}
   .linkbtn{background:none;border:0;color:var(--accent2);padding:0;font:inherit;cursor:pointer}
+  /* ---- V2 ---- */
+  .hr{display:flex;align-items:center;gap:6px}
+  .bell{position:relative;flex:none;width:38px;height:38px;border-radius:50%;background:var(--panel);border:1px solid var(--line);font-size:17px;display:grid;place-items:center}
+  .bell b{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#ff3b5c;color:#fff;font-size:11px;line-height:18px;display:none}
+  .bell.has b{display:block} .bell.has{border-color:#ff3b5c88;animation:bellpulse 2.4s ease-in-out 2}
+  @keyframes bellpulse{15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-6deg)}60%{transform:none}}
+  @media (max-width:370px){ .bell{width:34px;height:34px;font-size:15px} }
+  .nrow{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 6px;border-top:1px solid var(--line);font-size:14px}
+  .nrow:first-of-type{border-top:0} .nrow.unread{background:linear-gradient(90deg,#2ec5ff14,transparent);border-radius:12px}
+  .nrow .grow{display:flex;flex-direction:column;gap:2px} .nic{flex:none;width:34px;display:grid;place-items:center;font-size:20px}
+  .empty{text-align:center;padding:26px 10px} .empty p{margin:6px 0 0}
+  .evcard{cursor:pointer}
+  .evhero{position:relative;height:170px;margin:0 -16px;border-radius:22px 22px 0 0;background:linear-gradient(135deg,#2a1a4a,#0b2233) center/cover no-repeat;display:grid;place-items:center;font-size:54px;overflow:hidden}
+  .evhero.photo>span{display:none} .evhero[style*="background-image"]>span{display:none}
+  .evhero .evx{position:absolute;top:10px;right:12px;background:#070b18cc;border-radius:99px}
+  .evtitle{font-size:22px;line-height:1.2;margin:4px 0 6px;letter-spacing:-.3px}
+  .evact{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px} .evact .btn{justify-content:center}
+  .evact .btn:first-child{grid-column:1/-1;font-size:16px;padding:12px}
+  .evdesc{font-size:14px;line-height:1.5;color:#cfd5f5;margin:12px 0 0;white-space:pre-line}
+  .evperson{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:3px 10px 3px 3px;font-size:13px;font-weight:600}
+  .evchat{display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto}
+  .evmsg{display:flex;gap:8px;font-size:14px;line-height:1.4} .evmsg.me b{color:var(--accent2)}
+  .invrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-weight:600} .invrow input{width:22px;height:22px}
+  #homeTonight{margin:2px 0 8px} .tnhead{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;font-size:14px}
+  .tnrail{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:2px;scrollbar-width:none} .tnrail::-webkit-scrollbar{display:none}
+  .tncard{flex:none;width:228px;display:flex;gap:9px;align-items:center;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:7px;scroll-snap-align:start}
+  .tncard .thumb{width:44px;height:44px;font-size:19px;flex:none} .tnt{display:flex;flex-direction:column;min-width:0;font-size:13px}
+  .tnt b,.tnt .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .upnext{cursor:pointer;border-color:#ff9a3c66}
+  .lvlcard{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#2a1a4a,#10162c);border:1px solid #b57bff55;border-radius:18px;padding:14px;margin-top:12px}
+  .lvl{width:66px;height:66px;border-radius:50%;flex:none;display:grid;place-items:center;align-content:center;background:radial-gradient(circle,#ff9a3c33,#ff9a3c08);border:2px solid #ff9a3c}
+  .lvl small{font-size:9px;font-weight:800;letter-spacing:1px;color:#ffd2b0} .lvl b{font-size:26px;line-height:1}
+  .bar.xp{height:10px;margin-top:6px} .bar.xp b{background:linear-gradient(90deg,#ff9a3c,#ffd166)}
+  .qgrid{display:grid;grid-template-columns:1fr;gap:8px}
+  @media (min-width:520px){ .qgrid{grid-template-columns:1fr 1fr} }
+  .qcard{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px} .qcard .bar{margin-top:8px;background:#0b1022}
+  .qcard.done{border-color:#3ddc9766;background:linear-gradient(135deg,#3ddc9714,var(--panel2))} .qcard.done .bar b{background:var(--good)}
+  .qe{font-size:24px;width:34px;text-align:center} .qxp{font-size:11px;font-weight:800;color:#ffd166;background:#ffd16618;border-radius:99px;padding:2px 7px;flex:none}
+  .lbrow{display:flex;align-items:center;gap:8px;padding:7px 4px;border-top:1px solid var(--line);font-size:14px} .lbrow.me{background:#2ec5ff12;border-radius:10px}
+  .lbrow .rank{width:20px;text-align:center;color:var(--muted)}
+  .pbadges{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:20px}
+  .lvlpill{font-size:12px;font-weight:800;background:#ff9a3c22;color:#ffd2b0;border:1px solid #ff9a3c66;border-radius:99px;padding:3px 9px}
   .opin{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:13px;background:#0b2233;border:1.5px solid #2ec5ff}
   .opin.trailhead{background:#0d2a1f;border-color:#3ddc97}
   .od-river{filter:drop-shadow(0 0 4px #2ec5ff99)} .od-trail{filter:drop-shadow(0 0 3px #000)}
@@ -542,13 +584,15 @@
     <div class="hl"><button class="homebtn" id="homeBtn" title="Back" aria-label="Back" hidden>‹</button>
       <button class="logo" id="logo" title="Home"><img class="gem" src="/logo.png" alt="" width="30" height="30"><span id="appname">Side Quest</span><small id="betaTag" hidden>beta</small></button></div>
     <button class="pres" id="presBtn" role="switch" aria-checked="true" title="Show others you're around, or go offline"><span id="presLbl">Online</span><span class="trk"><i></i></span></button>
-    <div class="hr"><button class="me-chip" id="meChip" title="Your profile" aria-haspopup="menu"><span class="av" id="meAv"></span><span id="meHandle"></span><span class="caret">▾</span></button>
+    <div class="hr"><button class="bell" id="bellBtn" data-bell aria-label="Notifications" title="Notifications" hidden>🔔<b id="bellN"></b></button><button class="me-chip" id="meChip" title="Your profile" aria-haspopup="menu"><span class="av" id="meAv"></span><span id="meHandle"></span><span class="caret">▾</span></button>
       <div class="memenu" id="meMenu" role="menu" hidden><div class="mmhead" id="meMenuHead"></div>
         <button data-menu="profile" role="menuitem">👤 <span data-t="My profile">My profile</span></button>
         <button data-menu="quiz" role="menuitem">🧬 <span data-t="Personality quiz">Personality quiz</span></button>
         <button data-menu="chart" role="menuitem">✨ <span data-t="My chart">My chart</span></button>
         <button data-menu="about" role="menuitem">📝 <span data-t="About me">About me</span></button>
-        <button data-menu="plans" role="menuitem">📅 <span data-t="My plans">My plans</span></button><hr>
+        <button data-menu="plans" role="menuitem">📅 <span data-t="My plans">My plans</span></button>
+        <button data-menu="quests" role="menuitem">🏆 <span data-t="Quests">Quests</span></button>
+        <button data-menu="invite" role="menuitem">💌 <span data-t="Invite friends">Invite friends</span></button><hr>
         <button data-menu="lang" role="menuitem">🌐 <span data-t="Español">Español</span></button>
         <button data-menu="privacy" role="menuitem">🔒 <span data-t="Privacy & settings">Privacy &amp; settings</span></button></div></div>
   </header>
@@ -557,6 +601,7 @@
     <section class="view" id="v-home" hidden>
       <div id="homeStories" aria-label="Stories"></div>
       <div id="quickBar" role="toolbar" aria-label="Quick actions"></div>
+      <div id="homeTonight" hidden></div>
       <div class="quad">
         <button class="q4 tl" data-home="meet"><span class="ic">👋</span><span><span class="nm" data-t="Meet">Meet</span><div class="st" id="hsGroups"></div></span>
           <span class="msgbtn" role="button" tabindex="0" aria-label="Messages" data-msgs>💬<b id="msgCount"></b></span></button>
@@ -742,6 +787,9 @@
   <div id="swipeHint" aria-hidden="true">‹</div><div id="swipeHintR" aria-hidden="true">›</div>
   <div class="sheet-bg" id="placesBg" hidden style="z-index:730"><div class="sheet" id="placesSheet"></div></div>
   <div class="sheet-bg" id="camBg" hidden style="z-index:760"><div class="sheet" id="camSheet"></div></div>
+  <div class="sheet-bg" id="evBg" hidden style="z-index:736"><div class="sheet" id="evSheet" style="max-height:94%;padding-top:10px"></div></div>
+  <div class="sheet-bg" id="questBg" hidden style="z-index:741"><div class="sheet" id="questSheet" style="max-height:92%"></div></div>
+  <div class="sheet-bg" id="notifBg" hidden style="z-index:745"><div class="sheet" id="notifSheet" style="max-height:85%"></div></div>
   <div class="sheet-bg" id="plansBg" hidden style="z-index:740"><div class="sheet" id="plansSheet" style="max-height:88%;overflow-y:auto"></div></div>
   <div id="toasts"></div>
 </div>
@@ -1193,6 +1241,7 @@ function openProfile(h){
     <div class="row" style="margin:14px 0 6px"><div class="grow"><span class="match">${pct}% MATCH</span><div class="bar"><b style="width:${pct}%"></b></div></div>
       ${isFriend(h)?`<button class="btn sm blue" data-thread="${esc(h)}" data-fromprofile>💬 Message</button>`:addBtn(h)}
       <button class="btn sm" data-more="user|${esc(h)}|${esc(h)}" style="padding:4px 9px">⋯</button></div>
+    ${SV.badges?.[h]?`<div class="pbadges"><span class="lvlpill">🏆 ${T('Lv {n}',{n:SV.badges[h].lvl})}</span>${SV.badges[h].done.map(q=>`<span title="${esc(q)}">${({history:'🪧',culture:'🖼️',tacos:'🌮',outdoors:'🌲',shows:'🎸',nightowl:'🦉',explorer:'🧭',squad:'🤝',flare:'🔥',story:'📸',recruiter:'💌',regular:'📅'})[q]||'🏅'}</span>`).join('')}</div>`:''}
     ${m.r.length?`<label class="lbl">What you have in common</label><ul class="why-list">${m.r.slice(0,10).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
     ${ac?`<div style="margin-top:12px">${compatCard(ac,'@'+h)}</div>`:S.me.astro?'':(ch.sun?'<p class="meta" style="margin-top:10px">✨ Turn on astrology in Me to see how your signs match.</p>':'')}
     ${(u.i||[]).length?`<label class="lbl">Into</label><div class="chips">${u.i.map(i=>`<span class="ichip ${S.me.i.includes(i)?'on':''}">${esc(i)}</span>`).join('')}</div>`:''}
@@ -1380,7 +1429,8 @@ async function checkSession(){
 }
 const addBtn = h => isFriend(h) ? '<span class="badge friends">friend</span>'
   : (SV.friends?.outgoing||[]).includes(h) ? '<span class="badge">requested</span>' : `<button class="btn sm" data-add="${esc(h)}">+ Add</button>`;
-function renderSocial(){ renderFeed(); renderFriendsTab(); renderMap(); renderHome(); }
+function renderSocial(){ renderFeed(); renderFriendsTab(); renderMap(); renderHome(); renderBell?.();
+  if(V2S.evOpen&&!$('#evBg').hidden&&EV.byId[V2S.evOpen]&&!$('#evChatIn')?.value&&document.activeElement?.id!=='evChatIn') renderEventSheet(EV.byId[V2S.evOpen]); }
 
 /* ---------- real events (centex_events service) ---------- */
 const EV = {list:[], byId:{}, err:'', loaded:false};
@@ -1391,6 +1441,7 @@ async function loadEvents(){
     EV.byId=Object.fromEntries(EV.list.map(e=>[e.id,e])); EV.err=''; seedStoryEvent();
   }catch(e){ EV.err=e.message; }
   EV.loaded=true; renderSocial();
+  if(V2S.pendingEv){ const id=V2S.pendingEv; V2S.pendingEv=null; openEvent(id); }
 }
 const myRsvp = id => S.rsvps[id];
 // Real RSVPs from the server, plus demo users who'd plausibly go (so the demo has some life in it).
@@ -1406,7 +1457,7 @@ async function rsvp(id, st){
   if(next) S.rsvps[id]=next; else delete S.rsvps[id]; save();
   if(next==='going') logAct('rsvp',{c:e.cat, vn:e.venue});
   // guests keep RSVPs on the device until they sign up
-  if(SV.on&&AUTHED) try{ const j=await api('/api/rsvp',{id, status:next}); if(Object.keys(j.rsvps).length) SV.rsvps[id]=j.rsvps; else delete SV.rsvps[id]; }
+  if(SV.on&&AUTHED) try{ const j=await api('/api/rsvp',{id, status:next, title:e.title}); if(Object.keys(j.rsvps).length) SV.rsvps[id]=j.rsvps; else delete SV.rsvps[id]; }
     catch(err){ toast('Could not save your RSVP: '+esc(err.message),'orange'); }
   renderSocial();
   const fr=goingList(e).filter(isFriend);
@@ -1543,7 +1594,7 @@ function addToCalendar(id){ const e=EV.byId[id]; if(!e) return;
 
 function eventCard(e, r=[]){
   const mine=myRsvp(e.id), go=goingList(e), link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null;
-  return `<div class="card">
+  return `<div class="card evcard" data-evopen="${e.id}">
     <div class="row" style="align-items:flex-start"><span class="cat thumb"${e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span><div class="grow"><b style="font-size:15px">${esc(e.title)}</b>
       <div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.city&&e.city!=='Austin'?', '+esc(e.city):''}${e.price?' · '+esc(e.price):''}</div></div></div>
     ${r.length?`<div class="meta" style="margin-top:8px;color:#cfd5f5">✨ ${esc(r.slice(0,3).join(' · '))}</div>`:''}
@@ -1694,7 +1745,8 @@ async function placePopup(id, ll){
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
       <div class="btns" style="margin-top:6px">${p.menu?`<a class="btn sm" href="${esc(p.menu)}" target="_blank" rel="noopener">Menu ↗</a>`:''}${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">Website ↗</a>`:''}
         <a class="btn sm" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Directions ↗</a>
-        ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 Eat after</button>`:''}</div>
+        ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 Eat after</button>`:''}
+        ${checkBtn('place',p.id,p.lat,p.lng)}<button class="btn sm ${isSaved('place',p.id)?'blue':''}" data-v2save="place|${esc(p.id)}|${esc(p.name.slice(0,90))}" aria-label="${T('Save')}">🔖</button></div>
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
@@ -1813,7 +1865,7 @@ function areaPopup(a, ll){
     <div id="odph">${photoStrip(storiesAt(a.c[0],a.c[1],null,a.name),[])}</div>
     <div class="tagchips" style="margin:8px 0">${(a.acts||[]).map(x=>`<span class="ichip on" style="cursor:default">${OD_ACTS[x]||esc(x)}</span>`).join('')}</div>
     ${near.length?`<div class="meta" style="margin-bottom:6px">${near.map(sp=>`${OD_SPOT[sp.kind][0]} ${esc(sp.name||OD_SPOT[sp.kind][1])}`).join('<br>')}</div>`:''}
-    <div class="btns"><a class="btn sm" href="${mapsUrl(a.c[0],a.c[1])}" target="_blank" rel="noopener">Directions ↗</a></div>
+    <div class="btns">${trail||river?'':checkBtn('area',a.id,a.c[0],a.c[1])}<a class="btn sm" href="${mapsUrl(a.c[0],a.c[1])}" target="_blank" rel="noopener">Directions ↗</a></div>
     <div class="meta" style="font-size:10px;margin-top:6px">Outline from OpenStreetMap. Check local rules for fishing licenses and boat access.</div>`).openOn(map);
   areaPhotos(a);
 }
@@ -1860,6 +1912,8 @@ async function sightPopup(id){
     ${s.where?`<div class="meta" style="font-size:11px">📍 ${esc(s.where)}</div>`:''}
     <div id="sgph_${esc(id)}"></div>
     <div class="btns" style="margin-top:8px"><button class="btn sm primary" data-sgtell="${esc(id)}">🔊 ${T('Tell me the story')}</button>
+      ${checkBtn('sight',id,s.lat,s.lng)}<button class="btn sm ${isSaved('sight',id)?'blue':''}" data-v2save="sight|${esc(id)}|${esc(s.name.slice(0,90))}">🔖</button>
+      <button class="btn sm" data-sgshare="${esc(id)}" aria-label="${T('Share')}">🔗</button>
       ${/^https:\/\//.test(s.url||'')?`<a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">${T('Read more')} ↗</a>`:''}
       <a class="btn sm" href="${mapsUrl(s.lat,s.lng)}" target="_blank" rel="noopener">${T('Directions')} ↗</a></div>
     <div class="meta" style="font-size:10px;margin-top:6px">${esc(credit)}</div>`);
@@ -2019,8 +2073,9 @@ function openPlans(){
     <label class="lbl" style="margin-top:16px">${T('Going to')}</label>
     ${going.length?going.map(e=>`<div class="pstop"><span class="ptime">${esc(fmtWhen(e.ts,e.tba))}</span><span class="pdot thumb"${e.geo_precise&&e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng}):''}>${CATS[e.cat]?.e||'🎫'}</span>
         <div class="grow"><b>${esc(e.title)}</b>${e.venue?`<div class="meta">${esc(e.venue)}</div>`:''}</div>${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')
-      :`<p class="meta">${T('Nothing yet. Tap "I\'m going" on an event and it shows up here.')}</p>`}`;
-  $('#plansBg').hidden=false;
+      :`<p class="meta">${T('Nothing yet. Tap "I\'m going" on an event and it shows up here.')}</p>`}
+    <label class="lbl" style="margin-top:16px">🔖 ${T('Saved')}</label><div id="savedList"><p class="meta">${T('Loading…')}</p></div>`;
+  $('#plansBg').hidden=false; fillSaved(); track('saved_open');
 }
 async function savePlan(i){
   const m=scS().log[i]; if(!m?.plan) return; if(needAccount('save plans')) return;
@@ -2295,6 +2350,7 @@ function renderOnb(){
     <input id="onbH" name="username" maxlength="20" placeholder="e.g. taco_tuesday" value="${esc(o.h)}" autocomplete="username" autocapitalize="off">
     ${o.google?'':`<label class="lbl">Password${signup?' <span class="meta">(8+ characters)</span>':''}</label>
     <input id="onbP" name="password" type="password" maxlength="200" value="${esc(o.pw||'')}" autocomplete="${signup?'new-password':'current-password'}">`}
+    ${signup&&S.ref?`<label class="row" style="gap:8px;margin-top:10px;font-weight:600"><input type="checkbox" id="onbRef" checked style="width:auto"> 💌 ${T('Be friends with @{h}, who invited you',{h:esc(S.ref)})}</label>`:''}
     ${signup?`${CFG.invite?`<label class="lbl">Invite code</label><input id="onbI" maxlength="40" placeholder="From the person who invited you" value="${esc(o.inv||'')}" autocomplete="off" autocapitalize="off">`:''}
       <label class="lbl">Color</label><div class="chips">${COLORS.map(c=>`<button type="button" class="av" style="background:${c};${o.c===c?'outline:3px solid #fff;outline-offset:2px':''}" data-onbc="${c}" aria-label="color"></button>`).join('')}</div>
       <label class="row" style="margin-top:14px;gap:10px;align-items:flex-start"><input type="checkbox" id="onbAdult" style="width:auto;margin-top:2px" ${o.adult?'checked':''}><span class="meta" style="font-size:13px">I'm 18 or older.</span></label>
@@ -2358,7 +2414,8 @@ async function onbNext(){
     ONB.busy=true; renderOnb();
     try{
       if(ONB.mode==='signup'){
-        await api('/api/signup',{h, ...(ONB.google?{google:ONB.google}:{pw}), c:ONB.c, invite:$('#onbI')?.value||'', adult:true, terms:true}); ONB.google=null;
+        await api('/api/signup',{h, ...(ONB.google?{google:ONB.google}:{pw}), c:ONB.c, invite:$('#onbI')?.value||'', adult:true, terms:true,
+          ref:S.ref||'', ref_friend:!!S.ref&&($('#onbRef')?$('#onbRef').checked:true)}); ONB.google=null;
         AUTHED=true; ONB.busy=false; await loadState(); onAuthed();
         if(S.me.h==='guest'){ S.me.h=h; S.me.c=ONB.c; }
         else { S=DEFAULT(); S.me.h=h; S.me.c=ONB.c; }
@@ -2980,6 +3037,7 @@ function renderMap(){
     m.bindPopup(()=>`<b>${esc(e.title)}</b><div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.price?' · '+esc(e.price):''}</div>
       ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
       <div class="btns" style="margin-top:8px"><button class="btn sm ${going?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${going?'✓ Going':"I'm going"}</button>
+      <button class="btn sm blue" data-evopen="${e.id}">${T('Details')}</button>
       ${/^https?:/.test(e.ticket_url||e.url||'')?`<a class="btn sm" href="${esc(e.ticket_url||e.url)}" target="_blank" rel="noopener">Info ↗</a>`:''}
       <button class="btn sm" data-cal="${e.id}">📅 Calendar</button>${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">Directions ↗</a>`:''}
       ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 Eat after</button>`:''}</div>`);
@@ -3029,7 +3087,7 @@ async function setOnline(on){
     toast('⚫ <b>You\'re offline.</b> Nobody sees you as active, and the app stopped using your location. You can still browse.','',[],4500); }
 }
 // Back: close whatever is on top first (a sheet or story), otherwise go to the previous screen.
-const OVERLAYS = ['actBg','placesBg','groupBg','storyBg','searchBg','feedSheetBg','createBg','sheetBg','groupsBg','onbBg'];
+const OVERLAYS = ['notifBg','questBg','evBg','plansBg','actBg','placesBg','groupBg','storyBg','searchBg','feedSheetBg','createBg','sheetBg','groupsBg','onbBg'];
 function closeTopOverlay(){
   if(!$('#camBg').hidden){ closeCam(); return true; }   // back also turns the camera off
   if(!$('#storyView').hidden){ closeStories(); return true; }
@@ -3105,6 +3163,7 @@ function renderQuick(){
   // Only what's useful right now; swipe, story, flare and go live already have their own quadrants.
   el.innerHTML = [
     btn('plans',T('📅 My plans'),'',plans+(SV.plans||[]).length||''),   // always here: your schedule + itineraries
+    AUTHED&&SV.v2 ? btn('quests',`🏆 ${T('Lv {n}',{n:SV.v2.level||1})}`) : '',
     un ? btn('msgs',T('💬 New messages'),'',un) : '',
   ].join('');   // quiz, chart and about me live in the name menu, top right
   el.hidden = !el.innerHTML;
@@ -3116,6 +3175,8 @@ function quick(k){
   if(k==='about'){ tab('me'); showMeSec('about'); lifeOpen=(LIFE_SECS.find(([sec])=>LIFE.some(f=>f.sec===sec&&!hasVal(S.me.p[f.k])))||LIFE_SECS[0])[0]; renderLife(); scrollToEl('#lifeCard'); }
   if(k==='msgs'){ meetTab='msgs'; DM.open=null; tab('meet'); renderMeet(); loadThreads().then(renderMeet); }
   if(k==='plans') openPlans();
+  if(k==='quests') openQuests();
+  if(k==='invite') inviteLink();
   if(k==='tonight'){ searchWhen='today'; runSearch(null,''); }
   if(k==='swipe'){ meetTab='swipe'; tab('meet'); }
   if(k==='story') openStoryComposer();
@@ -3125,7 +3186,7 @@ function quick(k){
 }
 function renderHome(){
   if(!$('#hsGroups')) return;
-  renderQuick(); $('#homeStories').innerHTML=storyRail();   // Instagram-style rings; tap one for the full-screen feed
+  renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail();   // Instagram-style rings; tap one for the full-screen feed
   const h=new Date().getHours(), mine=allGroups().filter(g=>isMember(g.id)).length, wk=Date.now()+7*864e5;
   const evs=EV.list.filter(e=>e.te>Date.now()&&e.ts<=wk).length, live=liveStreams().length+(LIVE.on?1:0);
   const un=dmUnread(), np=meetPeople().length;
@@ -3138,8 +3199,11 @@ function renderHome(){
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
   const aff=affinity(), tonight=EV.list.filter(e=>e.te>Date.now()&&e.ts<=new Date().setHours(23,59,59,999)&&aff[e.cat]).length;
   $('#homeNext').innerHTML = `<button class="next" data-home="picks" style="width:100%;text-align:left"><span style="font-size:20px">✨</span>
-      <div class="grow"><b>Picks for you</b><div class="meta">${tonight?`${tonight} thing${tonight===1?'':'s'} you'd like tonight`:'Your feed, ranked by what you\'re into'}</div></div><span class="meta">›</span></button>` + (next ? `<div class="next"><span style="font-size:20px">${CATS[next.cat].e}</span><div class="grow"><div class="meta">Up next</div><b>${esc(next.title)}</b>
-      <div class="meta">${fmtWhen(next.ts,next.tba)}${next.venue?' · '+esc(next.venue):''}</div></div>${next.lat?`<button class="btn sm" data-map="${next.id}">Map</button>`:''}</div>` : '');
+      <div class="grow"><b>Picks for you</b><div class="meta">${tonight?`${tonight} thing${tonight===1?'':'s'} you'd like tonight`:'Your feed, ranked by what you\'re into'}</div></div><span class="meta">›</span></button>` + (next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
+      const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
+      return `<div class="next upnext" data-evopen="${next.id}"><span style="font-size:20px">${CATS[next.cat].e}</span><div class="grow"><div class="meta">${T('Up next')} · <b style="color:var(--accent)">${esc(when)}</b></div><b>${esc(next.title)}</b>
+      <div class="meta">${next.venue?esc(next.venue):''}${fr.length?` · 👥 ${esc(fr.slice(0,2).map(x=>'@'+x).join(', '))}${fr.length>2?' +'+(fr.length-2):''}`:''}</div></div>
+      ${next.geo_precise?`<a class="btn sm" href="${mapsUrl(next.lat,next.lng)}" target="_blank" rel="noopener">${T('Go')} ↗</a>`:next.lat?`<button class="btn sm" data-map="${next.id}">Map</button>`:''}</div>`; })() : '');
 }
 let curTab='home', NAVBACK=false, NAVFWDING=false;
 const NAVST=[], NAVFWD=[];   // screens to go back to, and screens you came back from (swipe in from the right = forward)
@@ -4665,6 +4729,279 @@ $('#scoutPhoto').onchange=async e=>{ const f=e.target.files[0]; e.target.value='
 if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>{};   // some browsers load voices lazily
 scoutFaces();
 
+/* ================= Side Quest V2: notifications, event details, quests & check-ins, saved, sharing & invites =================
+   Server side lives in v2.rb. Everything here degrades to V1 behaviour for guests (needAccount) and offline. */
+const V2S = {notifs:null, lastUnread:null, quests:null, saves:null, evOpen:null, chatT:null};
+function track(e){
+  if(!location.protocol.startsWith('http')) return;
+  try{ fetch('/api/t',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({e}),keepalive:true}).catch(()=>{}); }catch(x){}
+}
+const agoT = ms => { const s=Math.max(1,(Date.now()-ms)/1000); return s<60?T('just now'):s<3600?T('{n} min ago',{n:Math.round(s/60)}):s<86400?T('{n} h ago',{n:Math.round(s/3600)}):T('{n} d ago',{n:Math.round(s/86400)}); };
+async function shareLink(url, title, text){
+  track('share_open');
+  if(navigator.share) try{ await navigator.share({title, text, url}); return; }catch(e){ if(e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(url); toast(`🔗 ${T('Link copied')}`,'green',[],2500); }catch(e){ window.prompt(T('Copy this link'), url); }
+}
+const v2head = (title, close) => `<div class="row"><b class="grow" style="font-size:19px">${title}</b><button class="btn sm" data-v2close="${close}">${T('Close')}</button></div>`;
+
+/* ---- 🔔 notifications ---- */
+const NOTIF_E = {freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️'};
+function renderBell(){
+  const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
+  const n=SV.v2?.unread||0; $('#bellN').textContent=n?(n>9?'9+':String(n)):''; b.classList.toggle('has',!!n);
+  b.setAttribute('aria-label', n?T('{n} new notifications',{n}):T('Notifications'));
+  if(V2S.lastUnread!=null&&n>V2S.lastUnread) phoneNotify();
+  V2S.lastUnread=n;
+}
+async function phoneNotify(){   // the app is open in the background: show the newest one as a system notification
+  if(!S.pushOn||!('Notification' in window)||Notification.permission!=='granted'||!document.hidden) return;
+  try{ const j=await api('/api/notifs',{}); const n=j.notifs.find(x=>!x.read); if(!n) return;
+    const nn=new Notification('Side Quest',{body:n.text, icon:'/icon-192.png', tag:n.id}); nn.onclick=()=>{ window.focus(); notifGo(n); nn.close(); }; }catch(e){}
+}
+async function openNotifs(){
+  if(needAccount('see your notifications')) return; track('notif_open');
+  const sh=$('#notifSheet'); sh.innerHTML=v2head(`🔔 ${T('Notifications')}`,'notifBg')+`<p class="meta">${T('Loading…')}</p>`; $('#notifBg').hidden=false;
+  let j; try{ j=await api('/api/notifs',{}); }catch(e){ sh.innerHTML=v2head(`🔔 ${T('Notifications')}`,'notifBg')+`<p class="meta">${esc(e.message)}</p>`; return; }
+  V2S.notifs=j.notifs; renderNotifs();
+  if(j.unread) setTimeout(()=>api('/api/notifs',{read:'all'}).then(()=>{ if(SV.v2) SV.v2.unread=0; renderBell(); }).catch(()=>{}),1200);
+}
+function renderNotifs(){
+  const list=V2S.notifs||[], canPush='Notification' in window;
+  $('#notifSheet').innerHTML=v2head(`🔔 ${T('Notifications')}`,'notifBg')+
+    (list.length?list.map((n,i)=>`<button class="nrow ${n.read?'':'unread'}" data-notifi="${i}">
+      <span class="nic">${n.from?av(n.from,'sm'):NOTIF_E[n.t]||'🔔'}</span><span class="grow"><span>${esc(n.text)}</span><span class="meta">${agoT(n.at)}</span></span></button>`).join('')
+      :`<div class="empty"><div style="font-size:34px">🔔</div><b>${T('Nothing yet')}</b><p class="meta">${T('Waves, friends going to your events, replies, reminders and quest wins show up here.')}</p></div>`)+
+    (canPush?`<div class="lcat" style="margin-top:14px"><div class="row"><span class="grow"><b>${T('Phone notifications')}</b><div class="meta">${T('While Side Quest is open in the background.')}</div></span>
+      <button class="toggle ${S.pushOn&&Notification.permission==='granted'?'on':''}" data-pushtoggle aria-label="${T('Phone notifications')}"></button></div></div>`:'');
+}
+function notifGo(n){
+  $('#notifBg').hidden=true;
+  if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);
+  if(n.t==='quest') return openQuests();
+  if(n.t==='down'&&n.ref) return focusOnMap(n.ref);
+  if(n.t==='join'&&n.ref) return openGroup?.(n.ref);
+  if(n.t==='freq'){ meetTab='friends'; tab('meet'); return renderMeet(); }
+  if(n.from&&user(n.from)) return openProfile(n.from);
+}
+async function togglePush(){
+  if(!('Notification' in window)) return;
+  if(S.pushOn&&Notification.permission==='granted'){ S.pushOn=false; save(); return renderNotifs(); }
+  const p=await Notification.requestPermission(); S.pushOn=p==='granted'; save(); renderNotifs();
+  if(S.pushOn){ track('push_on'); toast(`🔔 ${T("Done. You'll get a heads-up while Side Quest is open in the background.")}`,'green',[],3500); }
+  else toast(T('Your browser said no. You can allow notifications for this site in its settings.'),'orange');
+}
+
+/* ---- 🎟️ event details ---- */
+function openEvent(id){
+  if(!/^e:/.test(id)) id='e:'+id;
+  const e=EV.byId[id];
+  if(!e){ if(!EV.loaded){ V2S.pendingEv=id; return; } return toast(T("That event has ended or isn't listed anymore."),'orange'); }
+  map?.closePopup(); track('event_open'); V2S.evOpen=id;
+  renderEventSheet(e); $('#evBg').hidden=false; $('#evSheet').scrollTop=0; loadEvChat(id);
+}
+function renderEventSheet(e){
+  const mine=myRsvp(e.id), go=goingList(e), fr=go.filter(isFriend), others=go.filter(h=>!isFriend(h));
+  const inter=Object.entries(SV.rsvps[e.id]||{}).filter(([h,st])=>st==='interested'&&h!==S.me.h).length;
+  const link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null, now=Date.now(), on=e.ts-36e5<now&&now<e.te+36e5;
+  const hero=/^https:\/\//.test(e.image||'')?`style="background-image:url('${esc(e.image)}')"`:(e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):'');
+  const desc=(e.description||'').trim(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
+  const saved=isSaved('event',e.id), soon=e.ts>now?Math.round((e.ts-now)/6e4):null;
+  $('#evSheet').innerHTML=`<div class="evhero thumb" ${hero}><span>${CATS[e.cat].e}</span><button class="btn sm evx" data-v2close="evBg" aria-label="${T('Close')}">✕</button></div>
+    <div class="kicker" style="margin-top:12px">${CATS[e.cat].e} ${esc(CATS[e.cat].l)}${on?` · <span class="pst open">${T('On now')}</span>`:soon!=null&&soon<180?` · ${T('starts in {n}',{n:soon<60?soon+' min':Math.round(soon/60)+' h'})}`:''}</div>
+    <h2 class="evtitle">${esc(e.title)}</h2>
+    <div class="meta">🗓 ${fmtWhen(e.ts,e.tba)}${e.price?` · ${esc(e.price)}`:''}</div>
+    ${e.venue?`<div class="meta">📍 ${esc(e.venue)}${e.city?', '+esc(e.city):''}${e.geo_precise?'':` · ${T('approximate location')}`}</div>`:''}
+    <div class="evact">
+      <button class="btn ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?T('✓ Going'):T("I'm going")}</button>
+      <button class="btn ${mine==='interested'?'blue':''}" data-rsvp="${e.id}" data-st="interested">${mine==='interested'?'★':'☆'} ${T('Interested')}</button>
+      <button class="btn ${saved?'blue':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}">🔖 ${saved?T('Saved'):T('Save')}</button>
+      <button class="btn" data-evinvite="${e.id}">💌 ${T('Invite')}</button>
+      <button class="btn" data-evshare="${e.id}">🔗 ${T('Share')}</button>
+    </div>
+    <div class="btns" style="margin-top:8px">
+      ${on&&e.geo_precise?`<button class="btn sm primary" data-checkin2="event|${e.id}">📍 ${T('Check in')}</button>`:''}
+      <button class="btn sm" data-cal="${e.id}">📅 ${T('Calendar')}</button>
+      ${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">${T('Directions')} ↗</a>`:''}
+      ${e.lat?`<button class="btn sm" data-evmap="${e.id}">🗺 ${T('Map')}</button>`:''}
+      ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 ${T('Eat after')}</button>`:''}
+      ${link?`<a class="btn sm" href="${esc(link)}" target="_blank" rel="noopener">${T('Tickets & info')} ↗</a>`:''}
+    </div>
+    ${desc?`<p class="evdesc" id="evDesc">${esc(short)}${short!==desc?` <button class="linkbtn" data-evmore="${e.id}">${T('More')}</button>`:''}</p>`:''}
+    <label class="lbl">${T("Who's going")}</label>
+    ${go.length||inter?`<div class="evwho">
+      ${fr.length?`<div class="row" style="gap:6px;flex-wrap:wrap">${fr.slice(0,8).map(h=>`<button class="evperson" data-profile="${esc(h)}">${av(h,'sm')}<span>@${esc(h)}</span></button>`).join('')}</div>
+        <div class="meta" style="margin:4px 0 8px">${T('{n} friends going',{n:fr.length})}</div>`:''}
+      ${others.length?`<div class="downs">${others.slice(0,10).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:8px">${fr.length?T('+{n} more',{n:others.length}):T('{n} going',{n:others.length})}</span></div>`:''}
+      ${inter?`<div class="meta" style="margin-top:6px">☆ ${T('{n} interested',{n:inter})}</div>`:''}</div>`
+      :`<p class="meta">${T('Be the first. Tap "I\'m going" and your friends will see it.')}</p>`}
+    <div id="evph_${e.id}"></div>
+    <label class="lbl">💬 ${T('Talk about it')}</label>
+    <div id="evChat" class="evchat"><p class="meta">${AUTHED?T('Loading…'):T('Make a free account to see who\'s talking and join in.')}</p></div>
+    ${AUTHED?`<form class="row" id="evChatForm" style="gap:6px;margin-top:8px"><input id="evChatIn" maxlength="400" placeholder="${T('Ask who\'s going early, share a tip…')}" autocomplete="off" style="flex:1">
+      <button class="btn primary" type="submit">${T('Send')}</button></form>`:`<button class="btn sm" data-v2join style="margin-top:6px">${T('Create a free account')}</button>`}`;
+  eventPhotos(e);
+}
+async function loadEvChat(id){
+  clearInterval(V2S.chatT);
+  if(!AUTHED||!SV.on) return;
+  const draw=j=>{ const el=$('#evChat'); if(!el||V2S.evOpen!==id) return;
+    el.innerHTML=j.msgs.length?j.msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join('')
+      :`<p class="meta">${T('No one has said anything yet. Start it off!')}</p>`; };
+  const get=()=>api('/api/event/chat',{id}).then(draw).catch(()=>{});
+  await get(); V2S.chatT=setInterval(()=>{ if($('#evBg').hidden||V2S.evOpen!==id) return clearInterval(V2S.chatT); get(); },15000);
+}
+async function sendEvChat(){
+  const i=$('#evChatIn'), id=V2S.evOpen, t=i?.value.trim(); if(!t||!id) return;
+  i.disabled=true;
+  try{ const j=await api('/api/event/chat',{id, text:t, title:EV.byId[id]?.title||''}); i.value='';
+    const el=$('#evChat'); if(el) el.innerHTML=j.msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join(''); }
+  catch(e){ toast(esc(e.message),'orange'); }
+  i.disabled=false; i.focus();
+}
+function openInvite(id){
+  if(needAccount('invite friends')) return;
+  const e=EV.byId[id]; if(!e) return; const fr=(SV.friends?.list||[]);
+  $('#notifSheet').innerHTML=v2head(`💌 ${T('Invite friends')}`,'notifBg')+`<p class="meta" style="margin:6px 0 10px">${esc(e.title)} · ${fmtWhen(e.ts,e.tba)}</p>`+
+    (fr.length?`<div id="invList">${fr.map(h=>`<label class="invrow">${av(h,'sm')}<span class="grow">@${esc(h)}${goingList(e).includes(h)?` <span class="meta">· ${T('going')}</span>`:''}</span><input type="checkbox" value="${esc(h)}"></label>`).join('')}</div>
+      <button class="btn primary" data-invsend="${e.id}" style="width:100%;margin-top:12px">${T('Send invites')}</button>`
+      :`<p class="meta">${T('Add friends on Meet first, or share the link with anyone:')}</p>`)+
+    `<button class="btn" data-evshare="${e.id}" style="width:100%;margin-top:8px">🔗 ${T('Share a link instead')}</button>`;
+  $('#notifBg').hidden=false;
+}
+async function sendInvites(id){
+  const to=[...document.querySelectorAll('#invList input:checked')].map(x=>x.value); if(!to.length) return toast(T('Pick at least one friend.'),'orange');
+  try{ const j=await api('/api/event/invite',{id, title:EV.byId[id]?.title||'', to}); $('#notifBg').hidden=true;
+    toast(`💌 ${T('Invited {n}. They got a message with the link.',{n:j.sent})}`,'green',[],3500); }catch(e){ toast(esc(e.message),'orange'); }
+}
+
+/* ---- 🔖 saved ---- */
+const isSaved = (k,id) => (SV.v2?.saves||[]).includes(k+':'+id);
+async function toggleSave(k, id, name){
+  if(needAccount('save things for later')) return;
+  const on=isSaved(k,id);
+  try{ const j=await api('/api/saves',{action:on?'remove':'add', k, id, name}); V2S.saves=j.saves; SV.v2={...(SV.v2||{}), saves:j.saves.map(x=>x.k+':'+x.id)}; }
+  catch(e){ return toast(esc(e.message),'orange'); }
+  toast(on?T('Removed from Saved'):`🔖 ${T('Saved. Find it in My plans.')}`,on?'':'green',on?[]:[{l:T('My plans'),cls:'blue',f:openPlans}],2800);
+  if(V2S.evOpen&&!$('#evBg').hidden&&EV.byId[V2S.evOpen]) renderEventSheet(EV.byId[V2S.evOpen]);
+  if(!$('#plansBg').hidden) fillSaved();
+}
+async function fillSaved(){
+  const el=$('#savedList'); if(!el) return;
+  if(!AUTHED){ el.innerHTML=`<p class="meta">${T('Make a free account to save events, places and sights.')}</p>`; return; }
+  try{ V2S.saves=(await api('/api/saves',{})).saves; }catch(e){ el.innerHTML=`<p class="meta">${esc(e.message)}</p>`; return; }
+  const E={event:'🎟️', place:'🍽️', sight:'🏛️'};
+  el.innerHTML=V2S.saves.length?V2S.saves.map(x=>{ const ev=x.k==='event'&&EV.byId[x.id], gone=x.k==='event'&&!ev;
+    return `<div class="prow"><span class="cat thumb" style="width:40px;height:40px;font-size:17px">${E[x.k]}</span><div class="grow">
+      <button class="linkbtn" style="color:var(--text);font-weight:700;text-align:left" data-savedgo="${x.k}|${esc(x.id)}">${esc(x.name||x.id)}</button>
+      <div class="meta">${ev?fmtWhen(ev.ts,ev.tba):gone?T('Ended'):x.k==='sight'?T('Sight'):T('Place')}</div></div>
+      <button class="btn sm" data-v2save="${x.k}|${esc(x.id)}|${esc(x.name||'')}" aria-label="${T('Remove')}">✕</button></div>`; }).join('')
+    :`<p class="meta">${T('Tap 🔖 Save on an event, place or sight to keep it here.')}</p>`;
+}
+function savedGo(k,id){
+  $('#plansBg').hidden=true;
+  if(k==='event') return openEvent(id);
+  if(k==='sight') return focusSight(id);
+  if(k==='place') return focusPlace(id);
+}
+
+/* ---- 🏆 quests & check-ins ---- */
+const QUEST_GO = {history:['🪧 '+'Show markers',()=>questMap({landmarks:1,markers:1})], culture:['🖼️ Museums & art',()=>questMap({landmarks:1,art:1})],
+  tacos:['🌮 Taco spots',()=>openPlaces({cat:'tacos'})], outdoors:['🌲 Parks & trails',()=>questMap({parks:1,water:1,trails:1})],
+  shows:['🎸 Events tonight',()=>{ tab('feed'); }], nightowl:['🌙 Late-night eats',()=>openPlaces({cat:'late'})],
+  explorer:['🔥 Hot spots',()=>questMap({zones:1})], squad:['👋 Meet people',()=>tab('meet')], flare:['🔥 Post a flare',()=>openCompose()],
+  story:['📸 Share a story',()=>tab('home')], recruiter:['💌 Invite link',()=>inviteLink()], regular:['📍 Check in this week',()=>questMap({landmarks:1,markers:1,parks:1})]};
+function questMap(on){ $('#questBg').hidden=true; tab('map'); Object.keys(on).forEach(k=>S.mapL[k]=true); refreshMapLayers(); setTimeout(()=>map?.setView(ME_POS,15),150); }
+async function openQuests(){
+  if(needAccount('play quests')) return; track('quests_open');
+  $('#questSheet').innerHTML=v2head(`🏆 ${T('Quests')}`,'questBg')+`<p class="meta">${T('Loading…')}</p>`; $('#questBg').hidden=false;
+  try{ const r=await fetch('/api/quests',{credentials:'same-origin'}); V2S.quests=await r.json(); if(V2S.quests.error) throw new Error(V2S.quests.error); }
+  catch(e){ $('#questSheet').innerHTML=v2head(`🏆 ${T('Quests')}`,'questBg')+`<p class="meta">${esc(e.message)}</p>`; return; }
+  renderQuests();
+}
+function renderQuests(){
+  const q=V2S.quests, pct=Math.min(100,Math.round((q.xp-q.this_at)*100/Math.max(1,q.next_at-q.this_at)));
+  const done=q.quests.filter(x=>x.done).length;
+  $('#questSheet').innerHTML=v2head(`🏆 ${T('Quests')}`,'questBg')+`
+    <div class="lvlcard"><div class="lvl"><small>${T('LEVEL')}</small><b>${q.level}</b></div><div class="grow">
+      <div class="row"><b class="grow">${q.xp} XP</b><span class="meta">${T('{n} to level {l}',{n:q.next_at-q.xp,l:q.level+1})}</span></div>
+      <div class="bar xp"><b style="width:${pct}%"></b></div>
+      <div class="meta" style="margin-top:6px">🔥 ${T('{n}-week streak',{n:q.streak||0})} · 📍 ${T('{n} check-ins',{n:q.checkins})} · 🏆 ${done}/${q.quests.length}</div></div></div>
+    <p class="meta" style="margin:10px 2px">${T("Get out, check in, level up. Tap 📍 Check in on a sight, place, park or event when you're there: your phone checks you're close, and Side Quest only learns the place, never your exact location.")}</p>
+    <div class="qgrid">${q.quests.map(x=>{ const go=QUEST_GO[x.id];
+      return `<div class="qcard ${x.done?'done':''}"><div class="row"><span class="qe">${x.e}</span><div class="grow"><b>${esc(T(x.name))}</b><div class="meta">${esc(T(x.desc))}</div></div><span class="qxp">+${x.xp}</span></div>
+        <div class="bar"><b style="width:${Math.round(x.have*100/x.goal)}%"></b></div>
+        <div class="row" style="margin-top:6px"><span class="meta grow">${x.done?`✓ ${T('Done')}`:`${x.have}/${x.goal}`}</span>${!x.done&&go?`<button class="btn sm" data-questgo="${x.id}">${esc(T(go[0]))}</button>`:''}</div></div>`; }).join('')}</div>
+    ${q.recent.length?`<label class="lbl">${T('Recent check-ins')}</label>${q.recent.map(c=>`<div class="log"><span>📍 ${esc(c.name)}</span><span class="meta" style="margin-left:auto">${agoT(c.at)}</span></div>`).join('')}`:''}
+    <label class="lbl">${T('Friends leaderboard')}</label>
+    ${q.board.length>1?q.board.map((r,i)=>`<div class="lbrow ${r.h===S.me.h?'me':''}"><b class="rank">${i+1}</b>${av(r.h,'sm')}<span class="grow">@${esc(r.h)} <span class="meta">· ${T('Lv {n}',{n:r.level})}</span></span><b>${r.xp} XP</b></div>`).join('')
+      :`<p class="meta">${T('Add friends to compete. Your invite link:')} <button class="linkbtn" data-invitelink>${T('copy it')}</button></p>`}
+    <div class="row" style="margin-top:10px"><span class="grow meta">${T("Show me on friends' leaderboards")}</span><button class="toggle ${q.hidden?'':'on'}" data-lbtoggle aria-label="leaderboard"></button></div>`;
+}
+async function checkInAt(k, id, lat, lng){
+  if(needAccount('check in and earn XP')) return;
+  if(!(ME_ACC>0)){ startLocating(true); return toast(`📍 ${T("Turn on location (the Online switch at the top) so your phone can tell you're there, then tap Check in again.")}`,'orange',[],5000); }
+  const m=km(ME_POS,[lat,lng])*1000, max=150+Math.min(ME_ACC,100);
+  if(m>max) return toast(`📍 ${T("You're about {d} away. Get within 150 m to check in.",{d:m>=1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m'})}`,'orange',[],4000);
+  try{ const j=await api('/api/checkin',{k,id});
+    if(j.again) return toast(`✓ ${T('Already checked in here today.')}`,'',[],2500);
+    if(SV.v2){ SV.v2.xp=j.xp; SV.v2.level=j.level; } renderQuick();
+    toast(`📍 <b>${esc(j.name)}</b> · +${j.xp_gain} XP${j.completed.length?`<br>🏆 ${T('Quest complete')}: ${j.completed.map(q=>esc(q.e+' '+T(q.name))).join(', ')}`:''}`,'green',[{l:T('Quests'),cls:'blue',f:openQuests}],5000);
+    if(j.completed.length) scoutBeep?.();
+  }catch(e){ toast(esc(e.message),'orange'); }
+}
+const checkBtn = (k,id,lat,lng) => `<button class="btn sm" data-checkin2="${k}|${esc(id)}|${lat}|${lng}">📍 ${T('Check in')}</button>`;
+
+/* ---- 💌 invites & deep links ---- */
+function inviteLink(){
+  if(needAccount('invite friends')) return;
+  track('invite_copy'); shareLink(`${location.origin}/i/${S.me.h}`,'Side Quest',T("I'm on Side Quest: Austin events, friends and quests. Join me!"));
+}
+function handleDeepLink(){
+  const q=new URLSearchParams(location.search); if(![...q.keys()].length) return;
+  const ev=q.get('ev'), sg=q.get('sight'), ref=q.get('ref');
+  if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
+  if(ev) openEvent(ev.startsWith('e:')?ev:'e:'+ev);
+  if(sg) setTimeout(()=>{ loadSights(); const t=setInterval(()=>{ if(SG.data){ clearInterval(t); focusSight(sg); } },200); setTimeout(()=>clearInterval(t),8000); },300);
+  try{ history.replaceState(history.state,'',location.pathname); }catch(e){}
+}
+
+/* ---- Home: up next + tonight near you ---- */
+function renderTonight(){
+  const el=$('#homeTonight'); if(!el) return;
+  const now=Date.now(), end=new Date().setHours(28,0,0,0), aff=affinity();   // "tonight" runs to 4 AM
+  const evs=EV.list.filter(e=>e.te>now&&e.ts<end&&!e.tba&&e.lat).map(e=>({e, s:(aff[e.cat]||0)*2+goingList(e).filter(isFriend).length*3+(e.geo_precise?1:0)-km(ME_POS,[e.lat,e.lng])/4}))
+    .sort((a,b)=>b.s-a.s).slice(0,12).map(x=>x.e);
+  el.hidden=!evs.length;
+  el.innerHTML=evs.length?`<div class="tnhead"><b>${T('Tonight near you')}</b><button class="linkbtn" data-tab="feed">${T('See all')} ›</button></div>
+    <div class="tnrail">${evs.map(e=>{ const fr=goingList(e).filter(isFriend).length;
+      return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(e.image)}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span>
+        <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'';
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare]');
+  if(!t) return; const d=t.dataset;
+  if(d.evopen!==undefined){ const inner=e.target.closest('button,a'); if(inner&&inner!==t) return; return openEvent(d.evopen); }
+  if(d.v2close){ $('#'+d.v2close).hidden=true; if(d.v2close==='evBg'){ V2S.evOpen=null; clearInterval(V2S.chatT); } return; }
+  if(d.bell!==undefined) return openNotifs();
+  if(d.notifi!==undefined){ const n=V2S.notifs?.[+d.notifi]; if(n) notifGo(n); return; }
+  if(d.pushtoggle!==undefined) return togglePush();
+  if(d.evinvite) return openInvite(d.evinvite);
+  if(d.evshare){ const ev=EV.byId[d.evshare]; if(ev){ track('event_share'); shareLink(`${location.origin}/e/${ev.uid}`, ev.title, `${ev.title} · ${fmtWhen(ev.ts,ev.tba)}${ev.venue?' · '+ev.venue:''}`); } return; }
+  if(d.evmore){ const ev=EV.byId[d.evmore], el=$('#evDesc'); if(ev&&el) el.textContent=ev.description; return; }
+  if(d.evmap){ $('#evBg').hidden=true; return focusOnMap(d.evmap); }
+  if(d.v2save){ const [k,id,...nm]=d.v2save.split('|'); return toggleSave(k,id,nm.join('|')); }
+  if(d.checkin2){ const [k,id,lat,lng]=d.checkin2.split('|'); if(k==='event'){ const ev=EV.byId[id]; return ev&&checkInAt('event',id,ev.lat,ev.lng); } return checkInAt(k,id,+lat,+lng); }
+  if(d.invsend) return sendInvites(d.invsend);
+  if(d.savedgo){ const [k,...id]=d.savedgo.split('|'); return savedGo(k,id.join('|')); }
+  if(d.questgo){ const g=QUEST_GO[d.questgo]; if(g){ $('#questBg').hidden=true; g[1](); } return; }
+  if(d.lbtoggle!==undefined){ const hid=!V2S.quests.hidden; api('/api/quests/board',{hidden:hid}).then(()=>{ V2S.quests.hidden=hid; openQuests(); }).catch(x=>toast(esc(x.message),'orange')); return; }
+  if(d.invitelink!==undefined) return inviteLink();
+  if(d.sgshare){ const sg=SG.full[d.sgshare]; if(sg) shareLink(`${location.origin}/s/${encodeURIComponent(sg.id)}`, sg.name, `${sg.name} · Side Quest`); return; }
+  if(d.v2join!==undefined){ $('#evBg').hidden=true; return needAccount('join the conversation'); }
+});
+document.addEventListener('submit',e=>{ if(e.target.id==='evChatForm'){ e.preventDefault(); sendEvChat(); } });
+
 $('#betaTag').hidden=!CFG.beta;
 renderAll(); tab('home'); if(S.online) startLocating(false);
 addEventListener('resize',()=>{ goMap?.invalidateSize(); centerGoMap(); renderHome(); scoutDock(); });
@@ -4676,7 +5013,7 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
   if(AUTHED) syncProfile();
   else if(!S.welcomed){ ONB.step='welcome'; ONB.i=[...S.me.i]; renderOnb(); }
   renderHeader();
-  renderAll(); loadEvents();
+  renderAll(); loadEvents(); handleDeepLink(); renderBell(); track('open');
   if(SV.on){ notifyTags(); await loadThreads(); renderHome();
     setInterval(async()=>{ await loadState(); await loadThreads(); renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!(DM.open&&document.activeElement?.id==='dmIn')) renderMeet(); }, 15000);
     setInterval(()=>{ if(DM.open&&!$('#v-meet').hidden&&!isDemoUser(DM.open)) fetch('/api/dm?with='+encodeURIComponent(DM.open),{credentials:'same-origin'}).then(r=>r.json())
