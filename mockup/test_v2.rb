@@ -177,5 +177,53 @@ t('deleting an account removes its notifications, quests and saves') {
         (d['notifs'] || {}).values.flatten.none? { |n| n['from'] == 'amy_v2' }, d.slice('quest', 'saves').keys)
 }
 
+# ---- live safety on the server: a second copy with screening ON and Claude unreachable (hard rules decide)
+dir2 = Dir.mktmpdir('sq-v2-live')
+FileUtils.cp(Dir[File.join(__dir__, '*.{rb,md,json,html}')], dir2)
+pid2 = spawn({ 'PORT' => '8800', 'SQ_MODERATE' => '1', 'SQ_DEMO' => '0', 'SQ_ENGINE' => 'api', 'ANTHROPIC_API_KEY' => 'x', 'SQ_USE_API_KEY' => '1',
+               'SQ_API_URL' => 'http://127.0.0.1:9/v1/messages', 'SQ_PLACES_FILE' => 'test_places.json', 'SQ_SIGHTS_FILE' => 'test_sights.json',
+               'SQ_EVENTS_API' => "http://127.0.0.1:#{EV_PORT}", 'SQ_LIVEKIT_URL' => nil },
+             'ruby', 'server.rb', chdir: dir2, out: File.join(dir2, 'log'), err: File.join(dir2, 'log'))
+at_exit { Process.kill('TERM', pid2) rescue nil; FileUtils.rm_rf(dir2) }
+Object.send(:remove_const, :BASE); BASE = 'http://127.0.0.1:8800'
+40.times { break if (Net::HTTP.get_response(URI("#{BASE}/api/health")) rescue nil); sleep 0.25 }
+sv, vw = Who.new('streamer_v2'), Who.new('viewer_v2'); sv.signup; vw.signup
+req = ->(text, pass = nil) { vw.post('/api/relay', t: 'req', to: 'tabX', id: 'Lstream', from: 'tabV', r: { id: 'q1', kind: 'task', text: text, pass: pass }.compact) }
+t('live requests: the hard rules apply on the server too') {
+  c, j = req.('go to her house and follow her')
+  check(c == 403 && j['error'] =~ /risk/, [c, j])
+}
+t('live requests: no screening pass, no delivery (the browser can\'t skip the check)') {
+  c, j = req.('do a cartwheel')
+  check(c == 403 && j['error'] =~ /checked for safety/, [c, j])
+}
+t('live requests: /api/screen signs a pass for that exact text; changed words need a new one') {
+  _, sc = vw.post('/api/screen', text: 'do a cartwheel', kind: 'task', streamer: 'streamer_v2')
+  c1, = req.('do a cartwheel', sc['pass'])
+  c2, = req.('do a cartwheel then go to her house', sc['pass'])
+  _, other = sv.post('/api/screen', text: 'do a cartwheel', kind: 'task')
+  c3, = req.('do a cartwheel', other['pass'])   # someone else's pass
+  check(sc['verdict'] == 'allow' && sc['pass'] && c1 == 200 && c2 == 403 && c3 == 403, [sc, c1, c2, c3])
+}
+t('live: a stream title shows only after it has been checked; accepted visit requests hide the place during the delay') {
+  stream = { id: 'Lsv1', u: 'x', title: 'Rainey crawl', v: 'v1', delay: 5, reqs: [{ id: 'q', kind: 'visit', place: 'v9', text: 'go to v9', status: 'accepted' },
+                                                                                  { id: 'q2', kind: 'visit', place: 'v8', text: 'maybe v8', status: 'pending' }] }
+  sv.post('/api/relay', t: 'stream', s: stream, from: 'tabS')
+  _, j = vw.get('/api/relay?tab=tabW&since=0')
+  s1 = j['msgs'].map { |m| m['s'] }.compact.last
+  sleep 1.5   # (Claude is unreachable here, so the check passes on the local rules)
+  sv.post('/api/relay', t: 'stream', s: stream, from: 'tabS')
+  _, j2 = vw.get('/api/relay?tab=tabW&since=0')
+  s2 = j2['msgs'].map { |m| m['s'] }.compact.last
+  check(s1['title'] == 'Live' && s2['title'] == 'Rainey crawl' && s2['reqs'][0]['place'].nil? && s2['reqs'][0]['placeHidden'] &&
+        s2['reqs'][1]['place'] == 'v8', [s1['title'], s2['title'], s2['reqs']])
+}
+t('live: a title with a phone number never shows') {
+  sv.post('/api/relay', t: 'stream', s: { id: 'Lsv1', title: 'text me 512-555-0100', v: 'v1', delay: 0 }, from: 'tabS'); sleep 1.2
+  sv.post('/api/relay', t: 'stream', s: { id: 'Lsv1', title: 'text me 512-555-0100', v: 'v1', delay: 0 }, from: 'tabS')
+  _, j = vw.get('/api/relay?tab=tabW&since=0')
+  check(j['msgs'].map { |m| m['s'] }.compact.last['title'] == 'Live')
+}
+
 puts "\n#{$pass}/#{$pass + $fail} passed"
 exit($fail.zero? ? 0 : 1)

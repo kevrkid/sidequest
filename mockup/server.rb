@@ -830,6 +830,7 @@ def live_announce(s, h)
   s['u'] = h
   s['room'] = "live-#{h}" if s['room']
   s['delay'] = s['delay'].to_i.clamp(0, 60)
+  live_sanitize!(s)   # V2: checked title, no destination reveal during the delay
   LIVE[:lock].synchronize do
     s['startedAt'] = (LIVE[:started][id] ||= t)
     LIVE[:by_h][h] = { 'h' => h, 'id' => id, 'title' => s['title'].to_s[0, 70], 'seen' => t, 'started' => s['startedAt'],
@@ -1883,18 +1884,34 @@ def mount_routes(server)
     [out, ms]
   end
 
-  claude_route(server, '/api/screen', 60) do |b|
+  # Live requests: hard rules, then Claude. An "allow" comes with a pass the relay checks (V2), so a request can't
+  # skip this by talking to the relay directly. Claude unreachable = the hard rules decide, as before.
+  route(server, '/api/screen') do |b, h|
+    limit!("claude:/api/screen:#{h}", 60, 3600)
     text = b['text'].to_s.strip[0, 240]
     raise 'empty request' if text.empty?
     t = Time.now
-    out, ms = run_claude(<<~P, SCREEN_SCHEMA, system: SCREEN_SYSTEM, model: SCREEN_MODEL)
-      Streamer @#{b['streamer'].to_s[0, 40]} is live at #{b['where'].to_s[0, 80]} in Austin, TX.
-      Request type: #{b['kind'] == 'visit' ? "visit a place (#{b['place'].to_s[0, 80]})" : 'do a task'}.
-      Request text: #{JSON.generate(text)}
-      Give a `verdict` and a `reason` of one short, friendly sentence the viewer will see.
-    P
+    out = if text =~ LIVE_HARD_NO
+            { 'verdict' => 'block', 'reason' => 'Could put someone at risk or send the streamer somewhere private.' }
+          elsif !MODERATE
+            { 'verdict' => 'allow', 'reason' => 'Passed the built-in safety rules.' }
+          else
+            begin
+              o, = run_claude(<<~P, SCREEN_SCHEMA, system: SCREEN_SYSTEM, model: SCREEN_MODEL)
+                Streamer @#{b['streamer'].to_s[0, 40]} is live at #{b['where'].to_s[0, 80]} in Austin, TX.
+                Request type: #{b['kind'] == 'visit' ? "visit a place (#{b['place'].to_s[0, 80]})" : 'do a task'}.
+                Request text: #{JSON.generate(text)}
+                Give a `verdict` and a `reason` of one short, friendly sentence the viewer will see.
+              P
+              o
+            rescue => e
+              warn "[screen] Claude unreachable (#{e.message[0, 80]}); hard rules only"
+              { 'verdict' => 'allow', 'reason' => 'Passed the built-in safety rules (the safety check is offline).' }
+            end
+          end
     warn "[screen] #{out['verdict']} in #{(Time.now - t).round(1)}s: #{text[0, 60]}"
-    [out, ms]
+    out['pass'] = screen_pass(h, text) if out['verdict'] == 'allow'
+    out.merge('ms' => ((Time.now - t) * 1000).round, 'model' => SCREEN_MODEL)
   end
 
   claude_route(server, '/api/match', 10) do |ctx|
@@ -2038,6 +2055,10 @@ def mount_routes(server)
       m.delete('killed')   # only the server says a moderator ended a stream
       # Nothing goes out from someone a moderator just stopped; 410 tells their app to end the stream.
       next (res.status = 410; res.body = '{"error":"A moderator ended your stream."}') if store(write: false) { |d| live_killed?(d, h) }
+      if m['t'] == 'req' && (why = live_request_problem(h, m['r']))   # V2: screened on the server, not just the phone
+        next (res.status = 403; res.body = JSON.generate(error: why))
+      end
+      m['r'].delete('pass') if m['t'] == 'req'
       if %w[stream end].include?(m['t'])   # a stream can only be announced or ended by its owner
         id = m['t'] == 'stream' ? m.dig('s', 'id') : m['id']
         owner = live_owner(id.to_s[0, 40])

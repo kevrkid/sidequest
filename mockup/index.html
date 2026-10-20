@@ -3779,7 +3779,7 @@ async function flipCamera(){
 const HARD_NO = /\b(their|his|her|someone'?s) (home|house|apartment|car)\b|\b(where (he|she|they) lives?|address|follow (him|her|them|that|this)|stalk|dox|trespass|break in|fight|punch|steal|chug|naked|nude|jump off|rooftop|highway|weapon|gun|knife)\b/i;
 async function screen(r, s){
   if(HARD_NO.test(r.text)) return {verdict:'block', reason:'Could put someone at risk or send the streamer somewhere private.'};
-  if(!ENGINE) return {verdict:'allow', reason:'Passed the built-in safety rules (engine offline).'};
+  if(!SV.on) return {verdict:'allow', reason:'Passed the built-in safety rules (offline).'};   // the server screens (and signs a pass) whenever it's there
   try{ const res=await fetch('/api/screen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       streamer:s.u, where:venue(s.v)?.name, kind:r.kind, place:r.place&&venue(r.place)?.name, text:r.text})});
     const j=await res.json(); if(j.error) throw new Error(j.error); return j;
@@ -3822,7 +3822,7 @@ async function sendRequest(){
   if(v.verdict==='block') return toast(`🛡️ <b>Not sent.</b> ${esc(v.reason)}`,'orange',[],7000);
   if(v.verdict==='revise') return toast(`🛡️ <b>Almost.</b> ${esc(v.reason)}${v.suggestion?`<br><span class="meta">Try: “${esc(v.suggestion)}”</span>`:''}`,'orange',
     v.suggestion?[{l:'Use that',cls:'blue',f:()=>{ const i=$('#rText'); if(i) i.value=v.suggestion; }}]:[],9000);
-  r.why=v.reason; S.coins-=tip; save();
+  r.why=v.reason; if(v.pass) r.pass=v.pass; S.coins-=tip; save();
   if($('#rText')) $('#rText').value=''; if($('#coinBadge')) $('#coinBadge').textContent='🪙 '+S.coins;
   s.reqs.push(r); renderQueue(); logAct('request',{k:'live',v:r.place});
   toast(`📨 Sent to <b>${esc(s.u)}</b>${tip?` with a 🪙${tip} tip, held until they do it`:''}`,'green',[],3500);
@@ -3887,7 +3887,7 @@ function renderQueue(){
   const el=$('#reqList'); if(!el) return; const studio=LIVE.mode==='studio', s=studio?LIVE.my:streamById(LIVE.watch); if(!s) return;
   const rs=s.reqs.filter(r=>studio||r.status!=='blocked').sort((a,b)=>reqRank(a)-reqRank(b));
   el.innerHTML = rs.map(r=>`<div class="card req ${r.status}">
-    <div class="row">${av(r.by,'sm')}<div class="grow"><b>${r.kind==='visit'?'📍 Visit '+esc(venue(r.place)?.name||'a place'):'🎯 Task'}</b>
+    <div class="row">${av(r.by,'sm')}<div class="grow"><b>${r.kind==='visit'?'📍 Visit '+(r.placeHidden?'a place (shown after the location delay)':esc(venue(r.place)?.name||'a place')):'🎯 Task'}</b>
       <div class="meta">${esc(r.by)}${r.tip?` · 🪙 ${r.tip} tip`:''} · ${ST[r.status]}</div></div>
       ${!studio&&(r.status==='pending'||r.status==='accepted')?`<button class="btn sm ${r.votes.includes(meH())?'down-on':''}" data-vote="${r.id}">▲ ${r.votes.length}</button>`
         :r.votes.length?`<span class="badge">▲ ${r.votes.length}</span>`:''}</div>

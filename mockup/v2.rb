@@ -432,3 +432,67 @@ def mount_v2(server)
                           nil, known ? "/?ref=#{h}" : '/')
   end
 end
+
+# ---------------------------------------------------------------------------------------------
+# Live safety on the server (V1 screened viewer requests and stream titles only in the browser):
+# - a request reaches the streamer only with a pass from /api/screen (signed, 10 minutes, tied to the person and the
+#   exact words), and the hard rules are applied here too;
+# - a stream title shows only once it's been checked (until then viewers see "Live");
+# - an accepted "visit" request doesn't reveal where the streamer is heading while their location delay is on.
+LIVE_HARD_NO = /\b(their|his|her|someone'?s) (home|house|apartment|car)\b|\b(where (he|she|they) lives?|address|follow (him|her|them|that|this)|stalk|dox|trespass|break in|fight|punch|steal|chug|naked|nude|jump off|rooftop|highway|weapon|gun|knife)\b/i
+SCREEN_PASS_KEY = SecureRandom.bytes(32)
+
+def screen_mac(h, exp, text)
+  OpenSSL::HMAC.hexdigest('SHA256', SCREEN_PASS_KEY, "#{h}|#{exp}|#{Digest::SHA256.hexdigest(text.to_s.strip)}")
+end
+def screen_pass(h, text) exp = Time.now.to_i + 600; "#{exp}.#{screen_mac(h, exp, text)}" end
+def screen_pass_ok?(h, text, pass)
+  exp, mac = pass.to_s.split('.')
+  exp.to_i > Time.now.to_i && mac && secure_compare(screen_mac(h, exp.to_i, text), mac)
+end
+
+# nil when the request may go out, else why not
+def live_request_problem(h, r)
+  return 'bad request' unless r.is_a?(Hash)
+  text = r['text'].to_s
+  return 'Requests are 240 characters at most.' if text.strip.empty? || text.size > 240
+  return 'Not sent: it could put someone at risk or send the streamer somewhere private.' if text =~ LIVE_HARD_NO
+  return 'Requests are checked for safety first. Try sending it again.' if MODERATE && !screen_pass_ok?(h, text, r['pass'])
+  nil
+end
+
+LIVE_TITLES = { lock: Mutex.new, seen: {} }   # "h|title" => :ok / :no / :pending
+def live_title(h, title)
+  title = title.to_s[0, 70]
+  return title if title.strip.empty?
+  key = "#{h}|#{title}"
+  state = LIVE_TITLES[:lock].synchronize { LIVE_TITLES[:seen][key] }
+  unless state
+    local_ok = title !~ LIVE_HARD_NO && title !~ /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/ && title !~ /[\w.+-]+@[\w-]+\.[\w.]+/
+    state = !local_ok ? :no : MODERATE ? :pending : :ok
+    LIVE_TITLES[:lock].synchronize { LIVE_TITLES[:seen].shift while LIVE_TITLES[:seen].size > 2000; LIVE_TITLES[:seen][key] = state }
+    if state == :pending
+      Thread.new do
+        ok = begin
+          moderate(title)
+          true
+        rescue Forbidden
+          false
+        rescue StandardError
+          true   # unreachable = allowed, like posts
+        end
+        LIVE_TITLES[:lock].synchronize { LIVE_TITLES[:seen][key] = ok ? :ok : :no }
+      end
+    end
+  end
+  state == :ok ? title : 'Live'
+end
+
+def live_sanitize!(s)
+  s['title'] = live_title(s['u'], s['title'])
+  return unless s['delay'].to_i > 0 && s['reqs'].is_a?(Array)
+  s['reqs'].each do |r|
+    next unless r.is_a?(Hash) && r['kind'] == 'visit' && %w[accepted done].include?(r['status'])
+    r['place'] = nil; r['placeHidden'] = true
+  end
+end
