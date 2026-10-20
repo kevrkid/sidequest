@@ -1,0 +1,464 @@
+{
+  "areas": [
+    {
+      "name": "Hyde Park",
+      "aka": [],
+      "lat": 30.30441,
+      "lng": -97.73045,
+      "r": 1.0
+    },
+    {
+      "name": "Mueller",
+      "aka": [],
+      "lat": 30.29652,
+      "lng": -97.7002,
+      "r": 1.0
+    },
+    {
+      "name": "Clarksville",
+      "aka": [],
+      "lat": 30.27768,
+      "lng": -97.75981,
+      "r": 1.0
+    },
+    {
+      "name": "Zilker",
+      "aka": [],
+      "lat": 30.25424,
+      "lng": -97.76958,
+      "r": 1.0
+    },
+    {
+      "name": "Travis Heights",
+      "aka": [],
+      "lat": 30.24447,
+      "lng": -97.744,
+      "r": 1.0
+    },
+    {
+      "name": "Holly",
+      "aka": [],
+      "lat": 30.255,
+      "lng": -97.71856,
+      "r": 1.3
+    },
+    {
+      "name": "Montopolis",
+      "aka": [],
+      "lat": 30.22495,
+      "lng": -97.70344,
+      "r": 1.0
+    },
+    {
+      "name": "Downtown Austin",
+      "aka": [
+        "downtown"
+      ],
+      "lat": 30.26805,
+      "lng": -97.74476,
+      "r": 1.0
+    },
+    {
+      "name": "West Campus",
+      "aka": [],
+      "lat": 30.29021,
+      "lng": -97.74738,
+      "r": 1.0
+    },
+    {
+      "name": "Tarrytown",
+      "aka": [],
+      "lat": 30.30312,
+      "lng": -97.77048,
+      "r": 1.0
+    },
+    {
+      "name": "Rosedale",
+      "aka": [],
+      "lat": 30.31339,
+      "lng": -97.7449,
+      "r": 1.0
+    },
+    {
+      "name": "Allandale",
+      "aka": [],
+      "lat": 30.33931,
+      "lng": -97.74697,
+      "r": 2.3
+    },
+    {
+      "name": "Crestview",
+      "aka": [],
+      "lat": 30.34583,
+      "lng": -97.72476,
+      "r": 1.0
+    },
+    {
+      "name": "Brentwood",
+      "aka": [],
+      "lat": 30.33126,
+      "lng": -97.73647,
+      "r": 2.1
+    },
+    {
+      "name": "Windsor Park",
+      "aka": [],
+      "lat": 30.31355,
+      "lng": -97.6911,
+      "r": 1.0
+    },
+    {
+      "name": "Cherrywood",
+      "aka": [],
+      "lat": 30.29197,
+      "lng": -97.71767,
+      "r": 1.0
+    },
+    {
+      "name": "Govalle",
+      "aka": [],
+      "lat": 30.25868,
+      "lng": -97.70122,
+      "r": 1.0
+    },
+    {
+      "name": "East Cesar Chavez",
+      "aka": [],
+      "lat": 30.2559,
+      "lng": -97.73171,
+      "r": 1.2
+    },
+    {
+      "name": "St. Elmo",
+      "aka": [
+        "st elmo",
+        "saint elmo"
+      ],
+      "lat": 30.21864,
+      "lng": -97.76694,
+      "r": 1.0
+    },
+    {
+      "name": "Barton Hills",
+      "aka": [],
+      "lat": 30.25337,
+      "lng": -97.78298,
+      "r": 1.2
+    },
+    {
+      "name": "Circle C",
+      "aka": [
+        "circle c ranch"
+      ],
+      "lat": 30.18747,
+      "lng": -97.89027,
+      "r": 1.2
+    },
+    {
+      "name": "Westlake",
+      "aka": [
+        "west lake hills",
+        "westlake hills"
+      ],
+      "lat": 30.2877,
+      "lng": -97.80682,
+      "r": 2.7
+    },
+    {
+      "name": "Rollingwood",
+      "aka": [],
+      "lat": 30.27424,
+      "lng": -97.78558,
+      "r": 1.0
+    },
+    {
+      "name": "Riverside",
+      "aka": [
+        "east riverside"
+      ],
+      "lat": 30.23315,
+      "lng": -97.72454,
+      "r": 1.0
+    },
+    {
+      "name": "Highland",
+      "aka": [],
+      "lat": 30.32504,
+      "lng": -97.71256,
+      "r": 0.6
+    },
+    {
+      "name": "Wells Branch",
+      "aka": [],
+      "lat": 30.44608,
+      "lng": -97.67717,
+      "r": 2.8
+    },
+    {
+      "name": "Anderson Mill",
+      "aka": [],
+      "lat": 30.45583,
+      "lng": -97.8071,
+      "r": 1.0
+    },
+    {
+      "name": "Jollyville",
+      "aka": [],
+      "lat": 30.44235,
+      "lng": -97.77512,
+      "r": 2.9
+    },
+    {
+      "name": "Arboretum",
+      "aka": [
+        "the arboretum"
+      ],
+      "lat": 30.39093,
+      "lng": -97.74988,
+      "r": 1.0
+    },
+    {
+      "name": "Cedar Park",
+      "aka": [],
+      "lat": 30.52171,
+      "lng": -97.82783,
+      "r": 8.0
+    },
+    {
+      "name": "Round Rock",
+      "aka": [],
+      "lat": 30.50859,
+      "lng": -97.67881,
+      "r": 8.0
+    },
+    {
+      "name": "Pflugerville",
+      "aka": [],
+      "lat": 30.43937,
+      "lng": -97.62,
+      "r": 8.0
+    },
+    {
+      "name": "Georgetown",
+      "aka": [],
+      "lat": 30.63702,
+      "lng": -97.67756,
+      "r": 8.0
+    },
+    {
+      "name": "Leander",
+      "aka": [],
+      "lat": 30.57361,
+      "lng": -97.85673,
+      "r": 8.0
+    },
+    {
+      "name": "Bee Cave",
+      "aka": [],
+      "lat": 30.30854,
+      "lng": -97.94501,
+      "r": 5.2
+    },
+    {
+      "name": "Lakeway",
+      "aka": [],
+      "lat": 30.36449,
+      "lng": -97.98753,
+      "r": 6.4
+    },
+    {
+      "name": "Dripping Springs",
+      "aka": [],
+      "lat": 30.19021,
+      "lng": -98.08668,
+      "r": 8.0
+    },
+    {
+      "name": "Buda",
+      "aka": [],
+      "lat": 30.08248,
+      "lng": -97.84171,
+      "r": 6.0
+    },
+    {
+      "name": "Kyle",
+      "aka": [],
+      "lat": 29.98928,
+      "lng": -97.87717,
+      "r": 8.0
+    },
+    {
+      "name": "San Marcos",
+      "aka": [],
+      "lat": 29.88264,
+      "lng": -97.94058,
+      "r": 8.0
+    },
+    {
+      "name": "Manor",
+      "aka": [],
+      "lat": 30.34209,
+      "lng": -97.55591,
+      "r": 6.7
+    },
+    {
+      "name": "Hutto",
+      "aka": [],
+      "lat": 30.54276,
+      "lng": -97.54689,
+      "r": 7.5
+    },
+    {
+      "name": "Sunset Valley",
+      "aka": [],
+      "lat": 30.2258,
+      "lng": -97.81497,
+      "r": 1.9
+    },
+    {
+      "name": "Lockhart",
+      "aka": [],
+      "lat": 29.88321,
+      "lng": -97.67363,
+      "r": 6.8
+    },
+    {
+      "name": "Wimberley",
+      "aka": [],
+      "lat": 29.99768,
+      "lng": -98.09879,
+      "r": 6.1
+    },
+    {
+      "name": "Bastrop",
+      "aka": [],
+      "lat": 30.05411,
+      "lng": -97.38878,
+      "r": 8.0
+    },
+    {
+      "name": "Lago Vista",
+      "aka": [],
+      "lat": 30.4602,
+      "lng": -97.98835,
+      "r": 7.2
+    },
+    {
+      "name": "Spicewood",
+      "aka": [],
+      "lat": 30.47592,
+      "lng": -98.15664,
+      "r": 2.9
+    },
+    {
+      "name": "Elgin",
+      "aka": [],
+      "lat": 30.34951,
+      "lng": -97.37112,
+      "r": 5.3
+    },
+    {
+      "name": "South Lamar",
+      "aka": [
+        "s lamar",
+        "south lamar blvd"
+      ],
+      "lat": 30.2515,
+      "lng": -97.765,
+      "r": 1.6
+    },
+    {
+      "name": "South First",
+      "aka": [
+        "s 1st",
+        "south 1st",
+        "s first"
+      ],
+      "lat": 30.247,
+      "lng": -97.756,
+      "r": 1.4
+    },
+    {
+      "name": "Burnet Road",
+      "aka": [
+        "burnet rd",
+        "burnet"
+      ],
+      "lat": 30.333,
+      "lng": -97.739,
+      "r": 2.0
+    },
+    {
+      "name": "East Sixth",
+      "aka": [
+        "e 6th",
+        "east 6th"
+      ],
+      "lat": 30.264,
+      "lng": -97.727,
+      "r": 0.9
+    },
+    {
+      "name": "Manor Road",
+      "aka": [
+        "manor rd"
+      ],
+      "lat": 30.285,
+      "lng": -97.715,
+      "r": 0.9
+    },
+    {
+      "name": "North Lamar",
+      "aka": [
+        "n lamar"
+      ],
+      "lat": 30.335,
+      "lng": -97.724,
+      "r": 2.0
+    },
+    {
+      "name": "The Drag",
+      "aka": [
+        "guadalupe",
+        "the drag"
+      ],
+      "lat": 30.288,
+      "lng": -97.742,
+      "r": 0.7
+    },
+    {
+      "name": "North Loop",
+      "aka": [],
+      "lat": 30.31788,
+      "lng": -97.71876,
+      "r": 1.0
+    },
+    {
+      "name": "Bouldin Creek",
+      "aka": [
+        "bouldin"
+      ],
+      "lat": 30.25567,
+      "lng": -97.75548,
+      "r": 1.2
+    },
+    {
+      "name": "Oak Hill",
+      "aka": [],
+      "lat": 30.23431,
+      "lng": -97.86877,
+      "r": 2.5
+    },
+    {
+      "name": "South Congress",
+      "aka": [
+        "s congress",
+        "south congress ave",
+        "soco"
+      ],
+      "lat": 30.25,
+      "lng": -97.7495,
+      "r": 1.2
+    }
+  ]
+}

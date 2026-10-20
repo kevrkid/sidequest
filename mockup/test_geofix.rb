@@ -1,5 +1,7 @@
-# Event spots (geofix.rb), popularity scores (popular.rb) and farmers markets, offline: ruby test_geofix.rb
+# Event spots (geofix.rb), popularity scores (popular.rb), farmers markets and Scout's areas, offline: ruby test_geofix.rb
 require_relative 'geofix'
+require_relative 'areas'
+require_relative 'places'
 require_relative 'popular'
 require_relative 'hours'
 
@@ -55,6 +57,19 @@ t('popularity scores load (0 when unranked)') {
 t('farmers markets: each has a weekly time and a spot in the Austin area') {
   f = File.join(__dir__, 'data', 'markets.json')
   !File.exist?(f) || JSON.parse(File.read(f))['markets'].all? { |m| Hours.parse(m['hours'])&.any? && Geofix.in_box?(m['lat'], m['lng']) }
+}
+t('Scout finds the neighborhood or town in a question, the longest name first') {
+  Areas.find("can you find a local business you'd recommend in Hyde Park")&.dig('name') == 'Hyde Park' &&
+    Areas.find('best coffee in East Cesar Chavez')&.dig('name') == 'East Cesar Chavez' &&
+    Areas.find('a good spot on South Congress')&.dig('name') == 'South Congress' &&
+    Areas.find('tacos near me').nil? && Areas.find('my friend is going home').nil?
+}
+t("an area's best-known places: all inside it, local ones ahead of national chains") {
+  a = Areas.find('Cedar Park')
+  list = Places.best_in(a['lat'], a['lng'], a['r'], limit: 15)
+  inside = list.all? { |p| Places.miles(a['lat'], a['lng'], p[:lat], p[:lng]) * 1.609 <= a['r'] }
+  first_chain = list.index { |p| p[:chain] == 'national' } || list.size
+  list.any? && inside && list.first(first_chain).size >= 3
 }
 puts "\n#{$pass}/#{$pass + $fail} passed"
 exit($fail.zero? ? 0 : 1)

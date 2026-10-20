@@ -25,6 +25,12 @@ at Lakeline showing downtown; farmers markets promoted on weekends, visible zoom
   shown to fail without the fix; run with `SQ_DEMO=0`, since demo mode pads the viewer count), `test_v2.rb` 30/30,
   new `test_geofix.rb` 9/9, `test_webpush.rb` 6/6, `test_live.rb` 14/14, `test_google.rb` 17/17, `test_api.rb` and
   `test_hours.rb` pass.
+- **Scout**: "recommend a local business in Hyde Park / on South Congress / in Cedar Park" now answers with that area's
+  best-known local places (60 neighborhoods, streets and towns, placed with OpenStreetMap). Before, it only looked
+  places up for food words or the 8 hot spots, so it had nothing to go on. Other kinds of shops aren't in the app's
+  data: Scout says so and suggests from memory, labelled as memory.
+- **Scout's voice**: V2 was started without the Google voice key, so Scout used the phone's voice. `start_v2.sh --voice`
+  turns on just the voice (30,000 characters a day cap, inside Google's free allowance).
 - Limits: popularity is free data, not Google ratings; markets are a hand-kept list (recheck each season); 28 events
   have no usable address ("My home", "Various Locations") and are not on the map.
 

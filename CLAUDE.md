@@ -256,6 +256,13 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Farmers markets** (`fetch_markets.rb` → `data/markets.json`, `/api/markets`): a hand-kept list checked against
   each market's listing (Oct 2026). Today's / this weekend's markets show from zoom 9 with big glowing 🧺 pins and
   their hours (`fmSoon`); otherwise ordinary pins from zoom 13. Layer key `markets` under Food.
+- **Scout and areas** (`areas.rb`, `data/areas.json` from `fetch_areas.rb`: 60 neighborhoods, main streets and nearby
+  towns with a centre and radius): "a local business in Hyde Park" now gets that area's best-known places
+  (`Places.best_in`: popularity first, national chains well behind, `known` score passed to Scout). Triggered by an area
+  name plus a business / recommend word (`BIZ_Q`), not only food words; a named hot spot still wins. Scout is told the
+  app only has food & drink, sights and parks, so for shops it says so and answers from memory, flagged as memory.
+- `start_v2.sh --voice`: only Scout's Google voice (capped by SQ_TTS_DAILY_CHARS, default 30,000 a day); no Places,
+  tiles or LiveKit. Without it Scout falls back to the phone's built-in voice.
 - Fixed a V1 bug carried into V2: `endLive` had its `bc({t:'end'})` behind a `//`, so viewers were never told a stream
   ended (V1 still has it). `e2e_live.py` needs `SQ_DEMO=0` (demo mode pads the viewer count).
 - **Static files**: ETag + 304 for repeat visits, gzip for text over 1 KB (`GZ_CACHE`; Caddy also compresses in production).

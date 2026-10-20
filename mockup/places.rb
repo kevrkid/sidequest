@@ -127,6 +127,19 @@ module Places
     rows.first(limit).map { |r| row(r[:p], r[:st], r[:mi]) }
   end
 
+  # The best-known spots in an area ("a good spot in Hyde Park"): inside radius km of the centre, most popular first
+  # (popular.json), local places ahead of national chains, open ones a little ahead. `known` is the 0-100 score.
+  def best_in(lat, lng, km, cat: nil, open_only: false, limit: 15)
+    now = now_mow
+    rows = data[:list].select { |p| miles(lat, lng, p['lat'], p['lng']) * 1.609 <= km && matches?(p, cat, now) }.map do |p|
+      st = Hours.status(p['week'], now)
+      next if open_only && st[:state] != 'open'
+      known = Popular[p['id']]
+      { p: p, st: st, known: known, rank: known - (p['chain'] == 'national' ? 40 : p['chain'] == 'texas' ? 8 : 0) + (st[:state] == 'open' ? 6 : 0) }
+    end.compact
+    rows.sort_by { |r| [-r[:rank], r[:p]['name']] }.first(limit).map { |r| row(r[:p], r[:st]).merge(known: r[:known]) }
+  end
+
   def row(p, st = Hours.status(p['week'], now_mow), mi = nil)
     zone = zone_of(p)
     { id: p['id'], name: p['name'], kind: p['kind'], cuisine: p['cuisine'] || [], addr: p['addr'], lat: p['lat'], lng: p['lng'],
