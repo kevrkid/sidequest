@@ -59,6 +59,7 @@ async function load(){
           <div class="meta">reported by @${esc(r.by)} · ${when(r.at)}</div></div>
         ${r.kind==='user'?act('Ban user',{action:'ban',h:r.target},'bad')
           :r.kind==='stream'?(r.about?act('End stream',{action:'end_stream',h:r.about},'bad')+act('Suspend @'+esc(r.about),{action:'ban',h:r.about},'bad'):'')
+          :r.kind==='chat'?act('Remove message',{action:'remove',kind:'evchat',id:r.target},'bad')+(r.about?act('Suspend @'+esc(r.about),{action:'ban',h:r.about},'bad'):'')
           :act('Remove '+r.kind,{action:'remove',kind:r.kind,id:r.target},'bad')}
         ${act('Resolve',{action:'resolve',id:r.id},'good')}</div>`).join('') || '<p class="meta">Nothing open. 🎉</p>'}
       <h2>📺 Live now (${d.live.length})</h2>

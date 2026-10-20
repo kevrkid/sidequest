@@ -94,7 +94,7 @@
   .evdesc{font-size:14px;line-height:1.5;color:#cfd5f5;margin:12px 0 0;white-space:pre-line}
   .evperson{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:3px 10px 3px 3px;font-size:13px;font-weight:600}
   .evchat{display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto}
-  .evmsg{display:flex;gap:8px;font-size:14px;line-height:1.4} .evmsg.me b{color:var(--accent2)}
+  .evmsg{display:flex;gap:8px;font-size:14px;line-height:1.4} .msgmore{flex:none;align-self:flex-start;color:var(--muted);padding:0 6px;font-size:16px} .evmsg.me b{color:var(--accent2)}
   .invrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-weight:600} .invrow input{width:22px;height:22px}
   #homeTonight{margin:2px 0 8px;flex:none} #quickBar{flex:none}
   @media (max-height:700px){ #homeTonight .tncard{padding:5px} #homeTonight .tncard .thumb{width:36px;height:36px} .tnhead{padding-bottom:4px} } .tnhead{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;font-size:14px}
@@ -115,6 +115,7 @@
   .lbrow{display:flex;align-items:center;gap:8px;padding:7px 4px;border-top:1px solid var(--line);font-size:14px} .lbrow.me{background:#2ec5ff12;border-radius:10px}
   .lbrow .rank{width:20px;text-align:center;color:var(--muted)}
   .pbadges{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:20px}
+  .myquest{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px}
   .lvlpill{font-size:12px;font-weight:800;background:#ff9a3c22;color:#ffd2b0;border:1px solid #ff9a3c66;border-radius:99px;padding:3px 9px}
   .opin{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:13px;background:#0b2233;border:1.5px solid #2ec5ff}
   .opin.trailhead{background:#0d2a1f;border-color:#3ddc97}
@@ -656,6 +657,7 @@
       <div data-mepane="profile">
       <div class="card" id="picCard"></div>
       <div class="card" id="profCard"></div>
+      <button class="card myquest" id="myQuest" data-menu="quests" hidden></button>
 
       <h3>Interests</h3>
       <div class="card"><div class="row" style="margin-bottom:10px"><span class="meta grow">Pick as many as you like</span><span id="visInt"></span></div>
@@ -1014,7 +1016,8 @@ const ES = {
   'How does Meet work?':'¿Cómo funciona Conocer?', 'Who can see my answers?':'¿Quién ve mis respuestas?',
   "Voice isn't available in this browser, so type below.":'La voz no funciona en este navegador; escribe abajo.',
   "You're level 1.":'Eres nivel 1.', 'Check in at places around town to level up: a historical marker, a taco spot, a park.':'Registra visitas por la ciudad para subir de nivel: una placa histórica, una taquería, un parque.', 'See quests':'Ver misiones',
-  'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
+  'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
+  'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
   'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
   'Phone notifications':'Notificaciones en el teléfono', 'While Side Quest is open in the background.':'Mientras Side Quest está abierto en segundo plano.',
   'just now':'ahora mismo', '{n} min ago':'hace {n} min', '{n} h ago':'hace {n} h', '{n} d ago':'hace {n} d', 'Link copied':'Enlace copiado', 'Copy this link':'Copia este enlace',
@@ -1518,7 +1521,8 @@ function openGroup(id){
   $('#groupBg').hidden=false;
   if($('#gChat')) loadGroupChat(id);
 }
-const chatHtml = msgs => msgs.length?msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join('')
+const chatMsg = m => `<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div class="grow"><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div>${m.u===S.me.h?'':`<button class="msgmore" data-more="chat|${esc(m.id)}|${esc(m.u)}" aria-label="${T('Report or block')}">⋯</button>`}</div>`;
+const chatHtml = msgs => msgs.length?msgs.map(chatMsg).join('')
   :`<p class="meta">${T('No one has said anything yet. Start it off!')}</p>`;
 async function loadGroupChat(id, text){
   const el=()=>$('#gChat');
@@ -2923,6 +2927,10 @@ $('#camBg').onclick=e=>{ if(e.target.id==='camBg') closeCam(); };
 function renderProf(){
   const items=[S.me.i.length>0, !!S.me.t, S.me.astro, ...LIFE.map(f=>hasVal(S.me.p[f.k]))], n=items.filter(Boolean).length;
   const shown=profileFor(previewAs), forMatch=Object.keys(matchProfile()).length;
+  const mq=$('#myQuest'), mb=SV.badges?.[S.me.h];
+  if(mq){ mq.hidden=!AUTHED||!SV.v2; if(!mq.hidden) mq.innerHTML=`<span class="lvlpill">🏆 ${T('Lv {n}',{n:SV.v2.level||1})}</span><span class="grow" style="text-align:left">
+    <b>${SV.v2.xp||0} XP</b><span class="meta" style="display:block">${mb?.done?.length?T('{n} quests done · friends see your badges',{n:mb.done.length}):T('Check in around town to earn badges')}</span></span>
+    <span style="font-size:18px">${(mb?.done||[]).map(q=>({history:'🪧',culture:'🖼️',tacos:'🌮',outdoors:'🌲',shows:'🎸',nightowl:'🦉',explorer:'🧭',squad:'🤝',flare:'🔥',story:'📸',recruiter:'💌',regular:'📅'})[q]||'🏅').join('')}</span>`; }
   $('#profCard').innerHTML = `<div class="row"><b class="grow">Profile ${n}/${items.length}</b><span class="meta">${forMatch} answer${forMatch===1?'':'s'} used for matching</span></div>
     <div class="bar" style="margin:8px 0 12px"><b style="width:${n/items.length*100}%"></b></div>
     <div class="row"><span class="meta grow">What others see</span><div class="seg" style="flex:none">${['everyone','friend'].map(a=>
@@ -4872,6 +4880,9 @@ function renderEventSheet(e){
       ${inter?`<div class="meta" style="margin-top:6px">☆ ${T('{n} interested',{n:inter})}</div>`:''}</div>`
       :`<p class="meta">${T('Be the first. Tap "I\'m going" and your friends will see it.')}</p>`}
     <div id="evph_${e.id}"></div>
+    ${(()=>{ const sim=EV.list.filter(x=>x.id!==e.id&&x.cat===e.cat&&x.te>now&&x.ts<now+14*864e5&&x.title!==e.title).sort((a,b)=>a.ts-b.ts).slice(0,4);
+      return sim.length?`<label class="lbl">${T('More like this')}</label><div class="tnrail">${sim.map(x=>`<button class="tncard" data-evopen="${x.id}"><span class="cat thumb">${CATS[x.cat].e}</span>
+        <span class="tnt"><b>${esc(x.title)}</b><span class="meta">${fmtWhen(x.ts,x.tba)}${x.venue?' · '+esc(x.venue):''}</span></span></button>`).join('')}</div>`:''; })()}
     <label class="lbl">💬 ${T('Talk about it')}</label>
     <div id="evChat" class="evchat"><p class="meta">${AUTHED?T('Loading…'):T('Make a free account to see who\'s talking and join in.')}</p></div>
     ${AUTHED?`<form class="row" id="evChatForm" style="gap:6px;margin-top:8px"><input id="evChatIn" maxlength="400" placeholder="${T('Ask who\'s going early, share a tip…')}" autocomplete="off" style="flex:1">
@@ -4882,8 +4893,7 @@ async function loadEvChat(id){
   clearInterval(V2S.chatT);
   if(!AUTHED||!SV.on) return;
   const draw=j=>{ const el=$('#evChat'); if(!el||V2S.evOpen!==id) return;
-    el.innerHTML=j.msgs.length?j.msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join('')
-      :`<p class="meta">${T('No one has said anything yet. Start it off!')}</p>`; };
+    el.innerHTML=chatHtml(j.msgs); };
   const get=()=>api('/api/event/chat',{id}).then(draw).catch(()=>{});
   await get(); V2S.chatT=setInterval(()=>{ if($('#evBg').hidden||V2S.evOpen!==id) return clearInterval(V2S.chatT); get(); },15000);
 }
@@ -4891,7 +4901,7 @@ async function sendEvChat(){
   const i=$('#evChatIn'), id=V2S.evOpen, t=i?.value.trim(); if(!t||!id) return;
   const btn=$('#evChatForm button'); i.disabled=true; if(btn){ btn.disabled=true; btn.textContent=T('Sending…'); }
   try{ const j=await api('/api/event/chat',{id, text:t, title:EV.byId[id]?.title||''}); i.value='';
-    const el=$('#evChat'); if(el) el.innerHTML=j.msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join(''); }
+    const el=$('#evChat'); if(el) el.innerHTML=chatHtml(j.msgs); }
   catch(e){ toast(esc(e.message),'orange'); }
   i.disabled=false; if(btn){ btn.disabled=false; btn.textContent=T('Send'); } i.focus();
 }

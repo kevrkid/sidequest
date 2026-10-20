@@ -1546,10 +1546,14 @@ def mount_app(server)
   route(server, '/api/report') do |b, h|
     limit!("report:#{h}", 20, 3600)
     kind = b['kind'].to_s
-    raise 'bad report' unless %w[post story user group stream].include?(kind)
+    raise 'bad report' unless %w[post story user group stream chat].include?(kind)
     # a live stream: note whose it is now, since stream ids only exist while the stream runs
     about = kind == 'stream' ? live_owner(b['id'].to_s[0, 40]) : nil
     store do |d|
+      if kind == 'chat'   # an event or group chat message: keep who wrote it and what it said for the reviewer
+        msg = (d['ev_chat'] || {}).values.flatten.find { |m| m['id'] == b['id'].to_s } or raise 'That message is gone.'
+        about = msg['u']; b['note'] = "#{msg['t']} #{b['note']}".strip
+      end
       d['reports'] << { 'id' => "r#{SecureRandom.hex(4)}", 'by' => h, 'kind' => kind, 'target' => b['id'].to_s[0, 40],
                         'reason' => b['reason'].to_s[0, 40], 'note' => b['note'].to_s[0, 300], 'at' => now_ms, 'status' => 'open',
                         'about' => about }.compact

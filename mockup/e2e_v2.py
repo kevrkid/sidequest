@@ -120,6 +120,10 @@ with sync_playwright() as pw:
 
     b.evaluate("id=>openEvent(id)", ev); b.wait_for_selector("#evSheet .evtitle"); b.wait_for_timeout(900)
     check("the other person sees the discussion", "meet at the door" in b.inner_text("#evChat"))
+    b.click("#evChat [data-more]"); b.wait_for_selector("#actSheet [data-report]")
+    b.click("#actSheet [data-report*='Harassment']"); b.wait_for_timeout(600)
+    check("report a chat message from its ⋯ menu", "Thanks for reporting" in b.inner_text("#toasts"))
+    b.evaluate("$('#actBg').hidden=true")
     b.click("#evSheet [data-rsvp][data-st='going']"); b.wait_for_timeout(700)
     b.wait_for_function("SV.rsvps && true"); a.evaluate("loadState().then(renderSocial)"); a.wait_for_timeout(500)
     a.evaluate("id=>openEvent(id)", ev); a.wait_for_timeout(500)
@@ -165,6 +169,21 @@ with sync_playwright() as pw:
     a.screenshot(path=f"{OUT}/v2-04-quests.png")
     close_sheets(a)
 
+    a.evaluate("loadState().then(()=>{ tab('me'); showMeSec('profile'); renderMe(); })"); a.wait_for_timeout(600)
+    check("your own profile shows your level and XP", a.is_visible("#myQuest") and "XP" in a.inner_text("#myQuest"))
+    a.evaluate("tab('home')")
+
+    # ---- group chat (members only)
+    gid = b.evaluate("api('/api/group/create',{n:'V2 Test Runners',d:'Easy 5k loops',e:'🏃',cat:'sports'}).then(j=>j.group.id)")
+    b.evaluate("loadState()"); b.wait_for_timeout(500)
+    b.evaluate(f"openGroup('{gid}')"); b.wait_for_selector("#gChatForm")
+    b.fill("#gChatIn", "Saturday 8am at the bridge?"); b.click("#gChatForm button")
+    b.wait_for_function("document.querySelector('#gChat')?.innerText.includes('8am at the bridge')", timeout=40000)
+    check("group chat: members can talk", True)
+    a.evaluate("loadState()"); a.wait_for_timeout(500); a.evaluate(f"openGroup('{gid}')"); a.wait_for_timeout(500)
+    check("…non-members don't see the chat until they join", a.locator("#gChat").count() == 0)
+    close_sheets(a); close_sheets(b)
+
     # ---- profile badges between friends
     b.evaluate("loadState()"); b.wait_for_timeout(400); b.evaluate(f"openProfile('{AMY}')"); b.wait_for_timeout(300)
     check("a friend's profile shows their quest level", "Lv" in b.inner_text("#actSheet"))
@@ -174,6 +193,9 @@ with sync_playwright() as pw:
     if ADMIN:
         g = json.loads(urllib.request.urlopen(urllib.request.Request(f"{BASE}/api/admin/growth", headers={"X-Admin-Token": ADMIN})).read())
         check("admin growth: today's actives and tracked events", g["dau"][-1] >= 2 and g["events"].get("event_open", 0) >= 2, g["events"])
+        adm = json.loads(urllib.request.urlopen(urllib.request.Request(f"{BASE}/api/admin", headers={"X-Admin-Token": ADMIN})).read())
+        rep = [r for r in adm["reports"] if r["kind"] == "chat"]
+        check("admin: the chat report shows who wrote it and what it said", rep and rep[0].get("about") == AMY and "meet at the door" in rep[0].get("note", ""), rep[:1])
     else:
         check("admin growth (skipped: no SQ_ADMIN_TOKEN)", True)
 
