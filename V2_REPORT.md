@@ -57,6 +57,9 @@ against the real codebase).
    - **Check-ins** at sights, food spots, parks and events: the phone checks you're within 150 m, and the server only learns which place, never your location.
    - Your level shows on Home, on your profile, and to your friends.
 5. **🔖 Saved** events, places and sights, listed in My plans → Saved.
+   **Quest of the week** (1.5× XP, rotates weekly) and opt-in **Friends out now**: friends who choose to share their
+   check-ins show on Home for 3 hours, place name only (off by default).
+   **Scout** can open event pages and the new screens ("show me my quests", "how do I invite my friend").
 6. **💬 Group chat** for members.
 7. **Growth**:
    - share links with link previews (`/e/…` events, `/s/…` sights);
@@ -101,11 +104,13 @@ against the real codebase).
 | Ruby syntax (`ruby -c`) on every server file | OK |
 | JavaScript syntax of the whole inline script + `sw.js` (JavaScriptCore) | OK |
 | `e2e_test.py` (V1's full Playwright suite) **on V2** | **109/109** |
-| `e2e_v2.py` (new: 2 people, invite link, inbox, event page, going, save, chat + report, invites, share link, saved list, check-in near/far, quests, leaderboard, group chat, badges, admin growth + chat report) | **35/35** |
-| `test_v2.rb` (new: notifications, push delivery decrypted from a fake push service, quests, check-ins, saves, chats, invites incl. a forged link, share pages + escaping, analytics, privacy, account deletion, live safety with screening on) | **28/28** |
+| `e2e_v2.py` (new: 2 people, invite link, inbox, event page, going, save, chat + report, invites, share link, saved list, check-in near/far, quests, leaderboard, friends out now, group chat, badges, admin growth + chat report) | **36/36** |
+| `test_v2.rb` (new: notifications, push delivery decrypted from a fake push service, quests + quest of the week, check-ins, friends out now privacy, saves, chats, invites incl. a forged link, share pages + escaping, analytics, privacy, account deletion, live safety with screening on) | **29/29** |
 | `test_webpush.rb` (RFC 8291 example byte for byte, VAPID signature, SSRF guard) | **6/6** |
 | `e2e_live.py` (1 streamer + 3 viewers) on V2 | **13/13** |
 | `test_live.rb`, `test_google.rb`, `test_api.rb`, `test_hours.rb` on V2 | 14/14, 17/17, all pass, all pass |
+| V1's own `e2e_test.py` on V1 after tonight's two small V1 fixes | 109/109 |
+| Scout with the real Claude CLI: "show me my quests", "how do I invite my friend" | opens Quests / the invite link |
 | Phone 360 px + 390 px and desktop 1280 px screenshots (Home, event page, inbox, quests, sight popup) | Checked. Fixed: Home rows squeezed at 360 px, sight popup cut off on small phones |
 | Console errors during the browser runs | none |
 | Offline: load, go offline, reload | App shell loads, offline notice shows |
@@ -155,8 +160,6 @@ cd ~/claude/sidequest-v2/mockup
    - set `SQ_PUSH_CONTACT`;
    - keep `data/vapid.json` in backups (it already is).
 4. **Next features**:
-   - optional "share my check-ins with friends" (a friends' activity feed);
-   - a quest of the week;
    - an email digest;
    - quests tied to real events (e.g. "3 shows at Red River this month");
    - translate the remaining older screens.

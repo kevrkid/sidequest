@@ -223,6 +223,10 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   itself, counts it once per place per day, events only while on; max 40 a day. Friends see level + badges
   (`SV.badges`); your own card on Me → Profile (`#myQuest`).
 - **Saved** (`/api/saves`, 🔖 on events / places / sights; My plans → Saved).
+- **Quest of the week** (`featured_quest`, rotates weekly through the check-in quests, 1.5x XP). **Friends out now**:
+  friends who switched on "Show friends where I check in" (`users[h].share_checkins`, off by default) appear on Home for
+  3 hours after a check-in, place name only (`friends_out`).
+- **Scout** V2 actions: `event` (open an event's page), `open` (quests / inbox / plans / saved / invite).
 - **Group chat** for members of real groups (`/api/group/chat`, stored as `ev_chat["g:<id>"]`).
 - **Growth**: share pages with Open Graph previews `/e/<uid>`, `/s/<sight id>`, `/i/<handle>` (invite; sign-up offers
   "be friends with @them", `users[h].ref`, Bring a friend quest); Home "Tonight near you" strip + "Up next" countdown;
@@ -236,7 +240,7 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Admin**: Growth panel, flagged event/group chat under "Needs a human look", chat reports with author + text.
 - Run V2: `cd mockup && ./start_v2.sh` (http://localhost:8797, phones https://<Wi-Fi IP>:8444; `--keys` adds the paid
   Google / LiveKit keys). Same host as V1, so the browser shares the login cookie between ports.
-- Tests (all against throwaway copies): `ruby test_v2.rb` (27), `ruby test_webpush.rb` (6), `e2e_v2.py` (35) on a server
+- Tests (all against throwaway copies): `ruby test_v2.rb` (29), `ruby test_webpush.rb` (6), `e2e_v2.py` (36) on a server
   with the test files + `SQ_ADMIN_TOKEN=test`, plus every V1 suite (e2e_test 109, e2e_live 13, test_live 14,
   test_google 17, test_api, test_hours).
 
