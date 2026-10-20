@@ -341,7 +341,7 @@ SCOUT_SCHEMA = {
     expression: { type: 'string', enum: SCOUT_FACES },
     actions: { type: 'array', maxItems: 3, items: {
       type: 'object', required: %w[type target],
-      properties: { type: { type: 'string', enum: %w[point go map place sight search food rsvp flare chat directions] }, target: { type: 'string' },
+      properties: { type: { type: 'string', enum: %w[point go map place sight search food rsvp flare chat directions event open] }, target: { type: 'string' },
                     label: { type: 'string' } } } },
     plan: { type: 'object', required: %w[title items], properties: {   # only when asked to plan / make an itinerary
       title: { type: 'string' }, day: { type: 'string' },
@@ -401,6 +401,8 @@ def scout_actions(raw, driving:, targets:, places:, ctx:, food_ids:, sights: [])
     when 'flare' then !driving && t.strip.size.between?(3, 200)
     when 'chat' then !driving && friends.include?(t)
     when 'directions' then ev_ids.include?(t) || fl_ids.include?(t) || place_ids.include?(t) || sights.any? { |x| x['id'] == t }
+    when 'event' then !driving && ev_ids.include?(t)                                  # V2: open the event's page
+    when 'open' then !driving && %w[quests inbox plans saved invite].include?(t)      # V2: open a V2 screen
     else false
     end
   end.map { |a| a.slice('type', 'target', 'label') }

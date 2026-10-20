@@ -4498,13 +4498,15 @@ function scoutDo(acts, say){
   $('#scoutBg').hidden=true;
   // where Scout's words go: a card when it needs a tap, a toast over sheets it opens, else the bubble
   if(acts.some(a=>a.type==='rsvp'||a.type==='directions')){}
-  else if(acts.some(a=>['search','food','flare','chat'].includes(a.type))) toast(`🧭 <b>${esc(scS().name)}:</b> ${esc(say)}`,'',[],6000);
+  else if(acts.some(a=>['search','food','flare','chat','event','open'].includes(a.type))) toast(`🧭 <b>${esc(scS().name)}:</b> ${esc(say)}`,'',[],6000);
   else scoutBubble(say);
   let t=0;
   acts.forEach(a=>{ setTimeout(()=>{ const x=String(a.target);
     if(a.type==='go'&&SC_VIEWS.includes(x)) tab(x);
     if(a.type==='point') scoutPoint(x,a.label); if(a.type==='map') scoutMap(x,a.label); if(a.type==='place') scoutPlace(x,a.label);
     if(a.type==='sight') focusSight(x,true);
+    if(a.type==='event') openEvent(x);
+    if(a.type==='open') ({quests:openQuests, inbox:openNotifs, plans:openPlans, saved:openPlans, invite:inviteLink})[x]?.();
     if(a.type==='search') runSearch(null, x.slice(0,60));
     if(a.type==='food') openPlaces(FOOD_TILES.some(f=>f[0]===x)?{cat:x}:{zone:x});
     if(a.type==='flare'){ openCompose(); $('#cText').value=x.slice(0,200); composeHint(); }   // a draft: they pick the spot and press Send

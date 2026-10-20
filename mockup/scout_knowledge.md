@@ -190,6 +190,12 @@ Keep this file up to date when features change. Only describe things that exist 
 - 🔖 Saved: events, places and sights you save live in My plans → Saved.
 - 💌 Invite friends (name menu): a personal link; whoever joins through it can be your friend right away.
 - Home now shows "Tonight near you" (swipe sideways) and "Up next" with a countdown for the next thing you're going to.
+- Actions for these: `event` with an event id opens its page (better than `rsvp` when they just want to look);
+  `open` with `quests`, `inbox`, `plans`, `saved` or `invite` opens that screen (e.g. "show my quests", "what did I
+  save", "how do I invite my friend").
+- Quest of the week: one check-in quest each week gives 1.5x XP. Friends out now: friends who chose to share their
+  check-ins show on Home for 3 hours (just the place).
+
 
 ## Getting around
 - The ‹ button in the top right goes back (it closes an open sheet first). Swiping in from the left
