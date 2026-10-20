@@ -21,6 +21,8 @@ require 'set'
 ENV['TZ'] ||= 'America/Chicago'   # opening hours, "tonight" and Scout's clock are Austin time
 require_relative 'places'
 require_relative 'sights'
+require 'date'
+require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
 PORT    = (ENV['PORT'] || 8787).to_i
 LAN_PORT = (ENV['SQ_LAN_PORT'] || 8443).to_i
@@ -935,6 +937,11 @@ def state_for(d, h)
   }
   if h
     out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online' }
+    q = (d['quest'] || {})[h] || {}
+    out[:v2] = { unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
+                 xp: q['xp'].to_i, level: level_of(q['xp']), saves: ((d['saves'] || {})[h] || []).map { |x| "#{x['k']}:#{x['id']}" } }
+    # friends' levels and quest badges (friends only; everyone else just sees the app as before)
+    out[:badges] = (friends.to_a + [h]).map { |x| qq = (d['quest'] || {})[x]; qq && [x, { lvl: level_of(qq['xp']), done: (qq['done'] || {}).keys }] }.compact.to_h
     out[:friends] = { list: friends.to_a, incoming: d['freqs'].select { |f| f['to'] == h }.map { |f| f['from'] } - hidden.to_a,
                       outgoing: d['freqs'].select { |f| f['from'] == h }.map { |f| f['to'] } }
   end
@@ -975,6 +982,10 @@ def delete_user!(d, h)
   d['freqs'].reject! { |f| f['from'] == h || f['to'] == h }
   d['groups'].each_value { |g| g['owner'] = nil if g['owner'] == h }
   d['dms'].delete_if { |k, _| k.split('|').include?(h) }
+  %w[notifs quest saves].each { |k| (d[k] || {}).delete(h) }
+  (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
+  (d['ev_chat'] || {}).each_value { |l| l.reject! { |m| m['u'] == h } }
+  STATS[:lock].synchronize { (STATS[:d]['active'] || {}).delete(h); STATS[:dirty] = true }
 end
 
 def dm_key(a, b)
@@ -1382,6 +1393,16 @@ def mount_app(server)
       if gsub then d['users'][h]['google'] = true; d['google_ids'][gsub] = h   # signs in with Google; no password
       else d['users'][h]['pw'] = hash_pw(b['pw'])
       end
+      ref = b['ref'].to_s
+      if ref =~ HANDLE_RE && d['users'][ref] && ref != h && !d['users'][ref]['banned']   # came from someone's invite link
+        d['users'][h]['ref'] = ref
+        if b['ref_friend'] == true   # they said yes to "be friends with @ref"
+          (d['friends'][h] ||= []) << ref; (d['friends'][ref] ||= []) << h unless (d['friends'][ref] ||= []).include?(h)
+        end
+        notify!(d, ref, 'joined', from: h, text: "💌 @#{h} joined from your invite#{b['ref_friend'] == true ? ": you're friends now" : ''}")
+        quest_bump!(d, ref, 'recruit')
+        track!('signup_ref')
+      end
       new_session(d, h)
     end
     set_session_cookie(req, res, tok)
@@ -1461,6 +1482,7 @@ def mount_app(server)
   # Guests (no account) get the public view: everyone-visible posts and stories, nothing friends-only.
   route(server, '/api/state', auth: false, get: true) do |_b, h|
     PRESENCE[h] = now_ms if h   # every poll is a check-in
+    active!(h) if h
     store(write: false) { |d| state_for(d, h) }
   end
 
@@ -1483,13 +1505,18 @@ def mount_app(server)
         if d['freqs'].any? { |f| f['from'] == to && f['to'] == h }   # they already asked: that's a yes
           d['freqs'].reject! { |f| f['from'] == to && f['to'] == h }
           mine << to unless mine.include?(to); theirs << h unless theirs.include?(h)
+          notify!(d, to, 'friend', from: h, text: "🤝 You and @#{h} are friends now")
+          quest_award!(d, h); quest_award!(d, to)
         elsif !mine.include?(to) && d['freqs'].none? { |f| f['from'] == h && f['to'] == to }
           d['freqs'] << { 'from' => h, 'to' => to, 'at' => now_ms }
+          notify!(d, to, 'freq', from: h, text: "👋 @#{h} waved at you")
         end
       when 'accept'
         raise 'No request from them.' unless d['freqs'].any? { |f| f['from'] == to && f['to'] == h }
         d['freqs'].reject! { |f| f['from'] == to && f['to'] == h }
         mine << to unless mine.include?(to); theirs << h unless theirs.include?(h)
+        notify!(d, to, 'friend', from: h, text: "🤝 @#{h} waved back: you're friends now")
+        quest_award!(d, h); quest_award!(d, to)
       when 'decline' then d['freqs'].reject! { |f| f['from'] == to && f['to'] == h }
       when 'cancel' then d['freqs'].reject! { |f| f['from'] == h && f['to'] == to }
       when 'remove' then mine.delete(to); theirs.delete(h)
@@ -1582,6 +1609,12 @@ def mount_app(server)
     raise 'bad status' unless [nil, 'going', 'interested'].include?(b['status'])
     store do |d|
       list = (d['rsvps'][b['id'].to_s[0, 40]] ||= {})
+      if b['status'] == 'going' && list[h] != 'going'   # friends already in on it hear that you're coming
+        title = b['title'].to_s[0, 60]
+        (friends_of(d, h).to_a & list.keys).each do |f|
+          notify!(d, f, 'going', from: h, ref: b['id'].to_s[0, 40], text: "🎟️ @#{h} is going to #{title.empty? ? 'an event you picked' : title} too")
+        end
+      end
       b['status'] ? list[h] = b['status'] : list.delete(h)
       d['rsvps'].delete(b['id'].to_s) if list.empty?
       { ok: true, rsvps: d['rsvps'][b['id'].to_s] || {} }
@@ -1602,6 +1635,7 @@ def mount_app(server)
       post['t'] = post['t'].to_s[0, 200]
       post['unreviewed'] = true unless reviewed
       d['posts'] << post
+      quest_bump!(d, h, 'flare')
       d['posts'].reject! { |x| x['end'].to_i < now_ms - 86_400_000 }
       { ok: true, post: post }
     end
@@ -1612,6 +1646,7 @@ def mount_app(server)
       p = d['posts'].find { |x| x['id'] == b['id'] } or raise 'no such post'
       raise Forbidden, 'Not available.' if blocked_between(d, h).include?(p['u'])
       b['on'] ? (p['downs'] |= [h]) : p['downs'].delete(h)
+      notify!(d, p['u'], 'down', from: h, ref: p['id'], text: "🙌 @#{h} is down for #{p['text'].to_s[0, 60]}") if b['on']
       { ok: true, downs: p['downs'] }
     end
   end
@@ -1619,6 +1654,10 @@ def mount_app(server)
   route(server, '/api/group/join') do |b, h|
     store do |d|
       m = (d['members'][b['id'].to_s[0, 20]] ||= [])
+      if b['on'] && !m.include?(h)
+        g = d['groups'][b['id'].to_s[0, 20]]
+        notify!(d, g['owner'], 'join', from: h, ref: g['id'], text: "👥 @#{h} joined #{g['name'].to_s[0, 50]}") if g
+      end
       b['on'] ? (m << h unless m.include?(h)) : m.delete(h)
       { ok: true, members: m }
     end
@@ -1705,6 +1744,7 @@ def mount_app(server)
       raise Forbidden, "You can't like this story." if blocked_between(d, h).include?(st['u'])
       l = (st['likes'] ||= [])
       l.include?(h) ? l.delete(h) : l << h
+      notify!(d, st['u'], 'like', from: h, ref: st['id'], text: "❤️ @#{h} liked your story") if l.include?(h)
       { likes: l.size, liked: l.include?(h) }
     end
   end
@@ -1739,6 +1779,8 @@ def mount_app(server)
                 'vis' => st['vis'] == 'friends' ? 'friends' : 'everyone',
                 'unreviewed' => !reviewed || !raw.nil? || !up.nil? }   # photos and videos aren't machine-checked yet
       d['stories'] << story
+      story['people'].each { |x| notify!(d, x, 'tag', from: h, ref: id, text: "📸 @#{h} tagged you in a story") }
+      quest_bump!(d, h, 'story')
       { ok: true, story: story }
     end
   end
@@ -2049,7 +2091,8 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s) }
+v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }
 trap('TERM') { servers.each(&:shutdown) }

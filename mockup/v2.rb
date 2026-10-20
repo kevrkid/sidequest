@@ -1,0 +1,434 @@
+# Side Quest V2 on the server: notifications, quests & check-ins, saves, event discussion, invites, share pages with
+# link previews, first-party analytics and event reminders. Loaded by server.rb; uses its helpers (store, route,
+# limit!, moderate, blocked_between, friends_of, now_ms) and keeps everything in the same data file, under new keys
+# only (nothing old is renamed or removed).
+require 'json'
+require 'cgi'
+
+# ---------------------------------------------------------------------------------------------
+# Notifications: per person, newest last, capped. Never across a block; never about yourself.
+NOTIF_MAX = 120
+NOTIF_TYPES = %w[freq friend down going chat join tag like quest joined remind invite].freeze
+
+def notify!(d, to, type, from: nil, ref: nil, text: nil)
+  return unless to && d['users'][to] && to != from && NOTIF_TYPES.include?(type)
+  return if from && blocked_between(d, to).include?(from)
+  list = ((d['notifs'] ||= {})[to] ||= [])
+  # the same thing twice within an hour (likes, chat bursts) folds into one, bumped to the top
+  if (old = list.find { |n| n['t'] == type && n['from'] == from && n['ref'] == ref && n['at'] > now_ms - 3_600_000 })
+    list.delete(old)
+  end
+  list << { 'id' => "n#{SecureRandom.hex(5)}", 't' => type, 'from' => from, 'ref' => ref, 'text' => text.to_s[0, 160],
+            'at' => now_ms, 'read' => false }
+  list.shift while list.size > NOTIF_MAX
+end
+
+# ---------------------------------------------------------------------------------------------
+# Quests: challenges that get people out. Progress is worked out here from check-ins and what people did;
+# the phone only claims "I'm at <place id>" after checking it's within ~150 m (exact GPS never leaves it).
+QUESTS = [
+  { id: 'history', e: '🪧', name: 'History buff', desc: 'Check in at 5 historical markers or landmarks', goal: 5, xp: 150 },
+  { id: 'culture', e: '🖼️', name: 'Culture hound', desc: 'Visit 3 museums, murals or statues', goal: 3, xp: 100 },
+  { id: 'tacos', e: '🌮', name: 'Taco crawl', desc: 'Check in at 3 taco or Tex-Mex spots', goal: 3, xp: 100 },
+  { id: 'outdoors', e: '🌲', name: 'Touch grass', desc: 'Check in at 3 parks, lakes or trails', goal: 3, xp: 100 },
+  { id: 'shows', e: '🎸', name: 'Live and loud', desc: 'Check in at 2 events (shows, games, comedy)', goal: 2, xp: 120 },
+  { id: 'nightowl', e: '🦉', name: 'Night owl', desc: 'Check in somewhere between 11 PM and 4 AM', goal: 1, xp: 60 },
+  { id: 'explorer', e: '🧭', name: 'Explorer', desc: 'Check in in 3 different hot spots', goal: 3, xp: 120 },
+  { id: 'squad', e: '🤝', name: 'Squad up', desc: 'Make 3 friends on Side Quest', goal: 3, xp: 100 },
+  { id: 'flare', e: '🔥', name: 'Light a flare', desc: 'Post a flare and see who\'s down', goal: 1, xp: 40 },
+  { id: 'story', e: '📸', name: 'Storyteller', desc: 'Share 3 stories', goal: 3, xp: 60 },
+  { id: 'recruiter', e: '💌', name: 'Bring a friend', desc: 'Invite someone who joins', goal: 1, xp: 80 },
+  { id: 'regular', e: '📅', name: 'Regular', desc: 'Get out 3 weeks in a row', goal: 3, xp: 150 }
+].freeze
+CHECKIN_XP = 10
+CHECKIN_RE = /\A[A-Za-z0-9:_.-]{1,60}\z/
+
+def quest_rec(d, h)
+  q = ((d['quest'] ||= {})[h] ||= {})
+  q['xp'] ||= 0; q['done'] ||= {}; q['n'] ||= {}; q['checkins'] ||= []
+  q
+end
+
+def quest_bump!(d, h, key, by = 1)
+  return unless d['users'][h]
+  q = quest_rec(d, h)
+  q['n'][key] = q['n'][key].to_i + by
+  quest_award!(d, h)
+end
+
+def week_key(t) Time.at(t / 1000).strftime('%G-%V') end
+
+def quest_progress(d, h)
+  q = quest_rec(d, h)
+  c = q['checkins']
+  kinds = ->(*ks) { c.count { |x| (x['tags'] & ks).any? } }
+  weeks = c.map { |x| week_key(x['at']) }.uniq.sort
+  run = 0; best = 0; prev = nil
+  weeks.each do |w|
+    y, n = w.split('-').map(&:to_i)
+    run = prev && ((prev[0] == y && prev[1] == n - 1) || (prev[0] == y - 1 && n == 1 && prev[1] >= 52)) ? run + 1 : 1
+    best = [best, run].max; prev = [y, n]
+  end
+  {
+    'history' => kinds.('marker', 'landmark'), 'culture' => kinds.('museum', 'art'), 'tacos' => kinds.('tacos'),
+    'outdoors' => kinds.('outdoors'), 'shows' => kinds.('event'), 'nightowl' => kinds.('late'),
+    'explorer' => c.map { |x| x['zone'] }.compact.uniq.size, 'squad' => friends_of(d, h).size,
+    'flare' => q['n']['flare'].to_i, 'story' => q['n']['story'].to_i, 'recruiter' => q['n']['recruit'].to_i, 'regular' => best
+  }
+end
+
+def quest_award!(d, h)
+  q = quest_rec(d, h)
+  prog = quest_progress(d, h)
+  QUESTS.each do |qd|
+    next if q['done'][qd[:id]] || prog[qd[:id]].to_i < qd[:goal]
+    q['done'][qd[:id]] = now_ms
+    q['xp'] += qd[:xp]
+    notify!(d, h, 'quest', ref: qd[:id], text: "#{qd[:e]} Quest complete: #{qd[:name]} (+#{qd[:xp]} XP)")
+  end
+end
+
+def level_of(xp) (Math.sqrt(xp.to_i / 50.0)).floor + 1 end
+
+def quest_view(d, h)
+  q = quest_rec(d, h)
+  prog = quest_progress(d, h)
+  lvl = level_of(q['xp'])
+  { xp: q['xp'], level: lvl, next_at: (lvl**2) * 50, this_at: ((lvl - 1)**2) * 50,
+    streak: prog['regular'], checkins: q['checkins'].size,
+    quests: QUESTS.map { |qd| qd.merge(have: [prog[qd[:id]].to_i, qd[:goal]].min, done: q['done'][qd[:id]]) },
+    recent: q['checkins'].last(8).reverse }
+end
+
+# What a check-in is, from our own data (never from the phone): its name, where, and which quests it counts for.
+def checkin_target(k, id)
+  case k
+  when 'sight'
+    s = Sights.find(id) or return nil
+    tags = { 'marker' => %w[marker], 'landmark' => %w[landmark], 'museum' => %w[museum], 'art' => %w[art], 'view' => %w[art],
+             'nature' => %w[outdoors], 'venue' => %w[landmark] }[s['kind']] || []
+    { name: s['name'], lat: s['lat'], lng: s['lng'], tags: tags }
+  when 'place'
+    p = Places.find(id) or return nil
+    tags = []
+    tags << 'tacos' if "#{p['cuisine']} #{p['name']}" =~ /taco|mexican|tex-mex|tex_mex|burrito/i
+    { name: p['name'], lat: p['lat'], lng: p['lng'], tags: tags }
+  when 'area'
+    a = outdoor_areas.find { |x| x['id'] == id } or return nil
+    { name: a['name'], lat: a['c'][0], lng: a['c'][1], tags: %w[outdoors] }
+  when 'event'
+    e = event_by_uid(id.sub(/\Ae:/, '')) or return nil
+    return nil unless e['lat']
+    { name: e['title'], lat: e['lat'], lng: e['lng'], tags: %w[event], ev: e }
+  end
+end
+
+OUTDOOR_CACHE = { at: nil, list: [] }
+def outdoor_areas
+  file = ENV['SQ_OUTDOORS_FILE'] ? File.join(ROOT, ENV['SQ_OUTDOORS_FILE']) : File.join(ROOT, 'data', 'outdoors.json')
+  m = File.file?(file) ? File.mtime(file) : nil
+  if m != OUTDOOR_CACHE[:at]
+    OUTDOOR_CACHE[:at] = m
+    OUTDOOR_CACHE[:list] = m ? (JSON.parse(File.read(file))['areas'] rescue []) : []
+  end
+  OUTDOOR_CACHE[:list]
+end
+
+# Events come from the events service through the same 5-minute cache the app uses.
+def events_list
+  if Time.now.to_f - EVENTS_CACHE[:at] > 300 || !EVENTS_CACHE[:body]
+    horizon = (Time.now + 45 * 86_400).strftime('%Y-%m-%dT00:00:00')
+    uri = URI("#{EVENTS_API}/api/events?limit=1000&end=#{horizon}")
+    r = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: 15) { |http| http.get(uri.request_uri) }
+    EVENTS_CACHE.update(at: Time.now.to_f, body: r.body) if r.code == '200'
+  end
+  (JSON.parse(EVENTS_CACHE[:body].to_s)['events'] rescue nil) || []
+rescue StandardError
+  (JSON.parse(EVENTS_CACHE[:body].to_s)['events'] rescue nil) || []
+end
+
+def event_by_uid(uid) events_list.find { |e| e['uid'] == uid } end
+
+def km_between(a, b, c, e)
+  dy = (a - c) * 110.57; dx = (b - e) * 111.32 * Math.cos(a * Math::PI / 180)
+  Math.hypot(dx, dy)
+end
+
+# ---------------------------------------------------------------------------------------------
+# Analytics: first-party and small. Whitelisted event names, daily totals, and which days each account was active
+# (for daily/weekly actives and 7-day retention). No content, no locations, no device ids. Kept in memory and
+# written to data/stats.json once a minute so it never slows the app down.
+TRACK_EVENTS = %w[open home_next home_tonight event_open event_share event_save event_invite event_chat notif_open
+                  quests_open checkin quest_done saved_open invite_copy share_open sight_open sight_tell plan_save
+                  scout_ask map_open search feed_open signup_ref push_on].freeze
+STATS_FILE = File.join(__dir__, 'data', 'stats.json')
+STATS = { lock: Mutex.new, d: (JSON.parse(File.read(STATS_FILE)) rescue nil) || {}, dirty: false }
+
+def track!(name, h = nil)
+  return unless TRACK_EVENTS.include?(name)
+  day = Time.now.strftime('%Y-%m-%d')
+  STATS[:lock].synchronize do
+    s = STATS[:d]
+    ((s['ev'] ||= {})[day] ||= Hash.new(0))[name] = s['ev'][day][name].to_i + 1
+    STATS[:dirty] = true
+  end
+  active!(h) if h
+end
+
+def active!(h)
+  day = Time.now.strftime('%Y-%m-%d')
+  STATS[:lock].synchronize do
+    days = ((STATS[:d]['active'] ||= {})[h] ||= [])
+    next if days.last == day
+    days << day; days.shift while days.size > 90
+    STATS[:dirty] = true
+  end
+end
+
+def stats_flush
+  STATS[:lock].synchronize do
+    next unless STATS[:dirty]
+    s = STATS[:d]
+    (s['ev'] || {}).keys.sort[0...-120].each { |k| s['ev'].delete(k) }
+    FileUtils.mkdir_p(File.dirname(STATS_FILE))
+    File.write("#{STATS_FILE}.tmp", JSON.generate(s))
+    File.rename("#{STATS_FILE}.tmp", STATS_FILE)
+    STATS[:dirty] = false
+  end
+end
+
+def growth_report(d)
+  today = Date.today
+  days = (0..13).map { |i| (today - i).strftime('%Y-%m-%d') }.reverse
+  act = STATS[:lock].synchronize { (STATS[:d]['active'] || {}).dup }
+  ev = STATS[:lock].synchronize { (STATS[:d]['ev'] || {}).dup }
+  dau = days.map { |day| act.count { |_h, ds| ds.include?(day) } }
+  wau = act.count { |_h, ds| ds.any? { |x| x >= (today - 6).strftime('%Y-%m-%d') } }
+  joined = d['users'].values.map { |u| [u['h'], (Date.parse(u['joined'].to_s) rescue nil)] }.select { |_, j| j }
+  cohort = joined.select { |_, j| j <= today - 7 && j > today - 37 }
+  kept = cohort.count { |h, j| (act[h] || []).any? { |x| x >= (j + 7).strftime('%Y-%m-%d') && x <= (j + 13).strftime('%Y-%m-%d') } }
+  totals = Hash.new(0)
+  ev.each { |day, m| m.each { |k, v| totals[k] += v.to_i } if day >= days.first }
+  { days: days, dau: dau, wau: wau, users: d['users'].size,
+    signups: days.map { |day| joined.count { |_, j| j.strftime('%Y-%m-%d') == day } },
+    retention7: cohort.empty? ? nil : (kept * 100.0 / cohort.size).round, cohort: cohort.size,
+    rsvps: d['rsvps'].values.sum { |m| m.size }, checkins: (d['quest'] || {}).values.sum { |q| q['checkins'].to_a.size },
+    quests_done: (d['quest'] || {}).values.sum { |q| q['done'].to_h.size }, events: totals.sort_by { |_, v| -v }.to_h }
+end
+
+# ---------------------------------------------------------------------------------------------
+# Share pages: a real page per event / sight / invite with Open Graph tags (so links unfurl in Messages,
+# WhatsApp, Instagram DMs), which then opens the app on that item.
+def share_page(title, desc, image, to)
+  t = CGI.escapeHTML(title.to_s[0, 120]); s = CGI.escapeHTML(desc.to_s.gsub(/\s+/, ' ')[0, 280])
+  img = image.to_s =~ %r{\Ahttps://} ? CGI.escapeHTML(image) : '/icon-512.png'
+  <<~HTML
+    <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>#{t} · Side Quest</title>
+    <meta property="og:title" content="#{t}"><meta property="og:description" content="#{s}">
+    <meta property="og:image" content="#{img}"><meta property="og:site_name" content="Side Quest">
+    <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#070b18">
+    <style>body{background:#070b18;color:#eef1fb;font:16px system-ui;display:grid;place-items:center;min-height:90vh;margin:0;text-align:center;padding:16px}
+    a{color:#ff9a3c;font-weight:700}</style></head>
+    <body><div><img src="/logo.png" alt="" width="64" height="64"><h1 style="font-size:22px">#{t}</h1><p style="color:#9aa3b8">#{s}</p>
+    <p><a href="#{CGI.escapeHTML(to)}">Open in Side Quest →</a></p></div>
+    <script>location.replace(#{JSON.generate(to)})</script></body></html>
+  HTML
+end
+
+# ---------------------------------------------------------------------------------------------
+# Event reminders: two hours before something you're going to starts (checked every 5 minutes).
+def remind_due!
+  evs = events_list
+  return if evs.empty?
+  t = now_ms
+  soon = evs.select do |e|
+    s = (Time.parse(e['start']).to_f * 1000 rescue nil)
+    s && e['start'] !~ /T00:00(:00)?/ && s > t && s < t + 2 * 3_600_000
+  end
+  return if soon.empty?
+  store do |d|
+    done = (d['reminded'] ||= {})
+    done.delete_if { |_k, at| at < t - 3 * 86_400_000 }
+    soon.each do |e|
+      (d['rsvps']["e:#{e['uid']}"] || {}).each do |h, st|
+        next unless st == 'going' && !done["#{e['uid']}|#{h}"]
+        done["#{e['uid']}|#{h}"] = t
+        at = (Time.parse(e['start']).strftime('%-l:%M %p') rescue 'soon')
+        notify!(d, h, 'remind', ref: "e:#{e['uid']}", text: "⏰ #{e['title'][0, 70]} starts at #{at}#{e['venue'] ? " · #{e['venue']}" : ''}")
+      end
+    end
+  end
+end
+
+def v2_background
+  Thread.new do
+    loop do
+      sleep 60
+      stats_flush rescue warn("[v2] stats: #{$!.message}")
+      remind_due! rescue warn("[v2] reminders: #{$!.message}") if (Time.now.min % 5).zero?
+    end
+  end
+  at_exit { stats_flush rescue nil }
+end
+
+# ---------------------------------------------------------------------------------------------
+def mount_v2(server)
+  # Notifications: the inbox, and marking things read.
+  route(server, '/api/notifs') do |b, h|
+    store(write: b['read'] ? true : false) do |d|
+      list = ((d['notifs'] ||= {})[h] ||= [])
+      if b['read'] == 'all' then list.each { |n| n['read'] = true }
+      elsif b['read'] then list.each { |n| n['read'] = true if n['id'] == b['read'] }
+      end
+      hidden = blocked_between(d, h)
+      { notifs: list.reject { |n| hidden.include?(n['from']) }.last(60).reverse, unread: list.count { |n| !n['read'] } }
+    end
+  end
+
+  # Quests: your progress, and friends on a leaderboard (only people who haven't opted out).
+  route(server, '/api/quests', get: true) do |_b, h|
+    store(write: false) do |d|
+      board = ([h] + friends_of(d, h).to_a).select { |x| d['users'][x] && (x == h || !d['users'][x]['lb_hidden']) }
+                                           .map { |x| q = (d['quest'] || {})[x] || {}; { h: x, xp: q['xp'].to_i, level: level_of(q['xp']), badges: (q['done'] || {}).size } }
+                                           .sort_by { |r| -r[:xp] }.first(30)
+      quest_view(d, h).merge(board: board, hidden: !!d['users'][h]['lb_hidden'])
+    end
+  end
+  route(server, '/api/quests/board') do |b, h|   # show or hide me on friends' leaderboards
+    store { |d| d['users'][h]['lb_hidden'] = b['hidden'] == true; { ok: true, hidden: d['users'][h]['lb_hidden'] } }
+  end
+
+  # Check in: the phone says where; we look the place up ourselves and count it once per place per day.
+  route(server, '/api/checkin') do |b, h|
+    limit!("checkin:#{h}", 40, 86_400)
+    k = b['k'].to_s; id = b['id'].to_s
+    raise 'Nothing to check in at.' unless %w[sight place area event].include?(k) && id =~ CHECKIN_RE
+    tgt = checkin_target(k, id) or raise "That spot isn't in Side Quest."
+    if tgt[:ev]   # an event counts while it's on (an hour either side)
+      s = (Time.parse(tgt[:ev]['start']).to_f * 1000 rescue 0); e = (Time.parse(tgt[:ev]['end'].to_s).to_f * 1000 rescue s + 4 * 3_600_000)
+      raise "You can check in while it's on." unless now_ms.between?(s - 3_600_000, [e, s + 3_600_000].max + 3_600_000)
+    end
+    hr = Time.now.hour
+    tags = tgt[:tags] + (hr >= 23 || hr < 4 ? %w[late] : [])
+    zone = Places::HOTSPOTS.find { |z| km_between(z[:lat], z[:lng], tgt[:lat], tgt[:lng]) * 1000 < z[:r].to_f + 60 }
+    store do |d|
+      q = quest_rec(d, h)
+      today = Time.now.strftime('%Y-%m-%d')
+      if q['checkins'].any? { |c| c['k'] == k && c['id'] == id && Time.at(c['at'] / 1000).strftime('%Y-%m-%d') == today }
+        next { ok: true, again: true, name: tgt[:name] }.merge(quest_view(d, h))
+      end
+      before = q['done'].keys
+      q['checkins'] << { 'k' => k, 'id' => id, 'name' => tgt[:name].to_s[0, 80], 'tags' => tags, 'zone' => zone && zone[:id], 'at' => now_ms }
+      q['checkins'].shift while q['checkins'].size > 500
+      q['xp'] += CHECKIN_XP
+      quest_award!(d, h)
+      track!('checkin', h)
+      newly = (q['done'].keys - before).map { |qid| QUESTS.find { |x| x[:id] == qid } }
+      newly.each { track!('quest_done') }
+      { ok: true, name: tgt[:name], xp_gain: CHECKIN_XP + newly.sum { |x| x[:xp] }, completed: newly }.merge(quest_view(d, h))
+    end
+  end
+
+  # Saved: events, places and sights, yours only.
+  route(server, '/api/saves') do |b, h|
+    limit!("saves:#{h}", 300, 3600)
+    store(write: !!b['action']) do |d|
+      list = ((d['saves'] ||= {})[h] ||= [])
+      k, id = b['k'].to_s, b['id'].to_s
+      case b['action']
+      when 'add'
+        raise 'Bad item.' unless %w[event place sight].include?(k) && id =~ CHECKIN_RE
+        list.reject! { |x| x['k'] == k && x['id'] == id }
+        list << { 'k' => k, 'id' => id, 'name' => b['name'].to_s[0, 100], 'at' => now_ms }
+        list.shift while list.size > 200
+        track!('event_save', h) if k == 'event'
+      when 'remove' then list.reject! { |x| x['k'] == k && x['id'] == id }
+      end
+      { saves: list.reverse }
+    end
+  end
+
+  # Event discussion: anyone signed in can read; posting is screened like any other post. Replies notify the
+  # people who already talked there.
+  route(server, '/api/event/chat') do |b, h|
+    ev = b['id'].to_s[0, 40]
+    raise 'No event.' unless ev =~ /\Ae:[0-9a-f]{6,32}\z/
+    text = b['text'].to_s.strip[0, 400]
+    unless text.empty?
+      limit!("evchat:#{h}", 30, 3600)
+      flagged = !moderate(text)
+    end
+    store(write: !text.empty?) do |d|
+      th = ((d['ev_chat'] ||= {})[ev] ||= [])
+      unless text.empty?
+        th << { 'id' => "c#{SecureRandom.hex(5)}", 'u' => h, 't' => text, 'at' => now_ms, 'unreviewed' => flagged }
+        th.shift while th.size > 200
+        title = b['title'].to_s[0, 60]
+        (th.map { |m| m['u'] } + (d['rsvps'][ev] || {}).select { |_x, st| st == 'going' }.keys).uniq.first(30).each do |x|
+          notify!(d, x, 'chat', from: h, ref: ev, text: "💬 @#{h} on #{title.empty? ? 'an event you follow' : title}: #{text[0, 70]}")
+        end
+        track!('event_chat', h)
+      end
+      hidden = blocked_between(d, h)
+      { msgs: th.reject { |m| hidden.include?(m['u']) || m['removed'] }.last(80) }
+    end
+  end
+
+  # Invite a friend to an event: a DM with the link (friends only, like any DM).
+  route(server, '/api/event/invite') do |b, h|
+    limit!("evinvite:#{h}", 60, 3600)
+    ev = b['id'].to_s[0, 40]; title = b['title'].to_s[0, 80]
+    raise 'No event.' unless ev =~ /\Ae:[0-9a-f]{6,32}\z/
+    to = Array(b['to']).map(&:to_s).uniq.first(20)
+    store do |d|
+      ok = to.select { |x| d['users'][x] && friends_of(d, h).include?(x) && !blocked_between(d, h).include?(x) }
+      ok.each do |x|
+        thread = (d['dms'][dm_key(h, x)] ||= [])
+        thread << { 'f' => h, 't' => "🎟️ Come with me? #{title} → /e/#{ev.sub('e:', '')}", 'at' => now_ms, 'ev' => ev }
+        thread.shift while thread.size > 500
+        notify!(d, x, 'invite', from: h, ref: ev, text: "🎟️ @#{h} invited you to #{title}")
+      end
+      track!('event_invite', h)
+      { ok: true, sent: ok.size }
+    end
+  end
+
+  # Analytics beacons (guests too: counted, never tied to anyone).
+  route(server, '/api/t', auth: false) do |b, h, req|
+    limit!("t:#{h || client_ip(req)}", 600, 3600)
+    track!(b['e'].to_s, h)
+    { ok: true }
+  end
+  server.mount_proc('/api/admin/growth') do |req, res|
+    res['Content-Type'] = 'application/json'; res['Cache-Control'] = 'no-store'
+    if admin_ok?(req) then res.body = JSON.generate(store(write: false) { |d| growth_report(d) })
+    else res.status = 403; res.body = JSON.generate(error: 'Wrong admin token.')
+    end
+  end
+
+  # Share pages
+  server.mount_proc('/e') do |req, res|
+    uid = req.path[%r{\A/e/([0-9a-f]{6,32})\z}, 1]
+    e = uid && event_by_uid(uid)
+    res['Content-Type'] = 'text/html; charset=utf-8'
+    next (res.status = 404; res.body = share_page('Event not found', 'It may have ended.', nil, '/')) unless e
+    when_s = (Time.parse(e['start']).strftime('%a %b %-d, %-l:%M %p') rescue '')
+    res.body = share_page(e['title'], [when_s, e['venue'], e['description']].compact.join(' · '), e['image'], "/?ev=#{uid}")
+  end
+  server.mount_proc('/s') do |req, res|
+    id = req.path[%r{\A/s/([A-Za-z0-9_.-]{1,40})\z}, 1]
+    s = id && Sights.find(id)
+    res['Content-Type'] = 'text/html; charset=utf-8'
+    next (res.status = 404; res.body = share_page('Not found', '', nil, '/')) unless s
+    res.body = share_page(s['name'], s['text'] || s['what'] || 'A sight in Austin', s['photo'], "/?sight=#{id}")
+  end
+  server.mount_proc('/i') do |req, res|
+    h = req.path[%r{\A/i/([a-z0-9_]{3,20})\z}, 1]
+    known = h && store(write: false) { |d| !!d['users'][h] }
+    res['Content-Type'] = 'text/html; charset=utf-8'
+    res.body = share_page(known ? "@#{h} invited you to Side Quest" : 'Side Quest',
+                          "What's the move tonight, and who's coming? Real Austin events, friends, food, history and quests.",
+                          nil, known ? "/?ref=#{h}" : '/')
+  end
+end
