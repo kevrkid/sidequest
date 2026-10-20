@@ -3,6 +3,31 @@
 Written by Claude, 2026-10-20 (overnight session). Brief: `V2_PROMPT.md` (ChatGPT's sections 21-25 rewritten
 against the real codebase).
 
+## Update, 2026-10-20 morning: map clutter, event spots, farmers markets
+
+Asked for: a map that, like Google Maps, shows the best-known places zoomed out and more as you zoom in; pickup games
+at Lakeline showing downtown; farmers markets promoted on weekends, visible zoomed out.
+
+- **Popularity list**: `rank_popular.rb` scores every place and sight (Wikipedia readers over a year, a hand list of
+  ~150 Austin institutions, how complete the listing is; national chains and news-story articles pushed down).
+  Top places: Franklin Barbecue, Interstellar BBQ, Scholz Garten, la Barbecue, Banger's, Oilcan Harry's, Kerbey Lane.
+  Top sights: Texas State Capitol, Harry Ransom Center, Driskill, State Cemetery, Paramount, Deep Eddy, Treaty Oak.
+  The top 40 of each is in `data/popular.json` (`top_places`, `top_sights`).
+- **Decluttering**: each layer draws the best-known first and skips anything that would land on a more important pin;
+  names are placed once, never overlapping. Zoomed out shows a handful of famous spots; zooming in fills in.
+- **Event spots**: 91 of 597 events had no spot and 55 of them sat on one downtown corner. Now 63 are placed (venue,
+  park in the title, or a checked OpenStreetMap lookup) and the rest stay in lists but off the map. The Lakeline
+  pickup games are at Lakeline Park.
+- **Farmers markets**: 8 markets (SFC Downtown, SFC Sunset Valley, Barton Creek, Lakeline, Mueller, Domain, Bee Cave,
+  Hutto) with their day and hours; today's and this weekend's are big glowing baskets from all the way zoomed out.
+- **Bug fix**: ending your own live stream now tells viewers (the message was commented out; V1 still has this bug).
+- Tests: `e2e_test.py` 110/110, `e2e_v2.py` 41/41 (5 new map checks), `e2e_live.py` 14/14 (new: a self-ended stream,
+  shown to fail without the fix; run with `SQ_DEMO=0`, since demo mode pads the viewer count), `test_v2.rb` 30/30,
+  new `test_geofix.rb` 9/9, `test_webpush.rb` 6/6, `test_live.rb` 14/14, `test_google.rb` 17/17, `test_api.rb` and
+  `test_hours.rb` pass.
+- Limits: popularity is free data, not Google ratings; markets are a hand-kept list (recheck each season); 28 events
+  have no usable address ("My home", "Various Locations") and are not on the map.
+
 ## A. Backup and recovery
 
 | What | Where |
@@ -128,7 +153,7 @@ against the real codebase).
 - **No push on iPhone unless installed**: iPhone gets push only when Side Quest is added to the Home Screen (Apple's rule).
 - **No email digest**: the recap is in-app and push only. Email would need an email provider.
 - **Still in English**: some older screens (Search, Meet, Me questions, Create sheets). This is the same as V1.
-- **Events placed at the wrong spot**: the events scraper sometimes geocodes a venue wrongly (e.g. Cap City Comedy). This is a V1 issue in `~/claude/live`.
+- **Events placed at the wrong spot**: the events scraper sometimes can't place a venue. V2 now fixes these itself (`geofix.rb`, see the update above); the scraper in `~/claude/live` is unchanged.
 - **Deployment needs** (unchanged from V1): an Anthropic API key on the server, a GitHub repo, and a lawyer pass on terms and privacy.
 - **New privacy text**: Terms/Privacy should mention push notifications, check-ins and analytics before launch.
 - **Shared login cookie**: V2 shares the login cookie with V1 (same host, different port). Signing in on one can sign you out of the other.

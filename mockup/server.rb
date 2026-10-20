@@ -15,6 +15,7 @@ require 'openssl'
 require 'webrick/https'
 require 'net/http'
 require 'fileutils'
+require_relative 'geofix'
 require 'securerandom'
 require 'digest'
 require 'set'
@@ -1144,7 +1145,7 @@ def mount_app(server)
         uri = URI("#{EVENTS_API}/api/events?limit=1000&end=#{horizon}")
         r = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: 15) { |http| http.get(uri.request_uri) }
         raise "events service said #{r.code}" unless r.code == '200'
-        EVENTS_CACHE.update(at: Time.now.to_f, body: r.body)
+        EVENTS_CACHE.update(at: Time.now.to_f, body: Geofix.fix_body(r.body))   # real spots for the ones the scraper couldn't place
       end
       res.body = EVENTS_CACHE[:body]
     rescue => e
@@ -1193,6 +1194,13 @@ def mount_app(server)
     else
       res.body = '{"areas":[],"spots":[]}'
     end
+  end
+
+  # Farmers markets (data/markets.json from fetch_markets.rb), with their weekly hours worked out like a place's.
+  route(server, '/api/markets', auth: false, get: true) do |_b, _h, _req|
+    file = ENV['SQ_MARKETS_FILE'] ? File.join(ROOT, ENV['SQ_MARKETS_FILE']) : File.join(ROOT, 'data', 'markets.json')
+    d = (JSON.parse(File.read(file)) rescue { 'markets' => [] })
+    { checked: d['checked'], markets: d['markets'].map { |m| m.merge('week' => Hours.parse(m['hours'])) } }
   end
 
   # Sights & history layer: every dot (id, kind, name, lat, lng, year, has photo); the story comes per tap.

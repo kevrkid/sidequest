@@ -1,6 +1,7 @@
 # Sights & history (data/sights.json from fetch_sights.rb): Texas historical markers, National Register places,
 # Wikipedia landmarks, museums, viewpoints and public art. Loaded once and reloaded when the file changes.
 require 'json'
+require_relative 'popular'
 
 module Sights
   FILE = ENV['SQ_SIGHTS_FILE'] ? File.join(__dir__, ENV['SQ_SIGHTS_FILE']) : File.join(__dir__, 'data', 'sights.json')
@@ -47,9 +48,10 @@ module Sights
 
   def self.norm(s) s.to_s.downcase.gsub(/&/, 'and').gsub(/[^a-z0-9]+/, ' ').strip end
 
-  # For the map: just what a dot needs. The story itself comes from /api/sight per tap.
+  # For the map: just what a dot needs, and how well known it is (best first when space is short). The story itself
+  # comes from /api/sight per tap.
   def self.for_map
-    list.map { |s| [s['id'], s['kind'], s['name'], s['lat'], s['lng'], s['year'] || s['listed'], s['photo'] ? 1 : 0] }
+    list.map { |s| [s['id'], s['kind'], s['name'], s['lat'], s['lng'], s['year'] || s['listed'], s['photo'] ? 1 : 0, Popular[s['id']]] }
   end
 
   # Search by name (with the aliases above), else nearest. Rich entries (a story to tell) come first.

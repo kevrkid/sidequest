@@ -2,6 +2,7 @@
 # "open now" worked out in Austin time. Searched on the server so Scout and the app get small lists.
 require 'json'
 require_relative 'hours'
+require_relative 'popular'
 
 module Places
   FILE = ENV['SQ_PLACES_FILE'] || File.join(__dir__, 'data', 'places.json')
@@ -136,7 +137,7 @@ module Places
   # Everything, compact, for the map dots (the app works out open/closed itself from `w`).
   def for_map
     d = data
-    { fetched: d[:fetched], places: d[:list].map { |p| [p['id'], p['name'], p['kind'], p['lat'], p['lng'], p['week']] } }
+    { fetched: d[:fetched], places: d[:list].map { |p| [p['id'], p['name'], p['kind'], p['lat'], p['lng'], p['week'], Popular[p['id']]] } }
   end
 
   def hotspots

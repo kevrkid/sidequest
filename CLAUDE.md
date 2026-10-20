@@ -238,6 +238,26 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Live safety on the server**: `/api/screen` signs a 10-minute pass for the exact request text; the relay refuses
   requests without one (when moderation is on) and applies the hard rules itself (`LIVE_HARD_NO`); stream titles show
   only after a check (`live_title`); accepted visit requests hide the place while the location delay is on.
+- **Map decluttering** (2026-10-20, after the V2 night): Google-Maps-style. `rank_popular.rb` → `data/popular.json`
+  (0-100 per place / sight: Wikipedia readers over 12 months, a hand list of Austin institutions, listing
+  completeness; chains and news-story "sights" pushed down), served as the last element of `/api/places/map` and
+  `/api/sights` rows (`popular.rb`; unranked counts as 40 on the client). Client: `spaced(items, px, layerKey)` keeps
+  the best-known first and skips anything within px of a kept pin, seeded with the pins of more important layers
+  (`DC_ORDER`: markets, events, night, sights, food, outdoors); events folded away show `+n` on the one kept.
+  Names go through one placer (`setLabels(key, pins, names)` → `placeLabels`): best first, never overlapping, never on
+  other pins (food dots excepted), about one per 9,000 px², with a `short` fallback. `over` names (hot spots, today's
+  markets) may sit on ordinary pins but never on people's (flares, stories, live). One `moveend` handler
+  (`redrawMapLayers`) redraws the layers in priority order. The old permanent tooltips (`sglabel`, `odlabel`,
+  `hotlabel` as tooltips) are gone; hot spot names keep the `hotlabel` class.
+- **Event spots** (`geofix.rb`): events the scraper couldn't place (all dropped on downtown) get their spot from the
+  venue / a park named in the title (our parks, sights, places; chains by exact name only), then OpenStreetMap's
+  geocoder (1/s, answers must match house number + street or share a real word; cached in `data/geofix.json`).
+  Still unknown → `geo_none`: the client drops lat/lng, so no pin, no distance, no Map button.
+- **Farmers markets** (`fetch_markets.rb` → `data/markets.json`, `/api/markets`): a hand-kept list checked against
+  each market's listing (Oct 2026). Today's / this weekend's markets show from zoom 9 with big glowing 🧺 pins and
+  their hours (`fmSoon`); otherwise ordinary pins from zoom 13. Layer key `markets` under Food.
+- Fixed a V1 bug carried into V2: `endLive` had its `bc({t:'end'})` behind a `//`, so viewers were never told a stream
+  ended (V1 still has it). `e2e_live.py` needs `SQ_DEMO=0` (demo mode pads the viewer count).
 - **Static files**: ETag + 304 for repeat visits, gzip for text over 1 KB (`GZ_CACHE`; Caddy also compresses in production).
 - **Admin**: Growth panel, flagged event/group chat under "Needs a human look", chat reports with author + text.
 - Run V2: `cd mockup && ./start_v2.sh` (http://localhost:8797, phones https://<Wi-Fi IP>:8444; `--keys` adds the paid

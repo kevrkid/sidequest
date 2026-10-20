@@ -69,6 +69,20 @@
   .sgpin.art{border-radius:50%;background:#1f1630;border-color:#b57bff;box-shadow:none}
   .sglabel{background:#0d1226ee;color:#f3e2a9;border:1px solid #c9a22766;font-size:11px;padding:2px 6px;box-shadow:none}
   .sglabel::before{display:none}
+  .mlabel{display:inline-block;white-space:nowrap;font:600 11px Inter,system-ui,sans-serif;line-height:16px;padding:0 6px;border-radius:6px;color:#e8ecff;
+    background:#0d1226d9;border:1px solid #ffffff1f;pointer-events:auto;cursor:pointer;text-shadow:0 1px 2px #000}
+  .mlabel.sight{color:#f3e2a9;border-color:#c9a22755} .mlabel.sight.markers{color:#d9c39a;border-color:#8a6d3b55} .mlabel.sight.art{color:#dcc6ff;border-color:#b57bff55}
+  .mlabel.food{color:#c9f7e1;border-color:#3ddc9744} .mlabel.food.closed,.mlabel.food.unknown{color:#aab2d4;border-color:#ffffff14}
+  .mlabel.night{color:#f4c6ff;border-color:#b57bff55} .mlabel.ev{color:#ffe7a8;border-color:#ffd16655}
+  .mlabel.od{background:none;border:0;color:#bff5dc;font-weight:700;text-shadow:0 1px 3px #000,0 0 6px #000} .mlabel.od.water{color:#bfe9ff}
+  .mlabel.hot{border-radius:99px;padding:0 8px;color:#ffd2b0;border-color:#ff7a1888;box-shadow:0 0 14px #ff7a1855;font-weight:700}
+  .mlabel.hot.quiet{color:#9aa3c7;border-color:#ffffff22;box-shadow:none;opacity:.8}
+  .fmpin{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;font-size:14px;background:#1d2a12;border:1.5px solid #9bd35a}
+  .fmpin.soon,.fmpin.open{width:36px;height:36px;font-size:20px;border-width:2.5px;box-shadow:0 0 0 4px #9bd35a33,0 0 18px #9bd35a99}
+  .fmpin.open{animation:fmglow 2.4s ease-in-out infinite} @keyframes fmglow{50%{box-shadow:0 0 0 8px #9bd35a22,0 0 26px #9bd35acc}}
+  .mlabel.market{color:#e3f7c8;border-color:#9bd35a66} .mlabel.market.soon,.mlabel.market.open{font-weight:700;border-color:#9bd35a;background:#16220ee6}
+  .pin.ev{position:relative} .pin .more{position:absolute;right:-9px;top:-9px;transform:rotate(45deg);min-width:17px;height:17px;border-radius:9px;background:#ffd166;color:#1a1036;
+    font:800 10px/17px Inter,system-ui,sans-serif;text-align:center;padding:0 3px}
   .sgphoto{height:130px;margin:-2px 0 8px;border-radius:10px;background:#141a33 center/cover no-repeat}
   .sgtext{margin:6px 0;font-size:13px;line-height:1.45;max-height:150px;overflow:auto}
   .sgtext.open{max-height:260px}
@@ -1469,7 +1483,8 @@ const EV = {list:[], byId:{}, err:'', loaded:false};
 async function loadEvents(){
   try{ const j=await (await fetch('/api/events')).json(); if(j.error) throw new Error(j.error);
     EV.list=j.events.map(e=>{ const ts=Date.parse(e.start);
-      return {...e, id:'e:'+e.uid, ts, te:e.end?Date.parse(e.end):ts+3*36e5, cat:CATS[e.category]?e.category:'other', tba:/T00:00(:00)?/.test(e.start)}; });
+      return {...e, ...(e.geo_none?{lat:null,lng:null}:{}),   // no real spot (just "Austin"): no pin, no distance, no Map button
+        id:'e:'+e.uid, ts, te:e.end?Date.parse(e.end):ts+3*36e5, cat:CATS[e.category]?e.category:'other', tba:/T00:00(:00)?/.test(e.start)}; });
     EV.byId=Object.fromEntries(EV.list.map(e=>[e.id,e])); EV.err=''; seedStoryEvent();
   }catch(e){ EV.err=e.message; }
   EV.loaded=true; renderSocial();
@@ -1689,6 +1704,7 @@ function renderFeedSheet(){
 }
 function focusOnMap(id){
   tab('map'); map?.closePopup(); const e=EV.byId[id], p=!e&&allPings().find(x=>x.id===id);   // don't leave an older popup in the way
+  if(e){ DC.keep=id; if(markers[id]) renderEventPins(); }   // never folded into another pin's +n
   if(e&&!markers[id]){ mapFilter='all'; S.mapL.events=true; S.mapWhen='week'; if(!(!S.mapCats.length||S.mapCats.includes(e.cat))) S.mapCats=[]; save(); renderMapChips(); renderMap(); }
   setTimeout(()=>{ const ll=e?[e.lat,e.lng]:p&&pos(p); if(ll) map.setView(ll,15); markers[id]?.openPopup(); },80);
 }
@@ -1698,7 +1714,7 @@ S.foodOpen ??= true;
 S.mapL ??= {events:true, night:true, food:S.mapFood??true, live:true, posts:true, stories:false, zones:true};   // map layers, each on/off
 S.mapL.outdoors ??= true;
 for(const [k,v] of Object.entries({clubs:S.mapL.night, bars:S.mapL.night, parks:S.mapL.outdoors, water:S.mapL.outdoors, trails:S.mapL.outdoors,
-  spots:S.mapL.outdoors, openonly:false, landmarks:true, markers:true, art:false})) S.mapL[k] ??= v;   // sights: big ones zoomed out, markers up close
+  spots:S.mapL.outdoors, openonly:false, landmarks:true, markers:true, art:false, markets:true})) S.mapL[k] ??= v;   // sights: big ones zoomed out, markers up close
 S.mapWhen ??= 'tonight'; S.mapCats ??= [];   // events shown: tonight / weekend / week, and which types ([] = all)
 const FOOD_TILES = [['late','🌙','Late-night eats'],['early','🌅','Early morning'],['bars','🍸','Bars'],['clubs','🪩','Clubs'],['trucks','🚚','Food trucks'],['coffee','☕','Coffee'],
   ['tacos','🌮','Tacos'],['bbq','🍖','BBQ'],['pizza','🍕','Pizza'],['burgers','🍔','Burgers'],['asian','🍜','Asian'],['sweets','🍦','Sweets'],['all','🍽️','Everything']];
@@ -1759,26 +1775,139 @@ async function openAfter(q){
 }
 async function loadPlacesMap(){
   if(PL.all||PL.loading) return; PL.loading=true;
-  try{ const j=await (await fetch('/api/places/map')).json(); PL.all=j.places; PL.fetched=j.fetched; PL.all.forEach(p=>PL.byId[p[0]]=p); }catch(e){}
+  try{ const j=await (await fetch('/api/places/map')).json(); PL.all=j.places.map(p=>(p[6]||=40,p)).sort((a,b)=>b[6]-a[6]); /* unranked (no popular.json): average */ PL.fetched=j.fetched; PL.all.forEach(p=>PL.byId[p[0]]=p); }catch(e){}
   PL.loading=false; renderPlacesLayer(); renderNightLayer();
 }
-// Food & drink dots: green glowing when open, amber when opening soon, dim grey when closed or unknown.
+// Map decluttering, the way Google Maps does it: every layer draws its best-known things first (popular.json, see
+// rank_popular.rb) and skips any that would land on one already drawn, so zooming in (more room between them)
+// reveals more. Names go through one shared placer: best first, never on top of another name or someone else's pin,
+// and only as many as the screen has room for.
+const DC={labels:{}, pins:{}, layer:null, raf:0, keep:null};
+const DC_ORDER=['markets','events','night','sights','food','outdoors'];   // who wins a spot: earlier layers' pins push later ones out
+function spaced(items, px, key, cap=1e9){   // items best first, each with .ll; keeps the ones at least px apart on screen
+  const out=[], grid={}, put=(p,it)=>(grid[Math.floor(p.x/px)+','+Math.floor(p.y/px)] ||= []).push({x:p.x,y:p.y,it});
+  const seeds=[];   // the more important layers' pins (not the tiny food dots): nothing lands on them
+  if(px>0) DC_ORDER.slice(0,DC_ORDER.indexOf(key)).filter(k=>k!=='food').forEach(k=>(DC.pins[k]||[]).forEach(q=>{ const p=map.latLngToContainerPoint(q.ll).add([0,q.dy||0]); seeds.push([p.x,p.y,q.r+px/3]); }));
+  for(const it of items){
+    const p=map.latLngToContainerPoint(it.ll), cx=Math.floor(p.x/px), cy=Math.floor(p.y/px); let near=null;
+    if(px>0) for(let dx=-1;dx<=1&&!near;dx++) for(let dy=-1;dy<=1&&!near;dy++)
+      near=(grid[(cx+dx)+','+(cy+dy)]||[]).find(q=>Math.abs(q.x-p.x)<px&&Math.abs(q.y-p.y)<px);
+    if(near&&it.id!==DC.keep){ if(near.it.rank!=null) near.it.more=(near.it.more||0)+1; continue; }   // a kept one of ours stands in for it (+n)
+    if(it.id!==DC.keep&&seeds.some(([x,y,d])=>Math.abs(x-p.x)<d&&Math.abs(y-p.y)<d)) continue;
+    put(p,it); it.more=0; out.push(it); if(out.length>=cap) break;
+  }
+  return out;
+}
+// A layer hands over its pins (to keep names off them) and the names it would like shown, then asks for a redraw.
+function setLabels(key, pins, labels){ DC.pins[key]=pins; DC.labels[key]=labels; cancelAnimationFrame(DC.raf); DC.raf=requestAnimationFrame(placeLabels); }
+const labelW = (t) => { const c=DC.ctx ||= document.createElement('canvas').getContext('2d'); c.font='600 11px Inter,system-ui,sans-serif'; return Math.ceil(c.measureText(t).width)+14; };
+// After every pan or zoom, the layers redraw in DC_ORDER so each one knows where the more important pins went.
+function redrawMapLayers(){ if(!map||$('#v-map').hidden) return; renderMarkets(); renderEventPins(); renderNightLayer(); renderSights(); renderPlacesLayer(); if(S.mapL.outdoors) renderOutdoors();
+  cancelAnimationFrame(DC.raf); DC.raf=requestAnimationFrame(placeLabels); }
+function placeLabels(){
+  if(!map) return; if(!DC.layer){ map.createPane('labels').style.zIndex=580; map.createPane('toplabels').style.zIndex=640; DC.layer=L.layerGroup().addTo(map); }
+  DC.layer.clearLayers(); if($('#v-map').hidden) return;
+  const sz=map.getSize(), placed=[], ov=(a,b)=>a[0]<b[2]&&b[0]<a[2]&&a[1]<b[3]&&b[1]<a[3];
+  // names may cover the little food dots, never the other pins
+  const blocks=Object.entries(DC.pins).filter(([k])=>k!=='food').flatMap(([k,v])=>v.map(p=>({...p,soc:k==='social'||k==='live'}))).map(p=>{
+    const q=map.latLngToContainerPoint(p.ll), y=q.y+(p.dy||0), rx=p.rx||p.r; return [q.x-rx,y-p.r,q.x+rx,y+p.r,p.id,p.soc]; });
+  const max=Math.max(6,Math.round(sz.x*sz.y/9000));   // about 30 names on a phone, more on a big screen
+  for(const c of Object.values(DC.labels).flat().sort((a,b)=>b.score-a.score)){
+    if(placed.length>=max) break;
+    const q=map.latLngToContainerPoint(c.ll).add([0,c.dy||0]), r=c.r||0, h=18, cap=c.max||30;
+    const fit=t=>{   // the first free spot for this text, or null
+      const text=t.length>cap?t.slice(0,cap-2)+'…':t, w=labelW(text);
+      const ring=d=>[[q.x+r+d,q.y-h/2],[q.x-r-d-w,q.y-h/2],[q.x-w/2,q.y+r+d],[q.x-w/2,q.y-r-h-d]];   // right, left, below, above
+      const cx=x0=>Math.min(Math.max(x0-w/2,4),sz.x-w-4);
+      // a must-see name may step a little further out, never so far it looks like someone else's
+      const spots=c.center?[q].concat((c.alts||[]).map(a=>map.latLngToContainerPoint(a))).map(p=>[cx(p.x),p.y-h/2]):c.over?ring(2).concat(ring(12)):ring(2);
+      for(const [x,y] of spots){
+        const box=[x,y,x+w,y+h];
+        if(x<2||y<52||x+w>sz.x-2||y+h>sz.y-24) continue;   // off screen or under the layer chips
+        if(placed.some(o=>ov(o,box))||blocks.some(b=>b[4]!==c.id&&(!c.over||b[5])&&ov(b,box))) continue;   // even "over" names keep off people's pins
+        return {x,y,w,box,text};
+      }
+      return null;
+    };
+    const f=fit(c.text)||(c.short&&fit(c.short)); if(!f) continue;   // no room for the full name: the short one, else none
+    placed.push(f.box);
+    const m=L.marker(map.containerPointToLatLng([f.x,f.y]),{pane:c.over?'toplabels':'labels',keyboard:false,interactive:!!c.go,   // must-see names sit over ordinary pins
+      icon:L.divIcon({className:'',html:`<div class="mlabel ${c.cls||''}">${esc(f.text)}</div>`,iconSize:[f.w,h],iconAnchor:[0,0]})}).addTo(DC.layer);
+    if(c.go) m.on('click',c.go);
+  }
+}
+// Food & drink dots: green when open, amber when opening soon, dim grey when closed or unknown. The best-known open
+// ones glow, and get their names as you zoom in.
 function renderPlacesLayer(){
   if(!map) return;
-  if(!PL.layer){ PL.canv=L.canvas({padding:.3}); PL.layer=L.layerGroup().addTo(map); map.on('zoomend moveend',()=>renderPlacesLayer()); }
+  if(!PL.layer){ PL.canv=L.canvas({padding:.3}); PL.layer=L.layerGroup().addTo(map); }
   PL.layer.clearLayers(); PL.cores={}; clearInterval(PL.pulseT);
-  if(!S.mapL.food||!PL.all||map.getZoom()<13) return;
-  const b=map.getBounds().pad(.2), halos=[];
-  PL.all.forEach(([id,name,kind,lat,lng,w])=>{
+  const z=map.getZoom();
+  if(!S.mapL.food||!PL.all||z<13) return setLabels('food',[],[]);
+  const b=map.getBounds().pad(.2), halos=[], cand=[];
+  PL.all.forEach(([id,name,kind,lat,lng,w,pop])=>{   // already best-known first
     if(NIGHT_KINDS.includes(kind)||!b.contains([lat,lng])) return; const st=placeState(w);   // bars and clubs are the Nightlife layer
-    if(st!=='open'&&st!=='soon'&&(map.getZoom()<15||S.mapL.openonly)) return;   // closed / unknown-hours spots only up close (never with Open now only)
-    if(st==='open') halos.push(L.circleMarker([lat,lng],{renderer:PL.canv,interactive:false,radius:13,stroke:false,fillColor:'#3ddc97',fillOpacity:.25}).addTo(PL.layer));
-    const core=L.circleMarker([lat,lng],{renderer:PL.canv, radius:st==='open'?6:st==='soon'?5:3.5, weight:st==='open'?2:0,
-      color:'#eafff4', fillColor:st==='open'?'#3ddc97':st==='soon'?'#ffb800':'#7a83a8', fillOpacity:st==='open'?1:st==='soon'?.9:.55}).addTo(PL.layer);
-    core.on('click',()=>placePopup(id,[lat,lng])); PL.cores[id]=core;
+    if(st!=='open'&&st!=='soon'&&(z<15||S.mapL.openonly)) return;   // closed / unknown-hours spots only up close (never with Open now only)
+    cand.push({id,name,ll:[lat,lng],st,pop:pop||0,rank:(pop||0)+(st==='open'?15:st==='soon'?6:-25)});
   });
-  let k=0;   // a slow breathing glow on the open spots in view
+  cand.sort((a,b)=>b.rank-a.rank);
+  const keep=spaced(cand,{13:22,14:17,15:13,16:10,17:7}[z]??0,'food'), names=[];
+  keep.forEach(({id,name,ll,st,pop})=>{
+    const big=st==='open'&&(pop>=45||z>=17);
+    if(big) halos.push(L.circleMarker(ll,{renderer:PL.canv,interactive:false,radius:13,stroke:false,fillColor:'#3ddc97',fillOpacity:.25}).addTo(PL.layer));
+    const core=L.circleMarker(ll,{renderer:PL.canv, radius:st==='open'?(big?6:5):st==='soon'?5:3.5, weight:st==='open'?2:0,
+      color:'#eafff4', fillColor:st==='open'?'#3ddc97':st==='soon'?'#ffb800':'#7a83a8', fillOpacity:st==='open'?1:st==='soon'?.9:.55}).addTo(PL.layer);
+    core.on('click',()=>placePopup(id,ll)); PL.cores[id]=core;
+    if(z>=15&&pop>=({15:55,16:38}[z]??0)) names.push({id,ll,r:7,text:name,score:pop+(st==='open'?5:0),cls:'food '+st,go:()=>placePopup(id,ll)});
+  });
+  setLabels('food',keep.map(k=>({id:k.id,ll:k.ll,r:7})),names);
+  let k=0;   // a slow breathing glow on the popular open spots in view
   if(halos.length&&halos.length<600) PL.pulseT=setInterval(()=>{ if($('#v-map').hidden) return; k=(k+1)%40; const r=12+Math.sin(k/40*Math.PI*2)*4; halos.forEach(h=>h.setRadius(r)); },120);
+}
+// Farmers markets (data/markets.json): the ones happening today or this weekend stand out from all the way zoomed
+// out, with their hours on the label; the rest of the week they're ordinary pins up close.
+const FM={list:null, layer:null, loading:false};
+const DAYS_S=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function fmWhen(w){   // "Sat 9 AM–1 PM", from the parsed week [[startMin, endMin], ...] (Monday 0:00 = 0)
+  const c=m=>{ const h=Math.floor(m%1440/60), mi=m%60; return `${h%12||12}${mi?':'+String(mi).padStart(2,'0'):''} ${h<12?'AM':'PM'}`; };
+  return (w||[]).map(([a,b])=>`${T(DAYS_S[Math.floor(a/1440)%7])} ${c(a)}–${c(b)}`).join(', ');
+}
+function fmSoon(m){   // open now, or opening within a day and a half; on Fri–Sun, any weekend market
+  const now=austinMow(), W=10080, w=m.week||[];
+  if(placeState(w)==='open') return 'open';
+  const next=Math.min(...w.map(([a])=>(a-now+W)%W));
+  return next<=36*60||now>=4*1440&&w.some(([a])=>a>=5*1440) ? 'soon' : '';
+}
+async function renderMarkets(){
+  if(!map) return; if(!FM.layer) FM.layer=L.layerGroup().addTo(map);
+  FM.layer.clearLayers(); if(!S.mapL.markets) return setLabels('markets',[],[]);
+  if(!FM.list){ if(FM.loading) return; FM.loading=true;
+    try{ FM.list=(await (await fetch('/api/markets')).json()).markets||[]; }catch(e){ FM.list=[]; } FM.loading=false;
+    if(!$('#v-map').hidden) mapHint(true); }
+  const z=map.getZoom(), b=map.getBounds().pad(.2), pins=[], names=[];
+  FM.list.forEach(m=>{
+    const ll=[m.lat,m.lng], hot=fmSoon(m); if(!b.contains(ll)||(!hot&&z<13)) return;
+    const go=()=>marketPopup(m);
+    L.marker(ll,{zIndexOffset:hot?900:0,icon:L.divIcon({className:'',html:`<div class="fmpin ${hot}" title="${esc(m.name)}">🧺</div>`,iconSize:hot?[36,36]:[26,26]})})
+      .on('click',go).addTo(FM.layer);
+    pins.push({id:m.id,ll,r:hot?18:13});
+    names.push({id:m.id,ll,r:hot?18:13,over:!!hot,max:hot?48:30,score:hot?400:20,cls:'market '+hot,go,
+      text:hot?`🧺 ${m.name.replace(/^(Texas|SFC) /,'').replace(/Farmers'/,'Farmers')} · ${hot==='open'?T('open now'):fmWhen(m.week)}`:m.name,
+      short:hot?`🧺 ${hot==='open'?T('open now'):fmWhen(m.week)}`:null});
+  });
+  setLabels('markets',pins,names);
+}
+const placeStateAny = () => (FM.list||[]).some(m=>placeState(m.week)==='open');
+function marketPopup(m){
+  const st=placeState(m.week);
+  L.popup({maxWidth:Math.min(300,innerWidth-64),autoPanPadding:[14,70]}).setLatLng([m.lat,m.lng]).setContent(`<b>🧺 ${esc(m.name)}</b>
+    <div class="meta">${T('Farmers market')} · ${esc(fmWhen(m.week))}</div>
+    <div style="margin:6px 0"><span class="pst ${st==='open'?'open':st==='soon'?'soon':'closed'}">${st==='open'?T('Open now'):st==='soon'?T('Opens soon'):T('Closed now')}</span></div>
+    ${m.addr?`<div class="meta">${esc(m.addr)}</div>`:''}
+    <div class="btns" style="margin-top:6px">${/^https:\/\//.test(m.web||'')?`<a class="btn sm" href="${esc(m.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
+      <a class="btn sm" href="${mapsUrl(m.lat,m.lng)}" target="_blank" rel="noopener">${T('Directions')} ↗</a>
+      ${checkBtn('place',m.id,m.lat,m.lng)}<button class="btn sm ${isSaved('place',m.id)?'blue':''}" data-v2save="place|${esc(m.id)}|${esc(m.name.slice(0,90))}">🔖</button></div>
+    <div class="meta" style="font-size:10px;margin-top:6px">${T('Markets change with the seasons: check their site before you go.')}</div>`).openOn(map);
 }
 async function placePopup(id, ll){
   const pop=L.popup({offset:[0,-4]}).setLatLng(ll).setContent('<p class="skel">…</p>').openOn(map);
@@ -1864,12 +1993,11 @@ const OD_ACTS={biking:'🚲 Biking', hiking:'🥾 Hiking', nature:'🌿 Nature',
 const OD_SPOT={rental:['🛶','Kayak / paddleboard rental'], launch:['⚓','Boat ramp / put-in'], fishing:['🎣','Fishing spot'], trailhead:['🥾','Trailhead']};
 async function renderOutdoors(){
   if(!map) return;
-  if(!OD.layer){ map.createPane('outdoors').style.zIndex=350; OD.layer=L.layerGroup().addTo(map);
-    map.on('zoomend moveend',()=>{ if(!$('#v-map').hidden&&S.mapL.outdoors) renderOutdoors(); }); }
-  syncMapL(); OD.layer.clearLayers(); if(!S.mapL.outdoors) return;
+  if(!OD.layer){ map.createPane('outdoors').style.zIndex=350; OD.layer=L.layerGroup().addTo(map); }
+  syncMapL(); OD.layer.clearLayers(); if(!S.mapL.outdoors) return setLabels('outdoors',[],[]);
   if(!OD.data){ if(OD.loading) return; OD.loading=true;
     try{ OD.data=await (await fetch('/api/outdoors')).json(); }catch(e){ OD.data={areas:[],spots:[]}; } OD.loading=false; }
-  const z=map.getZoom(), b=map.getBounds().pad(.3);
+  const z=map.getZoom(), b=map.getBounds().pad(.3), names=[], pins=[];
   OD.data.areas.forEach(a=>{
     if(!S.mapL[{green:'parks',water:'water',river:'water',trail:'trails'}[a.kind]]) return;
     if(a.kind==='trail'){   // hike & bike trails: dashed, yellow when bikes are welcome, orange for foot only
@@ -1891,13 +2019,15 @@ async function renderOutdoors(){
     const water=a.kind==='water', col=water?'#2ec5ff':'#3ddc97';
     const poly=L.polygon(a.rings,{pane:'outdoors',color:col,weight:1.6,opacity:.75,fillColor:col,fillOpacity:water?.16:.12,smoothFactor:1.5,
       className:water?'od-water':'od-green'}).on('click',e=>areaPopup(a,e.latlng)).addTo(OD.layer);
-    if(z>=14&&a.km2>=.4) poly.bindTooltip(`${water?'💧':'🌲'} ${esc(a.name)}`,{permanent:true,direction:'center',className:'odlabel'+(water?' water':'')});
+    if(a.name&&(z>=14&&a.km2>=.4||z>=12&&a.km2>=3||z>=15)) names.push({id:a.id,ll:a.c,center:true,text:`${water?'💧':'🌲'} ${a.name}`,score:30+Math.min(40,a.km2*8),cls:'od'+(water?' water':''),go:()=>areaPopup(a,L.latLng(a.c))});
   });
-  if(z>=13&&S.mapL.spots) OD.data.spots.forEach(sp=>{ if(!b.contains([sp.lat,sp.lng])) return; const [e,l]=OD_SPOT[sp.kind]||['📍',''];
+  if(z>=13&&S.mapL.spots) spaced(OD.data.spots.filter(sp=>b.contains([sp.lat,sp.lng])).map(sp=>({sp,ll:[sp.lat,sp.lng]})),z>=17?0:28,'outdoors').forEach(({sp})=>{ const [e,l]=OD_SPOT[sp.kind]||['📍',''];
+    pins.push({id:'sp'+sp.lat+sp.lng,ll:[sp.lat,sp.lng],r:12});
     L.marker([sp.lat,sp.lng],{icon:L.divIcon({className:'',html:`<div class="opin ${sp.kind}" title="${esc(sp.name||l)}">${e}</div>`,iconSize:[24,24]})})
       .on('click',()=>L.popup({offset:[0,-4]}).setLatLng([sp.lat,sp.lng]).setContent(`<b>${e} ${esc(sp.name||l)}</b><div class="meta">${esc(l)}</div>
         <div class="btns" style="margin-top:6px">${/^https?:/.test(sp.web||'')?`<a class="btn sm" href="${esc(sp.web)}" target="_blank" rel="noopener">Website ↗</a>`:''}
         <a class="btn sm" href="${mapsUrl(sp.lat,sp.lng)}" target="_blank" rel="noopener">Directions ↗</a></div>`).openOn(map)).addTo(OD.layer); });
+  setLabels('outdoors',pins,names);
 }
 function areaPopup(a, ll){
   const trail=a.kind==='trail', water=a.kind==='water'||a.kind==='river', river=a.kind==='river'||trail, d=(sp,p)=>Math.hypot((sp.lat-p[0])*110.6,(sp.lng-p[1])*96);
@@ -1920,25 +2050,31 @@ const SG_KIND={marker:['🪧','Historical marker'], landmark:['🏛️','Landmar
 const sgLayer = k => k==='marker'?'markers':k==='art'||k==='view'?'art':'landmarks';
 async function loadSights(){
   if(SG.data||SG.loading) return; SG.loading=true;
-  try{ SG.data=(await (await fetch('/api/sights')).json()).sights||[]; SG.data.forEach(x=>SG.byId[x[0]]=x); }catch(e){ SG.data=null; }
+  try{ SG.data=((await (await fetch('/api/sights')).json()).sights||[]).map(x=>(x[7]||=40,x)).sort((a,b)=>b[7]-a[7]); SG.data.forEach(x=>SG.byId[x[0]]=x); }catch(e){ SG.data=null; }
   SG.loading=false; renderSights();
 }
 function renderSights(){
   if(!map) return;
-  if(!SG.layer){ SG.layer=L.layerGroup().addTo(map); map.on('zoomend moveend',()=>{ if(!$('#v-map').hidden) renderSights(); }); }
-  SG.layer.clearLayers(); if(!S.mapL.landmarks&&!S.mapL.markers&&!S.mapL.art) return;
+  if(!SG.layer) SG.layer=L.layerGroup().addTo(map);
+  SG.layer.clearLayers(); if(!S.mapL.landmarks&&!S.mapL.markers&&!S.mapL.art) return setLabels('sights',[],[]);
   if(!SG.data) return loadSights();
-  const z=map.getZoom(), b=map.getBounds().pad(.15); let n=0;
-  // zoomed out: only the big names (a photo or a museum); markers and art from street level, so the map stays readable
-  for(const [id,kind,name,lat,lng,year,photo] of SG.data){
+  const z=map.getZoom(), b=map.getBounds().pad(.15), cand=[];
+  // zoomed out: only the famous ones; markers and art from street level; the rest fill in as there's room
+  const need={landmarks:{11:60,12:52,13:45,14:35,15:25,16:18}, art:{14:45,15:32,16:22}, markers:{15:32,16:22}};
+  for(const [id,kind,name,lat,lng,,,pop=0] of SG.data){   // already best-known first
     const lay=sgLayer(kind); if(!S.mapL[lay]||!b.contains([lat,lng])) continue;
-    if(lay==='markers'&&z<15||lay==='art'&&z<14||lay==='landmarks'&&(z<12||z<14&&!photo&&kind!=='museum')) continue;
-    if(++n>220) break;
-    const [e]=SG_KIND[kind]||SG_KIND.sight;
-    L.marker([lat,lng],{icon:L.divIcon({className:'',html:`<div class="sgpin ${lay}" title="${esc(name)}">${e}</div>`,iconSize:[26,26]}),zIndexOffset:-100})
-      .on('click',()=>sightPopup(id)).addTo(SG.layer)
-      .bindTooltip(esc(name.length>34?name.slice(0,32)+'…':name),{direction:'top',offset:[0,-12],className:'sglabel',permanent:z>=16&&lay==='landmarks'});
+    const min=z>=17?0:need[lay][z]??(z<({landmarks:11,art:14,markers:15}[lay])?Infinity:0); if(pop<min) continue;
+    cand.push({id,kind,name,lay,pop,ll:[lat,lng]});
   }
+  const keep=spaced(cand,z>=18?24:z>=17?32:42,'sights',120), names=[];
+  keep.forEach(({id,kind,name,lay,pop,ll})=>{
+    const [e]=SG_KIND[kind]||SG_KIND.sight;
+    L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="sgpin ${lay}" title="${esc(name)}">${e}</div>`,iconSize:[26,26]}),zIndexOffset:-100})
+      .on('click',()=>sightPopup(id)).addTo(SG.layer);
+    const sc=pop-(lay==='markers'?15:0);
+    if(z>=13&&sc>=({13:60,14:45,15:30,16:15}[z]??0)) names.push({id,ll,r:14,text:name,score:sc,cls:'sight '+lay,go:()=>sightPopup(id)});
+  });
+  setLabels('sights',keep.map(k=>({id:k.id,ll:k.ll,r:14})),names);
 }
 async function sightPopup(id){
   track('sight_open');
@@ -1984,26 +2120,33 @@ const NIGHT_KINDS=['club','bar','pub','beer garden'];
 const NL={layer:null, g:{}, cells:new Set(), busy:false};
 function renderNightLayer(){
   if(!map) return;
-  if(!NL.layer){ NL.layer=L.layerGroup().addTo(map); map.on('moveend',()=>{ if(!$('#v-map').hidden) renderNightLayer(); }); }
-  NL.layer.clearLayers(); if(!S.mapL.clubs&&!S.mapL.bars) return;
-  const z=map.getZoom(), b=map.getBounds().pad(.15), osmClubs=new Set();
+  if(!NL.layer) NL.layer=L.layerGroup().addTo(map);
+  NL.layer.clearLayers(); if(!S.mapL.clubs&&!S.mapL.bars) return setLabels('night',[],[]);
+  const z=map.getZoom(), b=map.getBounds().pad(.15), osmClubs=new Set(), bars=[], pins=[], names=[];
   const pin=(ll,cls,emoji,title,onClick)=>L.marker(ll,{zIndexOffset:cls.includes('club')?400:100,
     icon:L.divIcon({className:'',html:`<div class="npin ${cls}" title="${esc(title)}">${emoji}</div>`,iconSize:cls.includes('club')?[30,30]:[22,22]})}).on('click',onClick).addTo(NL.layer);
   // Clubs from both sources; ones that would overlap on screen merge into one bubble (tap to zoom in).
   const clubs=[];
-  if(z>=11) (PL.all||[]).forEach(([id,name,kind,lat,lng,w])=>{
+  if(z>=11) (PL.all||[]).forEach(([id,name,kind,lat,lng,w,pop=0])=>{
     if(!NIGHT_KINDS.includes(kind)||!b.contains([lat,lng])) return;
-    if(kind==='club'){ if(!S.mapL.clubs) return; osmClubs.add(id); clubs.push({ll:[lat,lng],cls:'club '+placeState(w),name,go:()=>placePopup(id,[lat,lng])}); return; }
-    if(z>=16&&S.mapL.bars) pin([lat,lng],'bar '+placeState(w),'🍸',name,()=>placePopup(id,[lat,lng]));   // bars only at street level: there are hundreds
+    if(kind==='club'){ if(!S.mapL.clubs) return; osmClubs.add(id); clubs.push({id,ll:[lat,lng],cls:'club '+placeState(w),name,pop,go:()=>placePopup(id,[lat,lng])}); return; }
+    if(z>=16&&S.mapL.bars&&(z>=17||pop>=25)){ const st=placeState(w); bars.push({id,ll:[lat,lng],st,name,pop,rank:pop+(st==='open'?15:0)}); }   // bars only at street level: there are hundreds
   });
+  spaced(bars.sort((a,c)=>c.rank-a.rank),z>=18?18:z>=17?26:34,'night').forEach(x=>{ const go=()=>placePopup(x.id,x.ll);
+    pin(x.ll,'bar '+x.st,'🍸',x.name,go); pins.push({id:x.id,ll:x.ll,r:11});
+    if(x.pop>=(z>=17?0:45)) names.push({id:x.id,ll:x.ll,r:11,text:x.name,score:x.pop+(x.st==='open'?5:0),cls:'night',go}); });
   if(z>=11&&S.mapL.clubs) Object.values(NL.g).forEach(c=>{ if(!(c.osm&&osmClubs.has(c.osm))&&b.contains([c.lat,c.lng])) clubs.push({ll:[c.lat,c.lng],cls:'club',name:c.name,go:()=>googleClubPopup(c)}); });
   const cells={}; clubs.forEach(c=>{ const pt=map.latLngToContainerPoint(c.ll), k=z>=17?Math.random():`${Math.floor(pt.x/58)},${Math.floor(pt.y/58)}`; (cells[k] ||= []).push(c); });
   Object.values(cells).forEach(g=>{
-    if(g.length===1) return pin(g[0].ll,g[0].cls,'🪩',g[0].name,g[0].go);
+    if(g.length===1){ const c=g[0]; pins.push({id:c.id||c.name,ll:c.ll,r:15});
+      if(z>=15) names.push({id:c.id||c.name,ll:c.ll,r:15,text:c.name,score:(c.pop||40)+10,cls:'night club',go:c.go});
+      return pin(c.ll,c.cls,'🪩',c.name,c.go); }
+    pins.push({id:'many',ll:g[0].ll,r:18});
     const ll=[g.reduce((a,c)=>a+c.ll[0],0)/g.length, g.reduce((a,c)=>a+c.ll[1],0)/g.length];
     L.marker(ll,{zIndexOffset:450,icon:L.divIcon({className:'',html:`<div class="npin club many" title="${g.length} clubs">🪩<b>${g.length}</b></div>`,iconSize:[36,36]})})
       .on('click',()=>map.fitBounds(g.map(c=>c.ll),{padding:[60,60],maxZoom:Math.max(z+2,16)})).addTo(NL.layer);
   });
+  setLabels('night',pins,names);
   if(CFG.google&&z>=11&&S.mapL.clubs) fetchClubs();
 }
 // Google's nightclubs around the map centre, once per ~2 km cell per visit (the server caps the day's searches).
@@ -2034,16 +2177,16 @@ function zoneActivity(z){
 async function renderHotZones(){
   if(!map) return; if(!PL.hot) await loadHotspots(); if(!PL.hot) return;
   if(PL.zones) PL.zones.clearLayers(); else { PL.zones=L.layerGroup().addTo(map); map.on('zoomend',()=>renderHotZones()); }
-  if(!S.mapL.zones) return; const named=map.getZoom()>=15;   // downtown's zones sit close together: names only up close
+  if(!S.mapL.zones) return setLabels('zones',[],[]); const named=map.getZoom()>=15, names=[];   // downtown's zones sit close together: names only up close
   PL.hot.forEach(z=>{   // the label sits on the zone's top edge so it never covers the spots inside
     const a=zoneActivity(z), lv=a.level, quiet=lv<.12, busy=lv>=.6;
     const zone=L.circle([z.lat,z.lng],{radius:z.r,className:'hotzone'+(quiet?' quiet':busy?' busy':''),color:'#ff7a18',weight:1+lv*2,opacity:.18+lv*.72,
       fillColor:'#ff7a18',fillOpacity:.015+lv*.22,dashArray:quiet?'3 7':null}).on('click',()=>openPlaces({zone:z.id})).addTo(PL.zones);
     zone.hotId=z.id; zone.hotName=z.name; zone.level=lv; if(!named) return;
-    const bits=[a.open&&T('{n} open',{n:a.open}), a.ev&&T('{n} events',{n:a.ev}), a.live&&`📺 ${a.live}`].filter(Boolean).join(' · ');
-    L.tooltip({permanent:true,direction:'top',className:'hotlabel'+(quiet?' quiet':''),interactive:true,offset:[0,0]})
-      .setLatLng([z.lat+z.r/111320,z.lng]).setContent(`${quiet?'💤':'🔥'} ${esc(z.name)}${bits?' · '+esc(bits):quiet?' · '+esc(T('quiet now')):''}${busy?' · '+esc(T('busy now')):''}`).addTo(PL.zones)
-      .getElement()?.addEventListener('click',()=>openPlaces({zone:z.id})); });
+    const bits=[a.open&&T('{n} open',{n:a.open}), a.ev&&(a.ev===1?T('1 event'):T('{n} events',{n:a.ev})), a.live&&`📺 ${a.live}`].filter(Boolean).join(' · ');
+    names.push({id:'hz'+z.id,ll:[z.lat+z.r/111320,z.lng],alts:[[z.lat,z.lng],[z.lat-z.r/111320,z.lng]],center:true,over:true,max:60,score:150+lv*50,cls:'hot hotlabel'+(quiet?' quiet':''),go:()=>openPlaces({zone:z.id}),
+      text:`${quiet?'💤':'🔥'} ${z.name}${bits?' · '+bits:quiet?' · '+T('quiet now'):''}${busy?' · '+T('busy now'):''}`}); });
+  setLabels('zones',[],names);
 }
 // Hours change as the night goes on: refresh the hot spots every 5 minutes while the map is open.
 setInterval(async()=>{ if(!map||$('#v-map').hidden||!S.mapL.zones) return; await loadHotspots(); renderHotZones(); },5*60000);
@@ -3049,7 +3192,8 @@ function initMap(){
   meMark=L.marker(ME_POS,{zIndexOffset:1000,icon:L.divIcon({className:'',html:'<div class="loc"></div>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map).bindTooltip('You');
   layer=L.layerGroup().addTo(map); liveLayer=L.layerGroup().addTo(map);
   renderMapChips();
-  renderMap(); renderHotZones(); loadPlacesMap();
+  map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
+  renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
 }
 function renderMapLive(){
   const el=$('#mapLive'); if(!el) return; const ls=liveStreams();
@@ -3057,9 +3201,46 @@ function renderMapLive(){
   el.innerHTML = !ls.length ? '' : !S.liveOpen ? `<button class="livepill" data-livetoggle><span class="onair">LIVE</span> ${T('{n} streaming ▴',{n:ls.length})}</button>`
     : `<button class="livepill" data-livetoggle aria-label="Hide live streams">▾</button>`+ls.map(s=>`<button data-watch="${s.id}">${thumbHtml(s,true)}<span><span>${esc(s.u)} · 👁 ${s.viewers}</span><span class="meta">${esc(s.title)}</span></span></button>`).join('');
 }
+// Real events: the Filter's time window and types, or just the feed's after "Map it". Yours and your friends' first,
+// then the busiest; ones that would sit on top of a better one fold into its +n until you zoom in.
+let evLayer;
+function renderEventPins(){
+  if(!map) return; if(!evLayer) evLayer=L.layerGroup().addTo(map);
+  const openId=Object.keys(markers).find(id=>EV.byId[id]&&markers[id].isPopupOpen());   // a pan/zoom redraw keeps an open event open
+  evLayer.clearLayers(); Object.keys(markers).forEach(id=>{ if(EV.byId[id]) delete markers[id]; });
+  const catOk=c=>!S.mapCats.length||S.mapCats.includes(c), z=map.getZoom();
+  const now=Date.now(), eod=new Date().setHours(23,59,59,999), wk=now+7*864e5;
+  const wkEnd=(()=>{ const d=new Date(); d.setDate(d.getDate()+((7-d.getDay())%7)); return d.setHours(23,59,59,999); })();   // through Sunday
+  const until={tonight:eod, weekend:wkEnd, week:wk}[S.mapWhen]||eod;
+  const evs = mapFilter==='feed' ? FEED_LAST.slice(0,feedN).filter(x=>x.type==='event').map(x=>x.it)
+    : S.mapL.events ? EV.list.filter(e=>e.te>now&&e.ts<=until&&catOk(e.cat)) : [];
+  const rank=e=>{ const r=myRsvp(e.id), go=goingList(e); return (r==='going'?1000:r?500:0)+go.filter(isFriend).length*60+Math.min(go.length,20)*4
+    +(e.geo_precise?20:0)+(e.ts<=now+3*36e5?25:0)+(e.image?5:0); };
+  const all=[...new Set(evs.concat(EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>now)))].filter(e=>e.lat&&!e.geo_none).slice(0,400)
+    .map(e=>{ const j=((hash(e.uid)%200)-100)/90000; return {e,id:e.id,ll:[e.lat+j,e.lng-j],rank:rank(e)}; })   // tiny jitter so same-venue shows don't stack
+    .sort((a,b)=>b.rank-a.rank);
+  const keep=spaced(all,mapFilter==='feed'?0:z>=17?0:z>=16?22:z>=14?30:38,'events'), names=[];
+  keep.forEach(({e,ll,more,rank:rk})=>{
+    const going=myRsvp(e.id)==='going';
+    const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ev ${going?'going':''}"><i>${CATS[e.cat].e}</i>${more>1?`<b class="more">+${more}</b>`:''}</div>`,
+      iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]})}).addTo(evLayer);
+    m.bindPopup(()=>`<b>${esc(e.title)}</b><div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.price?' · '+esc(e.price):''}</div>
+      ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
+      <div class="btns" style="margin-top:8px"><button class="btn sm ${going?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${going?'✓ Going':"I'm going"}</button>
+      <button class="btn sm blue" data-evopen="${e.id}">${T('Details')}</button>
+      ${/^https?:/.test(e.ticket_url||e.url||'')?`<a class="btn sm" href="${esc(e.ticket_url||e.url)}" target="_blank" rel="noopener">Info ↗</a>`:''}
+      <button class="btn sm" data-cal="${e.id}">📅 Calendar</button>${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">Directions ↗</a>`:''}
+      ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 Eat after</button>`:''}</div>`);
+    m.on('popupopen',()=>eventPhotos(e));
+    markers[e.id]=m;
+    if(z>=15&&(rk>=60||z>=17)) names.push({id:e.id,ll,dy:-17,r:16,text:e.title,score:60+Math.min(rk,400)/10,cls:'ev',go:()=>m.openPopup()});
+  });
+  setLabels('events',keep.map(k=>({id:k.id,ll:k.ll,dy:-17,r:16})),names);   // the pin stands above its spot
+  const pm=openId&&markers[openId]; if(pm){ const po=pm.getPopup(); po.options.autoPan=false; pm.openPopup(); po.options.autoPan=true; }
+}
 function renderMap(){
   renderMapLive();
-  if(!map) return; layer.clearLayers(); markers={};
+  if(!map) return; layer.clearLayers(); markers={}; const social=[];   // people's pins: names never cover them
   const top=new Set(picks().slice(0,3).map(n=>n.p.id));
   const feedIds=new Set(FEED_LAST.slice(0,feedN).map(x=>x.id));
   const catOk=c=>!S.mapCats.length||S.mapCats.includes(c);
@@ -3072,29 +3253,9 @@ function renderMap(){
       m.bindPopup(()=>`<div class="row">${av(p.u)}<div><b>${esc(p.u)}</b><div class="meta">${esc(where(p))}</div></div></div>
         <div style="margin:8px 0">${esc(p.t)}</div><div class="where">${when(p)}<span class="badge">${p.downs.length} down</span></div>
         ${p.u!==S.me.h?`<div class="meta" style="margin-bottom:8px">✨ ${esc(n.r.slice(0,2).join(' · '))}</div><button class="btn sm ${downOn?'down-on':'primary'}" data-down="${p.id}">${downOn?"✓ I'm down":"I'm down"}</button>`:''}`);
-      markers[p.id]=m;
+      markers[p.id]=m; social.push({id:p.id,ll:pos(p),r:22,rx:24,dy:-16});
     });
-  // Real events: the Filter's time window and types, or just the feed's after "Map it".
-  const now=Date.now(), eod=new Date().setHours(23,59,59,999), wk=now+7*864e5;
-  const wkEnd=(()=>{ const d=new Date(); d.setDate(d.getDate()+((7-d.getDay())%7)); return d.setHours(23,59,59,999); })();   // through Sunday
-  const until={tonight:eod, weekend:wkEnd, week:wk}[S.mapWhen]||eod;
-  const evs = mapFilter==='feed' ? FEED_LAST.slice(0,feedN).filter(x=>x.type==='event').map(x=>x.it)
-    : S.mapL.events ? EV.list.filter(e=>e.te>now&&e.ts<=until&&catOk(e.cat)) : [];
-  const mineFirst = evs.filter(e=>myRsvp(e.id)).concat(evs.filter(e=>!myRsvp(e.id)));
-  [...new Set(mineFirst.concat(EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>now)))].filter(e=>e.lat).slice(0,300).forEach(e=>{
-    const j=((hash(e.uid)%200)-100)/90000, going=myRsvp(e.id)==='going';   // tiny jitter so same-venue shows don't stack
-    const m=L.marker([e.lat+j,e.lng-j],{icon:L.divIcon({className:'',html:`<div class="pin ev ${going?'going':''}"><i>${CATS[e.cat].e}</i></div>`,
-      iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]})}).addTo(layer);
-    m.bindPopup(()=>`<b>${esc(e.title)}</b><div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.price?' · '+esc(e.price):''}</div>
-      ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
-      <div class="btns" style="margin-top:8px"><button class="btn sm ${going?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${going?'✓ Going':"I'm going"}</button>
-      <button class="btn sm blue" data-evopen="${e.id}">${T('Details')}</button>
-      ${/^https?:/.test(e.ticket_url||e.url||'')?`<a class="btn sm" href="${esc(e.ticket_url||e.url)}" target="_blank" rel="noopener">Info ↗</a>`:''}
-      <button class="btn sm" data-cal="${e.id}">📅 Calendar</button>${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">Directions ↗</a>`:''}
-      ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 Eat after</button>`:''}</div>`);
-    m.on('popupopen',()=>eventPhotos(e));
-    markers[e.id]=m;
-  });
+  renderEventPins();
   // Stories: Snap Map–style bubbles, grouped when several are posted from the same spot.
   if(S.mapL.stories&&mapFilter!=='feed'){
     const cl={}; allStories().forEach(st=>{ const p=storyPos(st); if(!p) return; const k=p[0].toFixed(3)+','+p[1].toFixed(3); (cl[k] ||= {p,ss:[]}).ss.push(st); });
@@ -3102,8 +3263,10 @@ function renderMap(){
       L.marker(p,{zIndexOffset:600,icon:L.divIcon({className:'',iconSize:[50,50],iconAnchor:[25,25],
         html:`<div class="sbub ${seen?'seen':''}"><span style="${bubbleBg(last)}">${last.img?'':esc(last.emoji||'✨')}</span>${ss.length>1?`<b class="n">${ss.length}</b>`:''}<i class="who">${esc(last.u)}</i></div>`})})
         .addTo(layer).on('click',()=>openStories(ss.slice().reverse()));
+      social.push({id:'st'+p.join(),ll:p,r:34,rx:40,dy:6});
     });
   }
+  DC.pins.social=social;
   renderLiveMarkers(); renderNightLayer(); renderOutdoors(); renderSights();
 }
 const okThumb = t => /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(t||'') ? t : null;   // thumbnails arrive from other devices: accept only JPEG data
@@ -3112,10 +3275,11 @@ const thumbHtml = (s, sm) => `<div class="lthumb ${sm?'sm':''}">${okThumb(s.thum
 let liveLayer;
 // Live streams sit at their venue, and only once the streamer's location delay has passed.
 function renderLiveMarkers(){
-  if(!map) return; liveLayer.clearLayers();
+  if(!map) return; liveLayer.clearLayers(); DC.pins.live=[];
   if(!S.mapL.live||mapFilter==='feed') return;
   liveStreams().concat(LIVE.on?[LIVE.my]:[]).filter(s=>s.v&&Date.now()-(s.startedAt||0)>=(s.delay||0)*M).forEach(s=>{
     const v=venue(s.v), mine=LIVE.my&&s.id===LIVE.my.id;
+    DC.pins.live.push({id:'lv'+s.id,ll:[v.lat+.0012,v.lng+.0012],r:36,rx:46,dy:-41});
     L.marker([v.lat+.0012,v.lng+.0012],{zIndexOffset:800,icon:L.divIcon({className:'',html:thumbHtml(s),iconSize:[86,62],iconAnchor:[43,72]})})
       .addTo(liveLayer).on('click',()=>mine?(LIVE.mode='studio',tab('live')):openWatch(s.id));
   });
@@ -3897,7 +4061,8 @@ function startLive(){
   if(CFG.livekit) lkPublish().catch(e=>toast('Video relay: '+esc(e.message)+'. Viewers will connect directly to your phone instead.','orange',[],5000));
 }
 function endLive(){
-  clearInterval(LIVE.sim); LK.room?.disconnect(); LK.room=null; RS.status='off';   // the server stops any copy-out on 'end' bc({t:'end',id:LIVE.my.id}); Object.keys(PCS).forEach(k=>{ PCS[k].close(); delete PCS[k]; });
+  clearInterval(LIVE.sim); LK.room?.disconnect(); LK.room=null; RS.status='off';   // the server stops any copy-out on 'end'
+  bc({t:'end',id:LIVE.my.id}); Object.keys(PCS).forEach(k=>{ PCS[k].close(); delete PCS[k]; });
   const e=LIVE.earned; S.coins+=e; save(); LIVE.on=false; LIVE.my=null; LIVE.mode='list'; stopSource(); renderLive(); renderMap();
   toast(`Stream ended. You earned 🪙 ${e}.`,'',[],3500);
 }
@@ -4124,21 +4289,21 @@ const MAP_CATS=[
   {k:'zones', e:'🔥', l:'Hot spots', subs:[['zones','🔥 Hot spots: glow brighter the more is open and happening']]},
   {k:'outdoors', e:'🌲', l:'Outdoors', subs:[['parks','🌳 Parks & nature'],['water','💧 Lakes & rivers'],['trails','🚲 Hike & bike trails'],['spots','🛶 Rentals, ramps & trailheads']]},
   {k:'friends', e:'👥', l:'Friends', subs:[['posts','📍 Flares'],['live','📺 Live streams'],['stories','📸 Stories']]},
-  {k:'food', e:'🍔', l:'Food', subs:[['food','🍔 Food & drink spots'],['openonly','🟢 Open now only',true]]},   // true: a setting, not a layer
+  {k:'food', e:'🍔', l:'Food', subs:[['food','🍔 Food & drink spots'],['markets','🧺 Farmers markets (big on weekends)'],['openonly','🟢 Open now only',true]]},   // true: a setting, not a layer
   {k:'sights', e:'🏛️', l:'Sights', subs:[['landmarks','🏛️ Landmarks & museums'],['markers','🪧 Historical markers'],['art','🎨 Statues, murals & views']]},
 ];
 const MAP_PRESETS={
   night:['🌙 Night out',{events:1,clubs:1,bars:1,zones:1,food:1,openonly:1,posts:1,live:1},'tonight'],
-  outdoors:['🌲 Outdoors day',{parks:1,water:1,trails:1,spots:1,posts:1,live:1}],
+  outdoors:['🌲 Outdoors day',{parks:1,water:1,trails:1,spots:1,posts:1,live:1,markets:1}],
   friends:['👥 Friends',{posts:1,live:1,stories:1}],
-  sights:['🏛️ Sightseeing',{landmarks:1,markers:1,art:1,parks:1,food:1,posts:1}],
-  all:['✨ Everything',{events:1,clubs:1,bars:1,zones:1,parks:1,water:1,trails:1,spots:1,posts:1,live:1,stories:1,food:1,landmarks:1,markers:1,art:1}],
+  sights:['🏛️ Sightseeing',{landmarks:1,markers:1,art:1,parks:1,food:1,posts:1,markets:1}],
+  all:['✨ Everything',{events:1,clubs:1,bars:1,zones:1,parks:1,water:1,trails:1,spots:1,posts:1,live:1,stories:1,food:1,markets:1,landmarks:1,markers:1,art:1}],
   none:['○ Clear',{}],
 };
 const layerKeys = c => c.subs.filter(s=>!s[2]).map(s=>s[0]);
 const catState = c => { const on=layerKeys(c).filter(k=>S.mapL[k]).length; return on===0?'':on===layerKeys(c).length?'on':'part'; };
 function syncMapL(){ S.mapL.night=S.mapL.clubs||S.mapL.bars; S.mapL.outdoors=S.mapL.parks||S.mapL.water||S.mapL.trails||S.mapL.spots; }   // the old summary flags
-function refreshMapLayers(){ syncMapL(); save(); renderMapChips(); if(!map) return; renderMap(); renderPlacesLayer(); renderHotZones(); renderSights(); }
+function refreshMapLayers(){ syncMapL(); save(); renderMapChips(); if(!map) return; renderMarkets(); renderMap(); renderPlacesLayer(); renderHotZones(); renderSights(); }
 function toggleMapCat(k){ const c=MAP_CATS.find(x=>x.k===k), on=!!catState(c); layerKeys(c).forEach(x=>S.mapL[x]=!on); refreshMapLayers(); mapHint(true); }
 function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
   MAP_CATS.forEach(c=>c.subs.forEach(([x])=>S.mapL[x]=!!on[x])); if(when) S.mapWhen=when;
@@ -4166,6 +4331,7 @@ function openMapLayers(){
       <span class="lkey" style="background:#e9408a"></span>club (number = several close together) · <span class="lkey" style="background:#ff7a18"></span>hot spot zone<br>
       <span class="lkey" style="background:#3ddc97;border-radius:3px"></span>park / nature · <span class="lkey" style="background:#2ec5ff;border-radius:3px"></span>lake / river ·
       <span class="lkey" style="background:#ffd23f;border-radius:1px;height:3px"></span>bike trail · <span class="lkey" style="background:#ff9a3c;border-radius:1px;height:3px"></span>foot trail<br>
+      <span class="lkey" style="background:#9bd35a"></span>farmers market (big when it's on today or this weekend)<br>
       <span class="lkey" style="background:#c9a227"></span>landmark / museum · <span class="lkey" style="background:#8a6d3b"></span>historical marker · <span class="lkey" style="background:#b57bff"></span>art / view<br>
       <span class="lkey" style="background:var(--accent)"></span>flare for everyone · <span class="lkey" style="background:var(--accent2)"></span>flare for friends</div></div>`;
   $('#placesBg').hidden=false; sh.scrollTop=keep;
@@ -4175,7 +4341,9 @@ const openMapFilter = openMapLayers;
 function mapHint(now){
   const el=$('#mapHint'); if(!el||!map) return; clearTimeout(el.t); const z=map.getZoom(), b=map.getBounds(); let msg='', act='';
   const evIn=Object.keys(markers).filter(id=>EV.byId[id]&&b.contains(markers[id].getLatLng())).length;
-  if(S.mapL.events&&!evIn&&mapFilter!=='feed'){ msg=T('No events in view {when}',{when:T(MAP_WHEN[S.mapWhen]).toLowerCase()}); if(S.mapWhen!=='week') act=`<button data-mhintweek>${T('This week →')}</button>`; }
+  const fmOn=S.mapL.markets&&(FM.list||[]).filter(m=>fmSoon(m)).length;
+  if(fmOn&&now&&!mapHint.fmShown){ mapHint.fmShown=1; msg=T(placeStateAny()?'🧺 A farmers market is open now: look for the glowing baskets':fmOn>1?'🧺 {n} farmers markets coming up: tap a basket':'🧺 A farmers market is coming up: tap the basket',{n:fmOn}); }
+  else if(S.mapL.events&&!evIn&&mapFilter!=='feed'){ msg=T('No events in view {when}',{when:T(MAP_WHEN[S.mapWhen]).toLowerCase()}); if(S.mapWhen!=='week') act=`<button data-mhintweek>${T('This week →')}</button>`; }
   else if(S.mapL.bars&&z<16&&catState(MAP_CATS[1])) msg=T('Zoom in to street level to see bars 🍸');
   else if(S.mapL.zones&&PL.hot&&z<15&&PL.zones?.getLayers().some(l=>l.level>=.6)) msg=T('🔥 Bright zones are busy right now: tap one');
   else if(S.mapL.food&&z<13) msg=T('Zoom in to see food spots 🍔');

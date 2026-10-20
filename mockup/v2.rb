@@ -203,7 +203,7 @@ def events_list
     horizon = (Time.now + 45 * 86_400).strftime('%Y-%m-%dT00:00:00')
     uri = URI("#{EVENTS_API}/api/events?limit=1000&end=#{horizon}")
     r = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: 15) { |http| http.get(uri.request_uri) }
-    EVENTS_CACHE.update(at: Time.now.to_f, body: r.body) if r.code == '200'
+    EVENTS_CACHE.update(at: Time.now.to_f, body: Geofix.fix_body(r.body)) if r.code == '200'
   end
   (JSON.parse(EVENTS_CACHE[:body].to_s)['events'] rescue nil) || []
 rescue StandardError

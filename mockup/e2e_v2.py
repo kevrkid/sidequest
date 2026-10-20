@@ -119,7 +119,9 @@ with sync_playwright() as pw:
     a.screenshot(path=f"{OUT}/v2-03-event.png")
     close_sheets(a)
 
-    b.evaluate("id=>openEvent(id)", ev); b.wait_for_selector("#evSheet .evtitle"); b.wait_for_timeout(900)
+    b.evaluate("id=>openEvent(id)", ev); b.wait_for_selector("#evSheet .evtitle")
+    try: b.wait_for_function("document.querySelector('#evChat')?.innerText.includes('meet at the door')", timeout=8000)
+    except Exception: pass
     check("the other person sees the discussion", "meet at the door" in b.inner_text("#evChat"))
     b.click("#evChat [data-more]"); b.wait_for_selector("#actSheet [data-report]")
     b.click("#actSheet [data-report*='Harassment']"); b.wait_for_timeout(600)
@@ -203,6 +205,26 @@ with sync_playwright() as pw:
         check("admin: the chat report shows who wrote it and what it said", rep and rep[0].get("about") == AMY and "meet at the door" in rep[0].get("note", ""), rep[:1])
     else:
         check("admin growth (skipped: no SQ_ADMIN_TOKEN)", True)
+
+    # ---- map: decluttered, markets on weekends, no guessed event spots
+    a.evaluate("tab('map'); applyPreset('all'); $('#placesBg').hidden=true; S.mapWhen='week'; refreshMapLayers()"); a.wait_for_timeout(1200)
+    a.evaluate("void map.setView([30.2680,-97.7420],16,{animate:false})"); a.wait_for_timeout(1200)
+    boxes = a.evaluate("[...document.querySelectorAll('.mlabel')].map(e=>{const r=e.getBoundingClientRect();return [r.left,r.top,r.right,r.bottom]})")
+    over = sum(1 for i, p in enumerate(boxes) for q in boxes[i+1:] if p[0] < q[2]-1 and q[0] < p[2]-1 and p[1] < q[3]-1 and q[1] < p[3]-1)
+    check("map names never sit on top of each other", len(boxes) >= 1 and over == 0, f"{len(boxes)} names, {over} overlaps")
+    n16 = a.evaluate("SG.layer.getLayers().length + Object.keys(PL.cores).length")
+    a.evaluate("void map.setView([30.2680,-97.7420],14,{animate:false})"); a.wait_for_timeout(1200)
+    n14 = a.evaluate("SG.layer.getLayers().length + Object.keys(PL.cores).length")
+    check("zoomed out never shows more spots than up close", n14 <= n16, f"zoom 14: {n14}, zoom 16: {n16}")
+    check("events without a real spot get no pin (not dropped on downtown)",
+          a.evaluate("EV.list.filter(e=>e.geo_none).every(e=>!e.lat&&!markers[e.id])"))
+    a.evaluate("austinMow=()=>5*1440+8*60; FM.list=[{id:'fmT',name:'Test Farmers Market',hours:'Sa 09:00-13:00',lat:30.30,lng:-97.70,week:[[7740,7980]]}]; void map.setView([30.30,-97.74],11,{animate:false})")
+    a.wait_for_timeout(1200)
+    check("Saturday morning: the farmers market shows big from zoomed out, with its hours",
+          a.locator(".fmpin.soon").count() >= 1 and any("Sat 9 AM" in t for t in a.locator(".mlabel.market").all_inner_texts()),
+          a.evaluate("JSON.stringify({pins:document.querySelectorAll('.fmpin').length, on:S.mapL.markets, z:map.getZoom(), soon:FM.list.map(fmSoon), labels:[...document.querySelectorAll('.mlabel.market')].map(e=>e.innerText)})"))
+    a.locator(".fmpin.soon").first.click(); a.wait_for_timeout(300)
+    check("tapping a market shows its day, hours and directions", "Sat 9 AM–1 PM" in a.locator(".leaflet-popup-content").last.inner_text())
 
     check("no JavaScript errors", not errors, errors[:3])
     browser.close()

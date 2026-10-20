@@ -132,6 +132,21 @@ with sync_playwright() as pw:
         except Exception:
             relock = False
         check("they can't go straight back live", relock)
+
+    # A streamer ends their own stream: viewers are told and dropped (this message was commented out before V2)
+    s2, w2 = viewers[1], viewers[2] if len(viewers) > 2 else viewers[0]
+    s2.evaluate("tab('live'); LIVE.mode='list'; renderLive()"); s2.click("[data-golive]"); s2.click("[data-camon]")
+    s2.wait_for_function("LIVE.stream && PREVIEW.videoWidth > 0", timeout=15000)
+    s2.fill("#lvTitle", "Second test stream"); s2.click("[data-startlive]")
+    sid2 = s2.evaluate("LIVE.my.id")
+    w2.evaluate("tab('live'); LIVE.mode='list'; renderLive()"); w2.wait_for_selector(f"#v-live [data-watch='{sid2}']", timeout=15000); w2.click(f"#v-live [data-watch='{sid2}']")
+    w2.wait_for_function("id => LIVE.watch === id", arg=sid2, timeout=10000)
+    s2.click("[data-endlive]")
+    try:
+        w2.wait_for_function("id => LIVE.watch === null && !LIVE.remote[id]", arg=sid2, timeout=10000); dropped = True
+    except Exception:
+        dropped = False
+    check("ending your own stream tells viewers it ended", dropped and "stream ended" in w2.locator("#toasts").inner_text().lower())
     browser.close()
 
 real_errors = [e for e in errors if "Failed to load resource" not in e]

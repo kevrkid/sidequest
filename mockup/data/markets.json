@@ -1,0 +1,75 @@
+{
+  "checked": "2026-10",
+  "markets": [
+    {
+      "id": "fm1",
+      "name": "SFC Farmers' Market Downtown",
+      "hours": "Sa 09:00-13:00",
+      "lat": 30.26725,
+      "lng": -97.74711,
+      "addr": "Republic Square, 422 Guadalupe St",
+      "web": "https://sustainablefoodcenter.org/farmers-markets-support/sfc-farmers-markets/"
+    },
+    {
+      "id": "fm2",
+      "name": "SFC Farmers' Market Sunset Valley",
+      "hours": "Sa 09:00-13:00",
+      "lat": 30.22841,
+      "lng": -97.80935,
+      "addr": "Toney Burger Center, 3200 Jones Rd",
+      "web": "https://sustainablefoodcenter.org/farmers-markets-support/sfc-farmers-markets/"
+    },
+    {
+      "id": "fm3",
+      "name": "Barton Creek Farmers Market",
+      "hours": "Sa 09:00-13:00",
+      "lat": 30.25781,
+      "lng": -97.80815,
+      "addr": "Barton Creek Square parking lot, 2901 S Capital of Texas Hwy",
+      "web": "https://bartoncreekfarmersmarket.org"
+    },
+    {
+      "id": "fm4",
+      "name": "Texas Farmers' Market at Lakeline",
+      "hours": "Sa 09:00-13:00",
+      "lat": 30.47052,
+      "lng": -97.80697,
+      "addr": "Lakeline Mall, Cedar Park",
+      "web": "https://www.lakelinefarmersmarket.com"
+    },
+    {
+      "id": "fm5",
+      "name": "Texas Farmers' Market at Mueller",
+      "hours": "Su 10:00-14:00",
+      "lat": 30.30035,
+      "lng": -97.7034,
+      "addr": "Mueller, 2006 Philomena St",
+      "web": "https://texasfarmersmarket.org"
+    },
+    {
+      "id": "fm6",
+      "name": "Domain Farmers Market",
+      "hours": "Su 12:00-16:00",
+      "lat": 30.39657,
+      "lng": -97.72734,
+      "addr": "The Domain, 3220 Amy Donovan Plaza",
+      "web": "https://www.lakelinefarmersmarket.com/about-5-1/domainfarmersmarket"
+    },
+    {
+      "id": "fm7",
+      "name": "Bee Cave Farmers Market",
+      "hours": "Su 10:00-14:00",
+      "lat": 30.30865,
+      "lng": -97.93875,
+      "addr": "Hill Country Galleria, 12700 Hill Country Blvd"
+    },
+    {
+      "id": "fm8",
+      "name": "Hutto Farmers' Market",
+      "hours": "We 15:00-19:00",
+      "lat": 30.54621,
+      "lng": -97.55989,
+      "addr": "Downtown Hutto"
+    }
+  ]
+}
