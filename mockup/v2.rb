@@ -87,6 +87,9 @@ QUESTS = [
   { id: 'regular', e: '📅', name: 'Regular', desc: 'Get out 3 weeks in a row', goal: 3, xp: 150 }
 ].freeze
 CHECKIN_XP = 10
+# One check-in quest a week is the featured one: 1.5x XP if you finish it that week.
+FEATURED = %w[history tacos outdoors culture shows explorer nightowl].freeze
+def featured_quest(t = Time.now) QUESTS.find { |q| q[:id] == FEATURED[t.strftime('%V').to_i % FEATURED.size] } end
 CHECKIN_RE = /\A[A-Za-z0-9:_.-]{1,60}\z/
 
 def quest_rec(d, h)
@@ -129,8 +132,9 @@ def quest_award!(d, h)
   QUESTS.each do |qd|
     next if q['done'][qd[:id]] || prog[qd[:id]].to_i < qd[:goal]
     q['done'][qd[:id]] = now_ms
-    q['xp'] += qd[:xp]
-    notify!(d, h, 'quest', ref: qd[:id], text: "#{qd[:e]} Quest complete: #{qd[:name]} (+#{qd[:xp]} XP)")
+    xp = featured_quest[:id] == qd[:id] ? (qd[:xp] * 1.5).round : qd[:xp]
+    q['xp'] += xp
+    notify!(d, h, 'quest', ref: qd[:id], text: "#{qd[:e]} Quest complete: #{qd[:name]} (+#{xp} XP#{xp > qd[:xp] ? ', quest of the week' : ''})")
   end
 end
 
@@ -152,7 +156,7 @@ def quest_view(d, h)
   q = quest_rec(d, h)
   prog = quest_progress(d, h)
   lvl = level_of(q['xp'])
-  { xp: q['xp'], level: lvl, next_at: (lvl**2) * 50, this_at: ((lvl - 1)**2) * 50,
+  { xp: q['xp'], level: lvl, next_at: (lvl**2) * 50, this_at: ((lvl - 1)**2) * 50, featured: featured_quest[:id],
     streak: prog['regular'], checkins: q['checkins'].size,
     quests: QUESTS.map { |qd| qd.merge(have: [prog[qd[:id]].to_i, qd[:goal]].min, done: q['done'][qd[:id]]) },
     recent: q['checkins'].last(8).reverse }
@@ -430,7 +434,8 @@ def mount_v2(server)
       track!('checkin', h)
       newly = (q['done'].keys - before).map { |qid| QUESTS.find { |x| x[:id] == qid } }
       newly.each { track!('quest_done') }
-      { ok: true, name: tgt[:name], xp_gain: CHECKIN_XP + newly.sum { |x| x[:xp] }, completed: newly }.merge(quest_view(d, h))
+      gain = CHECKIN_XP + newly.sum { |x| featured_quest[:id] == x[:id] ? (x[:xp] * 1.5).round : x[:xp] }
+      { ok: true, name: tgt[:name], xp_gain: gain, completed: newly }.merge(quest_view(d, h))
     end
   end
 

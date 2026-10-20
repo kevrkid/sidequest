@@ -150,7 +150,8 @@ t('friends leaderboard: friends only, and you can hide yourself') {
   names = q['board'].map { |r| r['h'] }
   amy.post('/api/quests/board', hidden: true)
   _, q2 = bo.get('/api/quests')
-  check(names.sort == %w[amy_v2 bo_v2] && q2['board'].map { |r| r['h'] } == ['bo_v2'], [names, q2['board']])
+  check(names.sort == %w[amy_v2 bo_v2] && q2['board'].map { |r| r['h'] } == ['bo_v2'] &&
+        %w[history tacos outdoors culture shows explorer nightowl].include?(q['featured']), [names, q2['board'], q['featured']])
   amy.post('/api/quests/board', hidden: false)
 }
 t("friends out now: nothing unless they chose to share; then just the place, friends only") {

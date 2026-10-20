@@ -110,6 +110,7 @@
   .qgrid{display:grid;grid-template-columns:1fr;gap:8px}
   @media (min-width:520px){ .qgrid{grid-template-columns:1fr 1fr} }
   .qcard{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px} .qcard .bar{margin-top:8px;background:#0b1022}
+  .qcard.featured{border-color:#ffd16699;background:linear-gradient(135deg,#ffd16614,var(--panel2));box-shadow:0 0 18px -6px #ffd16688}
   .qcard.done{border-color:#3ddc9766;background:linear-gradient(135deg,#3ddc9714,var(--panel2))} .qcard.done .bar b{background:var(--good)}
   .qe{font-size:24px;width:34px;text-align:center} .qxp{font-size:11px;font-weight:800;color:#ffd166;background:#ffd16618;border-radius:99px;padding:2px 7px;flex:none}
   .lbrow{display:flex;align-items:center;gap:8px;padding:7px 4px;border-top:1px solid var(--line);font-size:14px} .lbrow.me{background:#2ec5ff12;border-radius:10px}
@@ -1020,7 +1021,7 @@ const ES = {
   'On iPhone, add Side Quest to your Home Screen (Share → Add to Home Screen) to get them with the app closed.':'En iPhone, agrega Side Quest a tu pantalla de inicio (Compartir → Agregar a inicio) para recibirlas con la app cerrada.',
   "You're offline. Showing what this phone already has; live stuff comes back with signal.":'Estás sin conexión. Ves lo que ya tiene este teléfono; lo en vivo vuelve con señal.', 'Back online.':'Conectado de nuevo.',
   'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
-  'Show friends where I check in (the place, for 3 hours)':'Mostrar a mis amigos dónde registro visitas (el lugar, por 3 horas)', 'Friends out now':'Amigos que andan fuera',
+  'Show friends where I check in (the place, for 3 hours)':'Mostrar a mis amigos dónde registro visitas (el lugar, por 3 horas)', 'Friends out now':'Amigos que andan fuera', 'Quest of the week · 1.5× XP':'Misión de la semana · 1.5× XP',
   'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
   'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
   'Phone notifications':'Notificaciones en el teléfono', 'While Side Quest is open in the background.':'Mientras Side Quest está abierto en segundo plano.',
@@ -4992,8 +4993,8 @@ function renderQuests(){
       <div class="bar xp"><b style="width:${pct}%"></b></div>
       <div class="meta" style="margin-top:6px">🔥 ${T('{n}-week streak',{n:q.streak||0})} · 📍 ${T('{n} check-ins',{n:q.checkins})} · 🏆 ${done}/${q.quests.length}</div></div></div>
     <p class="meta" style="margin:10px 2px">${T("Get out, check in, level up. Tap 📍 Check in on a sight, place, park or event when you're there: your phone checks you're close, and Side Quest only learns the place, never your exact location.")}</p>
-    <div class="qgrid">${q.quests.map(x=>{ const go=QUEST_GO[x.id];
-      return `<div class="qcard ${x.done?'done':''}"><div class="row"><span class="qe">${x.e}</span><div class="grow"><b>${esc(T(x.name))}</b><div class="meta">${esc(T(x.desc))}</div></div><span class="qxp">+${x.xp}</span></div>
+    <div class="qgrid">${q.quests.slice().sort((a,b)=>(b.id===q.featured)-(a.id===q.featured)).map(x=>{ const go=QUEST_GO[x.id], f=x.id===q.featured&&!x.done;
+      return `<div class="qcard ${x.done?'done':''} ${f?'featured':''}">${f?`<div class="kicker" style="color:#ffd166;margin-bottom:6px">⭐ ${T('Quest of the week · 1.5× XP')}</div>`:''}<div class="row"><span class="qe">${x.e}</span><div class="grow"><b>${esc(T(x.name))}</b><div class="meta">${esc(T(x.desc))}</div></div><span class="qxp">+${f?Math.round(x.xp*1.5):x.xp}</span></div>
         <div class="bar"><b style="width:${Math.round(x.have*100/x.goal)}%"></b></div>
         <div class="row" style="margin-top:6px"><span class="meta grow">${x.done?`✓ ${T('Done')}`:`${x.have}/${x.goal}`}</span>${!x.done&&go?`<button class="btn sm" data-questgo="${x.id}">${esc(T(go[0]))}</button>`:''}</div></div>`; }).join('')}</div>
     ${q.recent.length?`<label class="lbl">${T('Recent check-ins')}</label>${q.recent.map(c=>`<div class="log"><span>📍 ${esc(c.name)}</span><span class="meta" style="margin-left:auto">${agoT(c.at)}</span></div>`).join('')}`:''}
