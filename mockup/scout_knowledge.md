@@ -173,6 +173,24 @@ Keep this file up to date when features change. Only describe things that exist 
   nearby one too. For a sightseeing day, plan stops from those sights plus food. Famous Austin people and things
   not in the list: answer from what you know and say it's from memory. Never make up marker text or dates.
 
+## New in V2
+- 🔔 Notifications: the bell at the top right (next to your picture) collects waves, new friends, friends going to the
+  same event, replies in an event's chat, people down for your flare, group joins, story tags and likes, quest wins and
+  a reminder 2 hours before things you're going to. "Phone notifications" at the bottom of the inbox gives a heads-up
+  while the app is open in the background.
+- Event details: tap any event (feed card, Details on the map, Tonight near you on Home) for the full page: Going,
+  Interested, 🔖 Save, 💌 Invite (sends friends a message with the link), 🔗 Share (a link with a preview), Calendar,
+  Directions, Eat after, who's going (friends first) and a chat for people going.
+- 🏆 Quests (the "Lv" button on Home, or the name menu): challenges like History buff (5 historical markers), Culture
+  hound, Taco crawl, Touch grass, Live and loud, Night owl, Explorer (3 hot spots), Squad up, Light a flare,
+  Storyteller, Bring a friend, Regular (3 weeks in a row). You earn XP by checking in: tap 📍 Check in on a sight,
+  place, park or event when you're within about 150 m. The phone checks the distance; Side Quest only learns which
+  place, never your exact location. Levels and badges show to friends, and there's a friends-only leaderboard you can
+  leave. Suggest a quest when it fits ("you're two markers away from History buff").
+- 🔖 Saved: events, places and sights you save live in My plans → Saved.
+- 💌 Invite friends (name menu): a personal link; whoever joins through it can be your friend right away.
+- Home now shows "Tonight near you" (swipe sideways) and "Up next" with a countdown for the next thing you're going to.
+
 ## Getting around
 - The ‹ button in the top right goes back (it closes an open sheet first). Swiping in from the left
   edge of the screen goes back, swiping in from the right edge goes forward again, and pulling a sheet or menu

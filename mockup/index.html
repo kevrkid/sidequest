@@ -1012,6 +1012,25 @@ const ES = {
   'Find me something to do near me':'Encuéntrame algo que hacer cerca', 'Tell me a joke':'Cuéntame un chiste', "What's on the map?":'¿Qué hay en el mapa?',
   'How does Meet work?':'¿Cómo funciona Conocer?', 'Who can see my answers?':'¿Quién ve mis respuestas?',
   "Voice isn't available in this browser, so type below.":'La voz no funciona en este navegador; escribe abajo.',
+  'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
+  'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
+  'Phone notifications':'Notificaciones en el teléfono', 'While Side Quest is open in the background.':'Mientras Side Quest está abierto en segundo plano.',
+  'just now':'ahora mismo', '{n} min ago':'hace {n} min', '{n} h ago':'hace {n} h', '{n} d ago':'hace {n} d', 'Link copied':'Enlace copiado', 'Copy this link':'Copia este enlace',
+  "I'm going":'Voy', '✓ Going':'✓ Voy', 'Interested':'Me interesa', 'Save':'Guardar', 'Saved':'Guardado', 'Invite':'Invitar',
+  'Calendar':'Calendario', 'Eat after':'Comer después', 'Tickets & info':'Boletos e info', "Who's going":'Quién va', 'On now':'Ahora',
+  'starts in {n}':'empieza en {n}', 'approximate location':'ubicación aproximada', '{n} friends going':'{n} amigos van', '+{n} more':'+{n} más',
+  '{n} going':'{n} van', '{n} interested':'{n} interesados', 'Talk about it':'Platícalo', 'Send':'Enviar', 'Sending…':'Enviando…',
+  'No one has said anything yet. Start it off!':'Nadie ha dicho nada todavía. ¡Empieza tú!', 'Create a free account':'Crea una cuenta gratis',
+  'Invite friends':'Invitar amigos', 'Send invites':'Enviar invitaciones', 'Share a link instead':'Mejor comparte un enlace', 'going':'va',
+  'Pick at least one friend.':'Elige al menos un amigo.', 'Removed from Saved':'Quitado de Guardados', 'Saved. Find it in My plans.':'Guardado. Está en Mis planes.',
+  'Ended':'Terminó', 'Sight':'Lugar', 'Place':'Sitio', 'Remove':'Quitar', 'Quests':'Misiones', 'LEVEL':'NIVEL',
+  '{n} to level {l}':'{n} para el nivel {l}', '{n}-week streak':'racha de {n} semanas', '{n} check-ins':'{n} visitas',
+  'Recent check-ins':'Visitas recientes', 'Friends leaderboard':'Tabla de amigos', 'Lv {n}':'Nv {n}', 'Check in':'Registrar visita',
+  'Already checked in here today.':'Ya registraste tu visita hoy.', 'Quest complete':'Misión cumplida', 'Tonight near you':'Esta noche cerca de ti',
+  'See all':'Ver todo', 'Up next':'Lo que sigue', 'in {n} min':'en {n} min', 'in {n} h':'en {n} h', 'Go':'Ir', 'Details':'Detalles',
+  "Show me on friends' leaderboards":'Mostrarme en la tabla de mis amigos', 'History buff':'Fan de la historia', 'Taco crawl':'Ruta de tacos',
+  'Touch grass':'Sal al aire libre', 'Live and loud':'En vivo', 'Night owl':'Ave nocturna', 'Explorer':'Explorador', 'Squad up':'Arma tu grupo',
+  'Light a flare':'Lanza una bengala', 'Storyteller':'Cuentahistorias', 'Bring a friend':'Trae a un amigo', 'Regular':'De siempre', 'Culture hound':'Amante de la cultura',
   'Sights':'Lugares', '🏛️ Landmarks & museums':'🏛️ Monumentos y museos', '🪧 Historical markers':'🪧 Placas históricas', '🎨 Statues, murals & views':'🎨 Estatuas, murales y miradores',
   '🏛️ Sightseeing':'🏛️ Turismo', 'Zoom in to see historical markers 🪧':'Acércate para ver las placas históricas 🪧', 'Loading the story…':'Cargando la historia…',
   "Couldn't load this one.":'No se pudo cargar.', 'More':'Más', 'Tell me the story':'Cuéntame la historia', 'Read more':'Leer más', 'Directions':'Cómo llegar',
@@ -1898,6 +1917,7 @@ function renderSights(){
   }
 }
 async function sightPopup(id){
+  track('sight_open');
   const x=SG.byId[id]||(SCT.placeInfo?.[id]&&[id,SCT.placeInfo[id].kind,SCT.placeInfo[id].name,SCT.placeInfo[id].lat,SCT.placeInfo[id].lng]); if(!x||!map) return;
   const pop=L.popup({maxWidth:300,minWidth:240}).setLatLng([x[3],x[4]]).setContent(`<b>${esc(x[2])}</b><div class="meta">${T('Loading the story…')}</div>`).openOn(map);
   let s=SG.full[id]; if(!s) try{ s=SG.full[id]=(await (await fetch('/api/sight?id='+encodeURIComponent(id))).json()).sight; }catch(e){}
@@ -1931,7 +1951,7 @@ function focusSight(id, fromScout){
       setTimeout(()=>m.remove(),9000); } },120);
 }
 function sightTell(id){   // Scout tells the story out loud, like a tour guide
-  const s=SG.full[id]; if(!s) return;
+  const s=SG.full[id]; if(!s) return; track('sight_tell');
   if(!AUTHED) return needAccount(T('ask Scout about history'));
   openScoutVoice(); scoutAsk(T('Tell me the story of {n}',{n:s.name}), true);
 }
@@ -2077,7 +2097,7 @@ function openPlans(){
     <label class="lbl" style="margin-top:16px">🔖 ${T('Saved')}</label><div id="savedList"><p class="meta">${T('Loading…')}</p></div>`;
   $('#plansBg').hidden=false; fillSaved(); track('saved_open');
 }
-async function savePlan(i){
+async function savePlan(i){ track('plan_save');
   const m=scS().log[i]; if(!m?.plan) return; if(needAccount('save plans')) return;
   try{ const j=await api('/api/plans',{action:'save', plan:m.plan}); SV.plans=j.plans; m.saved=true; save(); renderScoutLog();
     toast(`💾 <b>${esc(m.plan.title||'Plan')}</b> saved to My plans.`,'green',[{l:'Open',cls:'blue',f:()=>{ $('#scoutBg').hidden=true; openPlans(); }}],4000); }
@@ -2116,6 +2136,7 @@ function openSearch(){
   if(!PL.hot) loadHotspots().then(()=>{ if(!$('#searchBg').hidden) openSearch(); });
 }
 function runSearch(cat, q){   // land on the feed with that view applied
+  track('search');
   $('#searchBg').hidden=true; S.feed.when=searchWhen==='today'?'today':searchWhen; save();
   feedFocus=cat||null; feedQ=q||''; $('#feedQ').value=feedQ; feedN=30; tab('feed'); renderFeed();
 }
@@ -3218,6 +3239,7 @@ function tab(t){
   $('#scoutBtn').hidden = t==='live'; scoutUnpoint?.();
   if(t==='home'){ renderHome(); setTimeout(initGoMap,0); }
   if(t==='map'){ if(!map) initMap(); setTimeout(()=>map.invalidateSize(),0); }
+  if(!NAVBACK&&(t==='map'||t==='feed')) try{ track(t+'_open'); }catch(e){}
   if(t==='live') renderLive();
   if(t==='feed') schedule(0);
   if(t==='meet') renderMeet();
@@ -4420,7 +4442,7 @@ function renderScoutLog(){
   $('#scVoice').textContent = s.voice?'🔊':'🔇';
 }
 async function scoutAsk(q, byVoice){
-  q=String(q).trim().slice(0,300); if(!q||SCT.busy) return;
+  q=String(q).trim().slice(0,300); if(!q||SCT.busy) return; track('scout_ask');
   scoutLog('me',q); SCT.busy=true; scoutEx('thinking'); renderScoutLog(); scoutMicUi(); $('#dvGo').hidden=true; scoutCardClose();
   if(SCT.driving) $('#dvSay').textContent='🧭 Thinking…';
   let r;

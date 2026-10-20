@@ -1801,7 +1801,8 @@ def mount_app(server)
                         users: d['users'].values.map { |u| u.slice('h', 'joined', 'banned', 'invite') },
                         unreviewed: { posts: d['posts'].select { |p| p['unreviewed'] && !p['removed'] },
                                       stories: d['stories'].select { |x| x['unreviewed'] && !x['removed'] },
-                                      groups: d['groups'].values.select { |g| g['unreviewed'] && !g['removed'] } },
+                                      groups: d['groups'].values.select { |g| g['unreviewed'] && !g['removed'] },
+                                      evchat: (d['ev_chat'] || {}).flat_map { |ev, l| l.select { |m| m['unreviewed'] && !m['removed'] }.map { |m| m.merge('ev' => ev) } } },
                         stats: { users: d['users'].size, posts: d['posts'].size, stories: d['stories'].size,
                                  groups: d['groups'].size, open_reports: d['reports'].count { |r| r['status'] == 'open' } },
                         scout: { days: (d['scout'] || {}).sort.last(7).reverse.map { |day, x| { day: day, n: x['n'], usd: x['usd'].round(2),
@@ -1816,11 +1817,13 @@ def mount_app(server)
         res.body = store do |d|
           case b['action']
           when 'remove'
-            coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values }[b['kind']] or raise 'bad kind'
+            coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values,
+                     'evchat' => (d['ev_chat'] || {}).values.flatten }[b['kind']] or raise 'bad kind'
             (coll.find { |x| x['id'] == b['id'] } or raise 'not found')['removed'] = true
             prune_stories(d)
           when 'approve'
-            coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values }[b['kind']] or raise 'bad kind'
+            coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values,
+                     'evchat' => (d['ev_chat'] || {}).values.flatten }[b['kind']] or raise 'bad kind'
             (coll.find { |x| x['id'] == b['id'] } or raise 'not found').delete('unreviewed')
           when 'ban', 'unban'
             u = d['users'][b['h']] or raise 'no such user'

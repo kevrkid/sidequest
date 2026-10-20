@@ -43,7 +43,17 @@ async function load(){
     const d = await call('GET'); $('#err').textContent=''; $('#login').hidden = true;
     const act = (label, o, cls='') => `<button class="${cls}" data-act='${esc(JSON.stringify(o))}'>${label}</button>`;
     const open = d.reports.filter(r=>r.status==='open');
+    let g=null; try{ const r=await fetch('/api/admin/growth',{headers:{'X-Admin-Token':TOK}}); if(r.ok) g=await r.json(); }catch(e){}
+    const max=g?Math.max(1,...g.dau):1;
     $('#out').innerHTML = `<div class="stats">${Object.entries(d.stats).map(([k,v])=>`<div class="stat"><b>${v}</b><span class="meta">${k.replace('_',' ')}</span></div>`).join('')}</div>
+      ${g?`<h2>📈 Growth (last 14 days)</h2>
+      <div class="stats"><div class="stat"><b>${g.dau.at(-1)}</b><span class="meta">active today</span></div><div class="stat"><b>${g.wau}</b><span class="meta">active this week</span></div>
+        <div class="stat"><b>${g.retention7==null?'–':g.retention7+'%'}</b><span class="meta">came back in week 2${g.cohort?` (of ${g.cohort})`:''}</span></div>
+        <div class="stat"><b>${g.signups.reduce((a,b)=>a+b,0)}</b><span class="meta">sign-ups</span></div><div class="stat"><b>${g.rsvps}</b><span class="meta">RSVPs</span></div>
+        <div class="stat"><b>${g.checkins}</b><span class="meta">check-ins</span></div><div class="stat"><b>${g.quests_done}</b><span class="meta">quests done</span></div></div>
+      <div class="card"><div class="meta">Daily active people</div><div style="display:flex;align-items:flex-end;gap:4px;height:70px;margin-top:6px">${g.dau.map((n,i)=>`<div title="${esc(g.days[i])}: ${n}" style="flex:1;background:#2ec5ff;border-radius:3px 3px 0 0;height:${Math.max(2,n/max*100)}%"></div>`).join('')}</div>
+        <div class="meta" style="display:flex;justify-content:space-between"><span>${esc(g.days[0])}</span><span>${esc(g.days.at(-1))}</span></div></div>
+      <div class="card"><div class="meta">What people did (taps, 14 days; no content or locations are recorded)</div>${Object.entries(g.events).slice(0,14).map(([k,v])=>`<div class="row"><span class="grow">${esc(k.replace(/_/g,' '))}</span><b>${v}</b></div>`).join('')||'<p class="meta">Nothing yet.</p>'}</div>`:''}
       <h2>Open reports (${open.length})</h2>
       ${open.map(r=>`<div class="card row"><div class="grow"><b>${esc(r.reason)}</b> · ${esc(r.kind)} <code>${esc(r.target)}</code>${r.about?` by @${esc(r.about)}`:''}
           <div class="meta">reported by @${esc(r.by)} · ${when(r.at)}</div></div>
@@ -66,7 +76,9 @@ async function load(){
         ${act('Looks fine',{action:'approve',kind:'post',id:x.id},'good')}${act('Remove',{action:'remove',kind:'post',id:x.id},'bad')}</div>`).join('')}
       ${d.unreviewed.groups.map(x=>`<div class="card row"><div class="grow"><b>Group</b> ${esc(x.n)} by @${esc(x.owner)}<div class="meta">${esc(x.d)}</div></div>
         ${act('Looks fine',{action:'approve',kind:'group',id:x.id},'good')}${act('Remove',{action:'remove',kind:'group',id:x.id},'bad')}</div>`).join('')}
-      ${d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length?'':'<p class="meta">All clear.</p>'}
+      ${(d.unreviewed.evchat||[]).map(x=>`<div class="card row"><div class="grow"><b>Event chat</b> by @${esc(x.u)} · <code>${esc(x.ev)}</code><div>${esc(x.t)}</div></div>
+        ${act('Looks fine',{action:'approve',kind:'evchat',id:x.id},'good')}${act('Remove',{action:'remove',kind:'evchat',id:x.id},'bad')}</div>`).join('')}
+      ${d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length+(d.unreviewed.evchat||[]).length?'':'<p class="meta">All clear.</p>'}
       <h2>🧭 Scout usage</h2>
       ${d.scout?`<div class="card row"><div class="grow"><b>${d.scout.paused?'Paused by you':d.scout.over_budget?"Paused: today's budget is used up":'Running'}</b>
           <div class="meta">Daily budget $${d.scout.budget} for everyone · ${d.scout.daily_limit} questions per person per day</div></div>
