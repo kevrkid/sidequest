@@ -2390,7 +2390,7 @@ function renderOnb(){
     <input id="onbH" name="username" maxlength="20" placeholder="e.g. taco_tuesday" value="${esc(o.h)}" autocomplete="username" autocapitalize="off">
     ${o.google?'':`<label class="lbl">Password${signup?' <span class="meta">(8+ characters)</span>':''}</label>
     <input id="onbP" name="password" type="password" maxlength="200" value="${esc(o.pw||'')}" autocomplete="${signup?'new-password':'current-password'}">`}
-    ${signup&&S.ref?`<label class="row" style="gap:8px;margin-top:10px;font-weight:600"><input type="checkbox" id="onbRef" checked style="width:auto"> 💌 ${T('Be friends with @{h}, who invited you',{h:esc(S.ref)})}</label>`:''}
+    ${signup&&S.ref&&S.refK?`<label class="row" style="gap:8px;margin-top:10px;font-weight:600"><input type="checkbox" id="onbRef" checked style="width:auto"> 💌 ${T('Be friends with @{h}, who invited you',{h:esc(S.ref)})}</label>`:''}
     ${signup?`${CFG.invite?`<label class="lbl">Invite code</label><input id="onbI" maxlength="40" placeholder="From the person who invited you" value="${esc(o.inv||'')}" autocomplete="off" autocapitalize="off">`:''}
       <label class="lbl">Color</label><div class="chips">${COLORS.map(c=>`<button type="button" class="av" style="background:${c};${o.c===c?'outline:3px solid #fff;outline-offset:2px':''}" data-onbc="${c}" aria-label="color"></button>`).join('')}</div>
       <label class="row" style="margin-top:14px;gap:10px;align-items:flex-start"><input type="checkbox" id="onbAdult" style="width:auto;margin-top:2px" ${o.adult?'checked':''}><span class="meta" style="font-size:13px">I'm 18 or older.</span></label>
@@ -2455,7 +2455,7 @@ async function onbNext(){
     try{
       if(ONB.mode==='signup'){
         await api('/api/signup',{h, ...(ONB.google?{google:ONB.google}:{pw}), c:ONB.c, invite:$('#onbI')?.value||'', adult:true, terms:true,
-          ref:S.ref||'', ref_friend:!!S.ref&&($('#onbRef')?$('#onbRef').checked:true)});
+          ref:S.ref||'', rk:S.refK||'', ref_friend:!!S.ref&&($('#onbRef')?$('#onbRef').checked:true)});
         setTimeout(()=>toast(`🏆 <b>${T("You're level 1.")}</b> ${T('Check in at places around town to level up: a historical marker, a taco spot, a park.')}`,'green',[{l:T('See quests'),cls:'blue',f:openQuests}],7000),5000); ONB.google=null;
         AUTHED=true; ONB.busy=false; await loadState(); onAuthed();
         if(S.me.h==='guest'){ S.me.h=h; S.me.c=ONB.c; }
@@ -5018,7 +5018,7 @@ const checkBtn = (k,id,lat,lng) => `<button class="btn sm" data-checkin2="${k}|$
 /* ---- 💌 invites & deep links ---- */
 function inviteLink(){
   if(needAccount('invite friends')) return;
-  track('invite_copy'); shareLink(`${location.origin}/i/${S.me.h}`,'Side Quest',T("I'm on Side Quest: Austin events, friends and quests. Join me!"));
+  track('invite_copy'); shareLink(`${location.origin}/i/${S.me.h}${SV.v2?.invite?'/'+SV.v2.invite:''}`,'Side Quest',T("I'm on Side Quest: Austin events, friends and quests. Join me!"));
 }
 function handleDeepLink(){
   const q=new URLSearchParams(location.search); if(![...q.keys()].length) return;
@@ -5026,7 +5026,7 @@ function handleDeepLink(){
   if(g) setTimeout(()=>{ if(groupOf?.(g)) openGroup(g); },600);
   if(q.get('quests')) setTimeout(()=>openQuests(),600);
   if(q.get('inbox')) setTimeout(()=>openNotifs(),600);
-  if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
+  if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; S.refK=(q.get('rk')||'').slice(0,12); save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
   if(ev) openEvent(ev.startsWith('e:')?ev:'e:'+ev);
   if(sg) setTimeout(()=>{ loadSights(); const t=setInterval(()=>{ if(SG.data){ clearInterval(t); focusSight(sg); } },200); setTimeout(()=>clearInterval(t),8000); },300);
   try{ history.replaceState(history.state,'',location.pathname); }catch(e){}

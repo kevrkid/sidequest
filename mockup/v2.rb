@@ -193,7 +193,24 @@ rescue StandardError
   (JSON.parse(EVENTS_CACHE[:body].to_s)['events'] rescue nil) || []
 end
 
-def event_by_uid(uid) events_list.find { |e| e['uid'] == uid } end
+EV_INDEX = { body: nil, by: {} }
+def event_by_uid(uid)
+  events_list if Time.now.to_f - EVENTS_CACHE[:at] > 300
+  if EV_INDEX[:body] != EVENTS_CACHE[:body]   # index once per refresh, not per lookup
+    EV_INDEX[:by] = events_list.to_h { |e| [e['uid'], e] }
+    EV_INDEX[:body] = EVENTS_CACHE[:body]
+  end
+  EV_INDEX[:by][uid.to_s]
+end
+# The event's real title (never the one a browser sent), for anything other people will read.
+def event_title(id) (event_by_uid(id.to_s.sub(/\Ae:/, '')) || {})['title'].to_s[0, 70] end
+
+# Invite links carry a code only the inviter gets, so nobody can make a link in someone else's name and become
+# their friend (and so able to message them) by signing up through it. The key is kept in the data file.
+def invite_code(d, h)
+  d['invite_key'] ||= SecureRandom.hex(16)
+  OpenSSL::HMAC.hexdigest('SHA256', d['invite_key'], "invite|#{h}")[0, 12]
+end
 
 def km_between(a, b, c, e)
   dy = (a - c) * 110.57; dx = (b - e) * 111.32 * Math.cos(a * Math::PI / 180)
@@ -329,6 +346,7 @@ def weekly_recap!(force: false)
 end
 
 def v2_background
+  store { |d| d['invite_key'] ||= SecureRandom.hex(16) }   # made once and kept, so invite links keep working
   push_worker
   Thread.new do
     loop do
@@ -433,7 +451,7 @@ def mount_v2(server)
       unless text.empty?
         th << { 'id' => "c#{SecureRandom.hex(5)}", 'u' => h, 't' => text, 'at' => now_ms, 'unreviewed' => flagged }
         th.shift while th.size > 200
-        title = b['title'].to_s[0, 60]
+        title = event_title(ev)
         (th.map { |m| m['u'] } + (d['rsvps'][ev] || {}).select { |_x, st| st == 'going' }.keys).uniq.first(30).each do |x|
           notify!(d, x, 'chat', from: h, ref: ev, text: "💬 @#{h} on #{title.empty? ? 'an event you follow' : title}: #{text[0, 70]}")
         end
@@ -471,8 +489,10 @@ def mount_v2(server)
   # Invite a friend to an event: a DM with the link (friends only, like any DM).
   route(server, '/api/event/invite') do |b, h|
     limit!("evinvite:#{h}", 60, 3600)
-    ev = b['id'].to_s[0, 40]; title = b['title'].to_s[0, 80]
+    ev = b['id'].to_s[0, 40]
     raise 'No event.' unless ev =~ /\Ae:[0-9a-f]{6,32}\z/
+    title = event_title(ev)
+    raise "That event isn't listed anymore." if title.empty?
     to = Array(b['to']).map(&:to_s).uniq.first(20)
     store do |d|
       ok = to.select { |x| d['users'][x] && friends_of(d, h).include?(x) && !blocked_between(d, h).include?(x) }
@@ -536,12 +556,12 @@ def mount_v2(server)
     res.body = share_page(s['name'], s['text'] || s['what'] || 'A sight in Austin', s['photo'], "/?sight=#{id}")
   end
   server.mount_proc('/i') do |req, res|
-    h = req.path[%r{\A/i/([a-z0-9_]{3,20})\z}, 1]
+    h, code = req.path.match(%r{\A/i/([a-z0-9_]{3,20})(?:/([0-9a-f]{12}))?\z})&.captures
     known = h && store(write: false) { |d| !!d['users'][h] }
     res['Content-Type'] = 'text/html; charset=utf-8'
     res.body = share_page(known ? "@#{h} invited you to Side Quest" : 'Side Quest',
                           "What's the move tonight, and who's coming? Real Austin events, friends, food, history and quests.",
-                          nil, known ? "/?ref=#{h}" : '/')
+                          nil, known ? "/?ref=#{h}#{code ? "&rk=#{code}" : ''}" : '/')
   end
 end
 

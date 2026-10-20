@@ -78,9 +78,10 @@ with sync_playwright() as pw:
     a.screenshot(path=f"{OUT}/v2-01-home.png")
 
     # ---- invite link: Bo arrives through Amy's link and becomes her friend at sign-up
-    share = urllib.request.urlopen(f"{BASE}/i/{AMY}").read().decode()
+    code = a.evaluate("SV.v2.invite")
+    share = urllib.request.urlopen(f"{BASE}/i/{AMY}/{code}").read().decode()
     check("invite link page has a link preview", f"@{AMY} invited you" in share and 'og:title' in share)
-    bctx, b = new_page(browser, "bo", url=f"/i/{AMY}")
+    bctx, b = new_page(browser, "bo", url=f"/i/{AMY}/{code}")
     check("invite link opens the app and remembers who invited", b.evaluate("S.ref") == AMY, b.evaluate("S.ref"))
     for i in ("music", "food", "art"):
         b.click(f"[data-onbi='{i}']")

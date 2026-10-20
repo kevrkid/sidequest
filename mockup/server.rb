@@ -940,7 +940,7 @@ def state_for(d, h)
   if h
     out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online' }
     q = (d['quest'] || {})[h] || {}
-    out[:v2] = { unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
+    out[:v2] = { invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
                  xp: q['xp'].to_i, level: level_of(q['xp']), saves: ((d['saves'] || {})[h] || []).map { |x| "#{x['k']}:#{x['id']}" } }
     # friends' levels and quest badges (friends only; everyone else just sees the app as before)
     out[:badges] = (friends.to_a + [h]).map { |x| qq = (d['quest'] || {})[x]; qq && [x, { lvl: level_of(qq['xp']), done: (qq['done'] || {}).keys }] }.compact.to_h
@@ -1399,10 +1399,10 @@ def mount_app(server)
       ref = b['ref'].to_s
       if ref =~ HANDLE_RE && d['users'][ref] && ref != h && !d['users'][ref]['banned']   # came from someone's invite link
         d['users'][h]['ref'] = ref
-        if b['ref_friend'] == true   # they said yes to "be friends with @ref"
+        if b['ref_friend'] == true && secure_compare(b['rk'].to_s, invite_code(d, ref))   # a real link from @ref, and they said yes
           (d['friends'][h] ||= []) << ref; (d['friends'][ref] ||= []) << h unless (d['friends'][ref] ||= []).include?(h)
         end
-        notify!(d, ref, 'joined', from: h, text: "💌 @#{h} joined from your invite#{b['ref_friend'] == true ? ": you're friends now" : ''}")
+        notify!(d, ref, 'joined', from: h, text: "💌 @#{h} joined from your invite#{(d['friends'][h] || []).include?(ref) ? ": you're friends now" : ''}")
         quest_bump!(d, ref, 'recruit')
         track!('signup_ref')
       end
@@ -1617,7 +1617,7 @@ def mount_app(server)
     store do |d|
       list = (d['rsvps'][b['id'].to_s[0, 40]] ||= {})
       if b['status'] == 'going' && list[h] != 'going'   # friends already in on it hear that you're coming
-        title = b['title'].to_s[0, 60]
+        title = event_title(b['id'])
         (friends_of(d, h).to_a & list.keys).each do |f|
           notify!(d, f, 'going', from: h, ref: b['id'].to_s[0, 40], text: "🎟️ @#{h} is going to #{title.empty? ? 'an event you picked' : title} too")
         end

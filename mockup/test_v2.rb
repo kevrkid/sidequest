@@ -189,8 +189,16 @@ t('group chat: members only; posting notifies members who have talked there') {
   check(c0 == 403 && j['msgs'].map { |m| m['t'] } == ['Field 3 this Sunday?', 'In! Bringing a ball'] &&
         n['notifs'].any? { |x| x['t'] == 'chat' && x['ref'] == "g:#{gid}" } && n['notifs'].any? { |x| x['t'] == 'join' }, [c0, j, gid])
 }
+t("a link made up in someone else's name can't make you their friend") {
+  mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
+  _, s = mal.get('/api/state')
+  check(!s['friends']['list'].include?('amy_v2'), s['friends'])
+}
 t('invite link: the new person can choose to be friends with whoever invited them') {
-  cy.signup(ref: 'amy_v2', ref_friend: true)
+  _, as = amy.get('/api/state')
+  page = Net::HTTP.get(URI("#{BASE}/i/amy_v2/#{as['v2']['invite']}"))
+  check(page.include?("rk=#{as['v2']['invite']}"), 'invite page lost the code')
+  cy.signup(ref: 'amy_v2', ref_friend: true, rk: as['v2']['invite'])
   _, s = cy.get('/api/state')
   _, n = amy.post('/api/notifs')
   _, q = amy.get('/api/quests')
@@ -214,7 +222,7 @@ t('analytics: whitelisted names only; the admin growth report needs the token') 
   amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'evil_thing')
   c1, = amy.get('/api/admin/growth')
   c2, g = amy.req(:get, '/api/admin/growth', nil, 'X-Admin-Token' => 'adm')
-  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 3, g)
+  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 4, g)
   "dau #{g['dau'].last}, wau #{g['wau']}"
 }
 t("friends see each other's level and badges; a stranger's quests stay private") {
