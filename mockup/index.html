@@ -102,7 +102,7 @@
   .tncard{flex:none;width:228px;display:flex;gap:9px;align-items:center;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:7px;scroll-snap-align:start}
   .tncard .thumb{width:44px;height:44px;font-size:19px;flex:none} .tnt{display:flex;flex-direction:column;min-width:0;font-size:13px}
   .tnt b,.tnt .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .upnext{cursor:pointer;border-color:#ff9a3c66}
+  .upnext{cursor:pointer;border-color:#ff9a3c66} .tncard.out{width:200px;border-color:#3ddc9755}
   .lvlcard{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,#2a1a4a,#10162c);border:1px solid #b57bff55;border-radius:18px;padding:14px;margin-top:12px}
   .lvl{width:66px;height:66px;border-radius:50%;flex:none;display:grid;place-items:center;align-content:center;background:radial-gradient(circle,#ff9a3c33,#ff9a3c08);border:2px solid #ff9a3c}
   .lvl small{font-size:9px;font-weight:800;letter-spacing:1px;color:#ffd2b0} .lvl b{font-size:26px;line-height:1}
@@ -1020,6 +1020,7 @@ const ES = {
   'On iPhone, add Side Quest to your Home Screen (Share → Add to Home Screen) to get them with the app closed.':'En iPhone, agrega Side Quest a tu pantalla de inicio (Compartir → Agregar a inicio) para recibirlas con la app cerrada.',
   "You're offline. Showing what this phone already has; live stuff comes back with signal.":'Estás sin conexión. Ves lo que ya tiene este teléfono; lo en vivo vuelve con señal.', 'Back online.':'Conectado de nuevo.',
   'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
+  'Show friends where I check in (the place, for 3 hours)':'Mostrar a mis amigos dónde registro visitas (el lugar, por 3 horas)', 'Friends out now':'Amigos que andan fuera',
   'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
   'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
   'Phone notifications':'Notificaciones en el teléfono', 'While Side Quest is open in the background.':'Mientras Side Quest está abierto en segundo plano.',
@@ -4999,7 +5000,8 @@ function renderQuests(){
     <label class="lbl">${T('Friends leaderboard')}</label>
     ${q.board.length>1?q.board.map((r,i)=>`<div class="lbrow ${r.h===S.me.h?'me':''}"><b class="rank">${i+1}</b>${av(r.h,'sm')}<span class="grow">@${esc(r.h)} <span class="meta">· ${T('Lv {n}',{n:r.level})}</span></span><b>${r.xp} XP</b></div>`).join('')
       :`<p class="meta">${T('Add friends to compete. Your invite link:')} <button class="linkbtn" data-invitelink>${T('copy it')}</button></p>`}
-    <div class="row" style="margin-top:10px"><span class="grow meta">${T("Show me on friends' leaderboards")}</span><button class="toggle ${q.hidden?'':'on'}" data-lbtoggle aria-label="leaderboard"></button></div>`;
+    <div class="row" style="margin-top:10px"><span class="grow meta">${T("Show me on friends' leaderboards")}</span><button class="toggle ${q.hidden?'':'on'}" data-lbtoggle aria-label="leaderboard"></button></div>
+    <div class="row" style="margin-top:10px"><span class="grow meta">${T('Show friends where I check in (the place, for 3 hours)')}</span><button class="toggle ${q.share?'on':''}" data-sharetoggle aria-label="share check-ins"></button></div>`;
 }
 async function checkInAt(k, id, lat, lng){
   if(needAccount('check in and earn XP')) return;
@@ -5036,17 +5038,21 @@ function handleDeepLink(){
 function renderTonight(){
   const el=$('#homeTonight'); if(!el) return;
   const now=Date.now(), end=new Date().setHours(28,0,0,0), aff=affinity();   // "tonight" runs to 4 AM
-  const evs=EV.list.filter(e=>e.te>now&&e.ts<end&&!e.tba&&e.lat).map(e=>({e, s:(aff[e.cat]||0)*2+goingList(e).filter(isFriend).length*3+(e.geo_precise?1:0)-km(ME_POS,[e.lat,e.lng])/4}))
+  const evs=EV.list.filter(e=>e.te>now&&e.ts<end&&!e.tba&&e.lat).map(e=>{ const go=goingList(e);
+      return {e, s:(aff[e.cat]||0)*2+go.filter(isFriend).length*3+Math.min(go.length,10)*.3+(e.geo_precise?1:0)-km(ME_POS,[e.lat,e.lng])/4}; })
     .sort((a,b)=>b.s-a.s).slice(0,12).map(x=>x.e);
-  el.hidden=!evs.length;
-  el.innerHTML=evs.length?`<div class="tnhead"><b>${T('Tonight near you')}</b><button class="linkbtn" data-tab="feed">${T('See all')} ›</button></div>
+  const out=(AUTHED&&SV.v2?.out)||[];
+  el.hidden=!evs.length&&!out.length;
+  const outHtml=out.length?`<div class="tnrail" style="margin-bottom:8px">${out.map(o=>`<button class="tncard out" data-outgo="${o.k}|${esc(o.id)}">${av(o.h,'sm')}
+      <span class="tnt"><b>@${esc(o.h)}</b><span class="meta">📍 ${esc(o.name)} · ${agoT(o.at)}</span></span></button>`).join('')}</div>`:'';
+  el.innerHTML=(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>${T('Tonight near you')}</b><button class="linkbtn" data-tab="feed">${T('See all')} ›</button></div>
     <div class="tnrail">${evs.map(e=>{ const fr=goingList(e).filter(isFriend).length;
       return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(e.image)}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span>
-        <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'';
+        <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'');
 }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare]');
+  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare],[data-sharetoggle],[data-outgo]');
   if(!t) return; const d=t.dataset;
   if(d.evopen!==undefined){ const inner=e.target.closest('button,a'); if(inner&&inner!==t) return; return openEvent(d.evopen); }
   if(d.v2close){ $('#'+d.v2close).hidden=true; if(d.v2close==='evBg'){ V2S.evOpen=null; clearInterval(V2S.chatT); } return; }
@@ -5064,6 +5070,8 @@ document.addEventListener('click',e=>{
   if(d.questgo){ const g=QUEST_GO[d.questgo]; if(g){ $('#questBg').hidden=true; g[1](); } return; }
   if(d.lbtoggle!==undefined){ const hid=!V2S.quests.hidden; api('/api/quests/board',{hidden:hid}).then(()=>{ V2S.quests.hidden=hid; openQuests(); }).catch(x=>toast(esc(x.message),'orange')); return; }
   if(d.invitelink!==undefined) return inviteLink();
+  if(d.sharetoggle!==undefined){ const on=!V2S.quests.share; api('/api/quests/board',{share:on}).then(()=>{ V2S.quests.share=on; renderQuests(); }).catch(x=>toast(esc(x.message),'orange')); return; }
+  if(d.outgo){ const [k,...id]=d.outgo.split('|'); const i=id.join('|'); return k==='sight'?focusSight(i):k==='place'?focusPlace(i):k==='event'?openEvent(i):null; }
   if(d.sgshare){ const sg=SG.full[d.sgshare]; if(sg) shareLink(`${location.origin}/s/${encodeURIComponent(sg.id)}`, sg.name, `${sg.name} · Side Quest`); return; }
   if(d.v2join!==undefined){ $('#evBg').hidden=true; return needAccount('join the conversation'); }
 });

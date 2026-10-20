@@ -168,7 +168,11 @@ with sync_playwright() as pw:
     check("quests: level, XP and the History buff at 1/5", "LEVEL" in qs and "1/5" in qs)
     check("friends leaderboard lists both", AMY in qs and BO in qs)
     a.screenshot(path=f"{OUT}/v2-04-quests.png")
+    a.click("#questSheet [data-sharetoggle]"); a.wait_for_timeout(700)
     close_sheets(a)
+    b.evaluate("loadState().then(()=>{ document.querySelectorAll('.sheet-bg').forEach(x=>x.hidden=true); tab('home'); renderHome(); })"); b.wait_for_timeout(800)
+    check("a friend who shares check-ins shows under 'Friends out now' on Home", AMY in b.inner_text("#homeTonight") and "Test Moonlight Tower" in b.inner_text("#homeTonight"),
+          b.inner_text("#homeTonight")[:120])
 
     a.evaluate("loadState().then(()=>{ tab('me'); showMeSec('profile'); renderMe(); })"); a.wait_for_timeout(600)
     check("your own profile shows your level and XP", a.is_visible("#myQuest") and "XP" in a.inner_text("#myQuest"))

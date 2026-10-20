@@ -153,6 +153,16 @@ t('friends leaderboard: friends only, and you can hide yourself') {
   check(names.sort == %w[amy_v2 bo_v2] && q2['board'].map { |r| r['h'] } == ['bo_v2'], [names, q2['board']])
   amy.post('/api/quests/board', hidden: false)
 }
+t("friends out now: nothing unless they chose to share; then just the place, friends only") {
+  _, s1 = bo.get('/api/state')
+  amy.post('/api/quests/board', share: true)
+  _, s2 = bo.get('/api/state')
+  stranger = Who.new('stranger_v2'); stranger.signup
+  _, s3 = stranger.get('/api/state')
+  o = s2['v2']['out'].first
+  check(s1['v2']['out'].empty? && o && o['h'] == 'amy_v2' && o['name'] && !o.key?('lat') && s3['v2']['out'].empty?, [s1['v2']['out'], s2['v2']['out']])
+  o['name']
+}
 t('saves are per person: add, list, remove') {
   amy.post('/api/saves', action: 'add', k: 'sight', id: 'm9001', name: 'Test Moonlight Tower')
   amy.post('/api/saves', action: 'add', k: 'event', id: 'e:abc123def456', name: 'Test Show')
@@ -222,7 +232,7 @@ t('analytics: whitelisted names only; the admin growth report needs the token') 
   amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'evil_thing')
   c1, = amy.get('/api/admin/growth')
   c2, g = amy.req(:get, '/api/admin/growth', nil, 'X-Admin-Token' => 'adm')
-  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 4, g)
+  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 5, g)
   "dau #{g['dau'].last}, wau #{g['wau']}"
 }
 t("friends see each other's level and badges; a stranger's quests stay private") {

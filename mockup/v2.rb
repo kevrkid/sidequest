@@ -134,6 +134,18 @@ def quest_award!(d, h)
   end
 end
 
+# Friends out right now: check-ins from the last 3 hours by friends who chose to share them (off by default).
+# Only the place's name and kind, never a position.
+def friends_out(d, h)
+  cut = now_ms - 3 * 3_600_000
+  hidden = blocked_between(d, h)
+  friends_of(d, h).to_a.reject { |f| hidden.include?(f) }.flat_map do |f|
+    next [] unless d['users'][f]&.dig('share_checkins')
+    c = ((d['quest'] || {})[f] || {})['checkins'].to_a.reverse.find { |x| x['at'] > cut }
+    c ? [{ h: f, name: c['name'], k: c['k'], id: c['id'], at: c['at'] }] : []
+  end.sort_by { |x| -x[:at] }.first(10)
+end
+
 def level_of(xp) (Math.sqrt(xp.to_i / 50.0)).floor + 1 end
 
 def quest_view(d, h)
@@ -379,11 +391,16 @@ def mount_v2(server)
       board = ([h] + friends_of(d, h).to_a).select { |x| d['users'][x] && (x == h || !d['users'][x]['lb_hidden']) }
                                            .map { |x| q = (d['quest'] || {})[x] || {}; { h: x, xp: q['xp'].to_i, level: level_of(q['xp']), badges: (q['done'] || {}).size } }
                                            .sort_by { |r| -r[:xp] }.first(30)
-      quest_view(d, h).merge(board: board, hidden: !!d['users'][h]['lb_hidden'])
+      quest_view(d, h).merge(board: board, hidden: !!d['users'][h]['lb_hidden'], share: !!d['users'][h]['share_checkins'])
     end
   end
-  route(server, '/api/quests/board') do |b, h|   # show or hide me on friends' leaderboards
-    store { |d| d['users'][h]['lb_hidden'] = b['hidden'] == true; { ok: true, hidden: d['users'][h]['lb_hidden'] } }
+  route(server, '/api/quests/board') do |b, h|   # show or hide me on friends' leaderboards; share check-ins with friends
+    store do |d|
+      u = d['users'][h]
+      u['lb_hidden'] = b['hidden'] == true if b.key?('hidden')
+      u['share_checkins'] = b['share'] == true if b.key?('share')
+      { ok: true, hidden: !!u['lb_hidden'], share: !!u['share_checkins'] }
+    end
   end
 
   # Check in: the phone says where; we look the place up ourselves and count it once per place per day.

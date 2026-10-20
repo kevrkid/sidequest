@@ -940,7 +940,7 @@ def state_for(d, h)
   if h
     out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online' }
     q = (d['quest'] || {})[h] || {}
-    out[:v2] = { invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
+    out[:v2] = { out: friends_out(d, h), invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
                  xp: q['xp'].to_i, level: level_of(q['xp']), saves: ((d['saves'] || {})[h] || []).map { |x| "#{x['k']}:#{x['id']}" } }
     # friends' levels and quest badges (friends only; everyone else just sees the app as before)
     out[:badges] = (friends.to_a + [h]).map { |x| qq = (d['quest'] || {})[x]; qq && [x, { lvl: level_of(qq['xp']), done: (qq['done'] || {}).keys }] }.compact.to_h
