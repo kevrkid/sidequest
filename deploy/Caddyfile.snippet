@@ -1,0 +1,16 @@
+# Add to /etc/caddy/Caddyfile, then: systemctl reload caddy   (Caddy gets the HTTPS certificate itself)
+sidequest.cc.middlematter.com {
+	encode gzip
+	request_body {
+		max_size 2MB
+	}
+	# Self-hosted LiveKit only (SQ_LIVEKIT_SELFHOST=1): the app's signalling at wss://<this site>/livekit.
+	# The video doesn't pass through Caddy; it goes to the box directly (UDP 50000-60000, TCP 7881, TURN).
+	# Harmless with LiveKit Cloud: nothing listens on 7880, and the app never uses this path.
+	handle_path /livekit/* {
+		reverse_proxy 127.0.0.1:7880
+	}
+	handle {
+		reverse_proxy 127.0.0.1:8787
+	}
+}

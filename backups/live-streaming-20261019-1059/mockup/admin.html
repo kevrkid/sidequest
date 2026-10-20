@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Side Quest Admin</title>
+<style>
+  :root{--bg:#070b18;--panel:#10162c;--panel2:#18203f;--line:#253058;--text:#e9edff;--muted:#8a93ba;--accent:#ff7a18;--good:#3ddc97;--bad:#ff3b5c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,-apple-system,sans-serif}
+  main{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+  h1{font-size:22px;margin:0} h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:26px 0 8px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px}
+  .meta{color:var(--muted);font-size:12px}
+  input{background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 12px;font:inherit;min-width:260px}
+  button{font:inherit;font-weight:700;border-radius:10px;padding:6px 11px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer}
+  button.bad{border-color:var(--bad);color:#ff8a9c} button.good{border-color:var(--good);color:var(--good)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+  .stat b{display:block;font-size:22px}
+  img{max-width:120px;border-radius:8px;display:block;margin-top:6px}
+  .grow{flex:1;min-width:0}
+</style>
+</head>
+<body><main>
+<div class="row"><h1 class="grow">🛡️ Side Quest admin</h1><a href="/" style="color:#2ec5ff">← app</a></div>
+<form id="login" class="row" style="margin-top:14px"><input id="tok" type="password" placeholder="Admin token (SQ_ADMIN_TOKEN)" autocomplete="off"><button>Open</button></form>
+<p id="err" style="color:#ff8a9c"></p>
+<div id="out"></div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const when = t => new Date(t).toLocaleString();
+let TOK = sessionStorage.getItem('sq-admin') || '';
+async function call(method, body){
+  const r = await fetch('/api/admin', {method, headers:{'X-Admin-Token':TOK, 'Content-Type':'application/json'}, body: body && JSON.stringify(body)});
+  const j = await r.json(); if(j.error) throw new Error(j.error); return j;
+}
+async function load(){
+  try{
+    const d = await call('GET'); $('#err').textContent=''; $('#login').hidden = true;
+    const act = (label, o, cls='') => `<button class="${cls}" data-act='${esc(JSON.stringify(o))}'>${label}</button>`;
+    const open = d.reports.filter(r=>r.status==='open');
+    $('#out').innerHTML = `<div class="stats">${Object.entries(d.stats).map(([k,v])=>`<div class="stat"><b>${v}</b><span class="meta">${k.replace('_',' ')}</span></div>`).join('')}</div>
+      <h2>Open reports (${open.length})</h2>
+      ${open.map(r=>`<div class="card row"><div class="grow"><b>${esc(r.reason)}</b> · ${esc(r.kind)} <code>${esc(r.target)}</code>
+          <div class="meta">by @${esc(r.by)} · ${when(r.at)}</div></div>
+        ${r.kind==='user'?act('Ban user',{action:'ban',h:r.target},'bad'):act('Remove '+r.kind,{action:'remove',kind:r.kind,id:r.target},'bad')}
+        ${act('Resolve',{action:'resolve',id:r.id},'good')}</div>`).join('') || '<p class="meta">Nothing open. 🎉</p>'}
+      <h2>Needs a human look</h2>
+      <p class="meta">Posts that went up while automatic screening was unavailable, and every photo story (photos aren't machine-checked yet).</p>
+      ${d.unreviewed.stories.map(x=>`<div class="card row"><div class="grow"><b>Story</b> by @${esc(x.u)} · ${when(x.created)}<div>${esc(x.caption)}</div>${x.img?`<img src="${esc(x.img)}" alt="">`:''}</div>
+        ${act('Looks fine',{action:'approve',kind:'story',id:x.id},'good')}${act('Remove',{action:'remove',kind:'story',id:x.id},'bad')}${act('Ban @'+esc(x.u),{action:'ban',h:x.u},'bad')}</div>`).join('')}
+      ${d.unreviewed.posts.map(x=>`<div class="card row"><div class="grow"><b>Post</b> by @${esc(x.u)}<div>${esc(x.t)}</div></div>
+        ${act('Looks fine',{action:'approve',kind:'post',id:x.id},'good')}${act('Remove',{action:'remove',kind:'post',id:x.id},'bad')}</div>`).join('')}
+      ${d.unreviewed.groups.map(x=>`<div class="card row"><div class="grow"><b>Group</b> ${esc(x.n)} by @${esc(x.owner)}<div class="meta">${esc(x.d)}</div></div>
+        ${act('Looks fine',{action:'approve',kind:'group',id:x.id},'good')}${act('Remove',{action:'remove',kind:'group',id:x.id},'bad')}</div>`).join('')}
+      ${d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length?'':'<p class="meta">All clear.</p>'}
+      <h2>🧭 Scout usage</h2>
+      ${d.scout?`<div class="card row"><div class="grow"><b>${d.scout.paused?'Paused by you':d.scout.over_budget?"Paused: today's budget is used up":'Running'}</b>
+          <div class="meta">Daily budget $${d.scout.budget} for everyone · ${d.scout.daily_limit} questions per person per day</div></div>
+        ${d.scout.paused?act('Resume Scout',{action:'scout_resume'},'good'):act('Pause Scout',{action:'scout_pause'},'bad')}</div>
+      ${d.scout.days.map(x=>`<div class="card"><b>${esc(x.day)}</b> · ${x.n} questions · $${x.usd}
+          <div class="meta">${x.top.map(u=>`@${esc(u.h)} ${u.n} ($${u.usd})`).join(' · ')||'nobody yet'}</div></div>`).join('') || '<p class="meta">No questions yet.</p>'}`:''}
+      <h2>Feedback (${d.feedback.length})</h2>
+      ${d.feedback.map(f=>`<div class="card"><div>${esc(f.text)}</div><div class="meta">@${esc(f.by)} · ${esc(f.where)} · ${when(f.at)}</div></div>`).join('') || '<p class="meta">None yet.</p>'}
+      <h2>People (${d.users.length})</h2>
+      ${d.users.map(u=>`<div class="card row"><div class="grow"><b>@${esc(u.h)}</b> ${u.banned?'<span style="color:#ff8a9c">suspended</span>':''}
+          <div class="meta">joined ${esc(u.joined)}${u.invite?` · invite ${esc(u.invite)}`:''}</div></div>
+        ${u.banned?act('Unban',{action:'unban',h:u.h},'good'):act('Suspend',{action:'ban',h:u.h},'bad')}${act('Delete account',{action:'delete_user',h:u.h},'bad')}</div>`).join('')}`;
+  }catch(e){ $('#err').textContent = e.message; $('#login').hidden = false; }
+}
+$('#login').onsubmit = e => { e.preventDefault(); TOK = $('#tok').value.trim(); sessionStorage.setItem('sq-admin', TOK); load(); };
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const o = JSON.parse(b.dataset.act);
+  if(/ban|delete|remove/.test(o.action) && !confirm(`${o.action.replace('_',' ')} ${o.h||o.id}?`)) return;
+  try{ await call('POST', o); load(); }catch(err){ alert(err.message); }
+});
+if(TOK) load();
+</script>
+</main></body>
+</html>

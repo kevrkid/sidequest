@@ -1,0 +1,6 @@
+{"built":"2026-10-20T00:00:00Z","sights":[
+ {"id":"w1001","kind":"landmark","name":"Test State Capitol","lat":30.2747,"lng":-97.7404,"what":"Capitol building in Austin, Texas","text":"The Test State Capitol was finished in 1888 out of pink granite, and it is a little taller than the one in Washington.","src":"wikipedia","url":"https://en.wikipedia.org/wiki/Texas_State_Capitol","photo":"https://upload.wikimedia.org/test.jpg"},
+ {"id":"m9001","kind":"marker","name":"Test Moonlight Tower","lat":30.2690,"lng":-97.7420,"year":1970,"addr":"Guadalupe St, Austin","text":"One of the moonlight towers put up in 1894-95 to light the whole city at night.","where":"at the corner by the tower","src":"thc","url":"https://atlas.thc.texas.gov/Details/5453000001"},
+ {"id":"m9002","kind":"marker","name":"Test Old Ferry Landing","lat":30.2660,"lng":-97.7400,"year":1936,"text":"A ferry crossed the river here before the first bridge.","src":"thc","url":"https://atlas.thc.texas.gov/Details/5453000002"},
+ {"id":"o1","kind":"art","name":"Test Guitar Statue","lat":30.2630,"lng":-97.7500,"src":"osm"}
+]}

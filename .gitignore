@@ -1,0 +1,10 @@
+mockup/data/app.json
+mockup/data/app.json.*
+mockup/data/stories/
+mockup/data/media/
+mockup/data/avatars/
+mockup/data/sights_cache/
+mockup/data/places_tiles/
+mockup/__pycache__/
+*.log
+.DS_Store

@@ -1,0 +1,317 @@
+# Side Quest
+
+A social app for Austin / Central Texas that answers **"what's the move tonight, and who's coming?"**
+It mixes real local events, people's own posts, and friend-matching so people meet through shared
+activities: pickup games, shows, comedy, bars, groups. **Not a dating app.** Owner: Kevin (kevrkid@gmail.com).
+
+Status: working beta prototype, tested end to end, not yet deployed. Target: public invite-only beta
+at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
+
+## What a user can do
+
+- **Try it without an account.** Guests browse everything and RSVP; anything that reaches other
+  people (post, wave, message, join, go live, report) opens a "create a free account" gate, then
+  returns them to what they were doing. Guest data carries into the account.
+- **Home**: 4 colored quadrants + a center circle. Meet (purple, with a 💬 messages shortcut),
+  Search (blue), Create (green), Live (orange); a middle row with **Friends** (left, badge = pending
+  requests → Meet's friends tab) and **Food** (right → Food & drink list) beside the circle; and **GO!** (a see-through live mini-map with an
+  Apple-style blue location dot; tap opens the full map). A short quick-button row on top that only
+  shows what's useful now (Tonight; My plans / New messages when there are some; quiz, chart, about me
+  until done; the rest lives in the quadrants) and a "Picks for you" bar. Search puts events first,
+  Food & drink + Hot spots first from 10 PM to 10 AM. The Scout button nudges itself up off any
+  button or text box under it (`scoutDock()`).
+  No bottom bar: Home is the hub; header = ‹ back + Side Quest logo (→ Home) on the left, the Online/Offline
+  toggle switch (tap or swipe; `role=switch`) in the centre, your picture + @handle ▾ on the right opening a
+  menu (My profile, Personality quiz, My chart, About me, Privacy); ≤400px shows just the picture.
+  No greeting on Home. Under the header: a **stories row** (Instagram-style rings, `storyRail()`), then the quick row
+  (📅 My plans always; New messages when unread).
+- **Story viewer** (`#storyView`, `renderReel()`): TikTok-style vertical scroll-snap feed of every story; the one ≥60%
+  in view plays (IntersectionObserver), 🔇/🔊 for all, single tap pauses a video, double-tap = ❤️ (`/api/story/like`;
+  the app only gets counts + your own like; demo stories' likes stay on the phone), right rail: like, reply (DM,
+  friends only), share (native share / copy), 📍 map, ⋯ report. Keep `#storyView`, `.media` and the tag buttons:
+  e2e relies on them.
+- **Plans** (`openPlans()`; Home "📅 My plans", name menu): saved itineraries (`/api/plans`, `d['plans'][h]`, only
+  yours, max 20) as timelines with walking times, per-stop Directions, Map (dashed route), Calendar (.ics with one
+  event per stop), Share; plus the events you're going to. "Plan my night / Saturday / outdoors / dinner and drinks"
+  asks Scout: questions matching `PLAN_RE` use the smart model, get a spread of nearby food / bars / clubs, and may
+  return `plan` (title, day, 2-6 stops); `scout_plan()` keeps only stops whose `ref` is an event, flare or place id
+  Scout was sent. The plan shows as a card in Scout's chat with 💾 Save. The ‹ back button Back closes the top sheet first, then returns to the previous screen; it's wired to
+  browser history (Android back works) and a swipe in from the left edge (left to Safari itself in
+  non-installed iPhone Safari, which already does that).
+- **Search**: "What are you looking to do?", tiles by section (Sports, Entertainment, Going out,
+  Outdoors & more) with live counts, a Tonight/Weekend/Week switch, free-text search, plus
+  **Food & drink** (late-night eats, early morning, bars, clubs, coffee, tacos, BBQ, pizza, burgers,
+  Asian, sweets, food trucks) with an **Open now** switch, and **Hot spots** tiles with live "open now" counts.
+  Results list: nearest first with open spots on top, status ("Open till 2 AM", "Opens at 7 AM",
+  "Hours unknown"), menu/website links when OpenStreetMap has them, and a "may be out of date" note.
+- **Feed**: ranked list of real events, flares, group posts, people and groups, with reasons
+  ("You're into comedy · 2 friends going"). Customizable (content types, categories, sort, distance).
+  "Map it" sends the list to the map. Sorted "For you" (default), the top shows "Tonight's picks for
+  you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
+  Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
+  Scout answers questions.)
+- **Map layers**: five category chips (`MAP_CATS`: 🎫 Events (label = time window), 🌙 Night, 🌲 Outdoors, 👥 Friends,
+  🍔 Food; tap = whole category on/off, dashed = partly on). 🗂 (right side) opens the Layers sheet: quick picks
+  (`MAP_PRESETS`: Night out, Outdoors day, Friends, Everything, Clear), each category with its own switches
+  (`S.mapL`: events · clubs, bars, zones · parks, water, trails, spots · posts, live, stories · food, openonly), event
+  time window (`S.mapWhen`) and types (folded), and the color key. 📍 recenters on you, 🔍 searches places, parks,
+  lakes, trails and events (`mapSearch()`). `mapHint()` shows a short pill after a change when a layer has nothing in
+  view ("Zoom in to see bars", "No events in view tonight · This week →"). Live streams sit in a "LIVE 3 streaming"
+  pill that opens into the strip (`S.liveOpen`). Map attributes use `data-mlcat` / `data-ml` (Meet's filter already
+  uses `data-mcat`). `mapFilter` is now only 'feed' (after Map it, with a ✕ chip) or 'all'. **Nightlife**:
+  OpenStreetMap clubs + Google's (`/api/places/nightclubs`: searchNearby, includedPrimaryTypes night_club, basic
+  fields, ~2 km cells, `SQ_GOOGLE_NIGHT_DAILY` 100/day, strip clubs dropped, nothing stored), overlapping clubs merge
+  into a numbered bubble (tap = zoom in); bars only at zoom ≥16. Food dots skip bars/clubs and show closed/unknown
+  spots only at zoom ≥15; hot-spot names only at zoom ≥15. **Outdoors** (🌲): park / greenbelt / preserve outlines
+  in green and lake / river outlines in blue (real shapes, simplified), drawn in a pane under everything, with activity
+  tags (hiking, nature, fishing, paddleboard, kayak, canoe), real rivers as blue lines (creeks only with a launch
+  or rental), named hike & bike trails as dashed lines (yellow = bikes allowed, orange = foot), and, from zoom 13, rentals 🛶, ramps / put-ins ⚓, fishing
+  spots 🎣 and trailheads 🥾. Data: `fetch_outdoors.rb` (OpenStreetMap, Round Rock to San Marcos) → `data/outdoors.json`,
+  served by `/api/outdoors` (`SQ_OUTDOORS_FILE` for tests).
+- **Map**: OpenStreetMap tiles, event pins, flares, story bubbles, live-stream thumbnail bubbles,
+  a live strip along the bottom, your location dot. Food & drink dots (canvas layer, zoom ≥ 13,
+  "🍔 Food & drink" chip): green glowing = open, amber = opens within the hour, grey = closed/unknown;
+  tap for hours, distance, address, menu/website/directions. Austin hot spots (6th St, Rainey St,
+  Red River, West 6th, SoCo, East Austin, The Domain, Old Downtown Round Rock) are glowing orange
+  zones labeled on their top edge; tap one for what's open there.
+  **Eat after**: a bar/club popup or event popup has "🌙 Eat after": food within 0.5 mi still open
+  when it closes (unknown bar hours = 2 AM last call) or the event ends (`Places.after`,
+  `/api/places/after`); Scout uses it for "food after <venue>" (`venue_key()` in server.rb).
+- **Meet**: one swipe deck for people (right = wave; a wave both ways = friends), events (right =
+  going), groups (right = join), flares (right = I'm down). Sort + filters (activity, when, distance,
+  goals, interests, new to Austin, from my groups, online now). Tabs: Swipe · Friends (requests,
+  friends with 💬 Message, "people you'd probably click with" + 🧠 Ask Claude via `/api/match`;
+  `friendsHtml()`) · Chats (friends-only messages) · Groups. The old People / Party screen
+  (party slots, party chat, invites) was retired: it only ever worked with demo people.
+- **Create & share**: Photo or video story (24h; videos ≤60 s / 60 MB upload raw to `/api/media`, then the
+  story points at them; served from `/story-vid/` with byte ranges, which iPhone Safari needs; a frame grabbed
+  on the phone is the cover), tagged with "Where was this?" (places from your history, then nearby food &
+  drink and venues; shown at that venue or fuzzed), an event, groups, people. Flare ("who's down?" now),
+  Event (date/time), Group, Go live.
+- **Live**: stream from the phone camera (front/back, flip mid-stream), USB webcam mode, Bluetooth
+  pairing for GoPro/Insta360/DJI, Wi-Fi/RTMP instructions. Viewers send requests (visit a place / do
+  a task, with play-money tips); Claude screens every request for safety. Video goes through
+  **LiveKit** when `SQ_LIVEKIT_URL/_KEY/_SECRET` are set (local: `~/.sidequest-livekit.env`): the server
+  mints 10-min tokens (`livekit_token()`, `/api/live/token`), streamers publish only to `live-<handle>`,
+  blocked viewers are refused; `vendor/livekit-client.js` (2.22.0) loads only on Live. Unset or failing =
+  the old phone-to-phone WebRTC over `/api/relay`. Stream announcements/requests always use the relay.
+  The server stamps announcements with the real handle and room, lets only the owner announce/end, holds
+  back the venue until the location delay (default 5 min) passes, hides streams across blocks both ways,
+  and gives viewers anonymous LiveKit ids. **Kill switch**: admin "📺 Live now" → End stream / Suspend
+  deletes the LiveKit room via its server API (`livekit_stop()`, repeated until the last pass expires),
+  drops viewers, stops the streamer's app and locks them out of going live for 30 min. ⋯ on the watch
+  screen = Report / Block. TURN comes from LiveKit (Cloud, or `deploy/livekit.yaml` self-hosted).
+  **Action cameras / OBS** (`/api/live/ingress`): with LiveKit on, the Wi-Fi (RTMP) panel gives each
+  streamer one permanent LiveKit Ingress address + key (id kept as `users[h].ingress`, key shown only to
+  them, "New key" rotates) publishing into `live-<h>` as `<h>~cam`; Go live lights up once the camera's
+  feed arrives (no phone camera needed). **YouTube / TikTok copy-out** (`/api/live/restream`): while live,
+  the streamer pastes stream keys (kept in their browser only, passed straight to LiveKit, never stored on
+  the server) and LiveKit RoomComposite Egress pushes the room to those RTMP addresses (billed per minute).
+  Ending the stream stops the copy-out; a moderator stop also deletes the camera key. The status reply
+  uses `problem`, not `error`: `api()` treats any `error` field as a failed request.
+  Known gaps: viewer requests and titles are screened in the browser only; an accepted "visit" request
+  reveals where the streamer is heading even during the delay.
+- **Your picture**: 📸 Take a photo (in-app camera: front camera in a round preview, shutter / retake / use,
+  480 px square JPEG; no camera access → the phone's own camera via `capture="user"`) or a chosen photo (`/api/me/photo`, shrunk on the phone, served at `/avatar/<h>.jpg?v=`,
+  flagged `pic_unreviewed` since photos aren't machine-checked yet), an emoji avatar (`pic: "emoji:🦊"` via
+  `/api/profile`) or your initial, on a chosen colour; `av()` draws all three everywhere.
+- **Me / profile**: four tabs (`showMeSec()`, `[data-mepane]`): Profile (preview + interests),
+  Personality (quiz + astrology), About you, Privacy (location, delay, data, account). Interests, a 20-question 16-type personality quiz, full astrology (birth date +
+  optional time + city → Sun, Moon, Rising, Mercury–Saturn, Chinese zodiac, computed on-device),
+  39 "about you" questions in 4 sections (Growing up, Life now, Friendship & values, Just for fun).
+  **Every answer has its own visibility**: Matching only (default, never shown) · Friends · Everyone ·
+  Only me. Activity/location history (opt-in, venue-level only), export, delete account.
+- **Profiles of others**: match %, "what you have in common", Snapchat-style astrological
+  compatibility card, their shared answers.
+- **Safety**: report/block on everything, Claude moderation of posts/captions/group names/public
+  profile text, phone/email filter, admin page (`/admin`), 18+ and Terms acceptance at sign-up,
+  rate limits, invite codes in beta.
+- **Scout** (bottom-left button): an animated guide that answers how-to and "what's the move" questions,
+  points at buttons (ring + label) and pulses spots on the map, talks via the browser's own speech
+  (🎤 in, 🔊 out), and has a voice-only 🚗 driving mode (auto-on at ~16 mph). Each user can design its
+  look and name (🎨 builder, a description Claude maps to parts, or their photo, kept on-device only).
+  Guests get a built-in FAQ (incl. food, bars, coffee, open now); signed-in users get Claude.
+  **Do it for me**: Scout actions `search`, `food`, `rsvp` (confirm card), `flare` (draft in the compose
+  sheet), `chat` (opens a friend's thread with a draft), `directions` (card with rough distance/time/
+  leave-by + Apple/Google Maps links; one big button in driving mode). `scout_actions()` in server.rb
+  only lets through actions on what the user was sent (their events/flares, friend handles, places);
+  `ruby test_api.rb` covers it. Nothing posts or sends without a tap. General questions get a brief
+  general-knowledge answer; no live weather/traffic.
+  A 7-step **tour** of Home (`SC_TOUR`, `scoutTour()`) is offered once after the welcome sheet or
+  sign-up, and any time from the panel's "Take the tour" chip or "give me a tour" (no Claude call).
+  Food & drink questions: the server picks ~15 matching places (`scout_places()` in server.rb,
+  widening zone → nearby → closed-with-opening-time and telling Scout what it did), and Scout may
+  light one up with a `place` action, allowed only for ids it was sent; it never invents menus.
+  Scout also answers general questions from Claude's own knowledge (Austin history, how-tos, outdoors tips),
+  and when someone asks about a place by name ("is Franklin open?"), `scout_google()` looks it up live on Google
+  (rating, price, open now, today's hours; nothing stored; counts against `SQ_GOOGLE_DAILY`) and passes it as
+  "Google info". **Voice**: `/api/scout/voice` speaks with Google Text-to-Speech Chirp 3 HD voices (Puck default;
+  Aoede, Kore, Charon in the 🎨 builder) using `SQ_GOOGLE_TTS_KEY`, a server key; cached, capped by
+  `SQ_TTS_DAILY_CHARS`; falls back to the browser's voice. The first tap anywhere unlocks audio on phones. Personality: `mockup/scout_personality.md`;
+  app knowledge: `mockup/scout_knowledge.md` (keep it current; never served). Spec: `SCOUT_PROMPT.md`.
+- **Scout is voice-first**: tapping Scout (or its bubble) opens the panel and starts listening; a big 🎤 is the main
+  control, "⌨️ Type instead" shows the text box. Scout only talks when talked to: spoken questions get spoken answers,
+  typed ones stay quiet unless 🔊 (`S.scout.voice`) is on; driving mode that switches itself on shows a toast instead
+  of speaking. Scout calls run at low effort (`run_claude(..., effort: 'low')` → CLI `--effort low` / API `output_config.effort`): Haiku
+  5.5 otherwise thinks ~500 tokens first; this saves 1-2 s. The CLI itself adds ~1.5 s per call; the API engine is faster.
+  Long answers are spoken ~200 characters at a time (first words in ~1 s) and never fall back to the
+  browser's robot voice while Google's voice exists; 10 Chirp 3 HD voices (`SCOUT_VOICES`) in the 🎨 builder. When you're idle on
+  Home or the map it waves 👋 with a bubble ("Need help? Talk to me!"); at most 3 a visit, 3 min apart, never while
+  driving or with a sheet open; two ✕ in a day silences it till tomorrow (`scoutNudge()`).
+- **Español**: name menu (or the welcome sheet) → 🌐 Español. `T('English', {n})` + the `ES` table translate the
+  visible app (header, name menu, Home, map chips / Layers / hints / search, stories viewer, plans, Scout panel);
+  static labels use `data-t` / `data-tp` and `applyLang()`. Scout listens (`es-US`), answers in Spanish (server
+  prompt) and speaks with the es-US Chirp 3 HD voices. Still English: Search, Meet, Me/profile questions,
+  onboarding text, Create sheets, toasts, the guests' built-in FAQ (Spanish guests get a "make an account" reply).
+- **Sights & history** (🏛️ Sights chip; Layers: landmarks & museums / historical markers / statues, murals & views;
+  "🏛️ Sightseeing" preset): `fetch_sights.rb` → `data/sights.json` (~1,650): all 666 Texas Historical Commission markers
+  from Round Rock to San Marcos with their full plaque text (THC Atlas GIS download + one Atlas page per marker, cached in
+  `data/sights_cache/`), National Register places, Wikipedia articles about places (intro + photo, CC BY-SA, geosearch
+  grid), OpenStreetMap museums / viewpoints / monuments / art; duplicates merged by name within 250 m. `sights.rb` loads
+  it; `/api/sights` = dots, `/api/sight?id=` = the story. Landmarks show from zoom 12 (big ones) / 14, markers from 15,
+  art from 14. Popup: photo, story (More), marker location, 🔊 Tell me the story (asks Scout, spoken), Read more,
+  Directions, credit line. Scout: history / sightseeing questions (`SIGHT_Q`) get matching sights (`Sights.search`,
+  aliases like ACL, Muny, capitol, bat bridge) with their real text, a `sight` action, and sights can be plan stops.
+  `--merge` rebuilds from the cache; `SQ_SIGHTS_FILE` for tests (`test_sights.json`).
+- **Gestures**: swipe in from the left edge = back, from the right edge = forward (`NAVFWD`, only after going back),
+  pull any sheet down to close it (`.sheet-bg>.sheet`, from its top or once scrolled to the top; grab handle drawn by
+  CSS), flick the name menu to close it. iPhone Safari outside the home-screen app keeps its own edge swipes.
+- **Real photos in lists**: rows on screen ask `/api/place/thumb` for one 240-px Google photo of the business /
+  venue / park (by our place id, Google id, or name near a spot; `loose=1` for city-level events) via `data-thumb`
+  + an IntersectionObserver (`watchThumbs()`); max 40 a visit, then the server's daily caps; the emoji stays when
+  there's none. Food & drink / hot spot / eat-after rows, feed event cards, plan stops, map search; park, lake and
+  trail popups get 3 photos (`areaPhotos()`).
+- **Hot spots** have their own chip (🔥) and glow by live activity (`zoneActivity()`: open places + events now or
+  within 2 h ×3 + live streams / flares ×4): busy zones pulse brighter, quiet ones fade to a dashed outline with 💤;
+  refreshed every 5 minutes while the map is open.
+- **Photos on places and events**: Side Quest story photos/videos posted there come first (`storiesAt()`, tap →
+  story feed), then Google's (credited): place popups get 3 with the Google details (`photos` field), event popups
+  look up the venue by name within ~550 m (`/api/place/photos`). Photo URLs aren't stored (Google's terms);
+  `SQ_GOOGLE_PHOTOS_DAILY` (300) caps them. Some event venues are geocoded wrong by the events scraper (e.g. Cap City
+  Comedy Club placed downtown, really at the Domain), so they get no photos.
+- **Installable** as a home-screen app (PWA manifest + icons). Logo: the SQ mark (`mockup/logo.png` in the
+  header, `icon-512/192/180.png`), cut from the tile in `~/Downloads/Side Quest Compass Logo.png` (1254 px; cream SQ + compass)
+  and padded square on `#070b18`; ≤370px wide the header shows the mark without the name.
+
+## Architecture
+
+Two services, deliberately dependency-light.
+
+| Part | Where | Tech |
+|---|---|---|
+| App server + UI | `mockup/server.rb`, `mockup/index.html` | Ruby 2.6 stdlib + WEBrick (no gems); one HTML file with inline JS/CSS, no framework, no build step |
+| Events service | `~/claude/live/` (`centex_events`) | Python 3.9, FastAPI, SQLite; scrapes ~45 Central Texas sources every 6h |
+| Food & drink places | `mockup/fetch_places.rb` → `mockup/data/places.json` | Ruby stdlib; OpenStreetMap Overpass, Round Rock to South Austin |
+| AI | `run_claude()` in server.rb: the Anthropic Messages API over Net::HTTP when `SQ_USE_API_KEY=1` + `ANTHROPIC_API_KEY` (server), else the Claude Code CLI headless (local, subscription) | Sonnet 5.5 for picks/matching, Haiku 5.5 for screening/Scout |
+
+- **index.html**: all screens are `<section class="view" id="v-…">`; `tab(name)` switches.
+  State lives in `S` (localStorage key `sq-mock-v1`), server state in `SV`, events in `EV`.
+  One delegated click handler dispatches on `data-*` attributes. Render functions per area
+  (`renderHome`, `renderFeed`, `renderMeet`, `renderMap`, `renderMe`, …). Key logic:
+  `matchPerson()` (friend matching + reasons), `scoreEvent()` / `feedItems()` (feed ranking),
+  `deckItems()` (Meet deck), `chart()` / `astroCompat()` (astrology), `needAccount()` (guest gate).
+- **server.rb**: JSON routes under `/api/*`; data in `mockup/data/app.json` (written atomically) and
+  story photos in `mockup/data/stories/`. Sessions = HttpOnly cookie, passwords = PBKDF2.
+  Friends-only content, blocks and bans are enforced **server-side** in `state_for()`.
+  Only whitelisted files are served (`PUBLIC_FILES`). Food & drink routes allow guests; Claude
+  routes don't.
+- **Food & drink**: `fetch_places.rb` downloads 130 small tiles one at a time into
+  `data/places_tiles/` (resumable after a dropped connection; retries with backoff; 3 Overpass
+  mirrors), then writes `data/places.json` (name, kind, cuisine, hours, address, position, website,
+  menu link). **Local first**: national chains are dropped at build time (`chain_of()`: a brand with a
+  Wikidata id, or an untagged place sharing its name, unless on the `AUSTIN`, `TEXAS` or `KEEP`
+  lists); kept places get `chain: texas|national`, and search ranks them as if 0.5 / 1.5 mi farther.
+  Edit the lists, then `--merge`. `--fresh` re-downloads everything (weekly cron on the server), `--merge` rebuilds the
+  JSON from saved tiles without downloading. The app never downloads on its own. `hours.rb` reads
+  OpenStreetMap opening_hours by hand into weekly minute ranges (overnight hours, `24/7`, `off`,
+  rule overrides; months/sunset/`10:00+`/holidays → unknown, never guessed); `test_hours.rb` covers
+  it. `places.rb` loads the file (auto-reloads when it changes), works out open/soon/closed/unknown
+  in Austin time (server sets `TZ=America/Chicago`), searches by category/cuisine/hot spot/open-now,
+  and defines the hot spots. The map gets compact weekly ranges and colors dots in the browser.
+  Locations sent to the server are rounded to ~1 km. **Google Places** (`SQ_GOOGLE_PLACES_KEY`, local:
+  `~/.sidequest-google.env`): tapping a place on the map adds Google's rating, price level, open now and
+  week's hours (`/api/place/google`). Google's terms allow storing only place ids (`d['gplace']`: OSM id →
+  Google id, '' = no match), so details are fetched per tap; the match search asks for ids only (free);
+  `SQ_GOOGLE_DAILY` (300) caps paid detail lookups per day; show the "Rating, price and hours: Google" credit.
+- **Other Google pieces**: Directions buttons open Google Maps (`mapsUrl()`, universal link → the app if
+  installed); 📅 on events → Google Calendar's template page or an .ics for Apple/Outlook (`addToCalendar()`).
+  **Map tiles**: with `SQ_GOOGLE_MAPS_BROWSER_KEY` (a browser key locked to the app's origins + tile.googleapis.com)
+  both maps use Google's Map Tiles API, dark-styled (`GMAP_STYLE`), with Google's viewport copyright and logo;
+  tiles must load with `crossOrigin` or Chrome's ORB blocks them; no key / errors → OpenStreetMap.
+  **Sign in with Google** (`SQ_GOOGLE_CLIENT_ID`, Google Identity Services button on the sign-up sheet): the
+  server checks the ID token with Google's tokeninfo (aud, iss, exp, verified email); a known `sub` signs in,
+  a new one gets a 15-min HMAC ticket to pick a handle + 18+/Terms with no password (`users[h].google`,
+  `d['google_ids']` sub → handle; no email stored). Google won't run the button on an IP origin, so test it on
+  localhost or the real domain. Keep `Referrer-Policy: strict-origin-when-cross-origin`: with `same-origin` the
+  button request carries no referrer and Google answers "origin not allowed" even when the origins are right. About 45% of places have hours; ~98% of those
+  are readable.
+- **Modes (env vars)**: local default = demo content on (8 fake people, streams, stories), open
+  sign-up. `SQ_BETA=1` = demo off, guests allowed, `SQ_INVITES` codes, `SQ_ADMIN_TOKEN` for /admin.
+  `SQ_USE_API_KEY=1` + `ANTHROPIC_API_KEY` = call the Anthropic API directly (required before serving
+  the public); see `run_claude_api` in server.rb. `SQ_ENGINE=cli|api` forces an engine.
+  `SQ_BEHIND_PROXY=1` behind Caddy. `SQ_MODERATE=0` turns off Claude screening.
+  `SQ_PLACES_FILE` points at another places file (the e2e test uses `test_places.json`).
+  Scout: `SQ_SCOUT_DAILY` (30/person/day), `SQ_SCOUT_HOURLY` (15), `SQ_SCOUT_BUDGET_USD` (10/day for
+  everyone, then Scout pauses), `SQ_SCOUT_MODEL` (haiku, how-to) / `SQ_SCOUT_SMART_MODEL` (sonnet, recommendations).
+
+## Run and test
+
+```sh
+~/claude/live/serve.sh                 # events service on :8788
+cd mockup && ./start.sh                # app on http://localhost:8787
+./phone.sh                             # + HTTPS on the LAN for phones (self-signed cert)
+./beta.sh                              # public-beta mode (needs ~/.sidequest.env)
+ruby fetch_places.rb                   # download/resume food & drink places (slow links: just rerun)
+ruby test_hours.rb                     # opening-hours reader tests
+ruby test_api.rb                       # Anthropic API engine against a fake API (no key needed)
+ruby test_live.rb                      # live-video rules, camera ingest, copy-out vs a fake LiveKit (:8795)
+ruby test_google.rb                    # Google Places details vs a fake Google API (own copy on :8794)
+../deploy/google-places-setup.sh [login|<project>]  # gcloud: project, billing, Places API, Places-only key → ~/.sidequest-google.env,
+                                       # $10 budget alert (project sidequest-512123). gcloud lives in ~/google-cloud-sdk and
+                                       # needs the standalone Python in ~/.local/python-gcloud (macOS has 3.9; gcloud needs 3.10+)
+SQ_PLACES_FILE=test_places.json SQ_OUTDOORS_FILE=test_outdoors.json SQ_SIGHTS_FILE=test_sights.json ruby server.rb   # e2e server (no internet needed)
+ruby fetch_sights.rb                   # history markers, landmarks, Wikipedia, museums → data/sights.json (~15 min first run)
+ruby fetch_outdoors.rb                 # parks, greenbelts, lakes, rivers + rentals, ramps, fishing, trailheads → data/outdoors.json
+python e2e_test.py <shot-dir>          # Playwright: two brand-new users, 95 checks
+SQ_BASE=http://localhost:8796 SQ_ADMIN_TOKEN=test python e2e_live.py <shot-dir>
+                                       # 1 streamer + 3 viewers, report, End stream (13 checks); server
+                                       # on :8796 with SQ_DEMO=0 SQ_MODERATE=0 SQ_ADMIN_TOKEN=test
+```
+
+Other Claude sessions often work here at the same time, each with a test server on its own port. Run
+the e2e tests against a copy of `mockup/` (empty `data/app.json`) on a spare port, and stop servers by
+PID or port, never `pkill -f "ruby server.rb"` (that kills everyone's).
+
+The end-to-end test needs Playwright (installed in a scratch venv during development). It signs up
+two users from guest mode and covers quiz, chart, profile visibility, feed, RSVP, map, Meet swipes,
+friends, messages, stories, reports, groups, food & drink (Search, open-now switch, map dots, hot
+spot zones, Scout finding tacos), back + swipe-back. **Stop the server and reset `data/app.json` to `{}`
+before and after test runs** (the server keeps data in memory and will overwrite file edits).
+
+Deployment kit: `deploy/` (systemd units, Caddyfile for `sidequest.cc.middlematter.com`,
+`install.sh`, `push.sh`, nightly `backup.sh`, `env.example`). Launch checklist: `mockup/LAUNCH.md`.
+
+## Conventions and constraints
+
+- Keep it dependency-free: no npm, no gems, no frameworks. Vendor small libs into `mockup/vendor/`
+  (Leaflet 1.9.4 lives there) and add them to `PUBLIC_FILES`.
+- Mobile first: design for a 390px-wide phone; check 360px. Dark theme tokens in `:root`
+  (`--bg #070b18`, `--panel`, `--accent` orange, `--accent2` cyan, `--party` purple, `--good` green).
+- Privacy by default: new profile answers default to "Matching only"; exact GPS, birth date/time/place
+  never leave the device; map positions are venue-level or blurred ~400 m; live location can be delayed.
+- Anything visible to other users must be filtered on the server, never just hidden in the browser.
+- Anything a guest can't do goes through `needAccount('<verb phrase>')`.
+- Claude calls must be signed-in only, rate-limited per user, short-timeout, and fail safe
+  (e.g. moderation failure = post goes up flagged for human review).
+- Plain-language UI copy; every Claude-ranked item shows its reasons.
+- After a change: syntax-check the inline script, run the e2e test, look at screenshots.
+
+## Open items
+
+- Food & drink limits: OpenStreetMap has no full menus or prices and hours can be stale. Later
+  idea: a paid places API (e.g. Google Places / Foursquare) for menus, prices, ratings and fresher
+  hours. Don't scrape restaurant websites.
+- Deployment: needs a GitHub repo for the server session to pull from, an Anthropic API key in the
+  server env file, and a lawyer pass on `terms.html` / `privacy.html` (both marked DRAFT).
+- Later: Postgres instead of the JSON file, password reset by email, photo moderation, an RTMP
+  ingest (WHIP/RTMP through LiveKit) for action cameras, simulcast to YouTube/TikTok, native app-store wrapper.

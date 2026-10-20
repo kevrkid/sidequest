@@ -1,0 +1,18 @@
+[Unit]
+Description=Side Quest app
+After=network-online.target sidequest-events.service
+Wants=network-online.target
+
+[Service]
+User=sidequest
+WorkingDirectory=/opt/sidequest/app
+EnvironmentFile=/etc/sidequest/env
+ExecStart=/usr/bin/ruby server.rb
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/opt/sidequest/app/data /tmp
+
+[Install]
+WantedBy=multi-user.target

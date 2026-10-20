@@ -1,0 +1,43 @@
+# Self-hosted LiveKit for Side Quest live video (the other option is LiveKit Cloud; see env.example).
+# install.sh sets it up when /etc/sidequest/env has SQ_LIVEKIT_SELFHOST=1.
+#
+# Phones reach it at wss://sidequest.cc.middlematter.com/livekit through Caddy (port 7880 stays on
+# 127.0.0.1). The video itself comes straight to this box: UDP 50000-60000 first, then TCP 7881, then
+# the built-in TURN relay (UDP 3478, TLS 5349) for networks that block everything else. LiveKit hands
+# each connected phone its own short-lived TURN login, so no separate TURN server (coturn) is needed.
+# Open in the Hetzner firewall: TCP 7881 and 5349; UDP 3478 and 50000-60000.
+port: 7880
+bind_addresses:
+  - 127.0.0.1
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  # finds the box's public address with STUN (Hetzner Cloud servers have it on the interface anyway)
+  use_external_ip: true
+
+# One "key: secret" line, the same pair as SQ_LIVEKIT_KEY / SQ_LIVEKIT_SECRET.
+# install.sh writes it from /etc/sidequest/env (readable by root and the livekit user only).
+key_file: /etc/sidequest/livekit-keys.yaml
+
+room:
+  # rooms are live-<handle>; they appear when the streamer connects and close soon after everyone leaves
+  empty_timeout: 300
+  departure_timeout: 20
+  # one streamer plus viewers. The box's upload is the real limit: about 1-2 Mbps per viewer at 720p,
+  # less for viewers on weak connections (LiveKit sends them a smaller copy).
+  max_participants: 300
+
+turn:
+  enabled: true
+  # must match the certificate; livekit-cert.sh copies Caddy's certificate for this name
+  domain: sidequest.cc.middlematter.com
+  udp_port: 3478
+  # Caddy already holds 443. For networks that only allow 443, give the box a second IP and move this there.
+  tls_port: 5349
+  cert_file: /etc/sidequest/livekit-turn/cert.pem
+  key_file: /etc/sidequest/livekit-turn/key.pem
+
+logging:
+  level: info

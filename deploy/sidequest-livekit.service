@@ -1,0 +1,19 @@
+[Unit]
+Description=Side Quest live video (self-hosted LiveKit server with built-in TURN)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=livekit
+Group=livekit
+ExecStart=/opt/sidequest/livekit/livekit-server --config /opt/sidequest/deploy/livekit.yaml
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

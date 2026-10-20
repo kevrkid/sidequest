@@ -1,0 +1,11 @@
+{"fetched":"2026-10-18T00:00:00Z","source":"test fixture","places":[
+ {"id":"n1001","name":"Taco Test Trailer","kind":"food truck","cuisine":["mexican","tacos"],"hours":"24/7","lat":30.25915,"lng":-97.73870,"addr":"70 Rainey St, Austin","menu":"https://example.com/taco-menu"},
+ {"id":"n1002","name":"Sixth Street Saloon","kind":"bar","cuisine":[],"hours":"Mo-Su 00:00-24:00","lat":30.26718,"lng":-97.73990,"addr":"400 E 6th St, Austin"},
+ {"id":"n1003","name":"Late Owl Club","kind":"club","cuisine":[],"hours":"Th-Sa 21:00-02:00","lat":30.26700,"lng":-97.73800},
+ {"id":"n1004","name":"Sunrise Coffee","kind":"cafe","cuisine":["coffee"],"hours":"Mo-Su 06:00-11:00","lat":30.26480,"lng":-97.74420,"web":"https://example.com/sunrise"},
+ {"id":"n1005","name":"Mystery Hours Diner","kind":"restaurant","cuisine":["american"],"lat":30.27100,"lng":-97.74300},
+ {"id":"n1006","name":"Brisket Barn","kind":"restaurant","cuisine":["barbecue"],"hours":"Tu-Su 11:00-21:00; Mo off","lat":30.25500,"lng":-97.72800},
+ {"id":"n1007","name":"Domain Pizza Co","kind":"restaurant","cuisine":["pizza"],"hours":"Mo-Su 11:00-23:00","lat":30.40160,"lng":-97.72490},
+ {"id":"n1008","name":"Main Street Taps","kind":"pub","cuisine":[],"hours":"Mo-Su 11:00-02:00","lat":30.50850,"lng":-97.67820},
+ {"id":"n1009","name":"Night Noodle House","kind":"restaurant","cuisine":["vietnamese","pho"],"hours":"Mo-Su 10:00-04:00","lat":30.26890,"lng":-97.73500}
+]}
