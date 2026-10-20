@@ -96,7 +96,8 @@
   .evchat{display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto}
   .evmsg{display:flex;gap:8px;font-size:14px;line-height:1.4} .evmsg.me b{color:var(--accent2)}
   .invrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-weight:600} .invrow input{width:22px;height:22px}
-  #homeTonight{margin:2px 0 8px} .tnhead{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;font-size:14px}
+  #homeTonight{margin:2px 0 8px;flex:none} #quickBar{flex:none}
+  @media (max-height:700px){ #homeTonight .tncard{padding:5px} #homeTonight .tncard .thumb{width:36px;height:36px} .tnhead{padding-bottom:4px} } .tnhead{display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;font-size:14px}
   .tnrail{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:2px;scrollbar-width:none} .tnrail::-webkit-scrollbar{display:none}
   .tncard{flex:none;width:228px;display:flex;gap:9px;align-items:center;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:7px;scroll-snap-align:start}
   .tncard .thumb{width:44px;height:44px;font-size:19px;flex:none} .tnt{display:flex;flex-direction:column;min-width:0;font-size:13px}
@@ -1930,7 +1931,7 @@ function renderSights(){
 async function sightPopup(id){
   track('sight_open');
   const x=SG.byId[id]||(SCT.placeInfo?.[id]&&[id,SCT.placeInfo[id].kind,SCT.placeInfo[id].name,SCT.placeInfo[id].lat,SCT.placeInfo[id].lng]); if(!x||!map) return;
-  const pop=L.popup({maxWidth:300,minWidth:240}).setLatLng([x[3],x[4]]).setContent(`<b>${esc(x[2])}</b><div class="meta">${T('Loading the story…')}</div>`).openOn(map);
+  const pop=L.popup({maxWidth:Math.min(300,innerWidth-64),minWidth:Math.min(240,innerWidth-80),autoPanPadding:[14,70]}).setLatLng([x[3],x[4]]).setContent(`<b>${esc(x[2])}</b><div class="meta">${T('Loading the story…')}</div>`).openOn(map);
   let s=SG.full[id]; if(!s) try{ s=SG.full[id]=(await (await fetch('/api/sight?id='+encodeURIComponent(id))).json()).sight; }catch(e){}
   if(!s) return pop.setContent(`<b>${esc(x[2])}</b><div class="meta">${T("Couldn't load this one.")}</div>`);
   const [e,l]=SG_KIND[s.kind]||SG_KIND.sight, txt=s.text||'', short=txt.length>360?txt.slice(0,340).replace(/\s+\S*$/,'')+'…':txt;
@@ -1957,7 +1958,7 @@ async function sightPopup(id){
 function focusSight(id, fromScout){
   const x=SG.byId[id]||(SCT.placeInfo?.[id]&&[id,SCT.placeInfo[id].kind,SCT.placeInfo[id].name,SCT.placeInfo[id].lat,SCT.placeInfo[id].lng]); if(!x) return;
   tab('map'); const lay=sgLayer(x[1]); if(!S.mapL[lay]){ S.mapL[lay]=true; refreshMapLayers(); }
-  setTimeout(()=>{ map.setView([x[3],x[4]],16); renderSights(); sightPopup(id);
+  setTimeout(()=>{ map.setView([x[3],x[4]],16,{animate:false}); renderSights(); sightPopup(id);
     if(fromScout){ scoutBeep(); const m=L.marker([x[3],x[4]],{icon:L.divIcon({className:'scpulse',html:`<i></i><b>🧭 ${esc(x[2].slice(0,40))}</b>`,iconSize:[0,0]}),interactive:false,zIndexOffset:1000}).addTo(map);
       setTimeout(()=>m.remove(),9000); } },120);
 }
