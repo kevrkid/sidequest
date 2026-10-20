@@ -109,8 +109,8 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   the server) and LiveKit RoomComposite Egress pushes the room to those RTMP addresses (billed per minute).
   Ending the stream stops the copy-out; a moderator stop also deletes the camera key. The status reply
   uses `problem`, not `error`: `api()` treats any `error` field as a failed request.
-  Known gaps: viewer requests and titles are screened in the browser only; an accepted "visit" request
-  reveals where the streamer is heading even during the delay.
+  (V1 gaps closed in V2: requests and titles are now screened on the server, and accepted visit requests stay hidden
+  during the delay.)
 - **Your picture**: 📸 Take a photo (in-app camera: front camera in a round preview, shutter / retake / use,
   480 px square JPEG; no camera access → the phone's own camera via `capture="user"`) or a chosen photo (`/api/me/photo`, shrunk on the phone, served at `/avatar/<h>.jpg?v=`,
   flagged `pic_unreviewed` since photos aren't machine-checked yet), an emoji avatar (`pic: "emoji:🦊"` via
@@ -192,6 +192,53 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
 - **Installable** as a home-screen app (PWA manifest + icons). Logo: the SQ mark (`mockup/logo.png` in the
   header, `icon-512/192/180.png`), cut from the tile in `~/Downloads/Side Quest Compass Logo.png` (1254 px; cream SQ + compass)
   and padded square on `#070b18`; ≤370px wide the header shows the mark without the name.
+
+## V2 (this folder: `~/claude/sidequest-v2`, git branch `v2`; V1 lives untouched in `~/claude/sidequest`)
+
+Brief: `V2_PROMPT.md`. Report: `V2_REPORT.md`. Server side in `mockup/v2.rb` (+ `mockup/webpush.rb`), mounted by
+server.rb (`mount_v2`, `v2_background`); client in one block in index.html ("Side Quest V2"). New data keys in app.json
+only (`notifs`, `quest`, `saves`, `ev_chat`, `push`, `reminded`, `recap`); analytics in `data/stats.json`; the VAPID key
+in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or every phone must re-subscribe).
+
+- **🔔 Notifications** (`notify!` in v2.rb; header bell `#bellBtn`, inbox `#notifBg`): waves, new friends, friends going
+  to the same event, event / group chat replies, downs on your flare, group joins, story tags and likes, quest wins,
+  2-hour event reminders (`remind_due!`, every 5 min), a Monday recap (`weekly_recap!`). Never across blocks; same
+  thing within an hour folds into one; max 120 each. Unread count rides on `/api/state` (`SV.v2.unread`).
+- **Phone push**: real Web Push (`webpush.rb`: RFC 8291 aes128gcm + RFC 8292 VAPID with Ruby's OpenSSL; macOS's
+  LibreSSL can't do AES-GCM through Ruby, so there's a hand-written GCM that `test_webpush.rb` checks against the RFC's
+  example byte for byte). The inbox's "Phone notifications" switch subscribes (`/api/push`, max 5 devices, endpoints
+  must be a real push service: no SSRF); `notify!` queues `PUSH_Q`, a thread delivers, 404/410 drops the device.
+  `sw.js` shows it and opens the right screen (`/?ev=`, `/?g=`, `/?inbox=1`, `/?quests=1`). iPhone needs the app on
+  the Home Screen (iOS 16.4+). `SQ_PUSH_CONTACT` = the VAPID contact (mailto).
+- **Service worker** (`sw.js`, registered on https/localhost, not under automation): app shell offline, static files
+  cache-first, never caches `/api`, stories, avatars or config. Bump `CACHE` when the shell list changes.
+- **Event details** (`openEvent(id)`, `#evBg`): hero photo, when/where/price, Going / Interested / 🔖 Save / 💌 Invite
+  (`/api/event/invite`: DMs friends a link) / 🔗 Share (`/e/<uid>`), Calendar, Directions, Map, Eat after, Tickets,
+  description, who's going (friends first), More like this, check-in while it's on, and a discussion
+  (`/api/event/chat`, moderated, ⋯ to report/block). Opened from feed cards (`data-evopen`), map pins (Details), Home,
+  notifications and links.
+- **Quests** (`QUESTS` in v2.rb, `openQuests()`, `#questBg`): 12 quests, XP, levels (`level_of`), weekly streak, badges,
+  friends-only leaderboard (`/api/quests`, opt out with `lb_hidden`). Check-ins (`/api/checkin` k = sight / place /
+  area / event): the phone checks it's within 150 m (+ accuracy); the server only gets the id, looks the place up
+  itself, counts it once per place per day, events only while on; max 40 a day. Friends see level + badges
+  (`SV.badges`); your own card on Me → Profile (`#myQuest`).
+- **Saved** (`/api/saves`, 🔖 on events / places / sights; My plans → Saved).
+- **Group chat** for members of real groups (`/api/group/chat`, stored as `ev_chat["g:<id>"]`).
+- **Growth**: share pages with Open Graph previews `/e/<uid>`, `/s/<sight id>`, `/i/<handle>` (invite; sign-up offers
+  "be friends with @them", `users[h].ref`, Bring a friend quest); Home "Tonight near you" strip + "Up next" countdown;
+  welcome nudge to quests after sign-up.
+- **Analytics** (`track(name)` → `/api/t`, `TRACK_EVENTS` whitelist; `active!` per account per day): admin
+  "📈 Growth" panel (`/api/admin/growth`: DAU, WAU, 7-day retention, sign-ups, RSVPs, check-ins, quests, top taps).
+  No content, locations or device ids.
+- **Live safety on the server**: `/api/screen` signs a 10-minute pass for the exact request text; the relay refuses
+  requests without one (when moderation is on) and applies the hard rules itself (`LIVE_HARD_NO`); stream titles show
+  only after a check (`live_title`); accepted visit requests hide the place while the location delay is on.
+- **Admin**: Growth panel, flagged event/group chat under "Needs a human look", chat reports with author + text.
+- Run V2: `cd mockup && ./start_v2.sh` (http://localhost:8797, phones https://<Wi-Fi IP>:8444; `--keys` adds the paid
+  Google / LiveKit keys). Same host as V1, so the browser shares the login cookie between ports.
+- Tests (all against throwaway copies): `ruby test_v2.rb` (27), `ruby test_webpush.rb` (6), `e2e_v2.py` (35) on a server
+  with the test files + `SQ_ADMIN_TOKEN=test`, plus every V1 suite (e2e_test 109, e2e_live 13, test_live 14,
+  test_google 17, test_api, test_hours).
 
 ## Architecture
 
