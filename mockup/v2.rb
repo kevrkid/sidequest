@@ -261,12 +261,34 @@ def remind_due!
   end
 end
 
+# Monday morning recap: what you did last week and a nudge toward the quest you're closest to finishing.
+def weekly_recap!(force: false)
+  t = Time.now
+  return unless force || (t.monday? && t.hour.between?(9, 11))
+  week = week_key(now_ms)
+  last = week_key(now_ms - 7 * 86_400_000)
+  store do |d|
+    (d['quest'] || {}).each do |h, q|
+      next unless d['users'][h] && (d['recap'] ||= {})[h] != week
+      d['recap'][h] = week
+      cs = q['checkins'].to_a.select { |c| week_key(c['at']) == last }
+      evs = d['rsvps'].count { |id, m| m[h] == 'going' }
+      next if cs.empty?
+      prog = quest_progress(d, h)
+      close = QUESTS.reject { |x| q['done'].to_h[x[:id]] }.map { |x| [x, x[:goal] - prog[x[:id]].to_i] }.select { |_, left| left > 0 }.min_by { |_, left| left }
+      nudge = close ? " #{close[0][:e]} #{close[1]} more for #{close[0][:name]}!" : ''
+      notify!(d, h, 'quest', ref: 'recap', text: "📅 Last week: #{cs.size} check-in#{cs.size == 1 ? '' : 's'}, #{evs} plan#{evs == 1 ? '' : 's'} on your list.#{nudge}")
+    end
+  end
+end
+
 def v2_background
   Thread.new do
     loop do
       sleep 60
       stats_flush rescue warn("[v2] stats: #{$!.message}")
       remind_due! rescue warn("[v2] reminders: #{$!.message}") if (Time.now.min % 5).zero?
+      weekly_recap! rescue warn("[v2] recap: #{$!.message}") if Time.now.min == 7
     end
   end
   at_exit { stats_flush rescue nil }
@@ -369,6 +391,30 @@ def mount_v2(server)
           notify!(d, x, 'chat', from: h, ref: ev, text: "💬 @#{h} on #{title.empty? ? 'an event you follow' : title}: #{text[0, 70]}")
         end
         track!('event_chat', h)
+      end
+      hidden = blocked_between(d, h)
+      { msgs: th.reject { |m| hidden.include?(m['u']) || m['removed'] }.last(80) }
+    end
+  end
+
+  # Group chat: members only (checked here), same screening and storage as event chats, kept under "g:<id>".
+  route(server, '/api/group/chat') do |b, h|
+    gid = b['id'].to_s[0, 20]
+    text = b['text'].to_s.strip[0, 400]
+    member = store(write: false) { |d| d['groups'][gid] && !d['groups'][gid]['removed'] && (d['members'][gid] || []).include?(h) }
+    raise Forbidden, 'Join the group to see and join its chat.' unless member
+    unless text.empty?
+      limit!("gchat:#{h}", 60, 3600)
+      flagged = !moderate(text)
+    end
+    store(write: !text.empty?) do |d|
+      th = ((d['ev_chat'] ||= {})["g:#{gid}"] ||= [])
+      unless text.empty?
+        th << { 'id' => "c#{SecureRandom.hex(5)}", 'u' => h, 't' => text, 'at' => now_ms, 'unreviewed' => flagged }
+        th.shift while th.size > 300
+        (th.map { |m| m['u'] }.uniq & (d['members'][gid] || [])).first(40).each do |x|
+          notify!(d, x, 'chat', from: h, ref: "g:#{gid}", text: "💬 @#{h} in #{d['groups'][gid]['n'].to_s[0, 40]}: #{text[0, 70]}")
+        end
       end
       hidden = blocked_between(d, h)
       { msgs: th.reject { |m| hidden.include?(m['u']) || m['removed'] }.last(80) }

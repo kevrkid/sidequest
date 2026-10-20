@@ -1012,7 +1012,8 @@ const ES = {
   'Find me something to do near me':'Encuéntrame algo que hacer cerca', 'Tell me a joke':'Cuéntame un chiste', "What's on the map?":'¿Qué hay en el mapa?',
   'How does Meet work?':'¿Cómo funciona Conocer?', 'Who can see my answers?':'¿Quién ve mis respuestas?',
   "Voice isn't available in this browser, so type below.":'La voz no funciona en este navegador; escribe abajo.',
-  'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
+  "You're level 1.":'Eres nivel 1.', 'Check in at places around town to level up: a historical marker, a taco spot, a park.':'Registra visitas por la ciudad para subir de nivel: una placa histórica, una taquería, un parque.', 'See quests':'Ver misiones',
+  'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
   'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
   'Phone notifications':'Notificaciones en el teléfono', 'While Side Quest is open in the background.':'Mientras Side Quest está abierto en segundo plano.',
   'just now':'ahora mismo', '{n} min ago':'hace {n} min', '{n} h ago':'hace {n} h', '{n} d ago':'hace {n} d', 'Link copied':'Enlace copiado', 'Copy this link':'Copia este enlace',
@@ -1509,9 +1510,19 @@ function openGroup(id){
     <div class="btns">${member?`<button class="btn primary" data-gpost="${id}">📣 Post to the group</button><button class="btn" data-gjoin="${id}" data-on="0">Leave</button>`
       :`<button class="btn primary" data-gjoin="${id}" data-on="1">Join group</button>`}</div>
     ${(()=>{ const r=storyRail(id); return r?`<h3>Stories</h3>${r}`:''; })()}
+    ${member&&SV.groups.some(x=>x.id===id)&&AUTHED?`<h3>💬 ${T('Group chat')}</h3><div id="gChat" class="evchat"><p class="meta">${T('Loading…')}</p></div>
+      <form class="row" id="gChatForm" data-gid="${id}" style="gap:6px;margin-top:8px"><input id="gChatIn" maxlength="400" placeholder="${T('Say something to the group…')}" autocomplete="off" style="flex:1"><button class="btn primary" type="submit">${T('Send')}</button></form>`:''}
     <h3>Group posts</h3>${posts.map(p=>pingCard(p)).join('')||'<p class="meta">No posts yet. Be the first to plan something.</p>'}
     ${evs.length?`<h3>${CATS[g.cat].e} Coming up around town</h3>${evs.map(x=>eventCard(x.e,x.r)).join('')}`:''}`;
   $('#groupBg').hidden=false;
+  if($('#gChat')) loadGroupChat(id);
+}
+const chatHtml = msgs => msgs.length?msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join('')
+  :`<p class="meta">${T('No one has said anything yet. Start it off!')}</p>`;
+async function loadGroupChat(id, text){
+  const el=()=>$('#gChat');
+  try{ const j=await api('/api/group/chat',text?{id,text}:{id}); if(el()){ el().innerHTML=chatHtml(j.msgs); el().scrollTop=1e6; } }
+  catch(e){ if(text) toast(esc(e.message),'orange'); else if(el()) el().innerHTML=`<p class="meta">${esc(e.message)}</p>`; }
 }
 const groupCard = (g, mine) => { const m=membersOf(g.id), fr=m.filter(isFriend);
   return `<div class="card row" style="cursor:pointer" data-gopen="${g.id}"><span class="cat">${esc(g.e||'🏘️')}</span>
@@ -2436,7 +2447,8 @@ async function onbNext(){
     try{
       if(ONB.mode==='signup'){
         await api('/api/signup',{h, ...(ONB.google?{google:ONB.google}:{pw}), c:ONB.c, invite:$('#onbI')?.value||'', adult:true, terms:true,
-          ref:S.ref||'', ref_friend:!!S.ref&&($('#onbRef')?$('#onbRef').checked:true)}); ONB.google=null;
+          ref:S.ref||'', ref_friend:!!S.ref&&($('#onbRef')?$('#onbRef').checked:true)});
+        setTimeout(()=>toast(`🏆 <b>${T("You're level 1.")}</b> ${T('Check in at places around town to level up: a historical marker, a taco spot, a park.')}`,'green',[{l:T('See quests'),cls:'blue',f:openQuests}],7000),5000); ONB.google=null;
         AUTHED=true; ONB.busy=false; await loadState(); onAuthed();
         if(S.me.h==='guest'){ S.me.h=h; S.me.c=ONB.c; }
         else { S=DEFAULT(); S.me.h=h; S.me.c=ONB.c; }
@@ -4799,6 +4811,7 @@ function renderNotifs(){
 }
 function notifGo(n){
   $('#notifBg').hidden=true;
+  if(n.t==='chat'&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2));
   if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);
   if(n.t==='quest') return openQuests();
   if(n.t==='down'&&n.ref) return focusOnMap(n.ref);
@@ -5023,7 +5036,8 @@ document.addEventListener('click',e=>{
   if(d.sgshare){ const sg=SG.full[d.sgshare]; if(sg) shareLink(`${location.origin}/s/${encodeURIComponent(sg.id)}`, sg.name, `${sg.name} · Side Quest`); return; }
   if(d.v2join!==undefined){ $('#evBg').hidden=true; return needAccount('join the conversation'); }
 });
-document.addEventListener('submit',e=>{ if(e.target.id==='evChatForm'){ e.preventDefault(); sendEvChat(); } });
+document.addEventListener('submit',async e=>{ if(e.target.id==='evChatForm'){ e.preventDefault(); sendEvChat(); }
+  if(e.target.id==='gChatForm'){ e.preventDefault(); const i=$('#gChatIn'), t=i.value.trim(); if(!t) return; i.disabled=true; await loadGroupChat(e.target.dataset.gid, t); i.value=''; i.disabled=false; i.focus(); } });
 
 $('#betaTag').hidden=!CFG.beta;
 renderAll(); tab('home'); if(S.online) startLocating(false);

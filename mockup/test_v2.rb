@@ -137,6 +137,17 @@ t('invite a friend to an event: a DM with the link + a notification; strangers a
   msgs = dm['msgs'] || []
   check(j['sent'] == 1 && msgs.any? { |m| m['t'].to_s.include?('/e/abc123def456') }, [j, dm])
 }
+t('group chat: members only; posting notifies members who have talked there') {
+  _, g = bo.post('/api/group/create', n: 'Test Pickup Soccer', d: 'Sundays at Zilker', e: '⚽', cat: 'sports')
+  gid = (g['group'] || g)['id'] || g.dig('group', 'id')
+  c0, = amy.post('/api/group/chat', id: gid)
+  bo.post('/api/group/chat', id: gid, text: 'Field 3 this Sunday?')
+  amy.post('/api/group/join', id: gid, on: true)
+  _, j = amy.post('/api/group/chat', id: gid, text: 'In! Bringing a ball')
+  _, n = bo.post('/api/notifs')
+  check(c0 == 403 && j['msgs'].map { |m| m['t'] } == ['Field 3 this Sunday?', 'In! Bringing a ball'] &&
+        n['notifs'].any? { |x| x['t'] == 'chat' && x['ref'] == "g:#{gid}" } && n['notifs'].any? { |x| x['t'] == 'join' }, [c0, j, gid])
+}
 t('invite link: the new person can choose to be friends with whoever invited them') {
   cy.signup(ref: 'amy_v2', ref_friend: true)
   _, s = cy.get('/api/state')
