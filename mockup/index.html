@@ -1021,7 +1021,10 @@ const ES = {
   'On iPhone, add Side Quest to your Home Screen (Share → Add to Home Screen) to get them with the app closed.':'En iPhone, agrega Side Quest a tu pantalla de inicio (Compartir → Agregar a inicio) para recibirlas con la app cerrada.',
   "You're offline. Showing what this phone already has; live stuff comes back with signal.":'Estás sin conexión. Ves lo que ya tiene este teléfono; lo en vivo vuelve con señal.', 'Back online.':'Conectado de nuevo.',
   'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
-  'Show friends where I check in (the place, for 3 hours)':'Mostrar a mis amigos dónde registro visitas (el lugar, por 3 horas)', 'Friends out now':'Amigos que andan fuera', 'Quest of the week · 1.5× XP':'Misión de la semana · 1.5× XP',
+  'Show friends where I check in (the place, for 3 hours)':'Mostrar a mis amigos dónde registro visitas (el lugar, por 3 horas)', 'Friends out now':'Amigos que andan fuera', 'What to tell me about':'De qué avisarme', 'Waves and friend requests':'Saludos y solicitudes', 'New friends':'Amigos nuevos',
+  'Friends going to your events':'Amigos que van a tus eventos', 'Invites':'Invitaciones', 'Chat replies':'Respuestas en chats', 'People down for your flares':'Quien se apunta a tus bengalas',
+  'Group joins':'Nuevos en tus grupos', 'Story tags':'Etiquetas en historias', 'Story likes':'Me gusta en historias', 'Event reminders':'Recordatorios de eventos',
+  'Quests and weekly recap':'Misiones y resumen semanal', 'Friends who join from your invite':'Amigos que se unen con tu invitación', 'Quest of the week · 1.5× XP':'Misión de la semana · 1.5× XP',
   'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
   'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
   'Phone notifications':'Notificaciones en el teléfono', 'While Side Quest is open in the background.':'Mientras Side Quest está abierto en segundo plano.',
@@ -4796,6 +4799,8 @@ async function shareLink(url, title, text){
 const v2head = (title, close) => `<div class="row"><b class="grow" style="font-size:19px">${title}</b><button class="btn sm" data-v2close="${close}">${T('Close')}</button></div>`;
 
 /* ---- 🔔 notifications ---- */
+const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['chat','Chat replies'],
+  ['down','People down for your flares'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite']];
 const NOTIF_E = {freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️'};
 function renderBell(){
   const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
@@ -4813,7 +4818,7 @@ async function openNotifs(){
   if(needAccount('see your notifications')) return; track('notif_open');
   const sh=$('#notifSheet'); sh.innerHTML=v2head(`🔔 ${T('Notifications')}`,'notifBg')+`<p class="meta">${T('Loading…')}</p>`; $('#notifBg').hidden=false;
   let j; try{ j=await api('/api/notifs',{}); }catch(e){ sh.innerHTML=v2head(`🔔 ${T('Notifications')}`,'notifBg')+`<p class="meta">${esc(e.message)}</p>`; return; }
-  V2S.notifs=j.notifs; renderNotifs();
+  V2S.notifs=j.notifs; V2S.mute=j.mute||[]; renderNotifs();
   if(j.unread) setTimeout(()=>api('/api/notifs',{read:'all'}).then(()=>{ if(SV.v2) SV.v2.unread=0; renderBell(); }).catch(()=>{}),1200);
 }
 function renderNotifs(){
@@ -4822,6 +4827,8 @@ function renderNotifs(){
     (list.length?list.map((n,i)=>`<button class="nrow ${n.read?'':'unread'}" data-notifi="${i}">
       <span class="nic">${n.from?av(n.from,'sm'):NOTIF_E[n.t]||'🔔'}</span><span class="grow"><span>${esc(n.text)}</span><span class="meta">${agoT(n.at)}</span></span></button>`).join('')
       :`<div class="empty"><div style="font-size:34px">🔔</div><b>${T('Nothing yet')}</b><p class="meta">${T('Waves, friends going to your events, replies, reminders and quest wins show up here.')}</p></div>`)+
+    `<details class="lcat" style="margin-top:14px"><summary><b>${T('What to tell me about')}</b></summary>
+      ${NOTIF_KINDS.map(([k,l])=>`<div class="row lsub"><span class="grow">${NOTIF_E[k]} ${esc(T(l))}</span><button class="toggle ${(V2S.mute||[]).includes(k)?'':'on'}" data-nmute="${k}" aria-label="${esc(T(l))}"></button></div>`).join('')}</details>`+
     (canPush?`<div class="lcat" style="margin-top:14px"><div class="row"><span class="grow"><b>${T('Phone notifications')}</b><div class="meta">${T('While Side Quest is open in the background.')}</div></span>
       <button class="toggle ${S.pushOn&&Notification.permission==='granted'?'on':''}" data-pushtoggle aria-label="${T('Phone notifications')}"></button></div></div>`:'');
 }
@@ -5055,7 +5062,7 @@ function renderTonight(){
 }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare],[data-sharetoggle],[data-outgo]');
+  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare],[data-sharetoggle],[data-outgo],[data-nmute]');
   if(!t) return; const d=t.dataset;
   if(d.evopen!==undefined){ const inner=e.target.closest('button,a'); if(inner&&inner!==t) return; return openEvent(d.evopen); }
   if(d.v2close){ $('#'+d.v2close).hidden=true; if(d.v2close==='evBg'){ V2S.evOpen=null; clearInterval(V2S.chatT); } return; }
@@ -5073,11 +5080,14 @@ document.addEventListener('click',e=>{
   if(d.questgo){ const g=QUEST_GO[d.questgo]; if(g){ $('#questBg').hidden=true; g[1](); } return; }
   if(d.lbtoggle!==undefined){ const hid=!V2S.quests.hidden; api('/api/quests/board',{hidden:hid}).then(()=>{ V2S.quests.hidden=hid; openQuests(); }).catch(x=>toast(esc(x.message),'orange')); return; }
   if(d.invitelink!==undefined) return inviteLink();
+  if(d.nmute){ const m=new Set(V2S.mute||[]); m.has(d.nmute)?m.delete(d.nmute):m.add(d.nmute);
+    api('/api/notifs',{mute:[...m]}).then(j=>{ V2S.mute=j.mute; renderNotifs(); $('#notifSheet details')?.setAttribute('open',''); }).catch(x=>toast(esc(x.message),'orange')); return; }
   if(d.sharetoggle!==undefined){ const on=!V2S.quests.share; api('/api/quests/board',{share:on}).then(()=>{ V2S.quests.share=on; renderQuests(); }).catch(x=>toast(esc(x.message),'orange')); return; }
   if(d.outgo){ const [k,...id]=d.outgo.split('|'); const i=id.join('|'); return k==='sight'?focusSight(i):k==='place'?focusPlace(i):k==='event'?openEvent(i):null; }
   if(d.sgshare){ const sg=SG.full[d.sgshare]; if(sg) shareLink(`${location.origin}/s/${encodeURIComponent(sg.id)}`, sg.name, `${sg.name} · Side Quest`); return; }
   if(d.v2join!==undefined){ $('#evBg').hidden=true; return needAccount('join the conversation'); }
 });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!e.defaultPrevented&&!document.activeElement?.matches?.('input,textarea')) closeTopOverlay(); });
 document.addEventListener('submit',async e=>{ if(e.target.id==='evChatForm'){ e.preventDefault(); sendEvChat(); }
   if(e.target.id==='gChatForm'){ e.preventDefault(); const i=$('#gChatIn'), t=i.value.trim(); if(!t) return; i.disabled=true; await loadGroupChat(e.target.dataset.gid, t); i.value=''; i.disabled=false; i.focus(); } });
 

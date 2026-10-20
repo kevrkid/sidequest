@@ -107,6 +107,16 @@ t('the VAPID private key stays on the server (not in config.js, not readable by 
   priv = JSON.parse(File.read(f))['private']
   check(!Net::HTTP.get(URI("#{BASE}/config.js")).include?(priv) && (File.stat(f).mode & 0o077).zero?, File.stat(f).mode.to_s(8))
 }
+t('muting a kind of notification stops it; unknown kinds are ignored') {
+  _, m = amy.post('/api/notifs', mute: %w[freq nonsense])
+  w1, w2 = Who.new('waver_one'), Who.new('waver_two'); w1.signup; w2.signup
+  w1.post('/api/friend', to: 'amy_v2', action: 'request')
+  amy.post('/api/notifs', mute: [])
+  w2.post('/api/friend', to: 'amy_v2', action: 'request')
+  _, j = amy.post('/api/notifs')
+  froms = j['notifs'].select { |n| n['t'] == 'freq' }.map { |n| n['from'] }
+  check(m['mute'] == ['freq'] && !froms.include?('waver_one') && froms.include?('waver_two'), [m['mute'], froms])
+}
 t('the unread count rides along with /api/state; mark all read clears it') {
   _, s = bo.get('/api/state')
   bo.post('/api/notifs', read: 'all')
@@ -233,7 +243,7 @@ t('analytics: whitelisted names only; the admin growth report needs the token') 
   amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'evil_thing')
   c1, = amy.get('/api/admin/growth')
   c2, g = amy.req(:get, '/api/admin/growth', nil, 'X-Admin-Token' => 'adm')
-  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 5, g)
+  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 7, g)
   "dau #{g['dau'].last}, wau #{g['wau']}"
 }
 t("friends see each other's level and badges; a stranger's quests stay private") {

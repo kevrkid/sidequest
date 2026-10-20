@@ -36,6 +36,7 @@ against the real codebase).
    - **a Monday "last week" recap** that nudges you toward the quest you're closest to finishing.
 
    Blocks are respected, repeats within an hour fold into one entry, and tapping a notification takes you to the thing.
+   Each kind can be muted ("What to tell me about" in the inbox). On a computer, Escape closes the top sheet.
 2. **📱 Real phone push** (notifications with the app closed): standard Web Push written in plain Ruby, no service
    account or fees.
    - The encryption matches the RFC's official example byte for byte.
@@ -106,7 +107,7 @@ against the real codebase).
 | JavaScript syntax of the whole inline script + `sw.js` (JavaScriptCore) | OK |
 | `e2e_test.py` (V1's full Playwright suite) **on V2** | **109/109** |
 | `e2e_v2.py` (new: 2 people, invite link, inbox, event page, going, save, chat + report, invites, share link, saved list, check-in near/far, quests, leaderboard, friends out now, group chat, badges, admin growth + chat report) | **36/36** |
-| `test_v2.rb` (new: notifications, push delivery decrypted from a fake push service, quests + quest of the week, check-ins, friends out now privacy, saves, chats, invites incl. a forged link, share pages + escaping, analytics, privacy, account deletion, live safety with screening on) | **29/29** |
+| `test_v2.rb` (new: notifications, push delivery decrypted from a fake push service, quests + quest of the week, check-ins, friends out now privacy, saves, chats, invites incl. a forged link, share pages + escaping, analytics, privacy, account deletion, live safety with screening on, muting) | **30/30** |
 | `test_webpush.rb` (RFC 8291 example byte for byte, VAPID signature, SSRF guard) | **6/6** |
 | `e2e_live.py` (1 streamer + 3 viewers) on V2 | **13/13** |
 | `test_live.rb`, `test_google.rb`, `test_api.rb`, `test_hours.rb` on V2 | 14/14, 17/17, all pass, all pass |

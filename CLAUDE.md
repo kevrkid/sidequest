@@ -203,7 +203,8 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **🔔 Notifications** (`notify!` in v2.rb; header bell `#bellBtn`, inbox `#notifBg`): waves, new friends, friends going
   to the same event, event / group chat replies, downs on your flare, group joins, story tags and likes, quest wins,
   2-hour event reminders (`remind_due!`, every 5 min), a Monday recap (`weekly_recap!`). Never across blocks; same
-  thing within an hour folds into one; max 120 each. Unread count rides on `/api/state` (`SV.v2.unread`).
+  thing within an hour folds into one; max 120 each. Unread count rides on `/api/state` (`SV.v2.unread`). Kinds can be
+  muted per person (`users[h].mute`, "What to tell me about" in the inbox).
 - **Phone push**: real Web Push (`webpush.rb`: RFC 8291 aes128gcm + RFC 8292 VAPID with Ruby's OpenSSL; macOS's
   LibreSSL can't do AES-GCM through Ruby, so there's a hand-written GCM that `test_webpush.rb` checks against the RFC's
   example byte for byte). The inbox's "Phone notifications" switch subscribes (`/api/push`, max 5 devices, endpoints
@@ -241,7 +242,7 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Admin**: Growth panel, flagged event/group chat under "Needs a human look", chat reports with author + text.
 - Run V2: `cd mockup && ./start_v2.sh` (http://localhost:8797, phones https://<Wi-Fi IP>:8444; `--keys` adds the paid
   Google / LiveKit keys). Same host as V1, so the browser shares the login cookie between ports.
-- Tests (all against throwaway copies): `ruby test_v2.rb` (29), `ruby test_webpush.rb` (6), `e2e_v2.py` (36) on a server
+- Tests (all against throwaway copies): `ruby test_v2.rb` (30), `ruby test_webpush.rb` (6), `e2e_v2.py` (36) on a server
   with the test files + `SQ_ADMIN_TOKEN=test`, plus every V1 suite (e2e_test 109, e2e_live 13, test_live 14,
   test_google 17, test_api, test_hours).
 

@@ -13,6 +13,7 @@ NOTIF_TYPES = %w[freq friend down going chat join tag like quest joined remind i
 
 def notify!(d, to, type, from: nil, ref: nil, text: nil)
   return unless to && d['users'][to] && to != from && NOTIF_TYPES.include?(type)
+  return if (d['users'][to]['mute'] || []).include?(type)   # they turned this kind off
   return if from && blocked_between(d, to).include?(from)
   list = ((d['notifs'] ||= {})[to] ||= [])
   # the same thing twice within an hour (likes, chat bursts) folds into one, bumped to the top
@@ -377,15 +378,19 @@ end
 
 # ---------------------------------------------------------------------------------------------
 def mount_v2(server)
-  # Notifications: the inbox, and marking things read.
+  # Notifications: the inbox, marking things read, and which kinds you want (mute).
   route(server, '/api/notifs') do |b, h|
-    store(write: b['read'] ? true : false) do |d|
+    store(write: b['read'] || b.key?('mute') ? true : false) do |d|
+      if b['mute'].is_a?(Array)
+        d['users'][h]['mute'] = b['mute'].map(&:to_s) & %w[freq friend down going chat join tag like quest joined remind invite]
+      end
       list = ((d['notifs'] ||= {})[h] ||= [])
       if b['read'] == 'all' then list.each { |n| n['read'] = true }
       elsif b['read'] then list.each { |n| n['read'] = true if n['id'] == b['read'] }
       end
       hidden = blocked_between(d, h)
-      { notifs: list.reject { |n| hidden.include?(n['from']) }.last(60).reverse, unread: list.count { |n| !n['read'] } }
+      { notifs: list.reject { |n| hidden.include?(n['from']) }.last(60).reverse, unread: list.count { |n| !n['read'] },
+        mute: d['users'][h]['mute'] || [] }
     end
   end
 
