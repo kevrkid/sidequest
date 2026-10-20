@@ -71,6 +71,7 @@ LIVEKIT_API_URL = (ENV['SQ_LIVEKIT_API_URL'].to_s.empty? ? LIVEKIT_URL.sub(/\Aws
 # and scheme. Caddy replaces any X-Forwarded-For a client sends, so the last entry is the real one.
 BEHIND_PROXY = ENV['SQ_BEHIND_PROXY'] == '1'
 PUBLIC_FILES = { 'index.html' => 'text/html; charset=utf-8', 'terms.html' => 'text/html; charset=utf-8',
+                 'sw.js' => 'application/javascript',   # V2: service worker (app shell offline)
                  'privacy.html' => 'text/html; charset=utf-8', 'admin.html' => 'text/html; charset=utf-8',
                  'manifest.webmanifest' => 'application/manifest+json', 'icon-512.png' => 'image/png',
                  'icon-192.png' => 'image/png', 'icon-180.png' => 'image/png', 'logo.png' => 'image/png',
@@ -1049,6 +1050,7 @@ def mount_app(server)
     if PUBLIC_FILES.key?(name) && File.file?(File.join(ROOT, name))
       res['Content-Type'] = PUBLIC_FILES[name]
       res['Cache-Control'] = name.end_with?('.png') || name.start_with?('vendor/') ? 'public, max-age=604800' : 'no-cache'
+      res['Service-Worker-Allowed'] = '/' if name == 'sw.js'
       res.body = File.binread(File.join(ROOT, name))
     else
       res.status = 404

@@ -1016,6 +1016,7 @@ const ES = {
   'How does Meet work?':'¿Cómo funciona Conocer?', 'Who can see my answers?':'¿Quién ve mis respuestas?',
   "Voice isn't available in this browser, so type below.":'La voz no funciona en este navegador; escribe abajo.',
   "You're level 1.":'Eres nivel 1.', 'Check in at places around town to level up: a historical marker, a taco spot, a park.':'Registra visitas por la ciudad para subir de nivel: una placa histórica, una taquería, un parque.', 'See quests':'Ver misiones',
+  "You're offline. Showing what this phone already has; live stuff comes back with signal.":'Estás sin conexión. Ves lo que ya tiene este teléfono; lo en vivo vuelve con señal.', 'Back online.':'Conectado de nuevo.',
   'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
   'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
   'Waves, friends going to your events, replies, reminders and quest wins show up here.':'Aquí ves saludos, amigos que van a tus eventos, respuestas, recordatorios y misiones ganadas.',
@@ -5050,6 +5051,12 @@ document.addEventListener('click',e=>{
 document.addEventListener('submit',async e=>{ if(e.target.id==='evChatForm'){ e.preventDefault(); sendEvChat(); }
   if(e.target.id==='gChatForm'){ e.preventDefault(); const i=$('#gChatIn'), t=i.value.trim(); if(!t) return; i.disabled=true; await loadGroupChat(e.target.dataset.gid, t); i.value=''; i.disabled=false; i.focus(); } });
 
+addEventListener('offline',()=>toast(`📶 ${T("You're offline. Showing what this phone already has; live stuff comes back with signal.")}`,'orange',[],5000));
+addEventListener('online',()=>{ toast(`📶 ${T('Back online.')}`,'green',[],2000); loadState().then(()=>{ loadEvents(); renderSocial(); }); });
+if(!navigator.onLine) setTimeout(()=>toast(`📶 ${T("You're offline. Showing what this phone already has; live stuff comes back with signal.")}`,'orange',[],5000),800);
+// V2: service worker for an instant, offline-capable app shell (https or localhost only; never during automated tests)
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!navigator.webdriver)
+  addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 $('#betaTag').hidden=!CFG.beta;
 renderAll(); tab('home'); if(S.online) startLocating(false);
 addEventListener('resize',()=>{ goMap?.invalidateSize(); centerGoMap(); renderHome(); scoutDock(); });
