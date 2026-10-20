@@ -15,7 +15,7 @@ require 'openssl'
 require 'webrick/https'
 require 'net/http'
 require 'fileutils'
-require_relative 'geofix'
+require_relative 'event_filter'
 require 'securerandom'
 require 'digest'
 require 'set'
@@ -1174,7 +1174,7 @@ def mount_app(server)
         uri = URI("#{EVENTS_API}/api/events?limit=1000&end=#{horizon}")
         r = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: 15) { |http| http.get(uri.request_uri) }
         raise "events service said #{r.code}" unless r.code == '200'
-        EVENTS_CACHE.update(at: Time.now.to_f, body: Geofix.fix_body(r.body))   # real spots for the ones the scraper couldn't place
+        EVENTS_CACHE.update(at: Time.now.to_f, body: EventFilter.clean(r.body))   # no kids' activities; real spots for the ones the scraper couldn't place
       end
       res.body = EVENTS_CACHE[:body]
     rescue => e

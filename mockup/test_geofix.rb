@@ -1,5 +1,6 @@
 # Event spots (geofix.rb), popularity scores (popular.rb), farmers markets and Scout's areas, offline: ruby test_geofix.rb
 require_relative 'geofix'
+require_relative 'event_filter'
 require_relative 'areas'
 require_relative 'places'
 require_relative 'popular'
@@ -70,6 +71,22 @@ t("an area's best-known places: all inside it, local ones ahead of national chai
   inside = list.all? { |p| Places.miles(a['lat'], a['lng'], p[:lat], p[:lng]) * 1.609 <= a['r'] }
   first_chain = list.index { |p| p[:chain] == 'national' } || list.size
   list.any? && inside && list.first(first_chain).size >= 3
+}
+t("kids' activities are left out of the events") {
+  kids = [{ 'title' => 'Toddler Storytime', 'category' => 'family' }, { 'title' => 'Kids Create: Frog and Toad Homes', 'category' => 'arts' },
+          { 'title' => 'Pop Up Library Van Stop', 'category' => 'community', 'description' => 'Pop-up library van stop for kids, tweens, and teens.' },
+          { 'title' => 'Family Drum and Dance Workshop', 'category' => 'family' }, { 'title' => "SAFE's Truck-or-Treat", 'category' => 'family' },
+          { 'title' => 'Books and Babies', 'category' => 'family', 'description' => 'For non-walking babies from 0-12 months.' }]
+  kids.all? { |e| EventFilter.kids?(e) }
+}
+t('…but not grown-up events that only sound like it') {
+  ok = [{ 'title' => 'Vince Staples – Cry Baby Tour', 'category' => 'live_music' },
+        { 'title' => 'Baylor University Volleyball vs BYU - Faith & Family Night', 'category' => 'sports' },
+        { 'title' => 'Dia de los Muertos', 'category' => 'family', 'description' => 'Family-friendly, alcohol-free Day of the Dead celebration.' },
+        { 'title' => 'Final Decapitation: A Live Reading', 'category' => 'theater', 'description' => 'Reading of a 2004 teen slasher script.' },
+        { 'title' => 'Dinosaur Jr. – Fall Tour 2026', 'category' => 'live_music' }]
+  ok.none? { |e| EventFilter.kids?(e) } &&
+    JSON.parse(EventFilter.clean(JSON.generate(events: kids_ok = ok + [{ 'title' => 'Toddler Storytime', 'category' => 'family' }])))['events'].size == ok.size
 }
 puts "\n#{$pass}/#{$pass + $fail} passed"
 exit($fail.zero? ? 0 : 1)

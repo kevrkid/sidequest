@@ -249,6 +249,10 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   markets) may sit on ordinary pins but never on people's (flares, stories, live). One `moveend` handler
   (`redrawMapLayers`) redraws the layers in priority order. The old permanent tooltips (`sglabel`, `odlabel`,
   `hotlabel` as tooltips) are gone; hot spot names keep the `hotlabel` class.
+- **No kids' activities** (`event_filter.rb`, `EventFilter.clean` runs before `Geofix.fix_body` on every events load):
+  storytimes, toddler / homeschool / kids' classes, trunk-or-treats and the like are dropped (kids words in the title
+  or the first 160 characters of the description; "family" category only with "Family" in the title). Grown-up
+  events that only sound like it stay ("Cry Baby Tour", "Faith & Family Night", "teen slasher script").
 - **Event spots** (`geofix.rb`): events the scraper couldn't place (all dropped on downtown) get their spot from the
   venue / a park named in the title (our parks, sights, places; chains by exact name only), then OpenStreetMap's
   geocoder (1/s, answers must match house number + street or share a real word; cached in `data/geofix.json`).

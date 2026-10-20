@@ -29,6 +29,8 @@ at Lakeline showing downtown; farmers markets promoted on weekends, visible zoom
   best-known local places (60 neighborhoods, streets and towns, placed with OpenStreetMap). Before, it only looked
   places up for food words or the 8 hot spots, so it had nothing to go on. Other kinds of shops aren't in the app's
   data: Scout says so and suggests from memory, labelled as memory.
+- **No kids' activities**: storytimes, toddler raves, homeschool classes, kids' crafts and trunk-or-treats are left out
+  of the events (36 of 611 today), while grown-up events that only sound like it stay.
 - **Scout's voice**: V2 was started without the Google voice key, so Scout used the phone's voice. `start_v2.sh --voice`
   turns on just the voice (30,000 characters a day cap, inside Google's free allowance).
 - Limits: popularity is free data, not Google ratings; markets are a hand-kept list (recheck each season); 28 events
