@@ -1036,7 +1036,7 @@ S.rsvps ??= {}; S.joined ??= []; S.seenStories ??= []; S.tagSeen ??= [];
 S.feed ??= {show:{events:true,posts:true,people:true,groups:true,live:true}, off:[], sort:'foryou', when:'week', dist:0};
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} try{ syncProfile(); }catch(e){} };
 // Downtown Austin until the browser shares a real position. Your exact spot is only ever used on your own screen.
-let ME_POS = [30.2747,-97.7404], ME_ACC = 0, locWatch = null;
+let ME_POS = [30.2747,-97.7404], ME_ACC = 0, ME_FIX = 0, locWatch = null;   // ME_FIX: when we last got a real position
 
 let pings = SEED_PINGS.map(p => ({...p, start:NOW+p.s*M, end:NOW+(p.s+p.d)*M, downs:[...p.downs]}));
 // Online, everyone's flares come from the server; offline, only your own (kept in this browser).
@@ -2696,6 +2696,7 @@ async function sendFeedback(){
 /* ---------- render ---------- */
 function renderHeader(){
   const guest=!AUTHED&&location.protocol.startsWith('http');
+  try{ renderBell(); }catch(e){}   // (V2's state may not exist yet during the first render)
   $('#meAv').outerHTML = guest ? `<span class="av emo" id="meAv" style="background:${S.me.c}">👤</span>` : av(S.me.h).replace('<span class="av','<span id="meAv" class="av');
   $('#meHandle').textContent=guest?T('Sign up'):'@'+S.me.h;   // sign-in is one tap further, on the same sheet
   $('#meChip .caret').hidden=guest; $('#meChip').classList.toggle('authed',!guest); $('#meMenuHead').textContent='@'+S.me.h;
@@ -2979,7 +2980,7 @@ function centerGoMap(){   // put your position under the blue dot (70% down the 
   goMap.setView(ME_POS,15,{animate:false}); goMap.panBy([0,-h*.2],{animate:false});
 }
 function setMyPos(lat,lng,acc){
-  ME_POS=[lat,lng]; ME_ACC=acc||0;
+  ME_POS=[lat,lng]; ME_ACC=acc||0; ME_FIX=Date.now();
   if(meMark){ meMark.setLatLng(ME_POS); meAcc.setLatLng(ME_POS).setRadius(Math.max(ME_ACC,1)); }
   centerGoMap();
 }
@@ -4852,11 +4853,11 @@ async function loadEvChat(id){
 }
 async function sendEvChat(){
   const i=$('#evChatIn'), id=V2S.evOpen, t=i?.value.trim(); if(!t||!id) return;
-  i.disabled=true;
+  const btn=$('#evChatForm button'); i.disabled=true; if(btn){ btn.disabled=true; btn.textContent=T('Sending…'); }
   try{ const j=await api('/api/event/chat',{id, text:t, title:EV.byId[id]?.title||''}); i.value='';
     const el=$('#evChat'); if(el) el.innerHTML=j.msgs.map(m=>`<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div></div>`).join(''); }
   catch(e){ toast(esc(e.message),'orange'); }
-  i.disabled=false; i.focus();
+  i.disabled=false; if(btn){ btn.disabled=false; btn.textContent=T('Send'); } i.focus();
 }
 function openInvite(id){
   if(needAccount('invite friends')) return;
@@ -4939,7 +4940,7 @@ function renderQuests(){
 }
 async function checkInAt(k, id, lat, lng){
   if(needAccount('check in and earn XP')) return;
-  if(!(ME_ACC>0)){ startLocating(true); return toast(`📍 ${T("Turn on location (the Online switch at the top) so your phone can tell you're there, then tap Check in again.")}`,'orange',[],5000); }
+  if(!ME_FIX||Date.now()-ME_FIX>10*6e4){ startLocating(true); return toast(`📍 ${T("Turn on location (the Online switch at the top) so your phone can tell you're there, then tap Check in again.")}`,'orange',[],5000); }
   const m=km(ME_POS,[lat,lng])*1000, max=150+Math.min(ME_ACC,100);
   if(m>max) return toast(`📍 ${T("You're about {d} away. Get within 150 m to check in.",{d:m>=1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m'})}`,'orange',[],4000);
   try{ const j=await api('/api/checkin',{k,id});
