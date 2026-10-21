@@ -244,6 +244,7 @@ with sync_playwright() as pw:
     p1.click("#placesSheet [data-mpreset='outdoors']"); p1.wait_for_timeout(500)
     check("quick pick 'Outdoors day' sets several layers at once",
           p1.evaluate("S.mapL.parks && S.mapL.trails && !S.mapL.clubs && !S.mapL.events") and p1.get_attribute("[data-mlcat='outdoors']", "aria-pressed") == "true")
+    check("Sights are off until you turn them on (too busy by default)", p1.evaluate("!S.mapL.landmarks && !S.mapL.markers && !S.mapL.art") and p1.locator(".sgpin").count() == 0)
     p1.click("#placesSheet [data-mpreset='all']"); p1.wait_for_timeout(300); p1.evaluate("S.mapL.stories=false; refreshMapLayers()")
     p1.click("#placesSheet [data-pclose]")
     p1.screenshot(path=f"{OUT}/71-map-food.png")

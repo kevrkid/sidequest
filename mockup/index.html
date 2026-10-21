@@ -1714,7 +1714,8 @@ S.foodOpen ??= true;
 S.mapL ??= {events:true, night:true, food:S.mapFood??true, live:true, posts:true, stories:false, zones:true};   // map layers, each on/off
 S.mapL.outdoors ??= true;
 for(const [k,v] of Object.entries({clubs:S.mapL.night, bars:S.mapL.night, parks:S.mapL.outdoors, water:S.mapL.outdoors, trails:S.mapL.outdoors,
-  spots:S.mapL.outdoors, openonly:false, landmarks:true, markers:true, art:false, markets:true})) S.mapL[k] ??= v;   // sights: big ones zoomed out, markers up close
+  spots:S.mapL.outdoors, openonly:false, landmarks:false, markers:false, art:false, markets:true})) S.mapL[k] ??= v;   // sights start off (too busy); the Sights chip or preset turns them on
+if(!S.sightsOffV2){ S.sightsOffV2=true; S.mapL.landmarks=S.mapL.markers=S.mapL.art=false; }   // once, for phones that saved the old default
 S.mapWhen ??= 'tonight'; S.mapCats ??= [];   // events shown: tonight / weekend / week, and which types ([] = all)
 const FOOD_TILES = [['late','🌙','Late-night eats'],['early','🌅','Early morning'],['bars','🍸','Bars'],['clubs','🪩','Clubs'],['trucks','🚚','Food trucks'],['coffee','☕','Coffee'],
   ['tacos','🌮','Tacos'],['bbq','🍖','BBQ'],['pizza','🍕','Pizza'],['burgers','🍔','Burgers'],['asian','🍜','Asian'],['sweets','🍦','Sweets'],['all','🍽️','Everything']];
@@ -2077,7 +2078,7 @@ function renderSights(){
   setLabels('sights',keep.map(k=>({id:k.id,ll:k.ll,r:14})),names);
 }
 async function sightPopup(id){
-  track('sight_open');
+  track('sight_open'); if(!SG.byId[id]&&!SG.data) await loadSights();   // the Sights layer may be off, so its list isn't loaded yet
   const x=SG.byId[id]||(SCT.placeInfo?.[id]&&[id,SCT.placeInfo[id].kind,SCT.placeInfo[id].name,SCT.placeInfo[id].lat,SCT.placeInfo[id].lng]); if(!x||!map) return;
   const pop=L.popup({maxWidth:Math.min(300,innerWidth-64),minWidth:Math.min(240,innerWidth-80),autoPanPadding:[14,70]}).setLatLng([x[3],x[4]]).setContent(`<b>${esc(x[2])}</b><div class="meta">${T('Loading the story…')}</div>`).openOn(map);
   let s=SG.full[id]; if(!s) try{ s=SG.full[id]=(await (await fetch('/api/sight?id='+encodeURIComponent(id))).json()).sight; }catch(e){}
