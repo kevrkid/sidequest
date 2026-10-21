@@ -44,7 +44,7 @@ INVITES = ENV['SQ_INVITES'].to_s.split(',').map(&:strip).reject(&:empty?)   # em
 ADMIN_TOKEN = ENV['SQ_ADMIN_TOKEN'].to_s                                    # empty = admin page off
 MODERATE = ENV['SQ_MODERATE'] != '0'                                        # screen posts with Claude
 SESSION_DAYS = 30
-TERMS_VERSION = '2026-10-16'
+TERMS_VERSION = '2026-10-21'
 # LiveKit relays live video (phone → LiveKit → any number of viewers, and through mobile networks).
 # Unset = phone-to-phone WebRTC, fine for a few viewers on Wi-Fi. URL is wss://<project>.livekit.cloud,
 # or wss://<this site>/livekit when it runs on our own box (deploy/livekit.yaml, behind Caddy).

@@ -17,7 +17,7 @@
 </head>
 <body><main>
 <h1>Privacy Policy</h1>
-<p class="meta">Side Quest beta · version 2026-10-16</p>
+<p class="meta">Side Quest beta · version 2026-10-21</p>
 <p class="draft"><b>Draft for the beta.</b> This describes how the app actually works today. Have a lawyer review it before opening sign-ups to the public.</p>
 
 <h2>What we collect, and who sees it</h2>
@@ -28,6 +28,11 @@
   <tr><td><b>Location</b></td><td>Only if you allow it. Your exact position is used on your own screen (your map dot, distances). Posts and stories you put on the map use a venue or a blurred spot. Live streams show the venue name, optionally delayed.</td></tr>
   <tr><td><b>Posts, stories, RSVPs, groups, friends</b></td><td>Shown to the audience you picked. Stories are deleted after 24 hours.</td></tr>
   <tr><td><b>Activity history</b></td><td>Kept in your browser to improve your picks. You can switch it off, download it, or delete it in Me → Your data.</td></tr>
+  <tr><td><b>Check-ins and quests</b></td><td>When you check in, your phone checks that you're close by; our server gets only which place or event it was, never your position. We keep your check-ins, XP, level and badges for quests. Friends see your level and badges, and the friends' leaderboard shows your XP unless you hide yourself from it. Friends see where you checked in only if you switch on "Show friends where I check in" (off by default), and then only the place's name, for 3 hours.</td></tr>
+  <tr><td><b>Event and group chats</b></td><td>Seen by everyone who opens that event's page, or by the group's members. Screened like posts.</td></tr>
+  <tr><td><b>Saved items and notifications</b></td><td>What you save and your notification inbox are visible only to you.</td></tr>
+  <tr><td><b>Phone notifications</b></td><td>Only if you switch them on. We store the address your phone's push service gives us (Apple, Google or Mozilla) for up to 5 devices. Notifications pass through that service on the way to your phone. Switch them off any time in the 🔔 inbox, and choose which kinds you get there.</td></tr>
+  <tr><td><b>Usage counts</b></td><td>We count how many times a day features are used (for example "event opened" or "check-in"), as totals for everyone, and which days each account was active (the last 90 days), to see whether the app is working for people. No content, locations or device identifiers.</td></tr>
   <tr><td><b>Reports and feedback</b></td><td>Seen only by the people running the beta.</td></tr>
 </table>
 
@@ -35,7 +40,10 @@
 <p>Recommendations, matching, and safety screening of posts and live-stream requests are done by Claude (Anthropic). When that runs, the relevant text (for example, your matching answers and the events being ranked) is sent to Claude to produce the result.</p>
 
 <h2>Live video</h2>
-<p>Live video goes directly between devices where possible and is not recorded by us. Small preview thumbnails are shared while you're live so others can see you on the map.</p>
+<p>Live video goes directly between devices, or through our video relay provider (LiveKit) when it's switched on. We don't record it. Small preview thumbnails are shared while you're live so others can see you on the map.</p>
+
+<h2>Other services</h2>
+<p>Map and place data come from OpenStreetMap, Wikipedia and the Texas Historical Commission; nothing about you is sent to them. If these features are switched on: Scout's spoken answers are turned into speech by Google (only Scout's own words are sent), tapping a place asks Google for its rating and hours (only the place is sent), and "Continue with Google" signs you in with your Google account (we keep Google's account id, not your email).</p>
 
 <h2>What we don't do</h2>
 <ul>
@@ -48,7 +56,7 @@
 <ul>
   <li>Change who sees each answer any time in Me.</li>
   <li>Block anyone: they stop seeing your posts and stories, and can't tag or add you.</li>
-  <li>Delete your account in Me → Account. This removes your profile, posts, stories, RSVPs, group memberships and friendships from our server.</li>
+  <li>Delete your account in Me → Account. This removes your profile, posts, stories, RSVPs, group memberships, friendships, chat messages, check-ins and quest progress, saved items, notifications, phone notification addresses and your active-days record from our server. Nightly backups are kept for 14 days, then deleted.</li>
 </ul>
 
 <h2>Contact</h2>
