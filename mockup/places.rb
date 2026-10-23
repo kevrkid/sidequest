@@ -143,7 +143,7 @@ module Places
   def row(p, st = Hours.status(p['week'], now_mow), mi = nil)
     zone = zone_of(p)
     { id: p['id'], name: p['name'], kind: p['kind'], cuisine: p['cuisine'] || [], addr: p['addr'], lat: p['lat'], lng: p['lng'],
-      web: p['web'], menu: p['menu'], state: st[:state], status: label(st), closes: st[:state] == 'open' && !st[:always] ? Hours.clock(st[:until]) : nil,
+      web: p['web'], menu: p['menu'], phone: p['phone'], state: st[:state], status: label(st), closes: st[:state] == 'open' && !st[:always] ? Hours.clock(st[:until]) : nil,
       mi: mi && mi.round(1), zone: zone && zone[:name], chain: p['chain'] }.compact
   end
 

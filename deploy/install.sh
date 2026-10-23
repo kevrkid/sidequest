@@ -3,7 +3,7 @@
 # Safe to re-run: it updates code and restarts the services.
 set -e
 apt-get update -qq
-apt-get install -y -qq ruby python3-venv caddy >/dev/null
+apt-get install -y -qq ruby python3-venv caddy poppler-utils >/dev/null   # poppler-utils: pdftotext for PDF menus (menus.rb)
 gem list -i webrick >/dev/null || gem install webrick --no-document   # WEBrick left Ruby's standard library in 3.0
 id sidequest >/dev/null 2>&1 || useradd --system --home /opt/sidequest --shell /usr/sbin/nologin sidequest
 mkdir -p /opt/sidequest/app/data /opt/sidequest/events/data /etc/sidequest

@@ -35,7 +35,7 @@ module Sights
         @data = m ? (JSON.parse(File.read(FILE))['sights'] rescue []) : []
         @by_id = @data.to_h { |s| [s['id'], s] }
       end
-      @data
+      @data ||= []   # no file: no sights (rather than nil)
     end
   end
 

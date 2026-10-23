@@ -27,6 +27,8 @@ require_relative 'areas'
 require_relative 'sights'
 require 'date'
 require_relative 'lens' # Live Translate: camera text → any of 13 languages (lens.js + /api/translate)
+require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
+require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
 PORT    = (ENV['PORT'] || 8787).to_i
@@ -181,9 +183,16 @@ API_EFFORT = { 'claude-haiku-5-5' => ENV['SQ_HAIKU_EFFORT'] || 'low',
                'claude-sonnet-5-5' => ENV['SQ_SONNET_EFFORT'] || 'medium' }
 
 # effort: 'low' makes the model answer straight away instead of thinking first (Scout uses it: ~1-2 s faster).
-def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil)
-  ENGINE == 'api' ? run_claude_api(prompt, schema, system: system, model: model, timeout: timeout, effort: effort)
-                  : run_claude_cli(prompt, schema, system: system, model: model, timeout: timeout, effort: effort)
+# images: JPEG bytes to show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
+# read the web (menus); pages it reads are untrusted, so only the structured answer comes back.
+def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
+  ENGINE == 'api' ? run_claude_api(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
+                  : run_claude_cli(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
+end
+
+def claude_content(prompt, images)
+  Array(images).map { |jpg| { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: [jpg].pack('m0') } } } +
+    [{ type: 'text', text: prompt }]
 end
 
 # The API's structured output needs additionalProperties: false on every object and doesn't take
@@ -226,7 +235,7 @@ class ApiRetry < StandardError; end
 API_SCHEMAS = {}   # schema string -> [schema for the API, original]; built once per schema
 API_SCHEMAS_LOCK = Mutex.new
 
-def run_claude_api(prompt, schema, system:, model:, timeout:, effort: nil)
+def run_claude_api(prompt, schema, system:, model:, timeout:, effort: nil, images: nil, web: false)
   id = API_MODELS[model] || model
   sent, orig = API_SCHEMAS_LOCK.synchronize do
     API_SCHEMAS[schema] ||= begin o = JSON.parse(schema); [api_schema(o), o] end
@@ -235,9 +244,10 @@ def run_claude_api(prompt, schema, system:, model:, timeout:, effort: nil)
     model: id, max_tokens: 16_000,
     # The system prompt is the same on every call of a kind, so cache it (later reads cost 10%).
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-    messages: [{ role: 'user', content: prompt }],
+    messages: [{ role: 'user', content: images ? claude_content(prompt, images) : prompt }],
     output_config: { format: { type: 'json_schema', schema: sent } }
   }
+  body[:tools] = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 6 }] if web
   body[:output_config][:effort] = effort || API_EFFORT[id] if effort || API_EFFORT[id]
   headers = { 'content-type' => 'application/json', 'x-api-key' => ENV['ANTHROPIC_API_KEY'].to_s,
               'anthropic-version' => '2023-06-01' }
@@ -300,11 +310,18 @@ end
 # silently switch billing to the API; set SQ_ENGINE=cli with SQ_USE_API_KEY=1 to run the CLI on an
 # API key instead. --tools "" and an empty MCP config keep it a pure
 # text call; cwd is a temp dir so no project CLAUDE.md gets pulled in.
-def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil)
-  cmd = [CLAUDE, '-p', '--output-format', 'json', '--model', model, '--tools', '',
+def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
+  tools = web ? %w[WebSearch WebFetch] : []
+  cmd = [CLAUDE, '-p', '--output-format', images ? 'stream-json' : 'json', '--model', model, '--tools', tools.join(','),
          '--strict-mcp-config', '--no-session-persistence', '--system-prompt', system,
          '--json-schema', schema]
+  cmd += ['--allowedTools', *tools] if web
   cmd += ['--effort', effort] if effort
+  # a photo goes in as a stream-json message (the plain-text prompt can't carry one); the answer is the last line
+  if images
+    cmd += ['--input-format', 'stream-json', '--verbose']
+    prompt = JSON.generate(type: 'user', message: { role: 'user', content: claude_content(prompt, images) })
+  end
   out = err = nil
   env = { 'ANTHROPIC_API_KEY' => ENV['SQ_USE_API_KEY'] == '1' ? ENV['ANTHROPIC_API_KEY'] : nil }
   Open3.popen3(env, *cmd, chdir: Dir.tmpdir) do |stdin, stdout, stderr, thr|
@@ -318,6 +335,7 @@ def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOU
     end
     out, err = o.value, e.value
   end
+  out = out.to_s.lines.reverse.find { |l| l.include?('"type":"result"') }.to_s if images
   j = begin JSON.parse(out) rescue raise("claude gave no JSON: #{(err.to_s + out.to_s)[0, 300]}") end
   raise "claude error: #{j['result'].to_s[0, 300]}" if j['is_error']
   raise 'claude returned no structured output' unless j['structured_output']
@@ -1310,6 +1328,12 @@ def mount_app(server)
     next { off: true } unless GOOGLE
     limit!("gplace:#{client_ip(req)}", 60, 3600)
     if (gid = req.query['gid'].to_s[/\A[A-Za-z0-9_-]{10,200}\z/])   # a place only Google knows (Nightlife layer)
+    elsif (name = req.query['name'].to_s.strip[0, 80]) != '' && (lat = req.query['lat'].to_f) != 0   # an event's venue, by name near its spot
+      lng = req.query['lng'].to_f; dd = 0.005
+      google_budget!
+      j = google_api('places:searchText', 'places.id', textQuery: name, maxResultCount: 1,
+                     locationRestriction: { rectangle: { low: { latitude: lat - dd, longitude: lng - dd * 1.15 }, high: { latitude: lat + dd, longitude: lng + dd * 1.15 } } })
+      gid = ((j['places'] || []).first || {})['id'].to_s
     else
       id = req.query['id'].to_s[0, 30]
       p = Places.find(id) or raise 'No such place.'
@@ -1321,8 +1345,10 @@ def mount_app(server)
     end
     next { none: true } if gid.empty?
     google_budget!
-    g = google_api("places/#{gid}", 'rating,userRatingCount,priceLevel,currentOpeningHours.openNow,currentOpeningHours.weekdayDescriptions,googleMapsUri,websiteUri,photos')
-    { photos: google_photos(g['photos'], 3), rating: g['rating'], count: g['userRatingCount'], price: GOOGLE_PRICE[g['priceLevel']],
+    g = google_api("places/#{gid}", 'rating,userRatingCount,priceLevel,currentOpeningHours.openNow,currentOpeningHours.weekdayDescriptions,googleMapsUri,websiteUri,photos,' \
+                   'nationalPhoneNumber,internationalPhoneNumber,formattedAddress')   # phone and address: same Enterprise call, no extra charge
+    { photos: google_photos(g['photos'], 4), phone: g['nationalPhoneNumber'], tel: g['internationalPhoneNumber'].to_s.gsub(/[^\d+]/, '')[0, 20].then { |t| t.empty? ? nil : t },
+      addr: g['formattedAddress'], rating: g['rating'], count: g['userRatingCount'], price: GOOGLE_PRICE[g['priceLevel']],
       open_now: g.dig('currentOpeningHours', 'openNow'), hours: g.dig('currentOpeningHours', 'weekdayDescriptions') || [],
       maps: g['googleMapsUri'], web: g['websiteUri'] }.compact
   end
@@ -2254,7 +2280,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

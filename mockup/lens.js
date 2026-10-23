@@ -1,7 +1,10 @@
 /* Live Translate: point the phone's camera at text (signs, menus, labels) and read it in another language, drawn
    right over the words and pinned to them as the camera moves. Self-contained so any web app can use it: Side Quest
    opens it from Scout, and lens.html runs it on its own page.
-     Lens.open({to:'es', from:'en', translate, onClose, standalone})
+     Lens.open({to:'es', from:'en', translate, onClose, standalone, mode, identify, onPlace, onSight, lang})
+   - Two modes, switched above the shutter: Translate, and Identify ("what is this?"): the shutter takes one photo and
+     identify(jpegDataUrl, {lat, lng, heading, lang}) says what's in it (default: POST /api/lens/identify, identify.rb).
+     onPlace(place, 'menu'|'info') and onSight(sight) let the app open what it found; without them it shows links.
    - The text is read on the device by tesseract.js (vendor/tesseract/, next to this file); each language's reading
      data (2-15 MB) downloads the first time it's used and stays cached in the browser.
    - Reading takes about a second, so between reads the camera's motion is tracked every frame (corners followed
@@ -36,7 +39,8 @@ const CSS = `
 .lz-box.orig{box-shadow:0 0 0 2px #ffd54a}
 .lz-glass{background:rgba(26,28,34,.55);-webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);border:1px solid rgba(255,255,255,.14)}
 .lz-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top)) 14px 26px;
-  background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,0))}
+  background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,0));pointer-events:none}
+.lz-top>*{pointer-events:auto}   /* the fade under the bar lets taps through to the translations */
 .lz .lz-ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:18px;flex:none;padding:0}
 .lz-langs{flex:1;min-width:0;display:flex;align-items:center;height:44px;border-radius:22px;padding:0 4px;box-sizing:border-box}
 .lz-langs label{flex:1;min-width:0;position:relative}
@@ -48,7 +52,8 @@ const CSS = `
 .lz .lz-sw{width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.14);font-size:16px;flex:none;padding:0;transition:transform .35s}
 .lz .lz-sw.spin{transform:rotate(180deg)}
 .lz-stat{position:absolute;left:50%;top:calc(max(12px,env(safe-area-inset-top)) + 58px);transform:translateX(-50%);display:flex;align-items:center;gap:8px;
-  max-width:calc(100% - 32px);box-sizing:border-box;padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap;transition:opacity .3s}
+  max-width:calc(100% - 32px);box-sizing:border-box;padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:600;white-space:nowrap;transition:opacity .3s;
+  pointer-events:none}   /* only says things: taps go through to the translation under it */
 .lz-stat span:last-child{overflow:hidden;text-overflow:ellipsis}
 .lz-stat.off{opacity:0}
 .lz-dot{width:8px;height:8px;border-radius:50%;background:#34d399;flex:none;animation:lz-pulse 1.8s ease-out infinite}
@@ -64,7 +69,8 @@ const CSS = `
 .lz-aim b{position:absolute;left:6%;right:6%;height:2px;top:10%;border-radius:2px;background:linear-gradient(90deg,transparent,#2ec5ff,transparent);
   box-shadow:0 0 14px 2px rgba(46,197,255,.7);animation:lz-scan 2.4s ease-in-out infinite}
 .lz-bot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;
-  padding:30px 26px max(18px,env(safe-area-inset-bottom));background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.55))}
+  padding:30px 26px max(18px,env(safe-area-inset-bottom));background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.55));pointer-events:none}
+.lz-bot>*{pointer-events:auto}
 .lz .lz-side{width:64px;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;font-size:12px;font-weight:600;padding:0;
   text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .lz-side span{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:700;transition:background .2s,color .2s}
@@ -89,6 +95,24 @@ const CSS = `
 .lz-card small{display:block;color:#9aa0aa;font-size:13px;white-space:pre-line;margin-bottom:6px;overflow-wrap:anywhere}
 .lz .lz-mini{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.1);flex:none;padding:0;font-size:16px}
 .lz-empty{color:#9aa0aa;text-align:center;padding:24px 0}
+.lz-modes{position:absolute;left:50%;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 98px);transform:translateX(-50%);display:flex;padding:3px;border-radius:999px}
+.lz .lz-modes button{border:0;background:none;border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap}
+.lz .lz-modes button.on{background:#fff;color:#111}
+.lz.look .lz-langs,.lz.look .lz-layer,.lz.look .lz-bot .lz-side{visibility:hidden}
+.lz-title{flex:1;text-align:center;font-weight:700;font-size:16px;display:none}
+.lz.look .lz-title{display:block}
+.lz.look .lz-langs{display:none}
+.lz.look .lz-shut i{width:58px;height:58px;border-radius:50%;background:#fff}
+.lz.look .lz-shut.frozen i{width:22px;height:22px;border-radius:0;background:#111;clip-path:polygon(50% 0,100% 40%,82% 100%,18% 100%,0 40%);margin:0}
+.lz-look p{margin:6px 0 0;font-size:15.5px;line-height:1.45;color:#e8eaef}
+.lz-look ul{margin:10px 0 0;padding-left:20px;color:#d5d8df;font-size:14.5px;line-height:1.45}
+.lz-look li{margin-top:4px}
+.lz-pl{background:rgba(255,255,255,.07);border-radius:14px;padding:12px 14px;margin-top:12px}
+.lz-pl b{font-size:16px} .lz-pl small{display:block;color:#9aa0aa;font-size:13px;margin-top:2px}
+.lz-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.lz .lz-acts a,.lz .lz-acts button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;border:0;
+  background:rgba(255,255,255,.12);color:#fff;font:600 14px system-ui,-apple-system,sans-serif;text-decoration:none}
+.lz .lz-acts .pri{background:#2ec5ff;color:#04121c}
 @keyframes lz-sh{from{background-position:100% 0}to{background-position:-150% 0}}
 @keyframes lz-rot{to{transform:rotate(360deg)}}
 @keyframes lz-pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}100%{box-shadow:0 0 0 8px rgba(52,211,153,0)}}
@@ -114,6 +138,14 @@ function loadTesseract(){
   if(window.Tesseract) return Promise.resolve();
   return loadTesseract.p ||= new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=BASE+'vendor/tesseract/tesseract.min.js';
     s.onload=ok; s.onerror=()=>{ loadTesseract.p=null; no(new Error("Couldn't load the text reader.")); }; document.head.appendChild(s); });
+}
+async function defaultIdentify(img, ctx){
+  const r=await fetch('/api/lens/identify', {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({img, lat:ctx.lat, lng:ctx.lng, heading:ctx.heading, lang:ctx.lang})});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401) throw new Error('Sign in to Side Quest to use Identify.');
+  if(!r.ok||j.error) throw new Error(j.error||"Couldn't tell what that is. Try again.");
+  return j;
 }
 async function defaultTranslate(lines, from, to){
   const r = await fetch('/api/translate',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({lines,from,to})});
@@ -253,7 +285,7 @@ function open(opts={}){
     stream:null, cam:null, torch:false, zoom:1, zoomMax:1, wp:null, wlang:null, w:null, loadPct:null, readerFail:0,
     items:[], id:0, reads:0, ms:0, cache:new Map(), inflight:false, again:false, noTry:0, ocr:false, lastOcr:0, gen:0,
     pose:{a:1,b:0,tx:0,ty:0}, T:newTracker(), vel:null, fails:0, epoch:0, speed:0, vw:0, vh:0, sc:0,
-    showOrig:false, err:'', errUntil:0, fatal:'' };
+    showOrig:false, err:'', errUntil:0, fatal:'', mode:opts.mode==='look'?'look':'tr', look:null, heading:null };
   if(!L[st.from]) st.from='en'; if(!L[st.to]) st.to='es';
   const translate = opts.translate || defaultTranslate;
   const root=document.createElement('div'); root.className='lz'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Live Translate');
@@ -261,12 +293,14 @@ function open(opts={}){
   root.innerHTML = `<video playsinline muted autoplay></video><div class="lz-layer"></div>
     <div class="lz-aim"><i></i><i></i><i></i><i></i><b></b></div>
     <div class="lz-top">${opts.standalone?'<span class="lz-ib" aria-hidden="true"></span>':'<button class="lz-ib lz-glass" data-a="close" aria-label="Close">✕</button>'}
+      <div class="lz-title">What is this?</div>
       <div class="lz-langs lz-glass"><label><select data-k="from" aria-label="Translate from">${opt(st.from)}</select></label>
         <button class="lz-sw" data-a="swap" aria-label="Swap languages">⇄</button>
         <label><select data-k="to" aria-label="Translate to">${opt(st.to)}</select></label></div>
       <button class="lz-ib lz-glass" data-a="torch" aria-label="Flashlight" style="visibility:hidden">🔦</button></div>
     <div class="lz-stat lz-glass off" role="status"><span></span><span></span></div>
-    <button class="lz-zoom lz-glass" data-a="zoom" hidden>1×</button>
+    <button class="lz-zoom lz-glass" data-a="zoom" hidden style="bottom:calc(max(18px,env(safe-area-inset-bottom)) + 146px)">1×</button>
+    <div class="lz-modes lz-glass" role="tablist"><button data-mode="tr" role="tab">🌐 Translate</button><button data-mode="look" role="tab">🔍 Identify</button></div>
     <div class="lz-bot"><button class="lz-side" data-a="list" aria-label="All the text in view"><span class="lz-glass">☰</span>Text</button>
       <button class="lz-shut" data-a="freeze" aria-label="Freeze the picture"><i></i></button>
       <button class="lz-side" data-a="orig" aria-label="Show the original text" aria-pressed="false"><span class="lz-glass">Aa</span>Original</button></div>`;
@@ -313,7 +347,7 @@ function open(opts={}){
   }
   async function step(md){
     const vw=video.videoWidth, vh=video.videoHeight;
-    if(!vw||!st.live||video.paused) return render();
+    if(!vw||!st.live||video.paused||st.mode==='look') return render();
     if(vw!==st.vw||vh!==st.vh){ st.vw=vw; st.vh=vh; st.T=newTracker(); st.pose={a:1,b:0,tx:0,ty:0}; clear(); }
     // the tracker works on a ~180 px wide grayscale copy of the frame
     const f=Math.max(1,Math.round(Math.min(vw,vh)/180)), tw=Math.floor(vw/f), th=Math.floor(vh/f), gray=buf(st.T,'gray',tw*th);
@@ -573,9 +607,9 @@ function open(opts={}){
         if(on&&mode!=='wait') any=true;
       }
     }
-    $('.lz-aim').classList.toggle('off', any||!st.live||!st.stream||!!st.fatal);
+    $('.lz-aim').classList.toggle('off', st.mode==='look' ? !!st.look||!st.stream||!!st.fatal : any||!st.live||!st.stream||!!st.fatal);
     status(any);
-    if(root.querySelector('.lz-sheet')) list(true);
+    if(st.mode==='tr'&&root.querySelector('.lz-sheet')) list(true);   // Identify's sheet is its answer, not the text list
   }
   // One line at the top saying what's going on
   function status(any){
@@ -583,6 +617,7 @@ function open(opts={}){
     if(st.fatal){ t=st.fatal; k='err'; }
     else if(st.err&&now<st.errUntil){ t=st.err; k='err'; }
     else if(!st.stream) { t='Starting the camera…'; k='busy'; }
+    else if(st.mode==='look') { [t,k] = st.looking?['Looking…','busy']:st.look?['','']:['Point at a place, sign or dish and tap ◯','']; }
     else if(!st.w) { t=`Getting ready to read ${L[st.from][2]}…`+(st.loadPct!=null&&st.loadPct<100?` ${st.loadPct}%`:''); k='busy'; }
     else if(st.inflight) { t='Translating…'; k='busy'; }
     else if(!st.live) { t=st.ocr?'Reading…':any?'Tap a translation to see the original':'No text found. Get closer and try again.'; k=st.ocr?'busy':''; }
@@ -622,8 +657,60 @@ function open(opts={}){
     else { st.items.forEach(it=>{ it.tr=null; it.src=null; it.want=false; it.dirty=true; }); fill(true); }
     render();
   }
+  // ---- Identify: one photo → what it is ----
+  function setMode(m){
+    if(m===st.mode) return; st.mode=m; root.classList.toggle('look',m==='look');
+    root.querySelectorAll('[data-mode]').forEach(b=>{ b.classList.toggle('on',b.dataset.mode===m); b.setAttribute('aria-selected',b.dataset.mode===m); });
+    root.querySelector('.lz-sheet')?.remove(); st.look=null;
+    if(!st.live){ st.live=true; video.play().catch(()=>{}); $('[data-a="freeze"]').classList.remove('frozen'); }
+    $('[data-a="freeze"]').setAttribute('aria-label', m==='look'?'Identify what is in the picture':'Freeze the picture');
+    if(m==='look') compass(); else { clear(); st.T=newTracker(); st.pose={a:1,b:0,tx:0,ty:0}; }
+    render();
+  }
+  function compass(){   // which way the phone faces helps tell which building it is (iPhone asks first, inside a tap)
+    if(st.compass) return; st.compass=true;
+    const on=()=>addEventListener('deviceorientationabsolute' in window?'deviceorientationabsolute':'deviceorientation', st.onOri=e=>{
+      const h=e.webkitCompassHeading!=null?e.webkitCompassHeading:e.absolute&&e.alpha!=null?(360-e.alpha)%360:null; if(h!=null) st.heading=h; });
+    try{ const ask=window.DeviceOrientationEvent?.requestPermission; ask ? ask().then(r=>{ if(r==='granted') on(); }).catch(()=>{}) : on(); }catch(e){}
+  }
+  const where = () => opts.where ? Promise.resolve(opts.where()).catch(()=>null) : new Promise(ok=>{
+    if(!navigator.geolocation) return ok(null);
+    navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude, lng:p.coords.longitude}), ()=>ok(null), {maximumAge:60000, timeout:4000, enableHighAccuracy:true}); });
+  async function identify(){
+    if(st.looking) return;
+    if(st.look||!st.live){ st.look=null; root.querySelector('.lz-sheet')?.remove(); st.live=true; video.play().catch(()=>{}); $('[data-a="freeze"]').classList.remove('frozen'); return render(); }
+    const vw=video.videoWidth, vh=video.videoHeight; if(!vw) return;
+    const k=Math.min(1,1024/Math.max(vw,vh)); grab.width=Math.round(vw*k); grab.height=Math.round(vh*k); gctx.drawImage(video,0,0,grab.width,grab.height);
+    video.pause(); st.live=false; $('[data-a="freeze"]').classList.add('frozen'); try{ navigator.vibrate?.(12); }catch(e){}
+    st.looking=true; render();
+    try{
+      const img=grab.toDataURL('image/jpeg',.85), pos=await where();
+      const r=await (opts.identify||defaultIdentify)(img, {...(pos||{}), heading:st.heading, lang:opts.lang});
+      if(st.closed||st.mode!=='look'||st.live) return;
+      st.look=r; lookSheet(r);
+    }catch(e){ if(!st.closed){ flash(e.message||"Couldn't tell what that is."); st.live=true; video.play().catch(()=>{}); $('[data-a="freeze"]').classList.remove('frozen'); } }
+    finally{ st.looking=false; if(!st.closed) render(); }
+  }
+  const KINDS={business:'Business', landmark:'Landmark', building:'Building', art:'Art', nature:'Nature', food:'Food', product:'Product', sign:'Sign', other:''};
+  const FOODY=/restaurant|fast food|food truck|truck park|food hall|bakery|ice cream|cafe|bar|pub|beer garden|club/;
+  function lookSheet(r){
+    const p=r.place, g=s=>'https://www.google.com/search?q='+encodeURIComponent(s), maps='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p?`${p.name} ${p.addr||''}`:r.search||r.name);
+    const html=`<div class="lz-grab"></div><div class="lz-look"><div class="lz-head"><span>${esc(r.name||'Not sure')}<small>${esc([KINDS[r.kind]||'',r.confidence==='low'?'best guess':''].filter(Boolean).join(' · '))}</small></span>
+        <button class="lz-mini" data-a="again" aria-label="Look at something else">✕</button></div>
+      ${r.summary?`<p>${esc(r.summary)}</p>`:''}${(r.facts||[]).length?`<ul>${r.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>`:''}
+      ${p?`<div class="lz-pl"><b>${esc(p.name)}</b><small>${esc([p.kind,p.status,p.addr].filter(Boolean).join(' · '))}</small>
+        <div class="lz-acts">${FOODY.test(p.kind||'')?`<button class="pri" data-place="menu">🍽️ Menu & prices</button>`:''}
+          <button data-place="info">🕒 Hours, phone & photos</button>${p.phone?`<a href="tel:${esc(p.phone.replace(/[^\d+]/g,''))}">📞 Call</a>`:''}
+          ${p.web?`<a href="${esc(p.web)}" target="_blank" rel="noopener">🌐 Website</a>`:''}</div></div>`:''}
+      <div class="lz-acts">${r.sight&&opts.onSight?'<button class="pri" data-place="sight">📖 The story</button>':r.sight?.url?`<a class="pri" href="${esc(r.sight.url)}" target="_blank" rel="noopener">📖 Read more</a>`:''}
+        <a href="${esc(g(r.search||r.name))}" target="_blank" rel="noopener">🔎 Search the web</a><a href="${esc(maps)}" target="_blank" rel="noopener">🗺 Google Maps</a>
+        <button data-a="again">📷 Another</button></div></div>`;
+    let sh=root.querySelector('.lz-sheet'); if(!sh){ sh=document.createElement('div'); sh.className='lz-sheet'; root.appendChild(sh); }
+    sh.innerHTML=html;
+  }
   function close(){
     if(st.closed) return; st.closed=true;
+    if(st.onOri){ removeEventListener('deviceorientationabsolute',st.onOri); removeEventListener('deviceorientation',st.onOri); }
     st.stream?.getTracks().forEach(t=>t.stop()); retire(st.wp);
     try{ speechSynthesis.cancel(); }catch(e){}
     removeEventListener('resize',render); root.remove(); ui=null; opts.onClose?.();
@@ -631,7 +718,14 @@ function open(opts={}){
   root.addEventListener('click',e=>{
     const a=e.target.closest('[data-a]')?.dataset.a;
     if(a==='close') return close();
-    if(a==='freeze') return freeze(st.live);
+    if(a==='freeze') return st.mode==='look' ? identify() : freeze(st.live);
+    if(a==='again') return identify();
+    const md=e.target.closest('[data-mode]')?.dataset.mode; if(md) return setMode(md);
+    const pl=e.target.closest('[data-place]')?.dataset.place;
+    if(pl&&st.look){ const r=st.look;
+      if(pl==='sight'){ close(); return opts.onSight?.(r.sight); }
+      if(opts.onPlace){ close(); return opts.onPlace(r.place, pl); }
+      return window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${r.place.name} ${r.place.addr||''}`),'_blank','noopener'); }
     if(a==='list') return list();
     if(a==='swap') return setLang('swap');
     if(a==='orig'){ st.showOrig=!st.showOrig; const b=$('[data-a="orig"]'); b.classList.toggle('on',st.showOrig); b.setAttribute('aria-pressed',st.showOrig); return render(); }
@@ -644,7 +738,9 @@ function open(opts={}){
   });
   root.addEventListener('change',e=>{ const k=e.target.dataset.k; if(k) setLang(k, e.target.value); });
   addEventListener('resize',render);
-  (async()=>{ render(); if(!(await camera())) return; render(); reader(); next(); })();
+  root.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===st.mode));
+  if(st.mode==='look'){ root.classList.add('look'); compass(); $('[data-a="freeze"]').setAttribute('aria-label','Identify what is in the picture'); }
+  (async()=>{ render(); if(!(await camera())) return; render(); if(st.mode==='tr') reader(); next(); })();   // Identify needs no text reader
   ui.api = {close, freeze, root, _st:st};
   return ui.api;
 }

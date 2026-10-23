@@ -252,7 +252,27 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   text and its lines handed back one per line (`solo` fallback when the counts differ). Reads cycle `PLAN` (960 px,
   1440 px, and ±8° turned ones that only count for tilted text); tesseract must run PSM 3 (its default 6 reads walls
   as text). Overlay colours are the sign's own (Otsu split, medians). Moving-camera test kit (fake camera with frame
-  numbers + per-line ground truth, gen.py/track_live.py) lives in the session scratchpad, not the repo.
+  numbers + per-line ground truth, gen.py/track_live.py/flow.py) is in `mockup/lens_test/` (its out/ isn't committed).
+- **What is this?** (lens.js Identify mode + `identify.rb`): the camera's second mode (switch above the shutter; Scout's
+  orange "🔍 What is this?" button, or asking Scout "what is this building"). The shutter sends one ~1024 px JPEG
+  with GPS + compass heading to `/api/lens/identify`; sonnet (`SQ_LOOK_MODEL`, effort low, ~5-7 s) sees the photo
+  with our places within 300 m and sights within 1.2 km (distance + ahead/left/right/behind) and names a candidate
+  only when the photo shows it. The card links to the place (menu, hours/phone/photos popup) or the sight's story,
+  plus web search and Google Maps. Photo never stored. Images reach Claude via `run_claude(images:)` (CLI:
+  stream-json input; API: image blocks). 30/hour per person.
+- **Menus** (`menus.rb`, `/api/place/menu?id=`): 🍽️ Menu on every food & drink row, popup, Identify card and event
+  venue that is one of our places → a big readable sheet (sections as chips, dish search, prices, where it came from).
+  Lookup: the place's own pages first (OSM menu link, website, Google's websiteUri; follows menu links, JSON-LD,
+  PDFs when `pdftotext` exists) read by haiku; if that has under 5 items, haiku with WebSearch/WebFetch
+  (`run_claude(web: true)`) tries online ordering, menu sites and delivery apps and notes caveats. Signed-in only
+  (it's Claude); runs in a thread while the app polls; 2 at a time, 15/hour per person, 150/day; kept in
+  `data/menus/<id>.json` 14 days (misses 2 days). `menu_get` refuses private addresses. Image-only menus can't be read.
+- **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
+  charge), 4 photos; event sheets have "🏢 Venue phone & hours" (Google by venue name, on tap). OSM `phone` is
+  fetched by fetch_places.rb from the next refresh.
+- **Meet search** (`#meetQ`, `meetQ`, `qHit`): one box under Meet's tabs that narrows the open tab: Swipe cards,
+  Friends (your friends + "People": everyone matching name, hometown, interests, goals, with + Add), Chats, Groups.
+  Cleared on tab switch.
 - **Group chat** for members of real groups (`/api/group/chat`, stored as `ev_chat["g:<id>"]`).
 - **Growth**: share pages with Open Graph previews `/e/<uid>`, `/s/<sight id>`, `/i/<handle>` (invite; sign-up offers
   "be friends with @them", `users[h].ref`, Bring a friend quest); Home "Tonight near you" strip + "Up next" countdown;

@@ -47,6 +47,8 @@ Keep this file up to date when features change. Only describe things that exist 
 - ⚙️ Sort & filter: activity, when, distance, goals, interests, new to Austin, from my groups,
   online now.
 - Tabs: 👋 Swipe · 👥 Friends · 💬 Chats · 🏘️ Groups.
+- 🔎 Search box under the tabs narrows whatever tab is open. On Friends it finds anyone on Side Quest by name,
+  hometown or interest (e.g. "hockey"), with + Add. On Swipe it searches the cards, on Chats the chats, on Groups the groups.
   - Friends: friend requests (Accept / Decline), your friends with a 💬 Message button, and "People
     you'd probably click with" (match %, reasons, + Add; signed-in people can tap 🧠 Ask Claude).
   - Chats: messages, friends only.
@@ -131,7 +133,11 @@ Keep this file up to date when features change. Only describe things that exist 
   Lean toward local spots, and if someone asks for a missing chain, say it's left out to favor local places.
 - Map: open spots are green glowing dots (amber = opening within the hour, grey = closed or hours
   unknown), toggled with the "🍔 Food & drink" chip; zoom in to see them. Tap a dot for hours,
-  distance, and menu/website links when there are any.
+  distance, 📞 Call, website, Google rating, photos and 🍽️ Menu.
+- 🍽️ Menu (on every food & drink place in lists, map popups, the camera's What is this? card and event venues that
+  are restaurants or bars): the full menu with prices in a big readable sheet, with a dish search. It comes from the
+  place's own website, or from the web (online ordering, menu sites, delivery apps) with a note saying where; the
+  first look at a place can take up to a minute. Needs a free account. Prices can change, so check with the place.
 - Eat after: tap a bar or club on the map (or an event pin) and press "🌙 Eat after" for food within
   a 10-minute walk that's still open when it closes or the show ends. Bars with no listed hours are
   assumed to let out at 2 AM (Texas last call). Food trucks get a small nudge up the list.
@@ -203,7 +209,7 @@ Keep this file up to date when features change. Only describe things that exist 
   down closes it. Tapping the Side Quest logo goes straight Home.
 
 ## Not in the app yet (say so honestly if asked)
-- Full menus and prices (OpenStreetMap doesn't have them; a paid places service might later).
+- Some menus can't be read (image-only menus); the menu sheet then links the website and Google Maps.
 - No password reset by email yet, no app-store app (it installs from the browser: Share → Add to
   Home Screen), no ticket buying, no rides, no payments (live-stream tips are play money).
 
@@ -211,4 +217,7 @@ Keep this file up to date when features change. Only describe things that exist 
 - People tap your button (or your bubble) and you start listening right away; "⌨️ Type instead" lets them type.
   Answers are read out loud; they can pick your voice (Puck, Aoede, Kore, Charon) in 🎨.
 - Español: name menu (top right) → 🌐 Español switches the app to Spanish. Then you listen and answer in Spanish.
+- 🔍 What is this? (orange button under the 🎤, or "what is this building?"): the camera's Identify mode. Point at a
+  building, landmark, storefront, mural or dish and tap the shutter: it says what it is and a few facts, and for a
+  business or sight opens its menu, hours, phone, photos or story. The camera's switch flips between Translate and Identify.
 - Place and event popups on the map show photos: Side Quest stories posted there first, then Google photos.

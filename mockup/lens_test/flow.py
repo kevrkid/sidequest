@@ -23,7 +23,7 @@ with sync_playwright() as p:
     pg.evaluate("fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({h:'lensflow1',pw:'password123',adult:true,terms:true})})")
     pg.reload(wait_until="load"); pg.wait_for_timeout(1200)
     pg.evaluate("document.querySelectorAll('#welcomeBg,#onbBg').forEach(x=>x.hidden=true); openScoutVoice(true)"); pg.wait_for_timeout(400)
-    pg.click(".sc-lens"); pg.wait_for_timeout(700)
+    pg.click("[data-sc=lens]"); pg.wait_for_timeout(700)
     pg.screenshot(path=O+"/1-start.png")
     ok("opens with a status line", pg.inner_text(".lz-stat")!="", pg.inner_text(".lz-stat"))
     v,s=wait(pg, lambda v: sum(x.startswith("ES:") for x in v)>=5, 90)

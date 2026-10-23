@@ -108,7 +108,7 @@ def place_of(e, brands)
     'hours' => t['opening_hours'], 'addr' => addr.empty? ? nil : addr,
     'lat' => lat.round(5), 'lng' => lng.round(5),
     'web' => t['website'] || t['contact:website'], 'menu' => t['website:menu'] || t['menu:url'] || t['menu'] =~ %r{\Ahttps?://} && t['menu'],
-    'chain' => chain
+    'phone' => t['phone'] || t['contact:phone'], 'chain' => chain
   }.reject { |_, v| v.nil? || v == [] }
 end
 

@@ -209,7 +209,7 @@ with sync_playwright() as pw:
     p1.click("[data-pcat='tacos']"); p1.wait_for_selector("#placesSheet .prow", timeout=10000)
     pl = p1.locator("#placesSheet").inner_text()
     check("tacos open now: the 24/7 taco truck, with hours and distance", "Taco Test Trailer" in pl and "Open 24 hours" in pl and " mi" in pl, pl[:120].replace("\n", " | "))
-    check("menu link and the OpenStreetMap hours note", p1.locator("#placesSheet a", has_text="Menu").count() == 1 and "may be out of date" in pl)
+    check("a Menu button on every place and the OpenStreetMap hours note", p1.locator("#placesSheet .prow").count() == p1.locator("#placesSheet [data-pmenu]").count() > 0 and "may be out of date" in pl)
     p1.click("#placesSheet [data-pclose]"); p1.click("[data-pcat='bbq']"); p1.wait_for_timeout(800)
     open_bbq = p1.locator("#placesSheet").inner_text()
     p1.click("#placesSheet [data-popen]"); p1.wait_for_selector("#placesSheet .prow", timeout=10000)
@@ -566,7 +566,7 @@ with sync_playwright() as pw:
     g.click("#scoutBtn"); g.wait_for_selector("#scoutBg", state="visible")
     check("Scout opens for guests", "Guest mode" in g.locator("#scoutLeft").inner_text())
     check("Scout panel: customize beside Scout, big translate button, no chip row",
-          g.locator(".sc-top [data-sc='look']").is_visible() and g.locator(".scvoice .sc-lens").is_visible() and g.locator("#scoutChips").count() == 0)
+          g.locator(".sc-top [data-sc='look']").is_visible() and g.locator(".scvoice [data-sc=lens]").is_visible() and g.locator(".scvoice [data-sc=identify]").is_visible() and g.locator("#scoutChips").count() == 0)
     g.evaluate("$('#scoutForm').hidden=false"); g.fill("#scoutIn", "How do I send a flare?"); g.press("#scoutIn", "Enter")
     g.wait_for_selector("#scoutRing", state="visible", timeout=5000)
     check("guest Scout answers from the FAQ and points at where flares are",
