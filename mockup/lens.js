@@ -461,6 +461,10 @@ function open(opts={}){
         const d=Math.hypot(it.x-f.x,it.y-f.y), t=sim(it.n,f.n);
         const ok = it.stale ? t>=.6 : d<Math.max(it.h,f.h)*.8+Math.min(it.w,f.w)*.15 && (t>=.5||overlap(it,f)>.6);
         if(ok&&d<bd){ bd=d; best=it; } }
+      // a piece of a line already up (the reader caught only its end, say) is that line, not a second box on top;
+      // a fuller reading of it takes over
+      const part=!best&&st.items.find(x=>!used.has(x)&&!x.stale&&overlap(x,f)>.5);
+      if(part){ if(f.w>part.w*1.15){ part.stale=true; update(part,f,now); } else { part.miss=0; part.seen=now; } used.add(part); continue; }
       let it=best;
       if(it) update(it,f,now);
       else { it={id:++st.id, ...f, hits:1, miss:0, seen:now, tr:null, src:null, want:false, solo:false, group:null, stale:false, el:null, dirty:true, look:paint(f.col)};
