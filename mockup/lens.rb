@@ -29,7 +29,9 @@ def lens_translate(lines, from, to)
     src = from == 'auto' ? 'whatever language it is in' : LENS_LANGS[from][0]
     out, ms, usd = run_claude(<<~P, LENS_SCHEMA, system: LENS_SYSTEM, model: LENS_MODEL, timeout: 40)
       Translate each line from #{src} into #{LENS_LANGS[to][0]}. Lines already in #{LENS_LANGS[to][0]} stay as they are.
-      Keep each line's line breaks (\\n) where they are. Return exactly #{todo.size} translations, in the same order.
+      An item can hold several lines (split by \\n) that were printed as one block: translate it as one passage, but give
+      back exactly as many lines as it has, line for line, split by \\n the same way (each line's translation goes over
+      that line on screen). Return exactly #{todo.size} translations, in the same order.
       Lines: #{JSON.generate(todo)}
     P
     got = Array(out['translations'])

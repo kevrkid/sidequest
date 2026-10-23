@@ -244,7 +244,15 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Live Translate** (`lens.js` + `lens.rb` + `lens.html` at `/lens`): self-contained camera translator, also usable
   by other apps (`Lens.open({to, from, translate})`). tesseract.js 6.0.1 (vendor/tesseract) reads text on the phone,
   language data from jsDelivr; `/api/translate` translates paragraphs with haiku, cached per line. Opened from the
-  Scout chip 📷 Translate or by asking Scout to "translate this menu/sign". 13 languages (`LENS_LANGS`).
+  big Live Translate button under Scout's mic or by asking Scout to "translate this menu/sign". 13 languages.
+  Translations are pinned to the words AR-style: every camera frame (WebCodecs `VideoFrame` luma, canvas fallback)
+  goes through a small tracker in lens.js (Shi-Tomasi corners, pyramidal Lucas-Kanade, coarse whole-frame shift,
+  RANSAC similarity → `st.pose`, world → frame), and each read is placed through the pose of the frame it read.
+  Items are LINES (tesseract groups lines into paragraphs differently each read); a paragraph is translated as one
+  text and its lines handed back one per line (`solo` fallback when the counts differ). Reads cycle `PLAN` (960 px,
+  1440 px, and ±8° turned ones that only count for tilted text); tesseract must run PSM 3 (its default 6 reads walls
+  as text). Overlay colours are the sign's own (Otsu split, medians). Moving-camera test kit (fake camera with frame
+  numbers + per-line ground truth, gen.py/track_live.py) lives in the session scratchpad, not the repo.
 - **Group chat** for members of real groups (`/api/group/chat`, stored as `ev_chat["g:<id>"]`).
 - **Growth**: share pages with Open Graph previews `/e/<uid>`, `/s/<sight id>`, `/i/<handle>` (invite; sign-up offers
   "be friends with @them", `users[h].ref`, Bring a friend quest); Home "Tonight near you" strip + "Up next" countdown;
