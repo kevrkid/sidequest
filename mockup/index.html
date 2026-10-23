@@ -591,6 +591,9 @@
   /* design your assistant */
   #lookPrev{width:120px;height:120px;margin:4px auto 6px}
   .lk-sw{display:flex;flex-wrap:wrap;gap:7px}
+  .lk-voice{margin:12px 0 4px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+  .lk-voice .row{align-items:center;gap:8px} .lk-voice .chips{margin-bottom:4px}
+  .lk-sub{font-size:12px;font-weight:700;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.04em}
   .lk-sw button{width:30px;height:30px;border-radius:50%;border:2px solid #0006;box-shadow:inset 0 -3px 0 #0003}
   .lk-sw button.on{outline:3px solid #fff;outline-offset:1px}
 </style>
@@ -1023,7 +1026,7 @@ const ES = {
   'Plan dinner and drinks':'Planea cena y tragos', '💾 Save to my plans':'💾 Guardar en mis planes', '🗺 Map':'🗺 Mapa', '📅 Calendar':'📅 Calendario',
   '↗ Share':'↗ Compartir', 'Close':'Cerrar', 'None yet. Ask Scout to plan something, then tap Save.':'Todavía nada. Pídele a Scout que planee algo y toca Guardar.',
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
-  'Tap to talk':'Toca para hablar', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
+  'Tap to talk':'Toca para hablar', "This is how fast I'll talk.":'Así de rápido voy a hablar.', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
   '🎤 Talk instead':'🎤 Hablar', 'Ask about the app, or what\'s the move…':'Pregunta sobre la app o qué hay que hacer…', 'Ask':'Preguntar',
   'Your guide to Side Quest':'Tu guía de Side Quest', 'Need help? Talk to me! 🎤':'¿Necesitas ayuda? ¡Háblame! 🎤',
   'Ask me what\'s the move tonight 🌙':'Pregúntame qué hacer esta noche 🌙', 'Want me to plan your night? Just say it ✨':'¿Planeo tu noche? Solo dímelo ✨',
@@ -4505,6 +4508,9 @@ function scoutTalking(on){
 /* voice: Google's natural voices through the server when it has them (/api/scout/voice), else the browser's own speech */
 const SCOUT_VOICE_L={puck:'Puck · upbeat', fenrir:'Fenrir · excitable', achird:'Achird · friendly', charon:'Charon · informative', orus:'Orus · firm',
   zephyr:'Zephyr · bright', aoede:'Aoede · breezy', leda:'Leda · youthful', kore:'Kore · firm', sulafat:'Sulafat · warm'};
+const SCOUT_VOICE_M=new Set(['puck','fenrir','achird','charon','orus']);   // the rest are female voices
+const SCOUT_RATES=[[0.85,'🐢 Slower'],[1,'Normal'],[1.2,'🐇 Faster']];
+const scoutRate = () => +scS().rate||1;
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 SCT.audio=new Audio(); SCT.audio.setAttribute('playsinline','');
 function scoutHush(){ try{ speechSynthesis?.cancel(); }catch(e){} try{ SCT.audio.pause(); }catch(e){} SCT.say=(SCT.say||0)+1; }
@@ -4524,7 +4530,7 @@ async function scoutSpeak(text, force){
     let audio; try{ audio=await next; }catch(e){ break; }   // Google's voice didn't answer: stop talking (the words are on screen)
     if(n!==SCT.say) return;   // a newer answer or a hush
     if(k+1<parts.length) next=get(parts[k+1]);
-    const a=SCT.audio; a.src='data:audio/mpeg;base64,'+audio; a.onplaying=()=>scoutTalking(true); a.onpause=a.onerror=null;
+    const a=SCT.audio; a.src='data:audio/mpeg;base64,'+audio; a.playbackRate=a.defaultPlaybackRate=scoutRate(); a.onplaying=()=>scoutTalking(true); a.onpause=a.onerror=null;
     try{ await a.play(); await new Promise(ok=>{ a.onended=ok; a.onerror=ok; a.onpause=ok; }); }catch(e){ break; }
     if(n!==SCT.say) return;
   }
@@ -4536,7 +4542,7 @@ function browserSpeak(plain, loud){
   const u=new SpeechSynthesisUtterance(plain), vs=speechSynthesis.getVoices();
   u.voice = S.lang==='es' ? (vs.find(v=>/^es.(US|MX)/i.test(v.lang))||vs.find(v=>/^es/i.test(v.lang))||null)
     : vs.find(v=>/en.US/i.test(v.lang)&&/Samantha|Aria|Jenny|Google US English|Natural/i.test(v.name)) || vs.find(v=>/^en/i.test(v.lang)) || null;
-  u.lang=S.lang==='es'?'es-US':'en-US'; u.rate=SCT.driving?1:1.05; u.pitch=SCT.driving?1.05:1.2;
+  u.lang=S.lang==='es'?'es-US':'en-US'; u.rate=(SCT.driving?1:1.05)*scoutRate(); u.pitch=SCT.driving?1.05:1.2;
   u.onstart=()=>scoutTalking(true);
   u.onend=u.onerror=()=>{ clearTimeout(SCT.stopT); scoutTalking(false); };
   scoutTalking(true); SCT.stopT=setTimeout(()=>scoutTalking(false), 4000+plain.length*90);   // in case onend never fires
@@ -4920,12 +4926,20 @@ function renderLook(){
     <div id="lookPrev" class="scwrap" data-sc="lookface" title="Tap to see expressions"></div>
     <p class="meta" style="text-align:center;margin:0 0 6px">Tap the face to try expressions. Only you see this look; it's saved on this device.</p>
     <label>Name</label><input id="lookName" maxlength="16" value="${esc(s.name)}" placeholder="Scout">
+    <div class="lk-voice">
+      <div class="row"><b class="grow">🔊 Voice</b><span class="meta">${s.voice?'Reads every answer':'Muted'}</span>
+        <button class="toggle ${s.voice?'on':''}" data-sc="voice" role="switch" aria-checked="${s.voice?'true':'false'}" aria-label="Read every answer aloud"></button></div>
+      ${CFG.voice?`<p class="meta" style="margin:4px 0 6px">Tap one to hear it. Plays at your phone's volume.</p>
+      <div class="lk-sub">Male</div><div class="chips">${Object.entries(SCOUT_VOICE_L).filter(([k])=>SCOUT_VOICE_M.has(k)).map(([k,l])=>`<button class="ichip ${(s.voiceName||'puck')===k?'on':''}" data-scv="${k}">${l}</button>`).join('')}</div>
+      <div class="lk-sub">Female</div><div class="chips">${Object.entries(SCOUT_VOICE_L).filter(([k])=>!SCOUT_VOICE_M.has(k)).map(([k,l])=>`<button class="ichip ${(s.voiceName||'puck')===k?'on':''}" data-scv="${k}">${l}</button>`).join('')}</div>`
+      :`<p class="meta" style="margin:4px 0 6px">Using your phone's built-in voice.</p>`}
+      <div class="lk-sub">Speed</div><div class="chips">${SCOUT_RATES.map(([r,l])=>`<button class="ichip ${scoutRate()===r?'on':''}" data-scrate="${r}">${l}</button>`).join('')}</div>
+    </div>
     <label>Describe it</label>
     <div class="row" style="gap:6px"><input id="lookDesc" maxlength="200" placeholder="e.g. a cowboy armadillo in sunglasses called Tex" autocomplete="off"><button class="btn sm primary" data-sc="lookdesc">✨ Make it</button></div>
     <label>Or use your photo</label>
     <div class="btns"><button class="btn sm" data-sc="lookphoto">📷 ${L.photo?'Change photo':'Use my photo'}</button>${L.photo?'<button class="btn sm" data-sc="lookphotox">Remove photo</button>':''}</div>
     <p class="meta" style="margin:6px 0 0">Your photo stays on this phone. It's never uploaded.</p>
-    ${CFG.voice?`<label>Voice</label><div class="chips">${Object.entries(SCOUT_VOICE_L).map(([k,l])=>`<button class="ichip ${(s.voiceName||'puck')===k?'on':''}" data-scv="${k}">🔊 ${l}</button>`).join('')}</div>`:''}
     <label>Color</label>${sw('body')}<label>Accent</label>${sw('accent')}
     ${Object.keys(SC_PART_L).map(k=>`<label>${SC_PART_L[k]}</label>${chips(k)}`).join('')}
     <label>Cheeks</label><div class="chips"><button class="ichip ${L.cheeks?'on':''}" data-lk="cheeks|1">rosy</button><button class="ichip ${L.cheeks?'':'on'}" data-lk="cheeks|0">none</button></div>
@@ -4957,13 +4971,14 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-scnudgex]')){ scoutNudgeDismiss(); return; }
   if(e.target.closest('#scoutBubble')){ $('#scoutBubble').hidden=true; return; }
   const q=e.target.closest('[data-scq]'); if(q) return scoutAsk(q.dataset.scq);
+  const sr=e.target.closest('[data-scrate]'); if(sr){ scS().rate=+sr.dataset.scrate; save(); renderLook(); scoutSpeak(T("This is how fast I'll talk."),true); return; }
   const sv=e.target.closest('[data-scv]'); if(sv){ scS().voiceName=sv.dataset.scv; save(); renderLook(); scoutSpeak(`Hi, I'm ${scS().name||'Scout'}. Let's go explore!`,true); return; }
   const lk=e.target.closest('[data-lk]'); if(lk){ const [k,v]=lk.dataset.lk.split('|'), L=scS().look;
     if(k==='cheeks') L.cheeks=v==='1'; else { L[k]=v; if(k==='eyes'||k==='glasses') delete L.photo; }   // a photo face has no drawn eyes
     save(); renderLook(); return; }
   const b=e.target.closest('[data-sc]'); if(!b) return; const a=b.dataset.sc, s=scS();
   if(a==='close') $('#scoutBg').hidden=true;
-  if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
+  if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(!$('#lookBg').hidden) renderLook(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
   if(a==='mic') scoutListen();
   if(a==='type'){ const f=$('#scoutForm'); f.hidden=!f.hidden; if(SCT.listening) scoutMicOff(false); scoutMicUi(); if(!f.hidden) $('#scoutIn').focus(); }
   if(a==='drive') scoutDrive(true,false);
