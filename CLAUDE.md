@@ -236,6 +236,15 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Scout settings** (🎨 Design your assistant): a Voice box with read-every-answer on/off (`S.scout.voice`, on by
   default since `voiceV4`), male / female Chirp voices with a spoken sample, speed (`S.scout.rate`: audio playbackRate).
   The mic is a toggle (tap on, talk through pauses, tap off to send; `scoutMicOff`); any way of closing Scout cancels it.
+- **Scout's ears**: browser SpeechRecognition (one phrase per session, chained) where it works; on iPhones, or when it
+  shows no life in 4 s (`S.micRec`), `listenRec` records (MediaRecorder) and `/api/scout/hear` transcribes with
+  whisper.cpp + ffmpeg on the server (`hear`, model `/opt/sidequest/whisper/ggml-base-q5_1.bin`, `-ac` sized to the
+  clip, one at a time, partials every 2.5 s). On/off tones (`micBeep`); stats `mic_*` show outcomes per day. The mic
+  must start inside the tap (iOS); a mic "denied" with no prompt is the phone's per-app or per-site setting.
+- **Live Translate** (`lens.js` + `lens.rb` + `lens.html` at `/lens`): self-contained camera translator, also usable
+  by other apps (`Lens.open({to, from, translate})`). tesseract.js 6.0.1 (vendor/tesseract) reads text on the phone,
+  language data from jsDelivr; `/api/translate` translates paragraphs with haiku, cached per line. Opened from the
+  Scout chip 📷 Translate or by asking Scout to "translate this menu/sign". 13 languages (`LENS_LANGS`).
 - **Group chat** for members of real groups (`/api/group/chat`, stored as `ev_chat["g:<id>"]`).
 - **Growth**: share pages with Open Graph previews `/e/<uid>`, `/s/<sight id>`, `/i/<handle>` (invite; sign-up offers
   "be friends with @them", `users[h].ref`, Bring a friend quest); Home "Tonight near you" strip + "Up next" countdown;
