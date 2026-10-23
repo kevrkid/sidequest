@@ -27,7 +27,8 @@ FileUtils.cp(Dir[File.join(__dir__, '*.{rb,md,json,html}')], dir)
 log = File.join(dir, 'server.log')
 # a stand-in for Claude Code: keeps the prompt it was given and answers with an empty reply
 FAKE_CLAUDE = File.join(dir, 'fake_claude')
-File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nFile.write(File.join(#{dir.inspect}, 'last_prompt.txt'), $stdin.read)\n" \
+File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nrequire 'json'\npr = $stdin.read\nFile.write(File.join(#{dir.inspect}, 'last_prompt.txt'), pr)\n" \
+  "if (l = pr[/^Lines: (\\[.*\\])$/, 1]) then puts JSON.generate(structured_output: { translations: JSON.parse(l).map { |x| 'ES ' + x } }, duration_ms: 1, total_cost_usd: 0); exit end\n" \
   "puts '{\"structured_output\":{\"say\":\"ok\",\"expression\":\"happy\",\"actions\":[]},\"duration_ms\":1,\"total_cost_usd\":0}'\n")
 File.chmod(0o755, FAKE_CLAUDE)
 # stand-ins for ffmpeg and whisper.cpp: the "conversion" keeps the bytes, the "transcription" says what it was asked
@@ -300,6 +301,19 @@ t('Scout\'s ears: a recording becomes text on the server (signed in only), clean
   cfg = Net::HTTP.get(URI("#{BASE}/config.js"))
   check(cg == 401 && c1 == 200 && j1['text'] == 'find tacos lang=es ctx=256' && c2 == 200 && j2['text'] == 'find tacos lang=en ctx=256' &&
         c3 == 400 && c4 == 400 && j4['error'] =~ /couldn't read/ && cfg.include?('"hear":true'), [cg, c1, j1, c2, j2, c3, c4, j4, cfg[0, 80]])
+}
+
+t('Live Translate: camera text is translated (signed in only), line breaks kept, repeats come from the cache') {
+  tr = Who.new('lens_v2'); tr.signup
+  cg, = Who.new('nobody2').post('/api/translate', lines: ['Hello'], to: 'es')
+  c1, j1 = tr.post('/api/translate', lines: ["TACOS  AL PASTOR\n  $3.50", '', 'Open late'], from: 'en', to: 'es')
+  File.delete(File.join($dir, 'last_prompt.txt'))
+  c2, j2 = tr.post('/api/translate', lines: ['Open late'], from: 'en', to: 'es')
+  cached = !File.exist?(File.join($dir, 'last_prompt.txt'))
+  c3, = tr.post('/api/translate', lines: ['x'], to: 'klingon')
+  c4, = tr.post('/api/translate', lines: ['  '], to: 'fr')
+  check(cg == 401 && c1 == 200 && j1['translations'] == ["ES TACOS AL PASTOR\n$3.50", '', 'ES Open late'] && c2 == 200 &&
+        j2['translations'] == ['ES Open late'] && cached && c3 == 400 && c4 == 400, [cg, c1, j1, c2, j2, cached, c3, c4])
 }
 
 # ---- live safety on the server: a second copy with screening ON and Claude unreachable (hard rules decide)

@@ -1,0 +1,2 @@
+tesseract.js 6.0.1 (dist) + tesseract.js-core 6.0.0 (LSTM builds), Apache-2.0, from cdn.jsdelivr.net/npm.
+Language data loads on demand from cdn.jsdelivr.net/npm/@tesseract.js-data/<lang>/4.0.0_best_int and is cached in the browser.

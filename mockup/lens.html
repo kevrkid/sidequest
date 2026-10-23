@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Live Translate</title>
+<link rel="apple-touch-icon" href="/icon-180.png">
+<style>
+  :root{--bg:#000;--fg:#fff;--muted:#9aa0aa;--accent:#2ec5ff}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,sans-serif}
+  .start{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px 16px;text-align:center;box-sizing:border-box}
+  .start h1{margin:0;font-size:26px} .start p{margin:0;color:var(--muted);max-width:340px}
+  .start button{font:inherit;font-weight:700;color:#04121c;background:var(--accent);border:0;border-radius:999px;padding:14px 28px;min-height:48px}
+  .start a{color:var(--accent)}
+</style>
+</head>
+<body>
+<!-- Live Translate on its own: the same module Side Quest uses (lens.js). The camera starts from a tap, as phones require. -->
+<div class="start" id="start">
+  <div style="font-size:52px" aria-hidden="true">📷🌐</div>
+  <h1>Live Translate</h1>
+  <p>Point your camera at a sign, menu or label and read it in your language, right on the picture. 13 languages.</p>
+  <button id="go">Start the camera</button>
+  <p id="note"></p>
+</div>
+<script src="/lens.js"></script>
+<script>
+  const go = document.getElementById('go'), note = document.getElementById('note');
+  // Translating runs on a Side Quest account: check for one before opening the camera
+  fetch('/api/state', {credentials: 'same-origin'}).then(r => r.ok ? r.json() : {}).then(j => {
+    if (!j.me) note.innerHTML = 'You need to be signed in to Side Quest to translate. <a href="/">Sign in</a>, then come back here.';
+  }).catch(() => {});
+  go.onclick = () => Lens.open();   // ✕ comes back to this screen
+</script>
+</body>
+</html>

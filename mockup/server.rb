@@ -26,6 +26,7 @@ require_relative 'places'
 require_relative 'areas'
 require_relative 'sights'
 require 'date'
+require_relative 'lens' # Live Translate: camera text → any of 13 languages (lens.js + /api/translate)
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
 PORT    = (ENV['PORT'] || 8787).to_i
@@ -82,7 +83,12 @@ PUBLIC_FILES = { 'index.html' => 'text/html; charset=utf-8', 'terms.html' => 'te
                  # Leaflet 1.9.4 served from here: faster than a CDN on slow or mobile connections
                  'vendor/leaflet.js' => 'application/javascript', 'vendor/leaflet.css' => 'text/css',
                  # livekit-client 2.22.0 (UMD), loaded only when someone streams or watches
-                 'vendor/livekit-client.js' => 'application/javascript' }
+                 'vendor/livekit-client.js' => 'application/javascript',
+                 # Live Translate (also works on its own at /lens): tesseract.js 6.0.1 reads text on the phone
+                 'lens.html' => 'text/html; charset=utf-8', 'lens.js' => 'application/javascript',
+                 'vendor/tesseract/tesseract.min.js' => 'application/javascript', 'vendor/tesseract/worker.min.js' => 'application/javascript',
+                 'vendor/tesseract/tesseract-core-lstm.wasm.js' => 'application/javascript',
+                 'vendor/tesseract/tesseract-core-simd-lstm.wasm.js' => 'application/javascript' }
 
 SYSTEM = <<~TXT
   You are the engine behind Side Quest, a social app that helps people decide what to do
@@ -1127,6 +1133,7 @@ def mount_app(server)
   server.mount_proc('/') do |req, res|
     name = req.path == '/' ? 'index.html' : req.path.sub(%r{\A/}, '')
     name = 'admin.html' if name == 'admin'
+    name = 'lens.html' if name == 'lens'
     if PUBLIC_FILES.key?(name) && File.file?(File.join(ROOT, name))
       res['Content-Type'] = PUBLIC_FILES[name]
       res['Cache-Control'] = name.end_with?('.png') || name.start_with?('vendor/') ? 'public, max-age=604800' : 'no-cache'
@@ -2247,7 +2254,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

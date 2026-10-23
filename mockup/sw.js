@@ -1,6 +1,6 @@
 // Side Quest service worker (V2): the app shell opens instantly and still loads with no signal; everything live
 // (events, people, chats) always comes from the network. Only same-origin static files are ever cached.
-const CACHE = 'sq-shell-v2-2';
+const CACHE = 'sq-shell-v2-3';
 const SHELL = ['/', '/logo.png', '/icon-192.png', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
 
 self.addEventListener('install', e => {
@@ -14,8 +14,10 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;           // other sites (map tiles, photos): untouched
   if (u.pathname.startsWith('/api/') || u.pathname === '/config.js' || u.pathname.startsWith('/story-') || u.pathname.startsWith('/avatar/')) return;
   if (e.request.mode === 'navigate') {   // the page: always fresh when online, the saved copy when not
-    e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(x => x.put('/', c)); return r; })
-      .catch(() => caches.match('/')));
+    e.respondWith(fetch(e.request).then(r => {   // only the app itself is saved (not /lens, /privacy.html...)
+      if (u.pathname === '/' && r.ok) { const c = r.clone(); caches.open(CACHE).then(x => x.put('/', c)); }
+      return r;
+    }).catch(() => caches.match('/')));
     return;
   }
   if (u.pathname.startsWith('/vendor/') || /\.(png|webmanifest)$/.test(u.pathname)) {   // static files: saved copy first

@@ -1027,7 +1027,7 @@ const ES = {
   'Plan dinner and drinks':'Planea cena y tragos', '💾 Save to my plans':'💾 Guardar en mis planes', '🗺 Map':'🗺 Mapa', '📅 Calendar':'📅 Calendario',
   '↗ Share':'↗ Compartir', 'Close':'Cerrar', 'None yet. Ask Scout to plan something, then tap Save.':'Todavía nada. Pídele a Scout que planee algo y toca Guardar.',
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
-  'Tap to talk':'Toca para hablar', "This is how fast I'll talk.":'Así de rápido voy a hablar.', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
+  'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Opening the camera translator. Point it at the text.':'Abriendo el traductor con la cámara. Apúntala al texto.', 'Got it, one sec…':'Listo, un segundo…', "This is how fast I'll talk.":'Así de rápido voy a hablar.', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
   '🎤 Talk instead':'🎤 Hablar', 'Ask about the app, or what\'s the move…':'Pregunta sobre la app o qué hay que hacer…', 'Ask':'Preguntar',
   'Your guide to Side Quest':'Tu guía de Side Quest', 'Need help? Talk to me! 🎤':'¿Necesitas ayuda? ¡Háblame! 🎤',
   'Ask me what\'s the move tonight 🌙':'Pregúntame qué hacer esta noche 🌙', 'Want me to plan your night? Just say it ✨':'¿Planeo tu noche? Solo dímelo ✨',
@@ -4771,13 +4771,15 @@ function renderScoutLog(){
   const def=JSON.stringify(scS().look)===JSON.stringify(SC_DEFAULT);
   const chips = (AUTHED ? ["Plan my night ✨","What's the move tonight? 🌙","How do I send a flare?","Find me something to do near me","Tell me a joke"]
     : ["How do I send a flare?","What's on the map?","How does Meet work?","Who can see my answers?"]).map(c=>T(c));
-  $('#scoutChips').innerHTML = `<button class="ichip" data-sc="tourgo">🧭 Take the tour</button>` + (def?`<button class="ichip" data-sc="look">🎨 Make me yours</button>`:'') + chips.map(c=>`<button class="ichip" data-scq="${esc(c)}">${esc(c)}</button>`).join('');
+  $('#scoutChips').innerHTML = `<button class="ichip" data-sc="tourgo">🧭 Take the tour</button><button class="ichip" data-sc="lens">📷 ${T('Translate')}</button>` + (def?`<button class="ichip" data-sc="look">🎨 Make me yours</button>`:'') + chips.map(c=>`<button class="ichip" data-scq="${esc(c)}">${esc(c)}</button>`).join('');
   $('#scoutName').textContent=s.name;
   $('#scoutLeft').textContent = SCT.left!=null&&AUTHED ? `${SCT.left} question${SCT.left===1?'':'s'} left today` : AUTHED ? 'Your guide to Side Quest' : 'Guest mode: the basics';
   $('#scVoice').textContent = s.voice?'🔊':'🔇';
 }
 async function scoutAsk(q, byVoice){
   q=String(q).trim().slice(0,300); if(!q||SCT.busy) return; track('scout_ask');
+  if(/\b(translat\w*|traduc\w*)\b/i.test(q)&&/\b(sign|menu|label|text|camera|this|that|letrero|men[uú]|c[aá]mara|esto|eso)\b/i.test(q)){   // a sign or a menu: that's the camera's job
+    scoutLog('me',q); scoutLog('scout',T('Opening the camera translator. Point it at the text.')); renderScoutLog(); return openLens(); }
   scoutLog('me',q); SCT.busy=true; scoutEx('thinking'); renderScoutLog(); scoutMicUi(); $('#dvGo').hidden=true; scoutCardClose();
   if(SCT.driving) $('#dvSay').textContent='🧭 Thinking…';
   let r;
@@ -4907,6 +4909,16 @@ function scoutTourEnd(){
   const was=SCT.tour; SCT.tour=null; $('#scoutTour').hidden=true; scoutUnpoint();
   scoutHush(); scoutTalking(false); S.toured=true; save();
   if(was!=null&&AUTHED&&!S.lookOffered&&JSON.stringify(scS().look)===JSON.stringify(SC_DEFAULT)){ S.lookOffered=true; save(); setTimeout(scoutOfferLook,800); }
+}
+// Live Translate (lens.js, loaded the first time): the camera reads text on the phone, Claude translates it
+function openLens(){
+  if(!AUTHED) return needAccount('translate with your camera');
+  if(SCT.listening) scoutMicOff(false);
+  scoutHush(); track('lens_open');
+  const go=()=>Lens.open({to:S.lang==='es'?'en':undefined});
+  if(window.Lens) return go();
+  const s=document.createElement('script'); s.src='/lens.js'; s.onload=go;
+  s.onerror=()=>toast("Couldn't load the translator. Check your connection.",'orange'); document.head.appendChild(s);
 }
 function openScoutVoice(quiet){
   scoutNudgeHide(); $('#scoutBg').hidden=false; renderScoutLog(); scoutFaces(); scoutMicUi();
@@ -5075,6 +5087,7 @@ document.addEventListener('click',e=>{
   if(a==='close') $('#scoutBg').hidden=true;
   if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(!$('#lookBg').hidden) renderLook(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
   if(a==='mic') scoutListen();
+  if(a==='lens') openLens();
   if(a==='type'){ const f=$('#scoutForm'); f.hidden=!f.hidden; if(SCT.listening) scoutMicOff(false); scoutMicUi(); if(!f.hidden) $('#scoutIn').focus(); }
   if(a==='drive') scoutDrive(true,false);
   if(a==='driveoff') scoutDrive(false);
