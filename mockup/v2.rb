@@ -222,6 +222,92 @@ end
 # The event's real title (never the one a browser sent), for anything other people will read.
 def event_title(id) (event_by_uid(id.to_s.sub(/\Ae:/, '')) || {})['title'].to_s[0, 70] end
 
+# ---------- Taste: what someone has enjoyed, so Scout recommends more of it ----------
+# Remembered from their own taps (going / interested, saves, check-ins) in d['taste'][h], newest last, because events
+# vanish from the events service once they're over. Only Scout reads it, and only for that person.
+TASTE_W = { 'going' => 3.0, 'checkin' => 3.0, 'save' => 2.0, 'interested' => 1.5 }.freeze
+TASTE_HOW = { 'going' => 'Went to', 'checkin' => 'Checked in at', 'save' => 'Saved', 'interested' => 'Interested in' }.freeze
+
+def taste_item(k, id)
+  case k
+  when 'event'
+    e = event_by_uid(id.to_s.sub(/\Ae:/, '')) or return nil
+    { 'k' => 'event', 'id' => "e:#{e['uid']}", 'name' => e['title'].to_s[0, 80], 'cat' => e['category'].to_s,
+      'venue' => e['venue'].to_s.strip.empty? ? nil : e['venue'].to_s[0, 60] }
+  when 'place'
+    p = Places.find(id) or return nil
+    food = p['cuisine'].to_s.split(/[;,]/).first.to_s.strip.tr('_', ' ')
+    { 'k' => 'place', 'id' => id, 'name' => p['name'].to_s[0, 80], 'food' => food.empty? ? p['kind'].to_s : food }
+  when 'sight'
+    s = Sights.find(id) or return nil
+    { 'k' => 'sight', 'id' => id, 'name' => s['name'].to_s[0, 80], 'kind' => s['kind'].to_s }
+  end
+rescue StandardError
+  nil
+end
+
+def remember_taste!(d, h, how, k, id)
+  item = taste_item(k, id) or return
+  list = ((d['taste'] ||= {})[h] ||= [])
+  list.reject! { |x| x['id'] == item['id'] && x['how'] == how }
+  list << item.merge('how' => how, 'at' => now_ms).reject { |_, v| v.nil? }
+  list.shift while list.size > 120
+end
+
+def forget_taste!(d, h, id, hows)
+  ((d['taste'] || {})[h] || []).reject! { |x| x['id'] == id && hows.include?(x['how']) }
+end
+
+# People who used the app before this existed: start from what's already saved (RSVPs, saves, check-ins).
+def seed_taste!(d, h)
+  return if (d['taste'] ||= {}).key?(h)
+  d['taste'][h] = []
+  (d['rsvps'] || {}).each { |id, who| remember_taste!(d, h, who[h], 'event', id) if %w[going interested].include?(who[h]) }
+  ((d['saves'] || {})[h] || []).each { |x| remember_taste!(d, h, 'save', x['k'], x['id']) }
+  (((d['quest'] || {})[h] || {})['checkins'] || []).each { |x| remember_taste!(d, h, 'checkin', x['k'], x['id']) }
+end
+
+# What they like, weighted: going / check-ins count most, and older things fade (half as much every two months).
+def taste_for(d, h)
+  list = (d['taste'] || {})[h] || []
+  return nil if list.empty?
+  now = now_ms
+  w = ->(x) { TASTE_W[x['how']].to_f * 0.5**((now - x['at'].to_i) / (60 * 86_400_000.0)) }
+  top = lambda do |f|
+    list.each_with_object(Hash.new(0.0)) { |x, m| v = f.(x); m[v] += w.(x) if v && !v.empty? }
+        .sort_by { |_, s| -s }.first(5).map { |v, s| [v, s.round(1)] }
+  end
+  { 'event_types' => top.(->(x) { x['cat'] if x['k'] == 'event' }),
+    'venues' => top.(->(x) { x['k'] == 'event' ? x['venue'] : (x['name'] if x['k'] == 'place' && x['how'] == 'checkin') }),
+    'food' => top.(->(x) { x['food'] if x['k'] == 'place' }),
+    'sights' => top.(->(x) { x['kind'] if x['k'] == 'sight' }),
+    'recent' => list.last(8).reverse.map do |x|
+      "#{TASTE_HOW[x['how']]} #{x['name']}#{x['venue'] ? " at #{x['venue']}" : ''} (#{Time.at(x['at'].to_i / 1000).strftime('%b %-d')})"
+    end }.reject { |_, v| v.empty? }
+end
+
+# Upcoming events (next 7 days) that fit their taste: the kinds and venues they've enjoyed, best fit first.
+def taste_events(taste, near, limit = 8)
+  return [] unless taste
+  cats = (taste['event_types'] || []).to_h
+  venues = (taste['venues'] || []).to_h
+  return [] if cats.empty? && venues.empty?
+  now = Time.now
+  events_list.map do |e|
+    t = (Time.parse(e['start'].to_s) rescue nil)
+    next unless t && t > now - 3600 && t < now + 7 * 86_400
+    c, v = cats[e['category']].to_f, venues[e['venue']].to_f
+    score = c + v * 1.5
+    next if score <= 0
+    why = [v > 0 ? "you've been to #{e['venue']}" : nil, c > 0 ? "you like #{e['category'].to_s.tr('_', ' ')}" : nil].compact.join(' and ')
+    mi = near && e['lat'] ? (Math.hypot((e['lat'].to_f - near[0]) * 69.0, (e['lng'].to_f - near[1]) * 59.7)).round(1) : nil
+    tba = e['start'].to_s =~ /T00:00(:00)?/   # the scrapers' "time not listed"
+    [score - (t - now) / 86_400.0 * 0.1, { 'id' => "e:#{e['uid']}", 'title' => e['title'].to_s[0, 90], 'type' => e['category'],
+                                          'when' => t.strftime(tba ? '%a %b %-d (time TBA)' : '%a %b %-d, %-l:%M %p'), 'venue' => e['venue'], 'mi' => mi,
+                                          'fits' => why }.compact]
+  end.compact.sort_by { |s, _| -s }.first(limit).map(&:last)
+end
+
 # Invite links carry a code only the inviter gets, so nobody can make a link in someone else's name and become
 # their friend (and so able to message them) by signing up through it. The key is kept in the data file.
 def invite_code(d, h)
@@ -433,6 +519,7 @@ def mount_v2(server)
       end
       before = q['done'].keys
       q['checkins'] << { 'k' => k, 'id' => id, 'name' => tgt[:name].to_s[0, 80], 'tags' => tags, 'zone' => zone && zone[:id], 'at' => now_ms }
+      remember_taste!(d, h, 'checkin', k, id) unless k == 'area'
       q['checkins'].shift while q['checkins'].size > 500
       q['xp'] += CHECKIN_XP
       quest_award!(d, h)
@@ -456,8 +543,11 @@ def mount_v2(server)
         list.reject! { |x| x['k'] == k && x['id'] == id }
         list << { 'k' => k, 'id' => id, 'name' => b['name'].to_s[0, 100], 'at' => now_ms }
         list.shift while list.size > 200
+        remember_taste!(d, h, 'save', k, id)
         track!('event_save', h) if k == 'event'
-      when 'remove' then list.reject! { |x| x['k'] == k && x['id'] == id }
+      when 'remove'
+        list.reject! { |x| x['k'] == k && x['id'] == id }
+        forget_taste!(d, h, k == 'event' && id !~ /\Ae:/ ? "e:#{id}" : id, %w[save])
       end
       { saves: list.reverse }
     end

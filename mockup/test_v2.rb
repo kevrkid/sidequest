@@ -10,7 +10,9 @@ now = Time.now
 EVENTS = [
   { uid: 'abc123def456', title: 'Test Show', start: (now - 1800).iso8601, end: (now + 7200).iso8601, venue: 'Test Hall',
     city: 'Austin', lat: 30.2671, lng: -97.7391, geo_precise: true, category: 'music', description: 'A loud test show.' },
-  { uid: 'fff000fff000', title: 'Tomorrow Thing', start: (now + 86_400).iso8601, venue: 'Elsewhere', city: 'Austin', lat: 30.3, lng: -97.7, category: 'comedy' }
+  { uid: 'fff000fff000', title: 'Tomorrow Thing', start: (now + 86_400).iso8601, venue: 'Elsewhere', city: 'Austin', lat: 30.3, lng: -97.7, category: 'comedy' },
+  { uid: 'aaa111aaa111', title: 'Laugh Night', start: (now + 2 * 86_400).iso8601, venue: 'Elsewhere', city: 'Austin', lat: 30.3, lng: -97.7, category: 'comedy' },
+  { uid: 'ccc222ccc222', title: 'Quiet Lecture', start: (now + 2 * 86_400).iso8601, venue: 'Library', city: 'Austin', lat: 30.3, lng: -97.7, category: 'community' }
 ]
 ev = WEBrick::HTTPServer.new(Port: EV_PORT, BindAddress: '127.0.0.1', Logger: WEBrick::Log.new('/dev/null'), AccessLog: [])
 ev.mount_proc('/api/events') { |_q, r| r['Content-Type'] = 'application/json'; r.body = JSON.generate(count: EVENTS.size, events: EVENTS) }
@@ -23,9 +25,15 @@ Thread.new { ev.start }
 dir = $dir = Dir.mktmpdir('sq-v2-test')
 FileUtils.cp(Dir[File.join(__dir__, '*.{rb,md,json,html}')], dir)
 log = File.join(dir, 'server.log')
+# a stand-in for Claude Code: keeps the prompt it was given and answers with an empty reply
+FAKE_CLAUDE = File.join(dir, 'fake_claude')
+File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nFile.write(File.join(#{dir.inspect}, 'last_prompt.txt'), $stdin.read)\n" \
+  "puts '{\"structured_output\":{\"say\":\"ok\",\"expression\":\"happy\",\"actions\":[]},\"duration_ms\":1,\"total_cost_usd\":0}'\n")
+File.chmod(0o755, FAKE_CLAUDE)
 pid = spawn({ 'PORT' => PORT.to_s, 'SQ_MODERATE' => '0', 'SQ_DEMO' => '0', 'SQ_PLACES_FILE' => 'test_places.json', 'SQ_OUTDOORS_FILE' => 'test_outdoors.json',
               'SQ_SIGHTS_FILE' => 'test_sights.json', 'SQ_EVENTS_API' => "http://127.0.0.1:#{EV_PORT}", 'SQ_ADMIN_TOKEN' => 'adm',
-              'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_PLACES_KEY' => nil, 'SQ_GOOGLE_TTS_KEY' => nil, 'SQ_PUSH_TEST_HOST' => "127.0.0.1:#{EV_PORT}" },
+              'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_PLACES_KEY' => nil, 'SQ_GOOGLE_TTS_KEY' => nil, 'SQ_PUSH_TEST_HOST' => "127.0.0.1:#{EV_PORT}",
+              'SQ_ENGINE' => 'cli', 'CLAUDE_BIN' => FAKE_CLAUDE, 'SQ_USE_API_KEY' => nil },
             'ruby', 'server.rb', chdir: dir, out: log, err: log)
 at_exit { Process.kill('TERM', pid) rescue nil; FileUtils.rm_rf(dir) }
 
@@ -250,11 +258,27 @@ t("friends see each other's level and badges; a stranger's quests stay private")
   _, sb = bo.get('/api/state'); _, sc = Who.new('nobody').tap(&:signup).get('/api/state')
   check(sb['badges']['amy_v2'] && sb['badges']['amy_v2']['done'].include?('history') && !sc['badges'].key?('amy_v2'), [sb['badges'], sc['badges']])
 }
+t("Scout knows what you've enjoyed and suggests more like it") {
+  amy.post('/api/rsvp', id: 'e:fff000fff000', status: 'going')   # a comedy show at Elsewhere
+  c, = amy.post('/api/scout', q: 'what should I do this weekend?', context: { events: [] })
+  pr = File.read(File.join($dir, 'last_prompt.txt'))
+  taste = pr[/What this user has enjoyed before.*?: (\{.*?\})\. When you recommend/, 1]
+  check(c == 200 && taste && JSON.parse(taste)['event_types'].include?(['comedy', 3.0]) && taste.include?('Went to Tomorrow Thing at Elsewhere'), taste || pr[0, 300])
+  ev = pr[/"events":(\[.*?\])[,}]/, 1].to_s
+  check(ev.include?('e:aaa111aaa111') && ev.include?("you've been to Elsewhere and you like comedy") && !ev.include?('Quiet Lecture'), ev[0, 300])
+  "fits: Laugh Night"
+}
+t('taking back an RSVP takes it out of what Scout thinks you like') {
+  amy.post('/api/rsvp', id: 'e:fff000fff000', status: nil)
+  amy.post('/api/scout', q: 'what should I do this weekend?', context: { events: [] })
+  pr = File.read(File.join($dir, 'last_prompt.txt'))
+  check(!pr.include?('Went to Tomorrow Thing'), pr[/What this user has enjoyed.{0,200}/])
+}
 t('deleting an account removes its notifications, quests and saves') {
   amy.post('/api/account/delete', pw: 'password123', confirm: true)
   sleep 0.3
   d = JSON.parse(File.read(File.join($dir, 'data', 'app.json')))
-  check(!(d['quest'] || {}).key?('amy_v2') && !(d['saves'] || {}).key?('amy_v2') && !(d['notifs'] || {}).key?('amy_v2') &&
+  check(!(d['quest'] || {}).key?('amy_v2') && !(d['saves'] || {}).key?('amy_v2') && !(d['notifs'] || {}).key?('amy_v2') && !(d['taste'] || {}).key?('amy_v2') &&
         (d['notifs'] || {}).values.flatten.none? { |n| n['from'] == 'amy_v2' }, d.slice('quest', 'saves').keys)
 }
 

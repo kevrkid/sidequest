@@ -228,6 +228,14 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   friends who switched on "Show friends where I check in" (`users[h].share_checkins`, off by default) appear on Home for
   3 hours after a check-in, place name only (`friends_out`).
 - **Scout** V2 actions: `event` (open an event's page), `open` (quests / inbox / plans / saved / invite).
+- **Scout knows your taste** (v2.rb `remember_taste!` / `taste_for` / `taste_events`): going / interested, saves and
+  check-ins are kept in `d['taste'][h]` (name, type, venue, food; 120 max; un-RSVP / unsave removes; seeded once from
+  existing RSVPs, saves and check-ins). Every Scout question gets a weighted summary (event types, venues, food,
+  sights, recent; older fades by half every 2 months); recommendation / plan questions also get the coming week's
+  events that fit it (marked `fits`, merged into the allowed events). Deleted with the account.
+- **Scout settings** (🎨 Design your assistant): a Voice box with read-every-answer on/off (`S.scout.voice`, on by
+  default since `voiceV4`), male / female Chirp voices with a spoken sample, speed (`S.scout.rate`: audio playbackRate).
+  The mic is a toggle (tap on, talk through pauses, tap off to send; `scoutMicOff`); any way of closing Scout cancels it.
 - **Group chat** for members of real groups (`/api/group/chat`, stored as `ev_chat["g:<id>"]`).
 - **Growth**: share pages with Open Graph previews `/e/<uid>`, `/s/<sight id>`, `/i/<handle>` (invite; sign-up offers
   "be friends with @them", `users[h].ref`, Bring a friend quest); Home "Tonight near you" strip + "Up next" countdown;
