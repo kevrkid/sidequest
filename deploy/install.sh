@@ -21,7 +21,7 @@ systemctl enable --now sidequest-events sidequest
 systemctl restart sidequest-events sidequest
 # Food & drink places from OpenStreetMap: first download now (resumable), then a fresh copy every Monday 4:30 AM.
 [ -f /opt/sidequest/app/data/places.json ] || su -s /bin/sh sidequest -c 'cd /opt/sidequest/app && ruby fetch_places.rb' || echo ">>> Places download incomplete; run it again later"
-( crontab -l 2>/dev/null | grep -v -e sidequest/deploy/backup.sh -e fetch_places.rb
+( crontab -l 2>/dev/null | grep -v -e sidequest/deploy/backup.sh -e fetch_places.rb || true   # set -e: an empty list must not end the subshell
   echo "15 4 * * * /opt/sidequest/deploy/backup.sh"
   echo "30 4 * * 1 su -s /bin/sh sidequest -c 'cd /opt/sidequest/app && ruby fetch_places.rb --fresh' >/var/log/sidequest-places.log 2>&1" ) | crontab -
 # Live video on this box (optional; the other choice is LiveKit Cloud, which needs nothing here).
@@ -52,7 +52,7 @@ if grep -q '^SQ_LIVEKIT_SELFHOST=1' /etc/sidequest/env; then
   systemctl daemon-reload
   systemctl enable sidequest-livekit
   systemctl restart sidequest-livekit || true
-  ( crontab -l 2>/dev/null | grep -v livekit-cert.sh
+  ( crontab -l 2>/dev/null | grep -v livekit-cert.sh || true
     echo "45 4 * * * /opt/sidequest/deploy/livekit-cert.sh >/var/log/sidequest-livekit-cert.log 2>&1" ) | crontab -
   if command -v ufw >/dev/null && ufw status | grep -q 'Status: active'; then
     ufw allow 7881/tcp >/dev/null; ufw allow 5349/tcp >/dev/null; ufw allow 3478/udp >/dev/null; ufw allow 50000:60000/udp >/dev/null
