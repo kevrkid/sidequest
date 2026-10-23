@@ -536,7 +536,12 @@
   .scm.me{align-self:flex-end;background:var(--accent2);color:#04121c;border-bottom-right-radius:5px}
   .scm.scout{align-self:flex-start;background:var(--panel2);border-bottom-left-radius:5px}
   .scm.wait{color:var(--muted)}
-  #scoutChips .ichip{white-space:nowrap;flex:none}
+  .sc-mine{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}   /* customize Scout, right beside Scout */
+  .sc-mine button{border:1px solid var(--accent2);background:#2ec5ff1a;color:var(--text);border-radius:99px;padding:5px 11px;font-size:13px;font-weight:700}
+  .sc-lens{display:flex;align-items:center;gap:12px;width:100%;max-width:380px;margin-top:12px;padding:14px 16px;border-radius:18px;text-align:left;
+    background:linear-gradient(135deg,#2ec5ff,#7b5cff);color:#fff;box-shadow:0 10px 28px -10px #2ec5ffcc}
+  .sc-lens i{font-style:normal;font-size:30px} .sc-lens b{display:block;font-size:17px} .sc-lens small{display:block;font-size:13px;opacity:.9}
+  .sc-lens:active{transform:scale(.97)}
   #scoutForm{gap:6px} #scoutForm input{flex:1;min-width:0}
   #scMic.on{background:#ff5a5f;color:#fff;border-color:#ff5a5f;animation:micpulse 1.2s ease-in-out infinite}
   #scMic.on i{font-size:0} #scMic.on i::after{content:'';display:inline-block;width:26px;height:26px;border-radius:6px;background:#fff}   /* a stop square while on */
@@ -789,13 +794,14 @@
   <div id="scoutRing" hidden></div><div id="scoutTag" hidden></div>
   <div class="sheet-bg" id="scoutBg" hidden style="z-index:740"><div class="sheet scout-sheet">
     <div class="row sc-top"><span id="scoutHead" class="scwrap"></span>
-      <div class="grow" style="min-width:0"><b id="scoutName">Scout</b><div class="meta" id="scoutLeft" data-t="Your guide to Side Quest">Your guide to Side Quest</div></div>
+      <div class="grow" style="min-width:0"><b id="scoutName">Scout</b><div class="meta" id="scoutLeft" data-t="Your guide to Side Quest">Your guide to Side Quest</div>
+        <div class="sc-mine"><button data-sc="look">🎨 <span data-t="Make me yours">Make me yours</span></button><button data-sc="tourgo">🧭 <span data-t="Tour">Tour</span></button></div></div>
       <button class="btn sm" data-sc="voice" id="scVoice" title="Also read typed answers out loud">🔇</button><button class="btn sm" data-sc="drive" title="Driving mode">🚗</button>
-      <button class="btn sm" data-sc="look" title="Design your assistant">🎨</button><button class="btn sm" data-sc="close" aria-label="Close">✕</button></div>
+      <button class="btn sm" data-sc="close" aria-label="Close">✕</button></div>
     <div id="scoutLog"></div>
-    <div class="chiprow" id="scoutChips"></div>
     <div class="scvoice"><button class="bigmic" data-sc="mic" id="scMic" aria-label="Talk to Scout"><i>🎤</i></button>
-      <div id="scMicL" class="scmicl">Tap to talk</div><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button></div>
+      <div id="scMicL" class="scmicl">Tap to talk</div><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button>
+      <button class="sc-lens" data-sc="lens"><i>📷</i><span><b data-t="Live Translate">Live Translate</b><small data-t="Point your camera at a sign or menu">Point your camera at a sign or menu</small></span></button></div>
     <form id="scoutForm" class="row" hidden><input id="scoutIn" maxlength="300" placeholder="Ask about the app, or what's the move…" data-tp="Ask about the app, or what's the move…" autocomplete="off">
       <button class="btn primary" data-t="Ask">Ask</button></form>
   </div></div>
@@ -1027,7 +1033,7 @@ const ES = {
   'Plan dinner and drinks':'Planea cena y tragos', '💾 Save to my plans':'💾 Guardar en mis planes', '🗺 Map':'🗺 Mapa', '📅 Calendar':'📅 Calendario',
   '↗ Share':'↗ Compartir', 'Close':'Cerrar', 'None yet. Ask Scout to plan something, then tap Save.':'Todavía nada. Pídele a Scout que planee algo y toca Guardar.',
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
-  'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Opening the camera translator. Point it at the text.':'Abriendo el traductor con la cámara. Apúntala al texto.', 'Got it, one sec…':'Listo, un segundo…', "This is how fast I'll talk.":'Así de rápido voy a hablar.', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
+  'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Make me yours':'Hazme tuyo', 'Tour':'Recorrido', 'Live Translate':'Traducir en vivo', 'Point your camera at a sign or menu':'Apunta la cámara a un letrero o menú', 'Opening the camera translator. Point it at the text.':'Abriendo el traductor con la cámara. Apúntala al texto.', 'Got it, one sec…':'Listo, un segundo…', "This is how fast I'll talk.":'Así de rápido voy a hablar.', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
   '🎤 Talk instead':'🎤 Hablar', 'Ask about the app, or what\'s the move…':'Pregunta sobre la app o qué hay que hacer…', 'Ask':'Preguntar',
   'Your guide to Side Quest':'Tu guía de Side Quest', 'Need help? Talk to me! 🎤':'¿Necesitas ayuda? ¡Háblame! 🎤',
   'Ask me what\'s the move tonight 🌙':'Pregúntame qué hacer esta noche 🌙', 'Want me to plan your night? Just say it ✨':'¿Planeo tu noche? Solo dímelo ✨',
@@ -4768,10 +4774,6 @@ function renderScoutLog(){
         return `<div class="scm ${m.who==='me'?'me':'scout'}">${esc(m.text)}</div>${m.plan?planCard(m.plan,{key:'log:'+i, save:m.saved?null:i}):''}`; }).join('')
     + (SCT.busy?'<div class="scm scout wait">🧭 Thinking…</div>':'');
   el.scrollTop=el.scrollHeight;
-  const def=JSON.stringify(scS().look)===JSON.stringify(SC_DEFAULT);
-  const chips = (AUTHED ? ["Plan my night ✨","What's the move tonight? 🌙","How do I send a flare?","Find me something to do near me","Tell me a joke"]
-    : ["How do I send a flare?","What's on the map?","How does Meet work?","Who can see my answers?"]).map(c=>T(c));
-  $('#scoutChips').innerHTML = `<button class="ichip" data-sc="tourgo">🧭 Take the tour</button><button class="ichip" data-sc="lens">📷 ${T('Translate')}</button>` + (def?`<button class="ichip" data-sc="look">🎨 Make me yours</button>`:'') + chips.map(c=>`<button class="ichip" data-scq="${esc(c)}">${esc(c)}</button>`).join('');
   $('#scoutName').textContent=s.name;
   $('#scoutLeft').textContent = SCT.left!=null&&AUTHED ? `${SCT.left} question${SCT.left===1?'':'s'} left today` : AUTHED ? 'Your guide to Side Quest' : 'Guest mode: the basics';
   $('#scVoice').textContent = s.voice?'🔊':'🔇';

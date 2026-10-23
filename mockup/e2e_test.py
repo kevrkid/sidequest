@@ -565,7 +565,9 @@ with sync_playwright() as pw:
     g.click("[data-onbguest]")
     g.click("#scoutBtn"); g.wait_for_selector("#scoutBg", state="visible")
     check("Scout opens for guests", "Guest mode" in g.locator("#scoutLeft").inner_text())
-    g.click("[data-scq='How do I send a flare?']")
+    check("Scout panel: customize beside Scout, big translate button, no chip row",
+          g.locator(".sc-top [data-sc='look']").is_visible() and g.locator(".scvoice .sc-lens").is_visible() and g.locator("#scoutChips").count() == 0)
+    g.evaluate("$('#scoutForm').hidden=false"); g.fill("#scoutIn", "How do I send a flare?"); g.press("#scoutIn", "Enter")
     g.wait_for_selector("#scoutRing", state="visible", timeout=5000)
     check("guest Scout answers from the FAQ and points at where flares are",
           "flare" in g.locator("#scoutBubble").inner_text().lower() and "Flare" in g.locator("#scoutTag").inner_text())
@@ -579,7 +581,7 @@ with sync_playwright() as pw:
     g.screenshot(path=f"{OUT}/14-scout-driving.png")
     g.click("[data-sc='driveoff']")
     check("driving mode turns off", not g.locator("#driveView").is_visible())
-    g.click("#scoutBtn"); g.click("#scoutChips [data-sc='tourgo']")
+    g.click("#scoutBtn"); g.click(".sc-top [data-sc='tourgo']")
     g.wait_for_selector("#scoutRing", state="visible", timeout=5000)
     check("Scout tour starts from the panel and points at Meet",
           "1/7" in g.locator("#scoutTour").inner_text() and "Meet" in g.locator("#scoutTag").inner_text())
