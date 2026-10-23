@@ -326,7 +326,8 @@ end
 # written to data/stats.json once a minute so it never slows the app down.
 TRACK_EVENTS = %w[open home_next home_tonight event_open event_share event_save event_invite event_chat notif_open
                   quests_open checkin quest_done saved_open invite_copy share_open sight_open sight_tell plan_save
-                  scout_ask map_open search feed_open signup_ref push_on].freeze
+                  scout_ask map_open search feed_open signup_ref push_on
+                  mic_on mic_heard mic_none mic_err_audio mic_err_network mic_err_lang mic_err_service mic_err_denied mic_err_other].freeze
 STATS_FILE = File.join(__dir__, 'data', 'stats.json')
 STATS = { lock: Mutex.new, d: (JSON.parse(File.read(STATS_FILE)) rescue nil) || {}, dirty: false }
 

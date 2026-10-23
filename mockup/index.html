@@ -4550,40 +4550,56 @@ function browserSpeak(plain, loud){
 }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 // The mic is a toggle, like a walkie-talkie: tap on, talk as long as you like (pauses are fine), tap off to send.
-// Browsers end a recognition session at a pause, so while it's on we quietly start a new one and keep the words.
-// Driving mode stays hands-free: it sends at the first pause.
+// Each recognition session is one phrase (continuous mode hears nothing on some phones, iPhones especially), so while
+// the mic is on we quietly start the next one at each pause and keep the words. Driving mode sends at the first pause.
+const MIC_ERR={'audio-capture':["I can't reach your microphone. Is another app using it?",'audio'], network:["Speech recognition needs internet. Try again, or type.",'network'],
+  'language-not-supported':["Your phone's speech recognition doesn't support this language.",'lang'],
+  'service-not-allowed':["This browser won't let me listen. Try Safari or Chrome, or type below.",'service'], 'not-allowed':['Allow the microphone for this site to talk to Scout.','denied']};
 function scoutListen(){
   if(SCT.listening) return scoutMicOff(true);
   if(!SR){ const m=S.lang==='es'?'Este navegador todavía no me escucha. Escribe abajo o prueba Chrome o Safari.':"This browser can't hear me talk yet. Type instead, or try Chrome or Safari.";
     if(!SCT.driving){ $('#scoutForm').hidden=false; $('#scTypeBtn').hidden=true; $('#scMicL').textContent=T("Voice isn't available in this browser, so type below."); }
     if(SCT.driving){ $('#dvSay').textContent=m; return scoutSpeak(m,true); } return toast('🎤 '+m,'orange'); }
   scoutHush(); scoutTalking(false);
+  try{ SCT.audio.removeAttribute('src'); SCT.audio.load(); }catch(e){}   // let go of the speaker so the phone hands the mic over
   const toggle=!SCT.driving, until=Date.now()+120000;   // 2 minutes at most, in case it's left on
-  let kept='', said='';
+  let kept='', said='', err='', runs=0, empty=0;
   const sid=SCT.micSid=(SCT.micSid||0)+1;   // a newer session (or turning it off) makes this one's late events no-ops
-  SCT.micWant=true; SCT.micSend=true;
+  SCT.micWant=true; SCT.micSend=true; track('mic_on');
   const finish=()=>{
     if(sid!==SCT.micSid) return;
     SCT.listening=false; SCT.rec=null; scoutMicUi();
-    if(!said) return;
+    if(!said){   // say why nothing happened instead of going quiet
+      const [m,code]=MIC_ERR[err]||["I didn't hear anything. Check the mic isn't muted and talk a little closer, or type below.",err?'other':'none'];
+      track(code==='none'?'mic_none':'mic_err_'+code);
+      if(!SCT.micSend) return;
+      if(SCT.driving){ $('#dvSay').textContent=T(m); return; }
+      if(err){ $('#scoutForm').hidden=false; scoutMicUi(); }   // the mic is out of action: offer typing
+      $('#scMicL').textContent=T(m); return;
+    }
+    track('mic_heard');
     if(SCT.micSend){ if(!SCT.driving) $('#scoutIn').value=''; scoutAsk(said,true); }
     else if(!SCT.driving) $('#scoutIn').value=said;   // switched to typing: keep the words to edit
   };
   const start=()=>{
-    const r=new SR(); SCT.rec=r; r.lang=S.lang==='es'?'es-US':'en-US'; r.interimResults=true; r.maxAlternatives=1; r.continuous=toggle;
+    const r=new SR(), at=Date.now(), before=said; SCT.rec=r; runs++;
+    r.lang=S.lang==='es'?'es-US':'en-US'; r.interimResults=true; r.maxAlternatives=1; r.continuous=false;
     r.onresult=e=>{ if(sid!==SCT.micSid) return; said=(kept+' '+[...e.results].map(x=>x[0].transcript).join(' ')).trim();
       if(SCT.driving) $('#dvSay').textContent='“'+said+'”'; else { $('#scoutIn').value=said; $('#scMicL').textContent='“'+said+'”'; } };
-    r.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ SCT.micWant=false; toast('🎤 Allow the microphone for this site to talk to Scout.','orange'); } };
+    r.onerror=e=>{ if(sid!==SCT.micSid) return;
+      if(e.error==='not-allowed'&&runs>1&&said) e={error:'aborted'};   // a later session refused without a tap: just send what we have
+      if(e.error!=='no-speech'&&e.error!=='aborted'){ err=e.error; SCT.micWant=false; } };
     r.onend=()=>{
       if(sid!==SCT.micSid) return;
       kept=said;
-      if(toggle&&SCT.micWant&&Date.now()<until){ try{ start(); return; }catch(e){} }   // still on: keep listening
+      empty = said===before && Date.now()-at<1500 ? empty+1 : 0;   // ending at once with nothing heard, again and again: the mic isn't working
+      if(toggle&&SCT.micWant&&empty<3&&Date.now()<until){ try{ start(); return; }catch(e){} }   // still on: keep listening
       finish();
     };
     r.start();
   };
   SCT.listening=true; scoutMicUi(); scoutEx('surprised');
-  try{ start(); }catch(e){ SCT.listening=false; SCT.rec=null; scoutMicUi(); }
+  try{ start(); }catch(e){ err='start'; finish(); }
 }
 // Turn the mic off: send what was heard, or (closing Scout, switching to typing) don't.
 function scoutMicOff(send){
