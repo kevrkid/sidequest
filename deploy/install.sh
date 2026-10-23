@@ -14,6 +14,16 @@ grep -q "^SQ_ENGINE=cli" /etc/sidequest/env && { command -v "$(sed -n "s/^CLAUDE
 cd /opt/sidequest/events
 [ -d .venv ] || python3 -m venv .venv
 .venv/bin/pip install -q -r requirements.txt
+# Scout's ears for phones whose own speech recognition doesn't work: whisper.cpp + ffmpeg turn mic recordings into
+# text on this box (optional: without them the app uses the browser's recognition only)
+if apt-get install -y -qq whisper.cpp ffmpeg >/dev/null 2>&1; then
+  WM=/opt/sidequest/whisper/ggml-base-q5_1.bin; WM_SHA=422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898   # sha256 from the model's Hugging Face page
+  mkdir -p /opt/sidequest/whisper
+  if ! echo "$WM_SHA  $WM" | sha256sum -c - >/dev/null 2>&1; then
+    curl -fsSL -o "$WM.tmp" https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin &&
+      echo "$WM_SHA  $WM.tmp" | sha256sum -c - >/dev/null && mv "$WM.tmp" "$WM" || { rm -f "$WM.tmp"; echo ">>> Whisper model download failed; Scout uses the browser's speech recognition only"; }
+  fi
+else echo ">>> No whisper.cpp package here; Scout uses the browser's speech recognition only"; fi
 chown -R sidequest:sidequest /opt/sidequest
 install -m 644 /opt/sidequest/deploy/sidequest.service /opt/sidequest/deploy/sidequest-events.service /etc/systemd/system/
 systemctl daemon-reload

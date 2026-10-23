@@ -541,6 +541,7 @@
   #scMic.on{background:#ff5a5f;color:#fff;border-color:#ff5a5f;animation:micpulse 1.2s ease-in-out infinite}
   #scMic.on i{font-size:0} #scMic.on i::after{content:'';display:inline-block;width:26px;height:26px;border-radius:6px;background:#fff}   /* a stop square while on */
   @keyframes micpulse{50%{box-shadow:0 0 0 12px #ff5a5f33}}
+  #scMic.on.lvl{animation:none;box-shadow:0 0 0 calc(4px + var(--lvl,0) * 22px) #ff5a5f44;transition:box-shadow .08s}   /* recording: the ring follows your voice */
   #scoutRing{position:absolute;z-index:905;border:3px solid var(--accent2);border-radius:14px;pointer-events:none;
     box-shadow:0 0 0 4px #2ec5ff44,0 0 24px #2ec5ff;animation:scring 1.1s ease-in-out infinite}
   @keyframes scring{50%{box-shadow:0 0 0 11px #2ec5ff18,0 0 34px #2ec5ff}}
@@ -2119,7 +2120,7 @@ function focusSight(id, fromScout){
 function sightTell(id){   // Scout tells the story out loud, like a tour guide
   const s=SG.full[id]; if(!s) return; track('sight_tell');
   if(!AUTHED) return needAccount(T('ask Scout about history'));
-  openScoutVoice(); scoutAsk(T('Tell me the story of {n}',{n:s.name}), true);
+  openScoutVoice(true); scoutAsk(T('Tell me the story of {n}',{n:s.name}), true);
 }
 
 const NIGHT_KINDS=['club','bar','pub','beer garden'];
@@ -4515,7 +4516,8 @@ const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAAB
 SCT.audio=new Audio(); SCT.audio.setAttribute('playsinline','');
 function scoutHush(){ try{ speechSynthesis?.cancel(); }catch(e){} try{ SCT.audio.pause(); }catch(e){} SCT.say=(SCT.say||0)+1; }
 // Phones only let a page play sound it started from a tap: play silence on the first tap so later answers can talk.
-document.addEventListener('pointerdown',()=>{ if(SCT.unlocked) return; SCT.unlocked=true; SCT.audio.src=SILENT; SCT.audio.play().catch(()=>{}); },{capture:true});
+document.addEventListener('pointerdown',()=>{ if(SCT.unlocked) return; SCT.unlocked=true; SCT.audio.src=SILENT; SCT.audio.play().catch(()=>{});
+  try{ (SCT.ac=new (window.AudioContext||window.webkitAudioContext)()).resume(); }catch(e){} },{capture:true});   // and the mic's on/off tones
 async function scoutSpeak(text, force){
   clearTimeout(SCT.stopT);
   const plain=text.replace(/\p{Extended_Pictographic}|️/gu,'').trim();
@@ -4549,74 +4551,151 @@ function browserSpeak(plain, loud){
   speechSynthesis.speak(u);
 }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-// The mic is a toggle, like a walkie-talkie: tap on, talk as long as you like (pauses are fine), tap off to send.
-// Each recognition session is one phrase (continuous mode hears nothing on some phones, iPhones especially), so while
-// the mic is on we quietly start the next one at each pause and keep the words. Driving mode sends at the first pause.
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+// Two kinds of ears. Where the browser's own speech recognition works (Chrome, Android) it's used: words appear as you talk.
+// On iPhones it often hears nothing (and never says so), so there, or once it has failed here, the mic records and our
+// server turns the recording into words (whisper.cpp, on the server itself), every few seconds while you talk.
+const micRec = () => !!(CFG.hear && AUTHED && navigator.mediaDevices?.getUserMedia && window.MediaRecorder && (IOS || !SR || S.micRec));
 const MIC_ERR={'audio-capture':["I can't reach your microphone. Is another app using it?",'audio'], network:["Speech recognition needs internet. Try again, or type.",'network'],
   'language-not-supported':["Your phone's speech recognition doesn't support this language.",'lang'],
-  'service-not-allowed':["This browser won't let me listen. Try Safari or Chrome, or type below.",'service'], 'not-allowed':['Allow the microphone for this site to talk to Scout.','denied']};
+  'service-not-allowed':["This browser won't let me listen. Try Safari or Chrome, or type below.",'service'], 'not-allowed':['Allow the microphone for this site to talk to Scout.','denied'],
+  stuck:["This browser's speech recognition isn't answering. I'll listen a different way next time: tap the mic and try again.",'stuck'],
+  hear:["I couldn't turn that into words. Try again, or type below.",'hear']};
+// A short tone as the mic turns on (rising) and off (falling), so you know without looking
+function micBeep(up){
+  try{ const C=SCT.ac||(SCT.ac=new (window.AudioContext||window.webkitAudioContext)()); C.resume?.();
+    const t=C.currentTime+.02, o=C.createOscillator(), g=C.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(up?660:880,t); o.frequency.setValueAtTime(up?990:587,t+.09);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.01); g.gain.setValueAtTime(.22,t+.17); g.gain.linearRampToValueAtTime(0,t+.2);
+    o.connect(g); g.connect(C.destination); o.start(t); o.stop(t+.22); }catch(e){}
+}
+// The mic is a toggle, like a walkie-talkie: tap on, talk as long as you like (pauses are fine), tap off to send.
+// Driving mode stays hands-free: it sends at the first pause.
 function scoutListen(){
   if(SCT.listening) return scoutMicOff(true);
-  if(!SR){ const m=S.lang==='es'?'Este navegador todavía no me escucha. Escribe abajo o prueba Chrome o Safari.':"This browser can't hear me talk yet. Type instead, or try Chrome or Safari.";
+  if(SCT.mic) return;   // still turning the last words into text
+  if(!SR&&!micRec()){ const m=S.lang==='es'?'Este navegador todavía no me escucha. Escribe abajo o prueba Chrome o Safari.':"This browser can't hear me talk yet. Type instead, or try Chrome or Safari.";
     if(!SCT.driving){ $('#scoutForm').hidden=false; $('#scTypeBtn').hidden=true; $('#scMicL').textContent=T("Voice isn't available in this browser, so type below."); }
     if(SCT.driving){ $('#dvSay').textContent=m; return scoutSpeak(m,true); } return toast('🎤 '+m,'orange'); }
   scoutHush(); scoutTalking(false);
   try{ SCT.audio.removeAttribute('src'); SCT.audio.load(); }catch(e){}   // let go of the speaker so the phone hands the mic over
+  micBeep(true); track('mic_on');
+  const m=SCT.mic={send:true, want:true}; SCT.listening=true; scoutMicUi(); scoutEx('surprised');
+  return micRec() ? listenRec(m) : listenSR(m);
+}
+// Turn the mic off: send what was heard, or (closing Scout, switching to typing) don't. The screen shows it off at once.
+function scoutMicOff(send){
+  const m=SCT.mic;
+  if(SCT.listening) micBeep(false);
+  SCT.listening=false;
+  if(m?.off) m.off(send); else if(m) micDone(m,'','');
+  scoutMicUi();
+}
+// However the listening ended: send the words, keep them for typing, or say why there are none
+function micDone(m, said, err){
+  if(SCT.mic!==m) return;
+  SCT.mic=null; SCT.listening=false; scoutMicUi();
+  if(!m.send){ if(said&&!SCT.driving) $('#scoutIn').value=said; return; }
+  if(said){ track('mic_heard'); if(!SCT.driving) $('#scoutIn').value=''; return scoutAsk(said,true); }
+  const [msg,code]=MIC_ERR[err]||["I didn't hear anything. Check the mic isn't muted and talk a little closer, or type below.",err?'other':'none'];
+  track(code==='none'?'mic_none':'mic_err_'+code);
+  if(SCT.driving){ $('#dvSay').textContent=T(msg); return; }
+  if(err){ $('#scoutForm').hidden=false; scoutMicUi(); }   // the mic is out of action: offer typing
+  $('#scMicL').textContent=T(msg);
+}
+function micShow(m, said){
+  if(SCT.mic!==m||!m.want||!said) return;
+  if(SCT.driving) $('#dvSay').textContent='“'+said+'”'; else { $('#scoutIn').value=said; $('#scMicL').textContent='“'+said+'”'; }
+}
+// The browser's own recognition. Each session is one phrase (continuous mode hears nothing on some phones), so while
+// the mic is on we start the next one at each pause and keep the words.
+function listenSR(m){
   const toggle=!SCT.driving, until=Date.now()+120000;   // 2 minutes at most, in case it's left on
-  let kept='', said='', err='', runs=0, empty=0;
-  const sid=SCT.micSid=(SCT.micSid||0)+1;   // a newer session (or turning it off) makes this one's late events no-ops
-  SCT.micWant=true; SCT.micSend=true; track('mic_on');
-  const finish=()=>{
-    if(sid!==SCT.micSid) return;
-    SCT.listening=false; SCT.rec=null; scoutMicUi();
-    if(!said){   // say why nothing happened instead of going quiet
-      const [m,code]=MIC_ERR[err]||["I didn't hear anything. Check the mic isn't muted and talk a little closer, or type below.",err?'other':'none'];
-      track(code==='none'?'mic_none':'mic_err_'+code);
-      if(!SCT.micSend) return;
-      if(SCT.driving){ $('#dvSay').textContent=T(m); return; }
-      if(err){ $('#scoutForm').hidden=false; scoutMicUi(); }   // the mic is out of action: offer typing
-      $('#scMicL').textContent=T(m); return;
-    }
-    track('mic_heard');
-    if(SCT.micSend){ if(!SCT.driving) $('#scoutIn').value=''; scoutAsk(said,true); }
-    else if(!SCT.driving) $('#scoutIn').value=said;   // switched to typing: keep the words to edit
+  let kept='', said='', err='', runs=0, empty=0, alive=false, rec=null, late=0;
+  const end=()=>{ clearTimeout(late); clearTimeout(watch); micDone(m,said,err); };
+  m.off=send=>{
+    m.send=send; m.want=false;
+    if(!send){ try{ rec?.abort(); }catch(e){} return end(); }
+    try{ rec?.stop(); }catch(e){}
+    // the browser should end the session now; if it doesn't, it's stuck (some phones): finish without it
+    late=setTimeout(()=>{ try{ rec?.abort(); }catch(e){}
+      if(!said&&!alive){ err='stuck'; if(CFG.hear&&AUTHED&&window.MediaRecorder){ S.micRec=true; save(); } }
+      end(); },1200);
   };
   const start=()=>{
-    const r=new SR(), at=Date.now(), before=said; SCT.rec=r; runs++;
+    const r=rec=new SR(), at=Date.now(), before=said; runs++;
     r.lang=S.lang==='es'?'es-US':'en-US'; r.interimResults=true; r.maxAlternatives=1; r.continuous=false;
-    r.onresult=e=>{ if(sid!==SCT.micSid) return; said=(kept+' '+[...e.results].map(x=>x[0].transcript).join(' ')).trim();
-      if(SCT.driving) $('#dvSay').textContent='“'+said+'”'; else { $('#scoutIn').value=said; $('#scMicL').textContent='“'+said+'”'; } };
-    r.onerror=e=>{ if(sid!==SCT.micSid) return;
-      if(e.error==='not-allowed'&&runs>1&&said) e={error:'aborted'};   // a later session refused without a tap: just send what we have
-      if(e.error!=='no-speech'&&e.error!=='aborted'){ err=e.error; SCT.micWant=false; } };
+    r.onaudiostart=r.onsoundstart=()=>{ alive=true; };
+    r.onresult=e=>{ if(rec!==r) return; alive=true; said=(kept+' '+[...e.results].map(x=>x[0].transcript).join(' ')).trim(); micShow(m,said); };
+    r.onerror=e=>{ if(rec!==r) return;
+      if(e.error==='not-allowed'&&runs>1&&said) return;   // a later session refused without a tap: just send what we have
+      if(e.error!=='no-speech'&&e.error!=='aborted'){ err=e.error; m.want=false; } };
     r.onend=()=>{
-      if(sid!==SCT.micSid) return;
+      if(rec!==r||SCT.mic!==m) return;
       kept=said;
       empty = said===before && Date.now()-at<1500 ? empty+1 : 0;   // ending at once with nothing heard, again and again: the mic isn't working
-      if(toggle&&SCT.micWant&&empty<3&&Date.now()<until){ try{ start(); return; }catch(e){} }   // still on: keep listening
-      finish();
+      if(toggle&&m.want&&empty<3&&Date.now()<until){ try{ start(); return; }catch(e){} }   // still on: keep listening
+      if(SCT.listening){ micBeep(false); SCT.listening=false; }
+      end();
     };
     r.start();
   };
-  SCT.listening=true; scoutMicUi(); scoutEx('surprised');
-  try{ start(); }catch(e){ err='start'; finish(); }
+  // No sign of life in 4 seconds: this browser's recognition is stuck. Switch to recording if we can.
+  const watch=setTimeout(()=>{ if(alive||SCT.mic!==m||!m.want) return;
+    try{ rec?.abort(); }catch(e){}
+    if(CFG.hear&&AUTHED&&window.MediaRecorder&&navigator.mediaDevices?.getUserMedia){ S.micRec=true; save(); m.off=null; rec=null; listenRec(m); }
+    else { m.want=false; err='stuck'; micBeep(false); SCT.listening=false; end(); } },4000);
+  try{ start(); }catch(e){ err='audio-capture'; SCT.listening=false; end(); }
 }
-// Turn the mic off: send what was heard, or (closing Scout, switching to typing) don't.
-function scoutMicOff(send){
-  SCT.micWant=false; SCT.micSend=send;
-  if(send){ try{ SCT.rec?.stop(); }catch(e){} return; }   // onend sends what was heard
-  // Cancel: off right now on screen, and the phone's mic released, whatever the browser does next
-  SCT.micSid=(SCT.micSid||0)+1;
-  const r=SCT.rec; SCT.rec=null; SCT.listening=false;
-  try{ r?.abort(); }catch(e){ try{ r?.stop(); }catch(e2){} }
-  scoutMicUi();
+// Recording: the server turns it into words, every few seconds while you talk and once more at the end
+async function listenRec(m){
+  const lang=S.lang==='es'?'es':'en', type=['audio/webm;codecs=opus','audio/mp4','audio/webm'].find(t=>MediaRecorder.isTypeSupported?.(t))||'';
+  let stream=null, recd=null, chunks=[], said='', inflight=false, sent=0, voiced=false, quietAt=0, raf=0, tick=0, cap=0;
+  const t0=Date.now();
+  const release=()=>{ cancelAnimationFrame(raf); clearInterval(tick); clearTimeout(cap); try{ stream?.getTracks().forEach(t=>t.stop()); }catch(e){}
+    try{ m.src?.disconnect(); }catch(e){} $('#scMic')?.classList.remove('lvl'); };
+  const hear=async partial=>{
+    const blob=new Blob(chunks,{type:recd?.mimeType||type||'audio/mp4'});
+    const r=await fetch(`/api/scout/hear?lang=${lang}${partial?'&partial=1':''}`,{method:'POST',credentials:'same-origin',headers:{'Content-Type':blob.type||'application/octet-stream'},body:blob});
+    const j=await r.json().catch(()=>({error:`Server error (${r.status})`})); if(j.error) throw new Error(j.error); return j;
+  };
+  m.off=send=>{
+    m.send=send; m.want=false;
+    if(send&&recd&&recd.state!=='inactive'){ SCT.hearing=true; scoutMicUi(); try{ recd.stop(); return; }catch(e){} }   // onstop sends
+    release(); try{ recd?.state!=='inactive'&&recd?.stop(); }catch(e){} micDone(m,'','');
+  };
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
+  catch(e){ micBeep(false); SCT.listening=false; return micDone(m,'',/NotAllowed|Security/.test(e.name)?'not-allowed':'audio-capture'); }
+  if(SCT.mic!==m||!m.want){ stream.getTracks().forEach(t=>t.stop()); return; }   // turned off while the phone was asking
+  try{ recd=new MediaRecorder(stream, type?{mimeType:type}:undefined); }catch(e){ recd=new MediaRecorder(stream); }
+  recd.ondataavailable=e=>{ if(e.data?.size) chunks.push(e.data); };
+  recd.onstop=async()=>{
+    release();
+    if(SCT.mic!==m||!m.send){ SCT.hearing=false; scoutMicUi(); return; }
+    let err='';
+    if(chunks.length){ try{ said=((await hear(false)).text||'').trim(); }catch(e){ err='hear'; } }
+    SCT.hearing=false; micDone(m,said,err);
+  };
+  recd.start(1000);
+  // the ring around the mic moves with your voice; in driving mode a pause after talking sends it
+  try{ const C=SCT.ac, an=C.createAnalyser(); an.fftSize=512; m.src=C.createMediaStreamSource(stream); m.src.connect(an);
+    const buf=new Uint8Array(an.fftSize); $('#scMic')?.classList.add('lvl');
+    const loop=()=>{ an.getByteTimeDomainData(buf); let s=0; for(const v of buf) s+=(v-128)*(v-128); const lvl=Math.sqrt(s/buf.length)/128;
+      $('#scMic')?.style.setProperty('--lvl',Math.min(1,lvl*8).toFixed(2));
+      if(lvl>.04){ voiced=true; quietAt=0; } else if(voiced&&!quietAt) quietAt=Date.now();
+      if(SCT.driving&&m.want&&((voiced&&quietAt&&Date.now()-quietAt>1600)||(!voiced&&Date.now()-t0>8000))) return scoutMicOff(true);
+      raf=requestAnimationFrame(loop); };
+    loop(); }catch(e){}
+  tick=setInterval(async()=>{ if(inflight||!m.want||chunks.length===sent) return; inflight=true; sent=chunks.length;
+    try{ const j=await hear(true); if(!j.busy) micShow(m,(j.text||'').trim()); }catch(e){} inflight=false; },2500);
+  cap=setTimeout(()=>{ if(SCT.mic===m&&m.want) scoutMicOff(true); },120000);   // 2 minutes at most
 }
 // However Scout gets closed (✕, tap outside, swipe down, back, a button that moves on), the mic goes off with it
 new MutationObserver(()=>{ if($('#scoutBg').hidden&&SCT.listening&&!SCT.driving) scoutMicOff(false); })
   .observe($('#scoutBg'),{attributes:true, attributeFilter:['hidden']});
 function scoutMicUi(){
   $('#scMic')?.classList.toggle('on',SCT.listening); $('#scoutBtn').classList.toggle('listening',SCT.listening);
-  if($('#scMicL')&&!(SCT.listening&&/^“/.test($('#scMicL').textContent))) $('#scMicL').textContent=T(SCT.listening?'Listening… tap again when you’re done':SCT.busy?'Thinking…':'Tap to talk');
+  if($('#scMicL')&&!(SCT.listening&&/^“/.test($('#scMicL').textContent))) $('#scMicL').textContent=T(SCT.listening?'Listening… tap again when you’re done':SCT.hearing?'Got it, one sec…':SCT.busy?'Thinking…':'Tap to talk');
   if($('#scTypeBtn')) $('#scTypeBtn').textContent=T($('#scoutForm').hidden?'⌨️ Type instead':'🎤 Talk instead');
   $('#driveView').classList.toggle('listening',SCT.listening);
   $('#dvHint').textContent = SCT.listening ? '🎙️ Listening… tap to stop' : SCT.busy ? '🧭 Thinking…' : '🎤 Tap anywhere to talk';
@@ -4829,9 +4908,9 @@ function scoutTourEnd(){
   scoutHush(); scoutTalking(false); S.toured=true; save();
   if(was!=null&&AUTHED&&!S.lookOffered&&JSON.stringify(scS().look)===JSON.stringify(SC_DEFAULT)){ S.lookOffered=true; save(); setTimeout(scoutOfferLook,800); }
 }
-function openScoutVoice(){
+function openScoutVoice(quiet){
   scoutNudgeHide(); $('#scoutBg').hidden=false; renderScoutLog(); scoutFaces(); scoutMicUi();
-  if(SR&&!SCT.busy&&!SCT.listening&&$('#scoutForm').hidden) setTimeout(scoutListen,250);   // voice first: the tap that opened Scout lets the mic start
+  if(!quiet&&(SR||micRec())&&!SCT.busy&&!SCT.listening&&!SCT.mic&&$('#scoutForm').hidden) scoutListen();   // voice first, started inside the tap that opened Scout (phones only give the mic to a tap)
 }
 // "Need help? Talk to me!": Scout waves with a bubble when you've been idle on Home or the map. Never while driving or
 // with a sheet open; at most 3 a visit, 3 minutes apart; two ✕ in a day and it stays quiet till tomorrow.

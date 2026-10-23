@@ -30,10 +30,17 @@ FAKE_CLAUDE = File.join(dir, 'fake_claude')
 File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nFile.write(File.join(#{dir.inspect}, 'last_prompt.txt'), $stdin.read)\n" \
   "puts '{\"structured_output\":{\"say\":\"ok\",\"expression\":\"happy\",\"actions\":[]},\"duration_ms\":1,\"total_cost_usd\":0}'\n")
 File.chmod(0o755, FAKE_CLAUDE)
+# stand-ins for ffmpeg and whisper.cpp: the "conversion" keeps the bytes, the "transcription" says what it was asked
+FAKE_FFMPEG, FAKE_WHISPER = File.join(dir, 'fake_ffmpeg'), File.join(dir, 'fake_whisper')
+File.write(FAKE_FFMPEG, "#!/usr/bin/env ruby\nsrc = ARGV[ARGV.index('-i') + 1]\nFile.binwrite(ARGV.last, 'x' * 44 + \"\\0\" * 64_000) if File.size(src) > 500\n")
+File.write(FAKE_WHISPER, "#!/usr/bin/env ruby\nputs \" [BLANK_AUDIO] find tacos (music) lang=\#{ARGV[ARGV.index('-l') + 1]} ctx=\#{ARGV[ARGV.index('-ac') + 1]}\"\n")
+File.write(File.join(dir, 'fake_model.bin'), 'm')
+File.chmod(0o755, FAKE_FFMPEG, FAKE_WHISPER)
 pid = spawn({ 'PORT' => PORT.to_s, 'SQ_MODERATE' => '0', 'SQ_DEMO' => '0', 'SQ_PLACES_FILE' => 'test_places.json', 'SQ_OUTDOORS_FILE' => 'test_outdoors.json',
               'SQ_SIGHTS_FILE' => 'test_sights.json', 'SQ_EVENTS_API' => "http://127.0.0.1:#{EV_PORT}", 'SQ_ADMIN_TOKEN' => 'adm',
               'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_PLACES_KEY' => nil, 'SQ_GOOGLE_TTS_KEY' => nil, 'SQ_PUSH_TEST_HOST' => "127.0.0.1:#{EV_PORT}",
-              'SQ_ENGINE' => 'cli', 'CLAUDE_BIN' => FAKE_CLAUDE, 'SQ_USE_API_KEY' => nil },
+              'SQ_ENGINE' => 'cli', 'CLAUDE_BIN' => FAKE_CLAUDE, 'SQ_USE_API_KEY' => nil,
+              'SQ_FFMPEG_BIN' => FAKE_FFMPEG, 'SQ_WHISPER_BIN' => FAKE_WHISPER, 'SQ_WHISPER_MODEL' => File.join(dir, 'fake_model.bin') },
             'ruby', 'server.rb', chdir: dir, out: log, err: log)
 at_exit { Process.kill('TERM', pid) rescue nil; FileUtils.rm_rf(dir) }
 
@@ -46,7 +53,7 @@ class Who
       q = m == :get ? Net::HTTP::Get.new(u) : Net::HTTP::Post.new(u, 'Content-Type' => 'application/json')
       q['Cookie'] = "sq_s=#{@c}" if @c
       hdr.each { |k, v| q[k] = v }
-      q.body = JSON.generate(body) if body
+      q.body = body.is_a?(String) ? body : JSON.generate(body) if body
       http.request(q)
     end
     @c = r['Set-Cookie'][/sq_s=([^;]+)/, 1] if r['Set-Cookie'].to_s.include?('sq_s=')
@@ -280,6 +287,19 @@ t('deleting an account removes its notifications, quests and saves') {
   d = JSON.parse(File.read(File.join($dir, 'data', 'app.json')))
   check(!(d['quest'] || {}).key?('amy_v2') && !(d['saves'] || {}).key?('amy_v2') && !(d['notifs'] || {}).key?('amy_v2') && !(d['taste'] || {}).key?('amy_v2') &&
         (d['notifs'] || {}).values.flatten.none? { |n| n['from'] == 'amy_v2' }, d.slice('quest', 'saves').keys)
+}
+
+t('Scout\'s ears: a recording becomes text on the server (signed in only), cleaned of [BLANK_AUDIO]-style marks') {
+  audio = 'a' * 4000
+  guest = Who.new('nobody'); ears = Who.new('ears_v2'); ears.signup
+  cg, = guest.req(:post, '/api/scout/hear?lang=en', audio, 'Content-Type' => 'audio/mp4')
+  c1, j1 = ears.req(:post, '/api/scout/hear?lang=es', audio, 'Content-Type' => 'audio/mp4')
+  c2, j2 = ears.req(:post, '/api/scout/hear?lang=xx&partial=1', audio, 'Content-Type' => 'audio/webm')
+  c3, = ears.req(:post, '/api/scout/hear', 'a' * 50, 'Content-Type' => 'audio/mp4')
+  c4, j4 = ears.req(:post, '/api/scout/hear', 'a' * 300, 'Content-Type' => 'audio/mp4')   # unreadable: ffmpeg makes nothing
+  cfg = Net::HTTP.get(URI("#{BASE}/config.js"))
+  check(cg == 401 && c1 == 200 && j1['text'] == 'find tacos lang=es ctx=256' && c2 == 200 && j2['text'] == 'find tacos lang=en ctx=256' &&
+        c3 == 400 && c4 == 400 && j4['error'] =~ /couldn't read/ && cfg.include?('"hear":true'), [cg, c1, j1, c2, j2, c3, c4, j4, cfg[0, 80]])
 }
 
 # ---- live safety on the server: a second copy with screening ON and Claude unreachable (hard rules decide)

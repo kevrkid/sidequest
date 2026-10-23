@@ -332,6 +332,13 @@ GOOGLE_TTS_KEY = ENV['SQ_GOOGLE_TTS_KEY'].to_s
 TTS_DAILY_CHARS = (ENV['SQ_TTS_DAILY_CHARS'] || 30_000).to_i
 SCOUT_VOICES = %w[Puck Fenrir Achird Charon Orus Zephyr Aoede Leda Kore Sulafat].to_h { |v| [v.downcase, v] }.freeze   # Chirp 3 HD, English and Spanish
 SCOUT_LANGS = { 'en' => 'en-US', 'es' => 'es-US' }.freeze
+# Scout's ears for phones whose own speech recognition doesn't work: whisper.cpp on this server turns a mic recording
+# into words (deploy/install.sh installs it). The audio goes to a temp folder and is deleted as soon as it's read.
+WHISPER_BIN = ENV['SQ_WHISPER_BIN'] || '/usr/bin/whisper-cli'
+WHISPER_MODEL = ENV['SQ_WHISPER_MODEL'] || '/opt/sidequest/whisper/ggml-base-q5_1.bin'
+FFMPEG_BIN = ENV['SQ_FFMPEG_BIN'] || '/usr/bin/ffmpeg'
+HEAR = File.executable?(WHISPER_BIN) && File.executable?(FFMPEG_BIN) && File.file?(WHISPER_MODEL)
+HEAR_LOCK = Mutex.new   # one at a time: the box has two cores
 TTS = { lock: Mutex.new, day: nil, chars: 0, cache: {} }
 SCOUT_FILES = %w[scout_personality.md scout_knowledge.md].map { |f| File.join(ROOT, f) }
 SCOUT_TARGETS = /\A[a-z0-9_]{1,30}\z/
@@ -1037,6 +1044,44 @@ ONLINE_MS = 3 * 60 * 1000
 GEO_CACHE = {}
 GEO_LOCK = Mutex.new
 
+# Run a command for at most `secs` seconds: [stdout, success?]
+def run_timed(cmd, secs)
+  r, w = IO.pipe
+  pid = Process.spawn(*cmd, out: w, err: File::NULL, in: File::NULL, pgroup: true)
+  w.close
+  out = Thread.new { r.read }
+  waiter = Thread.new { Process.wait2(pid)[1] }
+  unless waiter.join(secs)
+    Process.kill('KILL', -pid) rescue nil
+    waiter.join(2)
+    raise 'That took too long. Try a shorter message.'
+  end
+  [out.value.to_s, waiter.value.success?]
+ensure
+  r&.close unless r&.closed?
+end
+
+# A recording (whatever the phone made: webm, mp4...) to text. nil when wait: false and another one is running.
+def hear(audio, lang, wait: true)
+  return nil unless wait ? HEAR_LOCK.lock : HEAR_LOCK.try_lock
+  begin
+    Dir.mktmpdir('sq-hear') do |dir|
+      src, wav = File.join(dir, 'in'), File.join(dir, 'a.wav')
+      File.binwrite(src, audio)
+      _, ok = run_timed([FFMPEG_BIN, '-loglevel', 'error', '-y', '-i', src, '-t', '125', '-ar', '16000', '-ac', '1', '-f', 'wav', wav], 20)
+      raise "I couldn't read that recording." unless ok && File.size?(wav)
+      secs = (File.size(wav) - 44) / 32_000.0
+      return '' if secs < 0.4
+      ctx = secs > 27 ? 1500 : [((secs + 2) * 50).ceil, 256].max   # only as much of Whisper's 30-second window as the clip needs: much faster
+      out, ok = run_timed([WHISPER_BIN, '-m', WHISPER_MODEL, '-l', lang, '-t', '2', '-ac', ctx.to_s, '-nt', '-np', '-f', wav], 60)
+      raise "I couldn't make out the words." unless ok
+      out.gsub(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/, ' ').gsub(/\s+/, ' ').strip[0, 600]   # [BLANK_AUDIO], (music)...
+    end
+  ensure
+    HEAR_LOCK.unlock
+  end
+end
+
 # One JSON route. auth: require a signed-in user. Same-origin only (blocks cross-site form posts).
 def route(server, path, auth: true, get: false, raw: false, &blk)
   server.mount_proc(path) do |req, res|
@@ -1110,7 +1155,7 @@ def mount_app(server)
   server.mount_proc('/config.js') do |_req, res|
     res['Content-Type'] = 'application/javascript'
     res['Cache-Control'] = 'no-cache'
-    res.body = "window.SQ_CONFIG=#{JSON.generate(demo: DEMO, beta: BETA, invite: INVITES.any?, terms: TERMS_VERSION, livekit: LIVEKIT, google: GOOGLE, gmapKey: GOOGLE_MAPS_KEY, gclient: GOOGLE_CLIENT_ID, voice: !GOOGLE_TTS_KEY.empty?, vapid: (vapid_public rescue nil))};"
+    res.body = "window.SQ_CONFIG=#{JSON.generate(demo: DEMO, beta: BETA, invite: INVITES.any?, terms: TERMS_VERSION, livekit: LIVEKIT, google: GOOGLE, gmapKey: GOOGLE_MAPS_KEY, gclient: GOOGLE_CLIENT_ID, voice: !GOOGLE_TTS_KEY.empty?, hear: HEAR, vapid: (vapid_public rescue nil))};"
   end
 
   server.mount_proc('/api/health') do |_req, res|
@@ -2092,6 +2137,18 @@ def mount_routes(server)
     { audio: tts(text, voice, SCOUT_LANGS.key?(b['lang']) ? b['lang'] : 'en') }
   end
 
+  # Scout's ears: a mic recording becomes text (see HEAR). partial=1 while you're still talking: skipped when busy.
+  route(server, '/api/scout/hear', raw: true) do |_b, h, req|
+    raise 'Listening is not set up here.' unless HEAR
+    limit!("hear:#{h}", 600, 3600)
+    q = WEBrick::HTTPUtils.parse_query(req.query_string.to_s)
+    audio = req.body.to_s
+    raise 'Nothing was recorded.' if audio.bytesize < 100
+    raise 'That recording is too long.' if audio.bytesize > 5_000_000
+    text = hear(audio, SCOUT_LANGS.key?(q['lang']) ? q['lang'] : 'en', wait: q['partial'] != '1')
+    text.nil? ? { busy: true } : { text: text }
+  end
+
   # Design-your-assistant: a description becomes look parts. The look stays on the person's device.
   route(server, '/api/scout/look') do |b, h|
     desc = b['desc'].to_s.strip[0, 200]
@@ -2199,6 +2256,7 @@ puts "Side Quest -> http://localhost:#{PORT}  (engine: #{ENGINE == 'api' ? 'Anth
 puts "  mode: #{BETA ? 'PUBLIC BETA' : 'local'} · demo content #{DEMO ? 'on' : 'off'} · sign-up #{INVITES.any? ? "invite-only (#{INVITES.size} codes)" : 'open'}" \
      " · moderation #{MODERATE ? 'on' : 'OFF'} · admin #{ADMIN_TOKEN.empty? ? 'off' : 'on at /admin'}" \
      " · Claude billed to #{ENGINE == 'api' || ENV['SQ_USE_API_KEY'] == '1' ? 'API key' : 'your subscription'}"
+puts "  scout ears: #{HEAR ? 'whisper.cpp on this server (for phones without working speech recognition)' : "the browser's own (no whisper.cpp)"}"
 puts "  scout voice: #{GOOGLE_TTS_KEY.empty? ? "the phone's own (no SQ_GOOGLE_TTS_KEY)" : "Google (up to #{TTS_DAILY_CHARS} characters a day)"}"
 puts "  sign in with Google: #{GOOGLE_CLIENT_ID.empty? ? 'off (no SQ_GOOGLE_CLIENT_ID)' : 'on'}"
 puts "  map tiles: #{GOOGLE_MAPS_KEY.empty? ? 'OpenStreetMap' : 'Google (Map Tiles API), OpenStreetMap if that fails'}"
