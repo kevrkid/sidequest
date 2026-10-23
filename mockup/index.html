@@ -538,7 +538,9 @@
   .scm.wait{color:var(--muted)}
   #scoutChips .ichip{white-space:nowrap;flex:none}
   #scoutForm{gap:6px} #scoutForm input{flex:1;min-width:0}
-  #scMic.on{background:#ff5a5f;color:#fff;border-color:#ff5a5f}
+  #scMic.on{background:#ff5a5f;color:#fff;border-color:#ff5a5f;animation:micpulse 1.2s ease-in-out infinite}
+  #scMic.on i{font-size:0} #scMic.on i::after{content:'';display:inline-block;width:26px;height:26px;border-radius:6px;background:#fff}   /* a stop square while on */
+  @keyframes micpulse{50%{box-shadow:0 0 0 12px #ff5a5f33}}
   #scoutRing{position:absolute;z-index:905;border:3px solid var(--accent2);border-radius:14px;pointer-events:none;
     box-shadow:0 0 0 4px #2ec5ff44,0 0 24px #2ec5ff;animation:scring 1.1s ease-in-out infinite}
   @keyframes scring{50%{box-shadow:0 0 0 11px #2ec5ff18,0 0 34px #2ec5ff}}
@@ -1021,7 +1023,7 @@ const ES = {
   'Plan dinner and drinks':'Planea cena y tragos', '💾 Save to my plans':'💾 Guardar en mis planes', '🗺 Map':'🗺 Mapa', '📅 Calendar':'📅 Calendario',
   '↗ Share':'↗ Compartir', 'Close':'Cerrar', 'None yet. Ask Scout to plan something, then tap Save.':'Todavía nada. Pídele a Scout que planee algo y toca Guardar.',
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
-  'Tap to talk':'Toca para hablar', 'Listening… tap to stop':'Escuchando… toca para parar', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
+  'Tap to talk':'Toca para hablar', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
   '🎤 Talk instead':'🎤 Hablar', 'Ask about the app, or what\'s the move…':'Pregunta sobre la app o qué hay que hacer…', 'Ask':'Preguntar',
   'Your guide to Side Quest':'Tu guía de Side Quest', 'Need help? Talk to me! 🎤':'¿Necesitas ayuda? ¡Háblame! 🎤',
   'Ask me what\'s the move tonight 🌙':'Pregúntame qué hacer esta noche 🌙', 'Want me to plan your night? Just say it ✨':'¿Planeo tu noche? Solo dímelo ✨',
@@ -3344,7 +3346,7 @@ try{ history.replaceState({t:'home'},''); }catch(e){}
 // Pull a sheet down to close it (from its top, or anywhere once it's scrolled to the top); flick up on the name menu.
 function closeSheetBg(bg){
   if(bg.id==='camBg') return closeCam();
-  if(bg.id==='scoutBg'&&SCT.listening) try{ SCT.rec?.stop(); }catch(e){}
+  if(bg.id==='scoutBg'&&SCT.listening) scoutMicOff(false);
   bg.hidden=true;
 }
 (()=>{
@@ -4541,24 +4543,47 @@ function browserSpeak(plain, loud){
   speechSynthesis.speak(u);
 }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+// The mic is a toggle, like a walkie-talkie: tap on, talk as long as you like (pauses are fine), tap off to send.
+// Browsers end a recognition session at a pause, so while it's on we quietly start a new one and keep the words.
+// Driving mode stays hands-free: it sends at the first pause.
 function scoutListen(){
-  if(SCT.listening){ try{ SCT.rec?.stop(); }catch(e){} return; }
+  if(SCT.listening) return scoutMicOff(true);
   if(!SR){ const m=S.lang==='es'?'Este navegador todavía no me escucha. Escribe abajo o prueba Chrome o Safari.':"This browser can't hear me talk yet. Type instead, or try Chrome or Safari.";
     if(!SCT.driving){ $('#scoutForm').hidden=false; $('#scTypeBtn').hidden=true; $('#scMicL').textContent=T("Voice isn't available in this browser, so type below."); }
     if(SCT.driving){ $('#dvSay').textContent=m; return scoutSpeak(m,true); } return toast('🎤 '+m,'orange'); }
   scoutHush(); scoutTalking(false);
-  const r=new SR(); SCT.rec=r; r.lang=S.lang==='es'?'es-US':'en-US'; r.interimResults=true; r.maxAlternatives=1;
-  let said='';
-  r.onresult=e=>{ said=[...e.results].map(x=>x[0].transcript).join(' ').trim();
-    if(SCT.driving) $('#dvSay').textContent='“'+said+'”'; else { $('#scoutIn').value=said; $('#scMicL').textContent='“'+said+'”'; } };
-  r.onerror=e=>{ if(e.error==='not-allowed') toast('🎤 Allow the microphone for this site to talk to Scout.','orange'); };
-  r.onend=()=>{ SCT.listening=false; scoutMicUi(); if(said){ if(!SCT.driving) $('#scoutIn').value=''; scoutAsk(said,true); } };
+  const toggle=!SCT.driving, until=Date.now()+120000;   // 2 minutes at most, in case it's left on
+  let kept='', said='';
+  SCT.micWant=true; SCT.micSend=true;
+  const finish=()=>{
+    SCT.listening=false; SCT.rec=null; scoutMicUi();
+    if(!said) return;
+    if(SCT.micSend){ if(!SCT.driving) $('#scoutIn').value=''; scoutAsk(said,true); }
+    else if(!SCT.driving) $('#scoutIn').value=said;   // switched to typing: keep the words to edit
+  };
+  const start=()=>{
+    const r=new SR(); SCT.rec=r; r.lang=S.lang==='es'?'es-US':'en-US'; r.interimResults=true; r.maxAlternatives=1; r.continuous=toggle;
+    r.onresult=e=>{ said=(kept+' '+[...e.results].map(x=>x[0].transcript).join(' ')).trim();
+      if(SCT.driving) $('#dvSay').textContent='“'+said+'”'; else { $('#scoutIn').value=said; $('#scMicL').textContent='“'+said+'”'; } };
+    r.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ SCT.micWant=false; toast('🎤 Allow the microphone for this site to talk to Scout.','orange'); } };
+    r.onend=()=>{
+      kept=said;
+      if(toggle&&SCT.micWant&&Date.now()<until){ try{ start(); return; }catch(e){} }   // still on: keep listening
+      finish();
+    };
+    r.start();
+  };
   SCT.listening=true; scoutMicUi(); scoutEx('surprised');
-  try{ r.start(); }catch(e){ SCT.listening=false; scoutMicUi(); }
+  try{ start(); }catch(e){ SCT.listening=false; SCT.rec=null; scoutMicUi(); }
+}
+// Turn the mic off: send what was heard, or (closing Scout, switching to typing) don't.
+function scoutMicOff(send){
+  SCT.micWant=false; SCT.micSend=send;
+  try{ SCT.rec?.stop(); }catch(e){}
 }
 function scoutMicUi(){
   $('#scMic')?.classList.toggle('on',SCT.listening); $('#scoutBtn').classList.toggle('listening',SCT.listening);
-  if($('#scMicL')&&!(SCT.listening&&/^“/.test($('#scMicL').textContent))) $('#scMicL').textContent=T(SCT.listening?'Listening… tap to stop':SCT.busy?'Thinking…':'Tap to talk');
+  if($('#scMicL')&&!(SCT.listening&&/^“/.test($('#scMicL').textContent))) $('#scMicL').textContent=T(SCT.listening?'Listening… tap again when you’re done':SCT.busy?'Thinking…':'Tap to talk');
   if($('#scTypeBtn')) $('#scTypeBtn').textContent=T($('#scoutForm').hidden?'⌨️ Type instead':'🎤 Talk instead');
   $('#driveView').classList.toggle('listening',SCT.listening);
   $('#dvHint').textContent = SCT.listening ? '🎙️ Listening… tap to stop' : SCT.busy ? '🧭 Thinking…' : '🎤 Tap anywhere to talk';
@@ -4861,7 +4886,7 @@ function scoutDrive(on, auto){
   if(on){ ['scoutBg','lookBg','sheetBg','createBg','searchBg','actBg','storyBg','feedSheetBg','groupBg','groupsBg'].forEach(id=>{ const el=$('#'+id); if(el) el.hidden=true; });
     scoutEx('calm'); const m=auto?"Looks like you're driving, so I switched to voice only. Tap anywhere to talk to me.":"Driving mode is on. Eyes on the road, tap anywhere to talk to me.";
     $('#dvSay').textContent=m; if(auto) toast('🚗 '+esc(m),'',[],5000); else scoutSpeak(m,true); }   // switched on by itself: a message, not a voice out of nowhere
-  else { scoutHush(); try{ SCT.rec?.stop(); }catch(e){} scoutTalking(false); scoutEx('happy');
+  else { scoutHush(); scoutMicOff(false); scoutTalking(false); scoutEx('happy');
     if(SCT.saved.length){ const list=SCT.saved.splice(0);
       toast(`🧭 <b>${esc(scS().name)} saved ${list.length} spot${list.length>1?'s':''}</b> while you were driving.`,'',[{l:'Show me',cls:'primary',f:()=>scoutDo(list.slice(0,3),'Here\'s what I found while you were driving.')}],9000); } }
   scoutMicUi();
@@ -4929,7 +4954,7 @@ document.addEventListener('click',e=>{
   if(a==='close') $('#scoutBg').hidden=true;
   if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
   if(a==='mic') scoutListen();
-  if(a==='type'){ const f=$('#scoutForm'); f.hidden=!f.hidden; if(SCT.listening) try{ SCT.rec?.stop(); }catch(e){} scoutMicUi(); if(!f.hidden) $('#scoutIn').focus(); }
+  if(a==='type'){ const f=$('#scoutForm'); f.hidden=!f.hidden; if(SCT.listening) scoutMicOff(false); scoutMicUi(); if(!f.hidden) $('#scoutIn').focus(); }
   if(a==='drive') scoutDrive(true,false);
   if(a==='driveoff') scoutDrive(false);
   if(a==='passenger'){ SCT.passengerUntil=Date.now()+30*60000; scoutDrive(false); toast("👍 Got it, you're a passenger. I won't switch to driving mode for 30 minutes.",'',[],3500); }
