@@ -5,7 +5,7 @@ set -e
 [ -n "$1" ] || { echo "usage: $0 user@host"; exit 1; }
 here="$(cd "$(dirname "$0")/.." && pwd)"
 ssh "$1" 'mkdir -p /opt/sidequest/app /opt/sidequest/events /opt/sidequest/deploy'
-rsync -az --delete --exclude data/ --exclude '*.py' "$here/mockup/" "$1:/opt/sidequest/app/"
+rsync -az --delete --exclude data/ --exclude '*.py' --exclude lens_test/ "$here/mockup/" "$1:/opt/sidequest/app/"
 # Map data made on this Mac (sights, parks, markets, neighborhoods, popularity, event spots): never the users' data,
 # never --delete, and --update so the server's newer copy (the weekly places refresh) isn't rolled back
 (cd "$here/mockup/data" && rsync -az --update areas.json markets.json outdoors.json places.json popular.json sights.json geofix.json "$1:/opt/sidequest/app/data/")
