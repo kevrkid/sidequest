@@ -4398,7 +4398,7 @@ const SC_FACES = ['happy','thinking','surprised','laughing','confused','excited'
 const SC_EMO = {happy:'😊',thinking:'🤔',surprised:'😮',laughing:'😂',confused:'😕',excited:'🤩',calm:'😌'};
 function scS(){   // Scout's saved settings live in S (this device only); S can be replaced at sign-up
   S.scout = {name:'Scout', voice:false, log:[], autoDrive:true, ...(S.scout||{})};
-  if(!S.scout.quietV3){ S.scout.voice=false; S.scout.quietV3=true; }   // spoken questions get spoken answers; 🔊 also reads typed ones
+  if(!S.scout.voiceV4){ S.scout.voice=true; S.scout.voiceV4=true; }   // Scout reads every answer aloud (at the phone's volume); 🔇 mutes him
   S.scout.look = {...SC_DEFAULT, ...(S.scout.look||{})};
   return S.scout;
 }
@@ -4554,8 +4554,10 @@ function scoutListen(){
   scoutHush(); scoutTalking(false);
   const toggle=!SCT.driving, until=Date.now()+120000;   // 2 minutes at most, in case it's left on
   let kept='', said='';
+  const sid=SCT.micSid=(SCT.micSid||0)+1;   // a newer session (or turning it off) makes this one's late events no-ops
   SCT.micWant=true; SCT.micSend=true;
   const finish=()=>{
+    if(sid!==SCT.micSid) return;
     SCT.listening=false; SCT.rec=null; scoutMicUi();
     if(!said) return;
     if(SCT.micSend){ if(!SCT.driving) $('#scoutIn').value=''; scoutAsk(said,true); }
@@ -4563,10 +4565,11 @@ function scoutListen(){
   };
   const start=()=>{
     const r=new SR(); SCT.rec=r; r.lang=S.lang==='es'?'es-US':'en-US'; r.interimResults=true; r.maxAlternatives=1; r.continuous=toggle;
-    r.onresult=e=>{ said=(kept+' '+[...e.results].map(x=>x[0].transcript).join(' ')).trim();
+    r.onresult=e=>{ if(sid!==SCT.micSid) return; said=(kept+' '+[...e.results].map(x=>x[0].transcript).join(' ')).trim();
       if(SCT.driving) $('#dvSay').textContent='“'+said+'”'; else { $('#scoutIn').value=said; $('#scMicL').textContent='“'+said+'”'; } };
     r.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ SCT.micWant=false; toast('🎤 Allow the microphone for this site to talk to Scout.','orange'); } };
     r.onend=()=>{
+      if(sid!==SCT.micSid) return;
       kept=said;
       if(toggle&&SCT.micWant&&Date.now()<until){ try{ start(); return; }catch(e){} }   // still on: keep listening
       finish();
@@ -4579,8 +4582,16 @@ function scoutListen(){
 // Turn the mic off: send what was heard, or (closing Scout, switching to typing) don't.
 function scoutMicOff(send){
   SCT.micWant=false; SCT.micSend=send;
-  try{ SCT.rec?.stop(); }catch(e){}
+  if(send){ try{ SCT.rec?.stop(); }catch(e){} return; }   // onend sends what was heard
+  // Cancel: off right now on screen, and the phone's mic released, whatever the browser does next
+  SCT.micSid=(SCT.micSid||0)+1;
+  const r=SCT.rec; SCT.rec=null; SCT.listening=false;
+  try{ r?.abort(); }catch(e){ try{ r?.stop(); }catch(e2){} }
+  scoutMicUi();
 }
+// However Scout gets closed (✕, tap outside, swipe down, back, a button that moves on), the mic goes off with it
+new MutationObserver(()=>{ if($('#scoutBg').hidden&&SCT.listening&&!SCT.driving) scoutMicOff(false); })
+  .observe($('#scoutBg'),{attributes:true, attributeFilter:['hidden']});
 function scoutMicUi(){
   $('#scMic')?.classList.toggle('on',SCT.listening); $('#scoutBtn').classList.toggle('listening',SCT.listening);
   if($('#scMicL')&&!(SCT.listening&&/^“/.test($('#scMicL').textContent))) $('#scMicL').textContent=T(SCT.listening?'Listening… tap again when you’re done':SCT.busy?'Thinking…':'Tap to talk');
