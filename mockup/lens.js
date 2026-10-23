@@ -547,10 +547,14 @@ function open(opts={}){
     if(txt){
       const s=Math.hypot(st.pose.a,st.pose.b)||1, min=10/s; let fs=Math.max(min,Math.min(eh/it.lines*.78,eh*.9));
       el.style.fontSize=fs+'px';
-      for(let i=0;i<40&&fs>min&&(el.scrollWidth>el.clientWidth+1||el.offsetHeight>eh*1.06);i++){ fs=Math.max(min,fs*.93); el.style.fontSize=fs+'px'; }
+      const over=()=>el.scrollWidth>el.clientWidth+1||el.offsetHeight>eh*1.06;
+      if(over()) el.style.width=ew*1.35+'px';   // a longer translation may run a bit past the original line before it shrinks
+      for(let i=0;i<40&&fs>min&&over();i++){ fs=Math.max(min,fs*.93); el.style.fontSize=fs+'px'; }
     }
-    it.eh=el.offsetHeight; it.mode=mode; it.dirty=false;
+    it.eh=el.offsetHeight; it.ew=el.offsetWidth; el.dataset.w=Math.round(ew); it.mode=mode; it.dirty=false;   // data-w: the original line's width (tests)
   }
+  // where the box's own corner sits: the original line's start stays put and a wider box runs on the way the text reads
+  const el0 = it => it.el.dir==='rtl' ? it.ew-it.w*st.sc/2 : it.w*st.sc/2;
   function render(){
     if(st.closed) return;
     const W=root.clientWidth, H=root.clientHeight, vw=video.videoWidth, vh=video.videoHeight;
@@ -563,7 +567,7 @@ function open(opts={}){
         if(!it.el){ it.el=document.createElement('div'); it.el.dataset.id=it.id; layer.appendChild(it.el); it.dirty=true; }
         if(it.dirty||it.mode!==mode) fit(it, mode);
         const c=Math.cos(it.th), s=Math.sin(it.th), ma=P.a*c-P.b*s, mb=P.a*s+P.b*c, [px,py]=app(P,it.x,it.y);
-        const hw=it.w*sc/2, hh=it.eh/2, e=px*sc+ox-(ma*hw-mb*hh), f=py*sc+oy-(mb*hw+ma*hh);
+        const hw=el0(it), hh=it.eh/2, e=px*sc+ox-(ma*hw-mb*hh), f=py*sc+oy-(mb*hw+ma*hh);
         it.el.style.transform=`matrix(${ma.toFixed(5)},${mb.toFixed(5)},${(-mb).toFixed(5)},${ma.toFixed(5)},${e.toFixed(1)},${f.toFixed(1)})`;
         const on=!!mode; it.el.classList.toggle('on',on);
         if(on&&mode!=='wait') any=true;

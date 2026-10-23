@@ -23,9 +23,10 @@ MEASURE = r"""
       for(const b of document.querySelectorAll('.lz-box.on:not(.wait)')){
         const t=norm(b.textContent), ids=T.lines.map((l,j)=>t.includes(norm(l.text))?j:-1).filter(j=>j>=0); if(!ids.length) continue;
         let X0=1e9,Y0=1e9,X1=-1e9,Y1=-1e9; for(const j of ids){ const l=T.lines[j]; X0=Math.min(X0,l.x0); Y0=Math.min(Y0,l.y0); X1=Math.max(X1,l.x1); Y1=Math.max(Y1,l.y1); row.lines[j].covered=true; }
-        const [ex,ey]=scr((X0+X1)/2,(Y0+Y1)/2), r=b.getBoundingClientRect(), m=new DOMMatrix(getComputedStyle(b).transform);
+        const [ex,ey]=scr((X0+X1)/2,(Y0+Y1)/2), m=new DOMMatrix(getComputedStyle(b).transform), ow=+b.dataset.w||b.offsetWidth;
+        const lc=m.transformPoint(new DOMPoint(b.dir==='rtl'?b.offsetWidth-ow/2:ow/2, b.offsetHeight/2)), r={left:lc.x-.5,top:lc.y-.5,width:1,height:1};   // centre of the original line's span
         const l0=T.lines[ids[0]], ew=(ids.length>1?X1-X0:Math.hypot(l0.x1-l0.x0,0)*(l0.rot?Math.cos(l0.rot):1))*z*k*sc;
-        row.boxes.push({text:b.textContent, sign:l0.sign, n:ids.length, err:Math.hypot(r.left+r.width/2-ex, r.top+r.height/2-ey), size:b.offsetWidth*Math.hypot(m.a,m.b)/ew,
+        row.boxes.push({text:b.textContent, sign:l0.sign, n:ids.length, err:Math.hypot(r.left+r.width/2-ex, r.top+r.height/2-ey), size:ow*Math.hypot(m.a,m.b)/ew,
           angErr:Math.abs(Math.atan2(m.b,m.a)-(l0.rot+rot))*180/Math.PI});
       }
       out.push(row); };
