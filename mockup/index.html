@@ -320,6 +320,8 @@
   .mnit p{margin:3px 0 0;color:var(--muted);font-size:14.5px;line-height:1.4}
   .mnit .pr{font-size:16.5px;font-weight:800;color:var(--good);white-space:nowrap}
   .mnwait{text-align:center;padding:34px 10px}
+  .mnmore{display:flex;align-items:center;gap:10px;justify-content:center;padding:14px 0;color:var(--muted)}
+  .mnmore i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:mnspin .9s linear infinite}
   .mnwait i{display:block;width:34px;height:34px;margin:0 auto 14px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:mnspin .9s linear infinite}
   @keyframes mnspin{to{transform:rotate(360deg)}}
   #toasts{position:absolute;top:64px;left:12px;right:12px;z-index:800;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -1053,7 +1055,7 @@ const ES = {
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
   'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Make me yours':'Hazme tuyo', 'Tour':'Recorrido', 'Live Translate':'Traducir en vivo', 'What is this?':'¿Qué es esto?', 'Point at a building, landmark, storefront or dish':'Apunta a un edificio, monumento, negocio o platillo',
   'Opening the camera. Point it at what you want to know about and tap the button.':'Abriendo la cámara. Apunta a lo que quieras conocer y toca el botón.',
-  'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Checking the place's own website first, then other menu sources. The first look can take up to a minute.":'Primero revisamos el sitio del lugar y luego otras fuentes de menús. La primera vez puede tardar hasta un minuto.',
+  'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Reading the place's own menu. Dishes show up here as they're found.":'Leyendo el menú del lugar. Los platos aparecen aquí a medida que se encuentran.', 'Reading the rest of the menu…':'Leyendo el resto del menú…', "Checking the place's own website first, then other menu sources. The first look can take up to a minute.":'Primero revisamos el sitio del lugar y luego otras fuentes de menús. La primera vez puede tardar hasta un minuto.',
   'Make a free account to see full menus':'Crea una cuenta gratis para ver menús completos', 'Try again':'Intentar de nuevo', 'The menu is taking too long.':'El menú está tardando demasiado.',
   "Couldn't look up the menu just now.":'No pudimos buscar el menú ahora.', "Couldn't find a menu online for this place.":'No encontramos un menú en línea para este lugar.',
   'Their website or Google Maps may have photos of it.':'Puede que su sitio o Google Maps tengan fotos del menú.', '🔎 Find a dish or drink…':'🔎 Busca un platillo o bebida…',
@@ -1951,6 +1953,7 @@ function marketPopup(m){
 async function placePopup(id, ll){
   const pop=L.popup({offset:[0,-4]}).setLatLng(ll).setContent('<p class="skel">…</p>').openOn(map);
   try{ const j=await (await fetch(`/api/place?id=${encodeURIComponent(id)}&${nearParam()}`)).json(); const p=j.place; if(!p) throw 0;
+    if(FOOD_KINDS.test(p.kind||'restaurant')) menuWarm(p.id);
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}</div>
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
@@ -2035,26 +2038,36 @@ const FOOD_KINDS=/restaurant|fast food|food truck|truck park|food hall|bakery|ic
 const menuBtn = p => FOOD_KINDS.test(p.kind||'restaurant') ? `<button class="btn sm primary" data-pmenu="${esc(p.id)}" data-pname="${esc(p.name)}">🍽️ ${T('Menu')}</button>` : '';
 const telOf = s => String(s).split(/[;,]/)[0].replace(/[^\d+]/g,'');
 const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return ''; } };
+// Start reading a place's menu as soon as its popup or row shows, so Menu is usually instant (signed in: it's Claude).
+const MENU_WARM=new Set();
+function menuWarm(id){
+  if(!AUTHED||(MENU[id]&&!MENU[id].partial)||MENU_WARM.has(id)||MENU_WARM.size>40) return; MENU_WARM.add(id);
+  fetch(`/api/place/menu?id=${encodeURIComponent(id)}&warm=1`,{credentials:'same-origin'}).then(r=>r.json()).then(j=>{ if(j.menu&&!j.pending) MENU[id]=j.menu; }).catch(()=>{});
+}
 async function openMenu(id, name, retry){
-  const bg=$('#menuBg'), sh=$('#menuSheet'); sh.dataset.id=id; sh.dataset.name=name; bg.hidden=false; sh.scrollTop=0;
+  const bg=$('#menuBg'), sh=$('#menuSheet'); sh.dataset.id=id; sh.dataset.name=name; bg.hidden=false; sh.scrollTop=0; sh.dataset.partial='';
   const head=`<div class="mnhead"><div class="row"><b class="grow" style="font-size:20px">🍽️ ${esc(name)}</b><button class="btn sm" data-menuclose>✕</button></div></div>`;
-  if(MENU[id]) return renderMenu();
+  if(MENU[id]&&!MENU[id].partial&&!retry) return renderMenu();
   track('menu_open');
   sh.innerHTML=head+`<div class="mnwait"><i></i><b style="font-size:17px">${T('Finding the menu…')}</b>
-    <p class="meta">${T("Checking the place's own website first, then other menu sources. The first look can take up to a minute.")}</p></div>`;
+    <p class="meta">${T("Reading the place's own menu. Dishes show up here as they're found.")}</p></div>`;
   const t0=Date.now();
   for(;;){
     let j; try{ j=await (await fetch(`/api/place/menu?id=${encodeURIComponent(id)}${retry?'&retry=1':''}`,{credentials:'same-origin'})).json(); }catch(e){ j={error:T("Couldn't reach Side Quest. Check your connection.")}; }
     retry=false;
     if(bg.hidden||sh.dataset.id!==id) return;   // closed, or another menu opened
-    if(j.menu){ MENU[id]=j.menu; return renderMenu(); }
+    if(j.menu&&!j.pending){ MENU[id]=j.menu; sh.dataset.partial=''; const top=sh.scrollTop; renderMenu($('#menuQ')?.value||''); sh.scrollTop=top; return; }
+    if(j.menu?.sections?.length){   // what's been read so far; more on the way
+      const n=j.menu.sections.reduce((a,x)=>a+x.items.length,0);
+      if(String(n)!==sh.dataset.partial){ sh.dataset.partial=n; MENU[id]={...j.menu,partial:true}; const q=$('#menuQ'); if(q&&q===document.activeElement) menuList(q.value); else { const top=sh.scrollTop; renderMenu(q?.value||''); sh.scrollTop=top; } }
+    }
     if(j.login||j.error||Date.now()-t0>200000){
       sh.innerHTML=head+`<div class="mnwait"><b style="font-size:17px">${j.login?T('Make a free account to see full menus'):esc(j.error||T('The menu is taking too long.'))}</b>
         <div class="btns" style="justify-content:center;margin-top:12px">${j.login?`<button class="btn sm primary" data-v2join>${T('Create a free account')}</button>`:`<button class="btn sm primary" data-menuretry>${T('Try again')}</button>`}
         ${/^https?:/.test(j.web||'')?`<a class="btn sm" href="${esc(j.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}</div></div>`;
       return;
     }
-    await new Promise(ok=>setTimeout(ok,j.busy?5000:3000));
+    await new Promise(ok=>setTimeout(ok,j.busy?3000:Date.now()-t0<40000?1000:2500));
   }
 }
 function renderMenu(q=''){
@@ -2068,9 +2081,10 @@ function renderMenu(q=''){
         <a class="btn sm" href="${esc(maps)}" target="_blank" rel="noopener">Google Maps ↗</a>${m.failed?`<button class="btn sm" data-menuretry>${T('Try again')}</button>`:''}</div></div>`;
     return;
   }
+  const more=m.partial?`<div class="mnmore"><i></i>${T('Reading the rest of the menu…')}</div>`:'';
   sh.innerHTML=head+`<input id="menuQ" type="search" placeholder="${T('🔎 Find a dish or drink…')}" autocomplete="off" style="margin-top:8px" value="${esc(q)}">
       <div class="mnchips">${m.sections.map((x,i)=>`<button data-menujump="${i}">${esc(x.name)}</button>`).join('')}</div></div>
-    <div id="menuList"></div>
+    <div id="menuList"></div>${more}
     <p class="meta" style="margin:16px 0 4px">${m.note?esc(m.note)+' ':''}${T('Prices and dishes change: check with the place before you order.')}</p>
     <div class="meta" style="font-size:12px">${m.from==='site'?T("From the place's website"):m.from==='photos'?T('Read from photos of the menu'):m.from==='photos+web'?T('From photos of the menu and the web'):T('Found on the web')}${(m.sources||[]).length?': '+m.sources.filter((u,i,a)=>a.findIndex(x=>hostOf(x)===hostOf(u))===i).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent2)">${esc(hostOf(u))}</a>`).join(' · '):''}
       · ${new Date(m.at*1000).toLocaleDateString()}</div>

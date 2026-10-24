@@ -271,6 +271,15 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   (it's Claude); runs in a thread while the app polls; 2 at a time, 15/hour per person, 150/day; kept in
   `data/menus/<id>.json` 14 days (misses 2 days). `menu_get` refuses private addresses. Pictures + web results merge
   (`menu_merge`: pictures first, the web adds missing items). Images reach Claude as JPEG or PNG.
+  **Speed**: pages fetched in parallel (`menu_pages`), lines repeated across pages dropped (`menu_dedupe`), text read
+  in ~3,500-char parts in parallel (`menu_parts` → `menu_join`), all menu calls at effort low through `menu_slot`
+  (`SQ_MENU_PAR` 4 at once); website menu pictures one per read with haiku, Google photos 3 per read with sonnet, only
+  if the website's weren't enough; the web search starts alongside the pictures. Each finished part is shown at once
+  (`MENU_JOBS[:partial]` → `pending` + `menu`; the app polls every 1 s and shows "Reading the rest of the menu…").
+  Opening a place popup warms its menu (`warm=1`, 40/hour). Expired menus are still shown while a new read runs.
+  **Warm-up** (`menu_prewarm`, on with SQ_BETA or `SQ_MENU_PREWARM=1`): one place at a time, best-known first, only
+  while no one is waiting, website only (no Google, no web search), `SQ_MENU_PREWARM_DAILY` 300; places with no menu on
+  their site go in `data/menus/_tried.json` for 14 days.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
   charge), 4 photos; event sheets have "🏢 Venue phone & hours" (Google by venue name, on tap). OSM `phone` is
   fetched by fetch_places.rb from the next refresh.
