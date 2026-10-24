@@ -1,8 +1,8 @@
 # Menus: the full menu with prices for a food or drink place someone taps, readable in the app.
 # First the place's own website (OpenStreetMap's menu link, its website, Google's website for it): the pages are
 # fetched here and Claude reads the menu out of the text. When that finds nothing, Claude searches the web for it
-# (the restaurant's online ordering, menu sites, delivery apps) and says where each part came from. With Google on,
-# Claude first reads pictures of the menu: the ones on its website, and the photos people posted on Google Maps.
+# (the restaurant's online ordering, menu sites, delivery apps) and says where each part came from. Menus posted as
+# pictures on the website are read too. The sheet links the place on Google Maps for its photos and reviews.
 # Found menus are kept for MENU_DAYS (they're our reading of the restaurant's public menu), misses for 2 days.
 # Speed: pages are fetched at once, the text is read in parallel parts (each part shows up in the app as it's done),
 # pictures and the web search run side by side, and a background warm-up reads the best-known places' websites ahead
@@ -17,10 +17,8 @@ MENU_MODEL = ENV['SQ_MENU_MODEL'] || 'haiku'
 MENU_DAYS = 14
 MENU_HOURLY = (ENV['SQ_MENU_HOURLY'] || 15).to_i   # new lookups per person per hour
 MENU_DAILY = (ENV['SQ_MENU_DAILY'] || 150).to_i    # new lookups per day, everyone
-MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, partial: {}, day: nil, n: 0, photos: 0, warm: 0, warm_web: 0, warm_on: false }
+MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, partial: {}, day: nil, n: 0, warm: 0, warm_web: 0, warm_on: false }
 # failed: id => [time, answer], for 10 minutes; partial: id => what's been read so far
-MENU_PHOTO_MODEL = ENV['SQ_MENU_PHOTO_MODEL'] || 'sonnet'   # reading small print in photos needs the bigger model
-MENU_PHOTO_DAILY = (ENV['SQ_MENU_PHOTO_DAILY'] || 10).to_i   # menus that use Google photos per day (each = up to 10 paid photo fetches)
 MENU_PAR = (ENV['SQ_MENU_PAR'] || 5).to_i          # Claude reads at once for menus (each CLI ~110 MB; the box has 2 GB)
 MENU_SLOTS = { lock: Mutex.new, cv: ConditionVariable.new, n: 0 }
 MENU_PART = 2_000                                     # characters of menu text per parallel read (~25 items, ~5 s)
@@ -239,49 +237,34 @@ def menu_priced(m)
   m['sections'].sum { |s| s['items'].count { |i| i['price'] } }
 end
 
-# The menu read by Claude from pictures of it: the website's menu pictures (site: [[page, picture], ...]) and the
-# photos on Google Maps (g = Google's details; menus, menu boards, chalkboards often show up there). The pictures are
-# read three at a time in parallel; progress gets each group's menu as it's done.
-def menu_photos(where, g, site = [], progress = nil)
+# The menu read by Claude from the menu pictures on the place's website (site: [[page, picture], ...]), one picture
+# per read, in parallel; progress gets what's been read so far.
+def menu_photos(where, site, progress = nil)
   pic = lambda do |url|
     body, = (menu_get(url) rescue (return nil))
     body = body.b
     body if (body.start_with?("\xFF\xD8".b) || body.start_with?("\x89PNG".b)) && body.bytesize.between?(2_000, 4_000_000)
   end
   mine = site.map { |pg, u| Thread.new { (b = pic.(u)) && [pg, b] } }.map(&:value).compact
-  gpics = []
-  if g['photos'].to_a.any?
-    ok = MENU_JOBS[:lock].synchronize { MENU_JOBS[:photos] < MENU_PHOTO_DAILY && (MENU_JOBS[:photos] += 1) }
-    gpics = g['photos'].first(10 - mine.size).map { |ph| Thread.new { google_photos([ph], 1, 1600).map { |x| pic.(x[:url]) }.first } }.map(&:value).compact if ok
-  end
-  return nil if mine.empty? && gpics.empty?
-  # one website picture per read (each is usually a whole menu: lunch, dinner, drinks); customers' photos three at a time
-  groups = mine.map { |pg, b| [[:site, pg, b]] } + gpics.map { |b| [:google, nil, b] }.each_slice(3).to_a
+  return nil if mine.empty?
   t0 = Time.now
-  done = Array.new(groups.size)
-  groups.each_with_index.map do |grp, k|
+  done = Array.new(mine.size)
+  mine.each_with_index.map do |(page, img), k|
     Thread.new do
-      said = grp.first[0] == :site ? 'pictures from its website' : 'photos people posted on Google Maps'
-      said = 'pictures from its website and photos people posted on Google Maps' if grp.map(&:first).uniq.size > 1
-      # a website's menu picture is crisp print: the quick model reads it; phone photos need the bigger one
-      out, = menu_claude(<<~P, model: grp.first[0] == :site ? MENU_MODEL : MENU_PHOTO_MODEL, timeout: 120, images: grp.map(&:last))
-        These are #{said} of #{where}. Some may show its menu: a printed menu, a menu board, a chalkboard, a drinks
-        list. Read every menu item and price you can make out in them, grouped in the menu's sections. Ignore photos of
-        food, people or the room. Leave a price empty rather than guess one you can't read. A note only if needed
-        (e.g. "Only the drinks menu was in the photos").
+      # a website's menu picture is crisp print: the quick model reads it
+      out, = menu_claude(<<~P, model: MENU_MODEL, timeout: 120, images: [img])
+        This is a picture from the website of #{where}. It may show its menu: a printed menu, a menu board, a drinks
+        list. Read every menu item and price in it, grouped in the menu's sections. Leave a price empty rather than
+        guess one you can't read.
       P
-      m = menu_clean(out, 'photos')
-      m['sources'] = (grp.map { |x| x[1] }.compact + (grp.any? { |x| x[0] == :google } ? [g['googleMapsUri']] : [])).grep(%r{\Ahttps?://}).uniq
-      m['note'] = '' if menu_count(m).zero?
-      done[k] = m
+      done[k] = menu_clean(out, 'photos').merge('sources' => [page], 'note' => '')
       progress&.call(menu_join(done, 'photos'))
     rescue => e
-      warn "[menu] pictures part #{k}: #{e.message[0, 100]}"
+      warn "[menu] picture #{k}: #{e.message[0, 100]}"
     end
   end.each(&:join)
   m = menu_join(done, 'photos')
-  m['note'] = '' if groups.size > 1   # each read saw only its own pictures ("no drinks menu in the photos")
-  warn "[menu] pictures: #{menu_count(m)} items (#{menu_priced(m)} priced) from #{mine.size} site + #{gpics.size} Google, #{(Time.now - t0).round}s"
+  warn "[menu] pictures: #{menu_count(m)} items (#{menu_priced(m)} priced) from #{mine.size} website pictures, #{(Time.now - t0).round}s"
   m
 end
 
@@ -318,9 +301,9 @@ def menu_good?(m)
   m && menu_count(m) >= 15 && menu_priced(m) * 2 >= menu_count(m)
 end
 
-# warm: the background warm-up (no Google; the web search only when warm == :web). progress gets what's read so far.
+# warm: the background warm-up (the web search only when warm == :web). progress gets what's read so far.
 # pics: gets the website's menu pictures (shown with the menu, whichever way it was read).
-def menu_find(p, gweb, google = nil, warm: false, progress: nil, pics: nil)
+def menu_find(p, gweb, warm: false, progress: nil, pics: nil)
   where = [p['name'], p['addr'], 'Austin area, Texas'].compact.join(', ')
   t0 = Time.now
   # 1. the place's own pages, read in parallel parts
@@ -350,16 +333,10 @@ def menu_find(p, gweb, google = nil, warm: false, progress: nil, pics: nil)
     warn "[menu] #{p['id']} site: #{menu_count(m)} items in #{parts.size} parts, #{(Time.now - t0).round}s"
     return m if menu_count(m) >= 5
   end
-  # 2. pictures of the menu and the web search, side by side: the website's own menu pictures first (current, and
-  # free), then with Google on the photos on Google Maps if those weren't enough. Good pictures win at once; otherwise
-  # the web fills in.
+  # 2. the menu pictures on its website and the web search, side by side: good pictures win at once; otherwise the
+  # web fills in.
   web = (!warm || warm == :web) && Thread.new { menu_web(p, where, p['web'] || gweb) rescue (warn("[menu] web: #{$!.message[0, 100]}"); nil) }
-  shot = imgs.any? ? menu_photos(where, {}, imgs, progress) : nil
-  g = (!warm && !menu_good?(shot) && google&.call) || {}
-  if g['photos'].to_a.any?
-    plus = ->(x) { x && shot ? menu_merge(shot, x).merge('from' => 'photos') : x || shot }
-    shot = plus.(menu_photos(where, g, [], ->(x) { progress&.call(plus.(x)) }))
-  end
+  shot = imgs.any? ? menu_photos(where, imgs, progress) : nil
   shot = nil if shot && menu_count(shot).zero?
   return shot if menu_good?(shot) || (warm == true && shot)
   progress&.call(shot) if shot
@@ -385,96 +362,37 @@ def menu_merge(a, b)
           'note' => [a['note'], b['note']].reject(&:empty?).join(' '))
 end
 
-# Which of the place's Google Maps photos show its menu (a printed menu, a board, a price list): looked at once when the
-# menu is made, at 400 px, by the quick model. Google's terms don't let us keep their photos or photo names, so what's
-# kept is how to know them again: size and who posted it (menu_gpics matches them when the menu opens).
-def menu_gscan(where, g)
-  photos = g['photos'].to_a.first(10)
-  return [] if photos.empty?
-  ok = MENU_JOBS[:lock].synchronize { MENU_JOBS[:photos] < MENU_PHOTO_DAILY && (MENU_JOBS[:photos] += 1) }
-  return nil unless ok   # nil = not looked at (today's allowance is used up)
-  jpgs = photos.map do |ph|
-    Thread.new do
-      u = google_photos([ph], 1, 400).first&.dig(:url)
-      b = u && (menu_get(u)[0].b rescue nil)
-      b if b&.start_with?("\xFF\xD8".b) || b&.start_with?("\x89PNG".b)
-    end
-  end.map(&:value)
-  shown = jpgs.each_index.select { |i| jpgs[i] }
-  return [] if shown.empty?
-  out, = menu_slot do
-    run_claude(<<~P, nil, system: MENU_SYSTEM, model: MENU_MODEL, effort: 'low', timeout: 60, images: shown.map { |i| jpgs[i] })
-      These are #{shown.size} photos people posted of #{where} on Google Maps, numbered 1 to #{shown.size} in order.
-      Which ones show the place's menu, a menu board, a chalkboard of dishes or a price list (readable or not)? Not food,
-      drinks, people or the room. Answer only the numbers, comma-separated, or NONE.
-    P
-  end
-  nums = out.to_s.scan(/\d+/).map(&:to_i).select { |n| n.between?(1, shown.size) }.uniq
-  nums.map do |n|
-    ph = photos[shown[n - 1]]
-    { 'w' => ph['widthPx'], 'h' => ph['heightPx'], 'by' => ph.dig('authorAttributions', 0, 'displayName').to_s[0, 80] }
-  end
-rescue => e
-  warn "[menu] google menu photos: #{e.message[0, 100]}"
-  nil
-end
-
-# The place's Google Maps photos that were found to show its menu, fetched fresh (their links can't be kept).
-def menu_gpics(gid, marks)
-  return [] if gid.to_s.empty? || marks.to_a.empty?
-  google_budget!
-  photos = google_api("places/#{gid}", 'photos')['photos'].to_a
-  hits = photos.select { |ph| marks.any? { |k| k['w'] == ph['widthPx'] && k['h'] == ph['heightPx'] && k['by'] == ph.dig('authorAttributions', 0, 'displayName').to_s[0, 80] } }
-  google_photos(hits, 4, 1200)
-end
-
 def menu_job(id, p)
   MENU_JOBS[:lock].synchronize do
     return :running if MENU_JOBS[:running][id]
     return :busy if MENU_JOBS[:running].size >= 3   # the box has two cores; the phone asks again in a moment
     day = Time.now.strftime('%F')
-    MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos], MENU_JOBS[:warm], MENU_JOBS[:warm_web] = day, 0, 0, 0, 0 if MENU_JOBS[:day] != day
+    MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:warm], MENU_JOBS[:warm_web] = day, 0, 0, 0 if MENU_JOBS[:day] != day
     raise RateLimited, 'Menus are paused until tomorrow.' if MENU_JOBS[:n] >= MENU_DAILY
     MENU_JOBS[:n] += 1
     MENU_JOBS[:running][id] = Thread.new do
-      g, gid = {}, nil   # Google's details for it, when Google is on: website, Maps link, photos
+      g, gid = {}, nil   # Google's details for it, when Google is on: its website
       if GOOGLE
         begin
           gid = store(write: false) { |d| (d['gplace'] || {})[id] } || google_place_id(p).tap { |x| store { |d| (d['gplace'] ||= {})[id] = x } }
-          if !gid.empty? && !p['web'] && !p['menu']
+          if !gid.empty? && !p['web'] && !p['menu']   # no website on OpenStreetMap: Google's
             google_budget!
-            g = google_api("places/#{gid}", 'websiteUri,googleMapsUri,photos')
+            g = google_api("places/#{gid}", 'websiteUri')
           end
         rescue => e
           warn "[menu] google details for #{id}: #{e.message[0, 80]}"
         end
       end
-      google = lambda do
-        next g if g.key?('googleMapsUri') || gid.to_s.empty?
-        google_budget!
-        g = google_api("places/#{gid}", 'googleMapsUri,photos')
-      rescue => e
-        warn "[menu] google photos for #{id}: #{e.message[0, 80]}"
-        g = { 'googleMapsUri' => '' }
-      end
       progress = ->(m) { MENU_JOBS[:lock].synchronize { MENU_JOBS[:partial][id] = m if m && menu_count(m).positive? } }
       pics = []
-      m = begin menu_find(p, g['websiteUri'], google, progress: progress, pics: pics)
+      m = begin menu_find(p, g['websiteUri'], progress: progress, pics: pics)
           rescue => e
             warn "[menu] #{id} failed: #{e.message[0, 160]}"
             { 'sections' => [], 'sources' => [], 'note' => '', 'from' => 'none', 'at' => Time.now.to_i, 'failed' => true }
           end
       m['web'] = p['menu'] || p['web'] || g['websiteUri']
       m['pics'] = pics.uniq.first(4)
-      unless m['failed']
-        menu_keep(id, m)   # the menu shows now; its Google menu photos are looked for after
-        if !gid.to_s.empty? && (marks = menu_gscan([p['name'], p['addr']].compact.join(', '), google.call || {}))
-          m['gpics'] = marks
-          m['maps'] = g['googleMapsUri'] if g['googleMapsUri'].to_s.start_with?('https://')
-          menu_keep(id, m)
-          warn "[menu] #{id} google menu photos: #{marks.size}"
-        end
-      end
+      menu_keep(id, m) unless m['failed']
       MENU_JOBS[:lock].synchronize do
         MENU_JOBS[:running].delete(id)
         MENU_JOBS[:partial].delete(id)
@@ -528,7 +446,7 @@ def menu_prewarm
       sleep MENU_WARM_GAP
       MENU_JOBS[:lock].synchronize do
         day = Time.now.strftime('%F')
-        MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos], MENU_JOBS[:warm], MENU_JOBS[:warm_web] = day, 0, 0, 0, 0 if MENU_JOBS[:day] != day
+        MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:warm], MENU_JOBS[:warm_web] = day, 0, 0, 0 if MENU_JOBS[:day] != day
       end
       next sleep(600) if MENU_JOBS[:warm] >= MENU_WARM_DAILY
       next unless MENU_JOBS[:lock].synchronize { MENU_JOBS[:running].empty? }
@@ -563,46 +481,34 @@ def mount_menus(server)
   route(server, '/api/place/menu', auth: false, get: true) do |_b, h, req|
     id = req.query['id'].to_s[0, 30]
     p = Places.find(id) or raise 'No such place.'
-    links = { web: p['menu'] || p['web'] }.compact
-    warm = req.query['warm'] == '1'
-    if (m = menu_cached(id))
-      next { menu: m }
-    end
-    old = menu_cached(id, stale: true)
-    failed = MENU_JOBS[:lock].synchronize { MENU_JOBS[:running][id] ? nil : MENU_JOBS[:failed][id] }
-    next { menu: failed[1] } if failed && failed[0] > Time.now.to_i - 600 && req.query['retry'] != '1'
-    next (old ? { menu: old } : links.merge(login: true)) unless h
-    state, part = MENU_JOBS[:lock].synchronize { [MENU_JOBS[:running][id] ? :running : nil, MENU_JOBS[:partial][id]] }
-    unless state
-      begin
-        warm ? limit!("menuw:#{h}", 40, 3600) : limit!("menu:#{h}", MENU_HOURLY, 3600)
-        state = menu_job(id, p)
-      rescue RateLimited
-        raise unless warm || old
-      end
-    end
-    next { menu: old } if old   # an old menu now, the new one next time
-    next { warming: true } if warm
-    links.merge(pending: true, busy: state == :busy, menu: part).compact
+    # for the sheet's buttons: Google Maps (by Google's place id when we have it: its photos include the menu), call
+    gid = GOOGLE ? store(write: false) { |d| (d['gplace'] || {})[id] }.to_s : ''   # else the name + address find it
+    info = { gid: gid.empty? ? nil : gid, phone: p['phone'], addr: p['addr'] }.compact
+    menu_answer(id, p, h, req).merge(info: info)
   end
+end
 
-  # Pictures of the menu for the menu sheet: the website's (saved with the menu, served shrunk from /img/menu) and,
-  # signed in with Google on, the Google Maps photos that showed the menu when it was made (fetched fresh each time).
-  route(server, '/api/place/menupics', auth: false, get: true) do |_b, h, req|
-    id = req.query['id'].to_s[0, 30]
-    m = menu_cached(id, stale: true) or next { site: [], google: [] }
-    site = Array(m['pics']).each_index.map { |i| { thumb: "/img/menu?id=#{id}&i=#{i}", url: "/img/menu?id=#{id}&i=#{i}&w=1600" } }
-    google = []
-    if GOOGLE && h && m['gpics'].to_a.any?
-      begin
-        limit!("menupics:#{h}", 60, 3600)
-        gid = store(write: false) { |d| (d['gplace'] || {})[id] }
-        google = menu_gpics(gid, m['gpics'])
-      rescue RateLimited
-      rescue => e
-        warn "[menu] menu photos for #{id}: #{e.message[0, 80]}"
-      end
-    end
-    { site: site, google: google, maps: m['maps'], more: m['gpics'].to_a.size }.compact
+# The menu answer: kept menu, an old one while a new read runs, or pending with what's been read so far.
+def menu_answer(id, p, h, req)
+  links = { web: p['menu'] || p['web'] }.compact
+  warm = req.query['warm'] == '1'
+  if (m = menu_cached(id))
+    return { menu: m }
   end
+  old = menu_cached(id, stale: true)
+  failed = MENU_JOBS[:lock].synchronize { MENU_JOBS[:running][id] ? nil : MENU_JOBS[:failed][id] }
+  return { menu: failed[1] } if failed && failed[0] > Time.now.to_i - 600 && req.query['retry'] != '1'
+  return (old ? { menu: old } : links.merge(login: true)) unless h
+  state, part = MENU_JOBS[:lock].synchronize { [MENU_JOBS[:running][id] ? :running : nil, MENU_JOBS[:partial][id]] }
+  unless state
+    begin
+      warm ? limit!("menuw:#{h}", 40, 3600) : limit!("menu:#{h}", MENU_HOURLY, 3600)
+      state = menu_job(id, p)
+    rescue RateLimited
+      raise unless warm || old
+    end
+  end
+  return { menu: old } if old   # an old menu now, the new one next time
+  return { warming: true } if warm
+  links.merge(pending: true, busy: state == :busy, menu: part).compact
 end

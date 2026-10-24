@@ -323,9 +323,14 @@
   .mnit p{margin:3px 0 0;color:var(--muted);font-size:14.5px;line-height:1.4}
   .mnit .pr{font-size:16.5px;font-weight:800;color:var(--good);white-space:nowrap}
   .mnwait{text-align:center;padding:34px 10px}
-  .mnpics{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
-  .mnpics a{flex:none;position:relative;width:118px;height:150px;border-radius:12px;background:#1a2342 center/cover;border:1px solid var(--line)}
-  .mnpics i{position:absolute;right:5px;bottom:5px;font:700 10px/16px Inter,sans-serif;font-style:normal;width:16px;text-align:center;border-radius:50%;background:#fff;color:#1a73e8}
+  .mnacts{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none} .mnacts::-webkit-scrollbar{display:none} .mnacts .btn{flex:none}
+  #menuQ{margin-top:8px}
+  .mnpicbox{margin:10px 0 2px} .mnpicbox b{display:block;margin-bottom:6px;font-size:14px}
+  .mnpics{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:2px}
+  .mnpics a{flex:none;scroll-snap-align:start;width:118px;height:150px;border-radius:12px;overflow:hidden;background:#1a2342;border:1px solid var(--line)}
+  .mnpics img{width:100%;height:100%;object-fit:cover;display:block}
+  .mnchips button.on{background:var(--accent);border-color:var(--accent);color:#1a0d00}
+  .mnsec{scroll-margin-top:calc(var(--mnh,160px) + 6px);content-visibility:auto;contain-intrinsic-size:auto 500px}
   .mnmore{display:flex;align-items:center;gap:10px;justify-content:center;padding:14px 0;color:var(--muted)}
   .mnmore i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:mnspin .9s linear infinite}
   .mnwait i{display:block;width:34px;height:34px;margin:0 auto 14px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:mnspin .9s linear infinite}
@@ -1061,7 +1066,7 @@ const ES = {
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
   'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Make me yours':'Hazme tuyo', 'Tour':'Recorrido', 'Live Translate':'Traducir en vivo', 'What is this?':'¿Qué es esto?', 'Point at a building, landmark, storefront or dish':'Apunta a un edificio, monumento, negocio o platillo',
   'Opening the camera. Point it at what you want to know about and tap the button.':'Abriendo la cámara. Apunta a lo que quieras conocer y toca el botón.',
-  'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Reading the place's own menu. Dishes show up here as they're found.":'Leyendo el menú del lugar. Los platos aparecen aquí a medida que se encuentran.', 'Reading the rest of the menu…':'Leyendo el resto del menú…', 'Photos of the menu':'Fotos del menú', 'Menu picture':'Imagen del menú', 'Menu photo':'Foto del menú', 'More on Google Maps':'Más en Google Maps', 'Sign in to see photos of the menu from Google Maps.':'Inicia sesión para ver fotos del menú de Google Maps.', "Checking the place's own website first, then other menu sources. The first look can take up to a minute.":'Primero revisamos el sitio del lugar y luego otras fuentes de menús. La primera vez puede tardar hasta un minuto.',
+  'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Reading the place's own menu. Dishes show up here as they're found.":'Leyendo el menú del lugar. Los platos aparecen aquí a medida que se encuentran.', 'Reading the rest of the menu…':'Leyendo el resto del menú…', 'Menu pictures from their website':'Imágenes del menú de su sitio web', 'Menu picture':'Imagen del menú', 'Google Maps':'Google Maps', "Couldn't find a written menu online for this place.":'No encontramos un menú escrito en línea para este lugar.', 'Google Maps usually has photos of the menu: tap Google Maps above.':'Google Maps suele tener fotos del menú: toca Google Maps arriba.', "Checking the place's own website first, then other menu sources. The first look can take up to a minute.":'Primero revisamos el sitio del lugar y luego otras fuentes de menús. La primera vez puede tardar hasta un minuto.',
   'Make a free account to see full menus':'Crea una cuenta gratis para ver menús completos', 'Try again':'Intentar de nuevo', 'The menu is taking too long.':'El menú está tardando demasiado.',
   "Couldn't look up the menu just now.":'No pudimos buscar el menú ahora.', "Couldn't find a menu online for this place.":'No encontramos un menú en línea para este lugar.',
   'Their website or Google Maps may have photos of it.':'Puede que su sitio o Google Maps tengan fotos del menú.', '🔎 Find a dish or drink…':'🔎 Busca un platillo o bebida…',
@@ -2065,11 +2070,11 @@ const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./,''); }cat
 const MENU_WARM=new Set();
 function menuWarm(id){
   if(!AUTHED||(MENU[id]&&!MENU[id].partial)||MENU_WARM.has(id)||MENU_WARM.size>40) return; MENU_WARM.add(id);
-  fetch(`/api/place/menu?id=${encodeURIComponent(id)}&warm=1`,{credentials:'same-origin'}).then(r=>r.json()).then(j=>{ if(j.menu&&!j.pending) MENU[id]=j.menu; }).catch(()=>{});
+  fetch(`/api/place/menu?id=${encodeURIComponent(id)}&warm=1`,{credentials:'same-origin'}).then(r=>r.json()).then(j=>{ if(j.info) MENU_INFO[id]=j.info; if(j.menu&&!j.pending) MENU[id]=j.menu; }).catch(()=>{});
 }
 async function openMenu(id, name, retry){
   const bg=$('#menuBg'), sh=$('#menuSheet'); sh.dataset.id=id; sh.dataset.name=name; bg.hidden=false; sh.scrollTop=0; sh.dataset.partial='';
-  const head=`<div class="mnhead"><div class="row"><b class="grow" style="font-size:20px">🍽️ ${esc(name)}</b><button class="btn sm" data-menuclose>✕</button></div></div>`;
+  const head=`<div class="mnhead"><div class="row"><b class="grow" style="font-size:20px">🍽️ ${esc(name)}</b><button class="btn sm" data-menuclose>✕</button></div>${menuActs(id,name,{web:sh.dataset.web})}</div>`;
   if(MENU[id]&&!MENU[id].partial&&!retry) return renderMenu();
   track('menu_open');
   sh.innerHTML=head+`<div class="mnwait"><i></i><b style="font-size:17px">${T('Finding the menu…')}</b>
@@ -2077,7 +2082,7 @@ async function openMenu(id, name, retry){
   const t0=Date.now();
   for(;;){
     let j; try{ j=await (await fetch(`/api/place/menu?id=${encodeURIComponent(id)}${retry?'&retry=1':''}`,{credentials:'same-origin'})).json(); }catch(e){ j={error:T("Couldn't reach Side Quest. Check your connection.")}; }
-    retry=false;
+    retry=false; if(j.info) MENU_INFO[id]=j.info;
     if(bg.hidden||sh.dataset.id!==id) return;   // closed, or another menu opened
     if(j.menu&&!j.pending){ MENU[id]=j.menu; sh.dataset.partial=''; const top=sh.scrollTop; renderMenu($('#menuQ')?.value||''); sh.scrollTop=top; return; }
     if(j.menu?.sections?.length){   // what's been read so far; more on the way
@@ -2093,49 +2098,55 @@ async function openMenu(id, name, retry){
     await new Promise(ok=>setTimeout(ok,j.busy?3000:Date.now()-t0<40000?1000:2500));
   }
 }
-// Pictures of the menu above the written one: the restaurant's own (saved with the menu) and the Google Maps photos
-// that showed its menu when it was made (fetched fresh: Google's photo links can't be kept). Asked once a visit.
-const MENUPICS={};
-async function loadMenuPics(id){
-  const m=MENU[id]; if(!m||m.partial||!(m.pics?.length||m.gpics?.length)) return;
-  const j=MENUPICS[id]||=await fetch(`/api/place/menupics?id=${encodeURIComponent(id)}`,{credentials:'same-origin'}).then(r=>r.json()).catch(()=>({}));
-  const box=$('#menuPics'); if(!box||$('#menuSheet').dataset.id!==id) return;
-  const site=j.site||[], g=(j.google||[]).filter(x=>/^https:\/\//.test(x.url));
-  if(!site.length&&!g.length){ box.innerHTML=j.more&&!AUTHED?`<p class="meta">${T('Sign in to see photos of the menu from Google Maps.')}</p>`:''; return; }
-  const by=[...new Set(g.map(x=>x.by).filter(Boolean))].slice(0,3);
-  box.innerHTML=`<b style="display:block;margin:4px 0 6px">📷 ${T('Photos of the menu')}</b>
-    <div class="mnpics">${site.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.thumb)}')" aria-label="${T('Menu picture')}"></a>`).join('')}
-      ${g.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener" style="background-image:url('${esc(x.url)}')" aria-label="${T('Menu photo')}"><i>G</i></a>`).join('')}</div>
-    <div class="meta" style="font-size:11px;margin-top:4px">${site.length?T("From the place's website"):''}${site.length&&g.length?' · ':''}${g.length?T('Photos: Google')+(by.length?' · '+by.map(esc).join(', '):''):''}
-      ${/^https:\/\//.test(j.maps||'')?` · <a href="${esc(j.maps)}" target="_blank" rel="noopener" style="color:var(--accent2)">${T('More on Google Maps')} ↗</a>`:''}</div>`;
-}
+// The menu sheet: a sticky top (name, Google Maps / Website / Call, dish search, section chips that follow the
+// scroll), the website's own menu pictures, then the written menu. Google Maps opens the place itself (by Google's id
+// when the server has it), where its photos include the menu and its reviews and hours live.
+const MENU_INFO={};   // place id → {gid, phone, addr}, from the menu answers
+function menuMaps(id,name){ const i=MENU_INFO[id]||{};
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name+', '+(i.addr||'Austin, TX'))}${i.gid?'&query_place_id='+encodeURIComponent(i.gid):''}`; }
+function menuActs(id,name,m){ const i=MENU_INFO[id]||{}, web=m?.web||'';
+  return `<div class="mnacts"><a class="btn sm primary" href="${esc(menuMaps(id,name))}" target="_blank" rel="noopener">📍 ${T('Google Maps')} ↗</a>
+    ${/^https?:/.test(web)?`<a class="btn sm" href="${esc(web)}" target="_blank" rel="noopener">🌐 ${T('Website')} ↗</a>`:''}
+    ${i.phone?`<a class="btn sm" href="tel:${esc(telOf(i.phone))}">📞 ${T('Call')}</a>`:''}</div>`; }
+function menuPics(id,m){
+  if(!m.pics?.length) return '';
+  const src=(i,w)=>`/img/menu?id=${encodeURIComponent(id)}&i=${i}${w?'&w='+w:''}`;
+  return `<div class="mnpicbox"><b>📷 ${T('Menu pictures from their website')}</b><div class="mnpics">${m.pics.map((_,i)=>`<a href="${src(i,1600)}" target="_blank" rel="noopener"><img src="${src(i)}" loading="lazy" decoding="async" alt="${T('Menu picture')}"></a>`).join('')}</div></div>`; }
 function renderMenu(q=''){
   const sh=$('#menuSheet'), id=sh.dataset.id, name=sh.dataset.name, m=MENU[id]; if(!m) return;
-  const head=`<div class="mnhead"><div class="row"><b class="grow" style="font-size:20px">🍽️ ${esc(name)}</b><button class="btn sm" data-menuclose>✕</button></div>`;
-  const maps=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name+' menu Austin')}`;
+  const top=`<div class="row"><b class="grow" style="font-size:20px">🍽️ ${esc(name)}</b><button class="btn sm" data-menuclose aria-label="${T('Close')}">✕</button></div>${menuActs(id,name,m)}`;
   if(!m.sections?.length){
-    sh.innerHTML=head+`</div><div class="mnwait"><div style="font-size:40px">📖</div><b style="font-size:17px">${m.failed?T("Couldn't look up the menu just now."):T("Couldn't find a menu online for this place.")}</b>
-      <p class="meta">${T('Their website or Google Maps may have photos of it.')}</p><div id="menuPics" style="text-align:left"></div>
-      <div class="btns" style="justify-content:center;margin-top:10px">${/^https?:/.test(m.web||'')?`<a class="btn sm primary" href="${esc(m.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
-        <a class="btn sm" href="${esc(maps)}" target="_blank" rel="noopener">Google Maps ↗</a>${m.failed?`<button class="btn sm" data-menuretry>${T('Try again')}</button>`:''}</div></div>`;
-    loadMenuPics(id); return;
+    sh.innerHTML=`<div class="mnhead">${top}</div><div class="mnwait"><div style="font-size:40px">📖</div><b style="font-size:17px">${m.failed?T("Couldn't look up the menu just now."):T("Couldn't find a written menu online for this place.")}</b>
+      <p class="meta">${T('Google Maps usually has photos of the menu: tap Google Maps above.')}</p>${m.failed?`<button class="btn sm" data-menuretry>${T('Try again')}</button>`:''}</div>${menuPics(id,m)}`;
+    return;
   }
   const more=m.partial?`<div class="mnmore"><i></i>${T('Reading the rest of the menu…')}</div>`:'';
-  sh.innerHTML=head+`<input id="menuQ" type="search" placeholder="${T('🔎 Find a dish or drink…')}" autocomplete="off" style="margin-top:8px" value="${esc(q)}">
+  const n=m.sections.reduce((a,x)=>a+x.items.length,0);
+  sh.innerHTML=`<div class="mnhead">${top}
+      <input id="menuQ" type="search" placeholder="${T('🔎 Find a dish or drink…')} (${n})" autocomplete="off" value="${esc(q)}">
       <div class="mnchips">${m.sections.map((x,i)=>`<button data-menujump="${i}">${esc(x.name)}</button>`).join('')}</div></div>
-    <div id="menuPics"></div><div id="menuList"></div>${more}
+    ${menuPics(id,m)}<div id="menuList"></div>${more}
     <p class="meta" style="margin:16px 0 4px">${m.note?esc(m.note)+' ':''}${T('Prices and dishes change: check with the place before you order.')}</p>
-    <div class="meta" style="font-size:12px">${m.from==='site'?T("From the place's website"):m.from==='photos'?T('Read from photos of the menu'):m.from==='photos+web'?T('From photos of the menu and the web'):T('Found on the web')}${(m.sources||[]).length?': '+m.sources.filter((u,i,a)=>a.findIndex(x=>hostOf(x)===hostOf(u))===i).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent2)">${esc(hostOf(u))}</a>`).join(' · '):''}
-      · ${new Date(m.at*1000).toLocaleDateString()}</div>
-    <div class="btns" style="margin-top:10px">${/^https?:/.test(m.web||'')?`<a class="btn sm" href="${esc(m.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}<a class="btn sm" href="${esc(maps)}" target="_blank" rel="noopener">Google Maps ↗</a></div>`;
-  menuList(q); loadMenuPics(id);
-  $('#menuQ').oninput=e=>menuList(e.target.value);
+    <div class="meta" style="font-size:12px;padding-bottom:10px">${m.from==='site'?T("From the place's website"):m.from==='photos'?T('Read from photos of the menu'):m.from==='photos+web'?T('From photos of the menu and the web'):T('Found on the web')}${(m.sources||[]).length?': '+m.sources.filter((u,i,a)=>a.findIndex(x=>hostOf(x)===hostOf(u))===i).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent2)">${esc(hostOf(u))}</a>`).join(' · '):''}
+      · ${new Date(m.at*1000).toLocaleDateString()}</div>`;
+  sh.style.setProperty('--mnh', sh.querySelector('.mnhead').offsetHeight+'px');   // headings stop just under the sticky top
+  menuList(q);
+  let t; $('#menuQ').oninput=e=>{ clearTimeout(t); t=setTimeout(()=>menuList(e.target.value),120); };   // long menus: not on every key
 }
 function menuList(q){
-  const m=MENU[$('#menuSheet').dataset.id]; if(!m) return;
+  const sh=$('#menuSheet'), m=MENU[sh.dataset.id]; if(!m) return;
   const secs=m.sections.map((x,i)=>({...x,i,items:x.items.filter(it=>!q||qHit(q,it.name,it.desc,x.name))})).filter(x=>x.items.length);
-  $('#menuList').innerHTML=secs.map(x=>`<div class="mnsec" id="mns_${x.i}"><h3>${esc(x.name)}</h3>${x.items.map(it=>`<div class="mnit"><div><b>${esc(it.name)}</b>${it.desc?`<p>${esc(it.desc)}</p>`:''}</div>${it.price?`<span class="pr">${esc(it.price)}</span>`:''}</div>`).join('')}</div>`).join('')
+  $('#menuList').innerHTML=secs.map(x=>`<div class="mnsec" id="mns_${x.i}" data-sec="${x.i}"><h3>${esc(x.name)}</h3>${x.items.map(it=>`<div class="mnit"><div><b>${esc(it.name)}</b>${it.desc?`<p>${esc(it.desc)}</p>`:''}</div>${it.price?`<span class="pr">${esc(it.price)}</span>`:''}</div>`).join('')}</div>`).join('')
     || `<p class="meta" style="margin-top:16px">${T('Nothing on the menu matches “{q}”.',{q:esc(q)})}</p>`;
+  // the chip of the section you're reading lights up and slides into view
+  sh._io?.disconnect();
+  const chips=sh.querySelector('.mnchips'); if(!chips||!('IntersectionObserver' in window)) return;
+  sh._io=new IntersectionObserver(es=>{ const e=es.filter(x=>x.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0]; if(!e) return;
+    const c=chips.querySelector(`[data-menujump="${e.target.dataset.sec}"]`); if(!c||c.classList.contains('on')) return;
+    chips.querySelector('.on')?.classList.remove('on'); c.classList.add('on');
+    chips.scrollTo({left:c.offsetLeft-chips.offsetWidth/2+c.offsetWidth/2,behavior:'smooth'}); },
+    {root:sh, rootMargin:`-${parseInt(getComputedStyle(sh).getPropertyValue('--mnh'))||160}px 0px -60% 0px`});
+  sh.querySelectorAll('.mnsec').forEach(x=>sh._io.observe(x));
 }
 // An event's venue: Google's phone, hours, website and rating, on a tap (each look is a paid Google call)
 function venuePlace(e){   // one of our food & drink places at the venue, for its menu

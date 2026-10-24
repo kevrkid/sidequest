@@ -263,10 +263,8 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Menus** (`menus.rb`, `/api/place/menu?id=`): 🍽️ Menu on every food & drink row, popup, Identify card and event
   venue that is one of our places → a big readable sheet (sections as chips, dish search, prices, where it came from).
   Lookup: the place's own pages first (OSM menu link, website, Google's websiteUri; follows menu links, JSON-LD,
-  PDFs when `pdftotext` exists) read by haiku; then pictures of the menu (`menu_photos`, sonnet `SQ_MENU_PHOTO_MODEL`):
-  menu images on its website (`menu_imgs`) plus, with Google on, the place's 10 Google Maps photos at 1600 px
-  (`SQ_MENU_PHOTO_DAILY` 10 lookups/day; each = up to 10 paid photo fetches); 15+ items, half priced = done; else
-  haiku with WebSearch/WebFetch
+  PDFs when `pdftotext` exists) read by haiku; then the website's menu pictures (`menu_photos`, one per read, haiku);
+  15+ items, half priced = done; else haiku with WebSearch/WebFetch
   (`run_claude(web: true)`) tries online ordering, menu sites and delivery apps and notes caveats. Signed-in only
   (it's Claude); runs in a thread while the app polls; 2 at a time, 15/hour per person, 150/day; kept in
   `data/menus/<id>.json` 14 days (misses 2 days). `menu_get` refuses private addresses. Pictures + web results merge
@@ -279,12 +277,11 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   if the website's weren't enough; the web search starts alongside the pictures. Each finished part is shown at once
   (`MENU_JOBS[:partial]` → `pending` + `menu`; the app polls every 1 s and shows "Reading the rest of the menu…").
   Opening a place popup warms its menu (`warm=1`, 40/hour). Expired menus are still shown while a new read runs.
-  **Menu photos**: the menu file keeps the website's menu pictures (`pics`, up to 4; served shrunk by `/img/menu?id=&i=`,
-  which only ever fetches a saved one) and, when a user's tap made the menu with Google on, which Google Maps photos
-  show the menu (`menu_gscan`: the 10 photos at 400 px, haiku names the menu ones; counts against
-  `SQ_MENU_PHOTO_DAILY`). Google's terms forbid keeping their photos or photo names, so only size + poster are kept
-  (`gpics`) and `/api/place/menupics` re-fetches matching photos fresh (signed in, `menu_gpics`, 1,200 px, max 4).
-  The sheet shows them as "📷 Photos of the menu" above the written menu. Old menus got their `pics` once at start.
+  **Menu sheet**: sticky top with 📍 Google Maps (the place itself: `query_place_id` when `d['gplace']` has it, else
+  name + address; its photos include the menu, so no Google photos are fetched or read), Website, 📞 Call (from the
+  answer's `info`), dish search (debounced, item count), section chips that follow the scroll (IntersectionObserver).
+  The website's menu pictures are saved with the menu (`pics`, up to 4) and shown above it, shrunk by `/img/menu?id=&i=`
+  (only ever a saved one). Sections use `content-visibility:auto` (so tests read `textContent`, not `innerText`).
   **Warm-up** (`menu_prewarm`, on with SQ_BETA or `SQ_MENU_PREWARM=1`): one place at a time, best-known first, only
   while no one is waiting, website only (no Google, no web search), `SQ_MENU_PREWARM_DAILY` 300; places with no menu on
   their site go in `data/menus/_tried.json` for 14 days.
