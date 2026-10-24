@@ -30,6 +30,7 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
 PORT    = (ENV['PORT'] || 8787).to_i
@@ -930,7 +931,7 @@ def live_announce(s, h)
       LIVE[:places].select! { |k, _| ids.include?(k) }
     end
   end
-  s['v'] = live_place(id, s['v'].to_s[0, 20], s['delay'])
+  s['v'] = live_place(id, spot_ref(s['v']) || '', s['delay'])
   s
 end
 
@@ -1864,10 +1865,11 @@ def mount_app(server)
     limit!("post:#{h}", 30, 3600)
     p = b['post'] || {}
     raise 'empty post' if p['t'].to_s.strip.empty?
-    reviewed = moderate(p['t'])
+    p['v'] = spot_ref(p['v'])
+    reviewed = moderate([p['t'], p['v'].is_a?(Hash) ? p['v']['name'] : nil].compact.join(' · '))   # a place named by hand is text too
     store do |d|
       raise 'Join the group first.' if p['group'] && d['groups'][p['group']] && !(d['members'][p['group']] || []).include?(h)
-      post = p.slice('k', 't', 'v', 'at', 'group', 'start', 'end').merge(
+      post = p.slice('k', 't', 'v', 'at', 'group', 'start', 'end').compact.merge(
         'id' => "u#{SecureRandom.hex(4)}", 'u' => h, 'downs' => [], 'created' => now_ms,
         'vis' => %w[broadcast friends party].include?(p['vis']) ? p['vis'] : 'broadcast')
       post['vis'] = 'friends' if post['vis'] == 'party'
@@ -1998,7 +2000,7 @@ def mount_app(server)
     raise 'Add a photo, a video or some text.' if img.empty? && !up && st['caption'].to_s.strip.empty?
     raise 'Photo too large.' if img.size > 600_000
     raw = img.empty? ? nil : (img[%r{\Adata:image/jpeg;base64,([A-Za-z0-9+/=]+)\z}, 1] or raise 'Photos must be JPEG.')
-    reviewed = moderate(st['caption'])
+    reviewed = moderate([st['caption'], st['place']].map { |x| x.to_s.strip }.reject(&:empty?).join(' · '))   # a place named by hand is text too
     store do |d|
       prune_stories(d)
       blocked = blocked_between(d, h)
@@ -2376,7 +2378,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

@@ -312,6 +312,28 @@
     animation:up .22s ease-out;max-height:92%;overflow-y:auto}
   .sheet label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px}
   @keyframes up{from{transform:translateY(40px);opacity:0}}
+  /* "Add location" (stories, flares, live) */
+  .ppsearch{position:sticky;top:-18px;z-index:2;background:var(--panel);display:flex;align-items:center;gap:8px;margin:10px -2px 4px;padding:8px 2px}
+  .ppsearch input{flex:1;margin:0}
+  .pphd{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 4px}
+  .pprow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);padding:10px 2px;font:inherit}
+  .pprow b{display:block;font-size:15px;font-weight:700}
+  .pprow small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62vw}
+  .pprow .ppe{flex:none;width:36px;height:36px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-size:18px}
+  .pprow .ppd{flex:none;max-width:none;margin:0}
+  .ppnone b{color:var(--accent)}
+  .locbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:11px 12px;color:var(--text);font:inherit;font-size:14.5px}
+  .locbtn.on{border-color:var(--accent)}
+  .locbtn small{display:block;color:var(--muted);font-size:12px}
+  .locx{padding:2px 6px;color:var(--muted);font-size:16px}
+  .locsugg{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none} .locsugg::-webkit-scrollbar{display:none}
+  .locsugg .ichip{flex:none;cursor:pointer;white-space:nowrap}
+  .spe{flex:none;width:52px;height:52px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-size:26px;margin-right:4px}
+  .spgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+  .sptile{position:relative;aspect-ratio:9/14;border:0;border-radius:10px;background-size:cover;background-position:center;display:grid;place-items:center;font-size:28px;color:#fff;overflow:hidden}
+  .sptile b{position:absolute;left:6px;bottom:5px;font-size:11px;text-shadow:0 1px 3px #000;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sptile i{position:absolute;top:5px;right:7px;font-style:normal;font-size:12px}
+  .placetag{background:none;border:0;color:inherit;font:inherit;padding:0;text-decoration:underline;text-decoration-color:#fff6;text-underline-offset:2px}
   /* the menu sheet: big, plain and easy to read */
   #menuSheet{max-height:94%;padding-top:0}
   .mnhead{position:sticky;top:0;z-index:2;background:var(--panel);padding:14px 0 8px;margin:0 0 4px}
@@ -789,7 +811,7 @@
       <textarea id="cText" rows="3" maxlength="200" placeholder="heading to play pool at Buffalo Billiards if anyone's down…" required></textarea>
       <div class="chips" id="cIdeas" style="margin-top:8px"></div>
       <label>Activity</label><select id="cKind"></select>
-      <label>Where</label><select id="cVenue"></select>
+      <label>Where</label><div id="loc-fl"></div>
       <label>When</label>
       <div class="seg" id="cWhen"><button type="button" data-v="0" class="on">Now</button><button type="button" data-v="30">30 min</button><button type="button" data-v="60">1 hr</button><button type="button" data-v="120">2 hr</button><button type="button" data-v="later">Later…</button></div>
       <input type="datetime-local" id="cAt" style="margin-top:8px" hidden>
@@ -814,6 +836,8 @@
   <div class="sheet-bg" id="searchBg" hidden><div class="sheet" id="searchSheet"></div></div>
   <div class="sheet-bg" id="groupsBg" hidden><div class="sheet" id="groupsSheet"></div></div>
   <div class="sheet-bg" id="storyBg" hidden><div class="sheet" id="storySheet"></div></div>
+  <div class="sheet-bg" id="spotBg" hidden style="z-index:905"><div class="sheet" id="spotSheet"></div></div>
+  <div class="sheet-bg" id="ppBg" hidden style="z-index:960"><div class="sheet" id="ppSheet" style="height:88%"></div></div>
   <div id="storyView" hidden></div>
   <input type="file" id="storyFile" accept="image/*,video/*" hidden>
   <input type="file" id="picFile" accept="image/*" hidden>
@@ -1166,7 +1190,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const user = h => h===S.me.h ? S.me : people().find(u=>u.h===h);
 const isFriend = h => S.friends.includes(h);
-const venue = id => VENUES.find(v=>v.id===id);
+const venue = id => id&&typeof id==='object' ? id : VENUES.find(v=>v.id===id);   // a built-in venue id, or a place picked with "Add location" ({name, lat, lng})
 const pos = p => p.v ? [venue(p.v).lat, venue(p.v).lng] : p.at;
 const where = p => p.v ? venue(p.v).name : 'Somewhere nearby (fuzzy area)';
 const list = a => a.length<2 ? a.join('') : a.slice(0,-1).join(', ')+' and '+a.at(-1);
@@ -2639,7 +2663,7 @@ function reelItem(st, k){
       ${mine?'':`<button data-stmore="${esc(st.id)}|${esc(st.u)}" aria-label="More"><i>⋯</i></button>`}
     </div>
     <div class="bottom"><div class="who"><button data-stperson="${esc(st.u)}" class="row" style="gap:8px">${av(st.u)}<b>@${esc(st.u)}</b></button>
-        <span class="meta" style="color:#ddd">${mins<60?mins+'m':Math.round(mins/60)+'h'}${storyPlace(st)?' · 📍 '+esc(storyPlace(st)):''}</span></div>
+        <span class="meta" style="color:#ddd">${mins<60?mins+'m':Math.round(mins/60)+'h'}${storyPlace(st)?` · ${storyPos(st)?`<button class="placetag" data-stplace="${k}">📍 ${esc(storyPlace(st))}</button>`:'📍 '+esc(storyPlace(st))}`:''}</span></div>
       ${st.caption?`<div class="cap">${esc(st.caption)}</div>`:''}<div class="tags">${tags.join('')}</div></div>
   </section>`;
 }
@@ -2672,28 +2696,224 @@ async function shareStory(st){
   try{ await navigator.clipboard.writeText(`${text} ${location.origin}`); toast('Copied to share.','green',[],1800); }catch(e){}
 }
 
+/* ---------- "Add location": one place picker for stories, flares and live, like Instagram's ----------
+   Suggestions around where you really are (a fresh GPS fix when it opens), where your photo was taken, places
+   you've picked or been, what's on right now, and a search over every place we know (/api/spots). "Search
+   everywhere" asks OpenStreetMap for an address or another town; "Add …" names a spot of your own where you are. */
+const PP = {cb:null, cur:null, q:'', res:[], busy:false, any:null, anyBusy:false, seq:0, t:0, near:null, nearAt:0, nearPos:null, area:null, noLoc:false, photo:null, list:[]};
+const spotsUrl = (q,p,x='') => `/api/spots?lat=${p[0].toFixed(3)}&lng=${p[1].toFixed(3)}&q=${encodeURIComponent(q||'')}${x}`;   // ~100 m, never exact GPS
+const spotKey = x => `${String(x.name||'').toLowerCase()}|${(+x.lat).toFixed(3)}|${(+x.lng).toFixed(3)}`;
+const spotDist = k => k==null ? '' : k<.16 ? 'here' : `${(k*.621).toFixed(k<16?1:0)} mi`;
+const spotOf = x => ({id:x.id, name:String(x.name).slice(0,60), lat:+x.lat, lng:+x.lng, e:x.e||'📍', kind:x.kind||'', addr:x.addr||'', ...(x.event?{event:x.event}:{})});
+function freshFix(){   // a new fix if ours is over a minute old, so "nearby" is where you are now, not where the app opened
+  if(ME_FIX&&Date.now()-ME_FIX<6e4) return Promise.resolve(true);
+  if(!navigator.geolocation) return Promise.resolve(false);
+  return new Promise(res=>navigator.geolocation.getCurrentPosition(p=>{ setMyPos(p.coords.latitude,p.coords.longitude,p.coords.accuracy); startLocating(); res(true); },
+    ()=>res(false), {enableHighAccuracy:true, maximumAge:30000, timeout:8000}));
+}
+async function spotsNear(force){   // kept for 2 minutes while you stay within 150 m
+  if(!force&&PP.near&&Date.now()-PP.nearAt<12e4&&km(PP.nearPos,ME_POS)<.15) return PP.near;
+  const at=[...ME_POS];
+  try{ const j=await (await fetch(spotsUrl('',at,'&limit=60'))).json();
+    PP.near=(j.results||[]).map(x=>({...x,km:km(at,[x.lat,x.lng])})); PP.area=j.area||null; PP.nearAt=Date.now(); PP.nearPos=at; }
+  catch(e){ PP.near ||= []; }
+  return PP.near;
+}
+async function spotsAt(p){   // around a photo's location
+  try{ return ((await (await fetch(spotsUrl('',p,'&limit=8'))).json()).results||[]).map(x=>({...x,km:null})); }catch(e){ return []; }
+}
+function rememberSpot(x){ if(!x||x.custom&&!x.name) return; S.recentSpots=[spotOf(x),...(S.recentSpots||[]).filter(y=>spotKey(y)!==spotKey(x))].slice(0,10); save(); }
+function spotsBeen(){   // recent picks, then venues from your history and events you went to
+  const seen=new Set(), out=[], add=x=>{ if(!x?.name||x.lat==null) return; const k=spotKey(x); if(seen.has(k)) return; seen.add(k); out.push({...x,km:km(ME_POS,[x.lat,x.lng])}); };
+  (S.recentSpots||[]).forEach(add);
+  [...S.log].reverse().forEach(e=>{ const v=e.v&&venue(e.v); if(v) add({name:v.name,lat:v.lat,lng:v.lng,e:'🕘',kind:'Been here'}); });
+  EV.list.filter(e=>myRsvp(e.id)==='going'&&e.ts<Date.now()&&e.lat&&e.venue).slice(-6).forEach(e=>add({name:e.venue,lat:e.lat,lng:e.lng,e:'🎟️',kind:'Went to '+e.title.slice(0,30)}));
+  return out.slice(0,8);
+}
+function spotsNow(){   // events on now (or starting within the hour) close by: "At ACL Live · Tonight's show"
+  const now=Date.now();
+  return EV.list.filter(e=>e.lat&&e.venue&&e.ts<now+36e5&&(e.te||e.ts+3*36e5)>now&&km(ME_POS,[e.lat,e.lng])<2)
+    .sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).slice(0,4)
+    .map(e=>({name:e.venue,lat:e.lat,lng:e.lng,e:CATS[e.cat]?.e||'🎉',kind:e.title.slice(0,40),addr:'',event:e.id,km:km(ME_POS,[e.lat,e.lng])}));
+}
+function openPlacePicker(cur, cb, opt={}){
+  Object.assign(PP,{cb, cur, q:'', res:[], busy:false, any:null, photo:opt.photo||null, noLoc:false});
+  $('#ppSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📍 ${esc(opt.title||'Add location')}</b><button class="btn sm" data-ppclose>Cancel</button></div>
+    <div class="ppsearch"><span>🔎</span><input id="ppQ" type="search" placeholder="Search places, parks, neighborhoods…" autocomplete="off" enterkeyhint="search"></div>
+    ${cur?`<button class="pprow ppnone" data-ppnone><span class="ppe">✕</span><span class="grow"><b>Remove location</b><small>Now: ${esc(cur.name)}</small></span></button>`:''}
+    <div id="ppList"></div>`;
+  $('#ppBg').hidden=false; renderPPList();
+  freshFix().then(ok=>{ PP.noLoc=!ok&&!ME_FIX; return spotsNear(); }).then(()=>{ if(!$('#ppBg').hidden) renderPPList(); });
+}
+function closePlacePicker(){ $('#ppBg').hidden=true; clearTimeout(PP.t); }
+function ppRow(x){ PP.list.push(x);
+  return `<button class="pprow" data-ppick="${PP.list.length-1}"><span class="ppe">${x.e||'📍'}</span><span class="grow"><b>${esc(x.name)}</b>${x.kind||x.addr?`<small>${esc([x.kind,x.addr].filter(Boolean).join(' · '))}</small>`:''}</span>${x.km!=null?`<small class="ppd">${spotDist(x.km)}</small>`:''}</button>`; }
+const ppSec = (t,xs) => xs.length ? `<div class="pphd">${t}</div>${xs.map(ppRow).join('')}` : '';
+function ppUniq(xs){ const seen=new Set(); return xs.filter(x=>{ const k=spotKey(x); return seen.has(k)?false:(seen.add(k),true); }); }
+function renderPPList(){
+  const el=$('#ppList'); if(!el) return; PP.list=[];
+  const q=PP.q.trim(), fold=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'');
+  let h='';
+  if(PP.noLoc) h+=`<div class="card meta" style="margin:8px 0">Location is off, so there are no suggestions near you. <button class="btn sm blue" data-ppgps style="margin-left:4px">Turn on location</button><br>You can still search for any place.</div>`;
+  if(!q){
+    const near=(PP.near||[]).map(x=>({...x,km:km(ME_POS,[x.lat,x.lng])}));
+    const area=PP.area&&{name:PP.area.name,lat:PP.area.lat,lng:PP.area.lng,e:'🏘️',kind:'Neighborhood',addr:'Austin, Texas'};
+    h+=ppSec('📷 Where your photo was taken',(PP.photo||[]).slice(0,4))+ppSec('🎉 Happening now',spotsNow())+ppSec('🕘 Recent',spotsBeen())
+      +ppSec('📍 Near you',ppUniq([...(area?[area]:[]),...near]).slice(0,30));
+    if(PP.near===null) h+='<p class="meta" style="text-align:center">Finding places near you…</p>';
+    else if(!near.length&&!PP.noLoc) h+='<p class="meta" style="text-align:center">Nothing listed right around you. Search for it, or type a name to add it.</p>';
+  } else {
+    const words=fold(q).split(/\s+/), hit=x=>words.every(w=>fold(x.name).includes(w));
+    const mine=ppUniq([...spotsNow(),...spotsBeen()]).filter(hit);
+    h+=ppSec('',ppUniq([...mine,...PP.res.map(x=>({...x,km:km(ME_POS,[x.lat,x.lng])}))]).slice(0,40));
+    if(PP.busy&&!PP.res.length) h+='<p class="meta" style="text-align:center">Searching…</p>';
+    else if(!PP.busy&&!PP.res.length&&!mine.length) h+=`<p class="meta" style="text-align:center">No places called “${esc(q)}” that we know of.</p>`;
+    if(PP.any) h+=ppSec('🌎 Everywhere',PP.any.map(x=>({...x,km:km(ME_POS,[x.lat,x.lng])})))||'<p class="meta">Nothing found anywhere for that.</p>';
+    h+=`<div class="btns" style="margin-top:10px;flex-direction:column;align-items:stretch">
+      ${PP.any?'':`<button class="btn" data-ppany ${PP.anyBusy?'disabled':''}>${PP.anyBusy?'Searching everywhere…':`🌎 Search addresses & other towns for “${esc(q.slice(0,30))}”`}</button>`}
+      <button class="btn" data-ppnew>➕ Add “${esc(q.slice(0,40))}” as a place where you are</button></div>`;
+  }
+  el.innerHTML=h;
+}
+function ppSearch(){
+  clearTimeout(PP.t); const q=PP.q.trim(), n=++PP.seq; PP.any=null;
+  if(!q){ PP.res=[]; PP.busy=false; return renderPPList(); }
+  PP.busy=true; renderPPList();
+  PP.t=setTimeout(async()=>{ try{ const j=await (await fetch(spotsUrl(q,ME_POS,'&limit=40'))).json(); if(n===PP.seq){ PP.res=j.results||[]; } }catch(e){}
+    if(n===PP.seq){ PP.busy=false; renderPPList(); } },180);
+}
+async function ppAnywhere(){
+  const q=PP.q.trim(), n=PP.seq; if(q.length<3) return toast('Type at least 3 letters.','orange');
+  PP.anyBusy=true; renderPPList();
+  try{ const j=await (await fetch(spotsUrl(q,ME_POS,'&anywhere=1'))).json(); if(j.error) throw new Error(j.error); if(n===PP.seq) PP.any=j.results||[]; }
+  catch(e){ toast('Could not search right now: '+esc(e.message),'orange'); }
+  PP.anyBusy=false; if(n===PP.seq) renderPPList();
+}
+function ppChoose(x){ const cb=PP.cb; closePlacePicker(); if(x) rememberSpot(x); cb&&cb(x?spotOf(x):null); }
+document.addEventListener('input',e=>{ if(e.target.id==='ppQ'){ PP.q=e.target.value; ppSearch(); } });
+document.addEventListener('keydown',e=>{ if(e.target.id==='ppQ'&&e.key==='Enter'){ e.preventDefault(); const first=PP.list[0]; if(first&&PP.q.trim()) ppChoose(first); } });
+document.addEventListener('click',e=>{
+  if(e.target.id==='ppBg') return closePlacePicker();
+  const b=e.target.closest('#ppSheet [data-ppick],#ppSheet [data-ppclose],#ppSheet [data-ppnone],#ppSheet [data-ppany],#ppSheet [data-ppnew],#ppSheet [data-ppgps]'); if(!b) return;
+  const d=b.dataset;
+  if(d.ppick!==undefined) ppChoose(PP.list[+d.ppick]);
+  else if(d.ppclose!==undefined) closePlacePicker();
+  else if(d.ppnone!==undefined) ppChoose(null);
+  else if(d.ppany!==undefined) ppAnywhere();
+  else if(d.ppnew!==undefined){ const j=()=>(Math.random()-.5)*.002;   // ~100 m of fuzz: it's your spot, not your front door
+    ppChoose({name:PP.q.trim().slice(0,60),lat:ME_POS[0]+j(),lng:ME_POS[1]+j(),e:'📍',kind:'Added by you',custom:true}); }
+  else if(d.ppgps!==undefined){ startLocating(true); freshFix().then(ok=>{ PP.noLoc=!ok; if(!ok) toast('Location is blocked. Turn it on for this site in your browser settings.','orange',[],5000); return spotsNear(true); }).then(renderPPList); }
+});
+
+/* The "📍 Add location" row in each composer, with a few one-tap suggestions under it (the photo's spot first). */
+const LOCF = {};   // field id → {get, set, title, empty, photo}
+function locFieldHtml(f){
+  const F=LOCF[f], cur=F.get(), sug=locSugg(f);
+  return `<button type="button" class="locbtn${cur?' on':''}" data-locopen="${f}"><span>${cur?esc(cur.e||'📍'):'📍'}</span><span class="grow">${cur?`<b>${esc(cur.name)}</b>${cur.kind?`<small>${esc(cur.kind)}</small>`:''}`:esc(F.empty||'Add location')}</span>${cur?`<span class="locx" data-locclear="${f}" aria-label="Remove location">✕</span>`:'<span class="meta">›</span>'}</button>
+    ${sug.length?`<div class="locsugg">${sug.map((x,i)=>`<button type="button" class="ichip" data-locsugg="${f}|${i}">${esc(x.e||'📍')} ${esc(x.name.slice(0,26))}</button>`).join('')}</div>`:''}`;
+}
+function locSugg(f){
+  const F=LOCF[f], cur=F.get(), k=cur&&spotKey(cur);
+  F.sugg=ppUniq([...(F.photo?.()||[]), ...spotsNow().slice(0,2), ...(PP.near||[]).filter(x=>x.kind!=='Neighborhood').slice(0,8)]).filter(x=>spotKey(x)!==k).slice(0,6);
+  return F.sugg;
+}
+function refreshLoc(f){ const el=$('#loc-'+f); if(el) el.innerHTML=locFieldHtml(f); }
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-locopen],[data-locsugg],[data-locclear]'); if(!b) return;
+  const d=b.dataset; e.stopPropagation();
+  if(d.locclear){ e.preventDefault(); LOCF[d.locclear].set(null); return; }
+  if(d.locsugg){ const [f,i]=d.locsugg.split('|'), x=LOCF[f].sugg[+i]; rememberSpot(x); LOCF[f].set(spotOf(x)); return; }
+  const F=LOCF[d.locopen]; openPlacePicker(F.get(), x=>F.set(x), {title:F.title, photo:F.photo?.()});
+}, true);
+
+// Where a photo was taken, when the phone kept it (JPEG EXIF GPS). Many phones strip it on upload; then null.
+async function photoGps(file){
+  try{
+    const b=new DataView(await file.slice(0,256*1024).arrayBuffer()); if(b.getUint16(0)!==0xFFD8) return null;
+    for(let o=2;o+4<b.byteLength;){
+      const m=b.getUint16(o), len=b.getUint16(o+2);
+      if(m===0xFFE1&&b.getUint32(o+4)===0x45786966){
+        const t=o+10, le=b.getUint16(t)===0x4949, u16=p=>b.getUint16(p,le), u32=p=>b.getUint32(p,le);
+        const tag=(ifd,want)=>{ for(let i=0,n=u16(ifd);i<n;i++){ const e=ifd+2+i*12; if(u16(e)===want) return e; } return 0; };
+        const g=tag(t+u32(t+4),0x8825); if(!g) return null;
+        const gi=t+u32(g+8), deg=e=>{ const p=t+u32(e+8), v=i=>u32(p+i*8)/u32(p+i*8+4); return v(0)+v(1)/60+v(2)/3600; };
+        const la=tag(gi,2), lo=tag(gi,4), ns=tag(gi,1), ew=tag(gi,3); if(!la||!lo) return null;
+        const lat=deg(la)*(ns&&b.getUint8(ns+8)===83?-1:1), lng=deg(lo)*(ew&&b.getUint8(ew+8)===87?-1:1);   // 'S', 'W'
+        return isFinite(lat)&&isFinite(lng)&&(lat||lng)?[lat,lng]:null;
+      }
+      if((m&0xFF00)!==0xFF00||m===0xFFDA) return null; o+=2+len;
+    }
+  }catch(e){}
+  return null;
+}
+
+/* A place's page, like Instagram's location pages: tap the 📍 on a story or a flare to see everything posted there
+   (stories from the last day, flares and live streams going on now, events coming up), with directions and
+   "post from here". Matching is by name or within ~150 m, so a park's stories show up whatever spot in it was tagged. */
+const SPOT = {x:null, stories:[]};
+function spotHere(x, lat, lng, name, r=.15){ return (name&&x.name&&String(name).toLowerCase()===x.name.toLowerCase())||(lat!=null&&!isNaN(lat)&&km([x.lat,x.lng],[lat,lng])<r); }
+function openSpot(x, looked){
+  if(!x||x.lat==null) return;
+  if(!looked&&!x.kind) fetch(spotsUrl(x.name,[x.lat,x.lng],'&limit=5')).then(r=>r.json()).then(j=>{   // a story only keeps the name: find the place itself
+    const m=(j.results||[]).find(y=>y.name.toLowerCase()===x.name.toLowerCase()&&km([x.lat,x.lng],[y.lat,y.lng])<.25);
+    if(m&&SPOT.x===x&&!$('#spotBg').hidden) openSpot({...m,...x,e:m.e,kind:m.kind,addr:m.addr,id:m.id},true); }).catch(()=>{});
+  SPOT.x=x; const now=Date.now(), mine=x.lat!=null?km(ME_POS,[x.lat,x.lng]):null;
+  const st=SPOT.stories=allStories().filter(s=>{ const p=storyPos(s); return spotHere(x,p?.[0],p?.[1],storyPlace(s)); }).reverse();
+  const fl=allPings().filter(p=>(p.end||now+1)>now&&(p.v||p.at)&&spotHere(x,...pos(p),p.v&&venue(p.v)?.name));
+  const lv=liveStreams().filter(s=>s.v&&venue(s.v)&&spotHere(x,venue(s.v).lat,venue(s.v).lng,venue(s.v).name));
+  const ev=EV.list.filter(e=>e.te>now&&spotHere(x,e.lat,e.lng,e.venue,.1)).sort((a,b)=>a.ts-b.ts).slice(0,8);
+  const pid=/^p:/.test(x.id||'')?x.id.slice(2):null;
+  const tile=(s,i)=>`<button class="sptile" data-spstory="${i}" style="${bubbleBg(s)}">${safeImg(s.img)?'':`<span>${esc(s.emoji||'✨')}</span>`}${safeVid(s.vid)?'<i>▶</i>':''}<b>@${esc(s.u)}</b></button>`;
+  $('#spotSheet').innerHTML=`<div class="row" style="align-items:flex-start"><span class="spe">${esc(x.e||'📍')}</span>
+      <div class="grow"><b style="font-size:19px">${esc(x.name)}</b><div class="meta">${esc([x.kind,x.addr,mine!=null&&spotDist(mine)].filter(Boolean).join(' · '))}</div></div>
+      <button class="btn sm" data-spclose>✕</button></div>
+    <div class="btns" style="margin:12px 0 4px;flex-wrap:wrap">
+      <a class="btn sm blue" href="${mapsUrl(x.lat,x.lng)}" target="_blank" rel="noopener">🧭 Directions</a>
+      <button class="btn sm" data-spmap>🗺️ Map</button>
+      ${pid?`<button class="btn sm" data-spmenu="${esc(pid)}">🍽️ Menu</button>`:''}
+      <button class="btn sm primary" data-spstorynew>📸 Post here</button>
+      <button class="btn sm" data-spflare>📣 Flare here</button></div>
+    ${lv.length?`<h3>📺 Live here now</h3>${lv.map(s=>`<button class="pprow" data-spwatch="${esc(s.id)}"><span class="ppe">🔴</span><span class="grow"><b>${esc(s.title)}</b><small>@${esc(s.u)}</small></span></button>`).join('')}`:''}
+    <h3>📸 Stories here <span class="meta">· last 24 hours</span></h3>
+    ${st.length?`<div class="spgrid">${st.map(tile).join('')}</div>`:'<p class="meta">No stories here yet today. Be the first.</p>'}
+    ${fl.length?`<h3>📣 Flares here</h3>${fl.map(p=>`<button class="pprow" data-spping="${esc(p.id)}"><span class="ppe">${KINDS[p.k]?.e||'📣'}</span><span class="grow"><b>${esc(p.t)}</b><small>@${esc(p.u)} · ${p.start<=now?'happening now':'at '+clock(p.start)} · ${p.downs.length} down</small></span></button>`).join('')}`:''}
+    ${ev.length?`<h3>🎟️ Coming up here</h3>${ev.map(e=>`<button class="pprow" data-spev="${esc(e.id)}"><span class="ppe">${CATS[e.cat]?.e||'🎉'}</span><span class="grow"><b>${esc(e.title)}</b><small>${esc(fmtWhen(e.ts))}</small></span></button>`).join('')}`:''}`;
+  if(!looked){ $('#spotBg').hidden=false; $('#spotSheet').scrollTop=0; track('spot_open'); }
+}
+// The place a story, flare or stream was tagged with, as a spot.
+function spotFromStory(s){ const p=storyPos(s), n=storyPlace(s); return p&&n?{name:n,lat:p[0],lng:p[1],e:'📍'}:null; }
+function spotFromPing(p){ const v=p.v&&venue(p.v); return v?{...v,e:v.e||KINDS[p.k]?.e||'📍'}:null; }
+document.addEventListener('click',e=>{
+  if(e.target.id==='spotBg') return $('#spotBg').hidden=true;
+  const b=e.target.closest('[data-spclose],[data-spmap],[data-spmenu],[data-spstorynew],[data-spflare],[data-spstory],[data-spping],[data-spev],[data-spwatch],[data-stplace],[data-spotping]'); if(!b) return;
+  const d=b.dataset, x=SPOT.x, close=()=>{ $('#spotBg').hidden=true; };
+  if(d.stplace!==undefined){ const s=SVW.list[+d.stplace], sp=s&&spotFromStory(s); if(sp) openSpot(sp); return; }
+  if(d.spotping!==undefined){ const p=allPings().find(y=>y.id===d.spotping), sp=p&&spotFromPing(p); if(sp) openSpot(sp); return; }
+  if(d.spclose!==undefined) close();
+  else if(d.spmap!==undefined){ close(); if(!$('#storyView').hidden) closeStories(); tab('map'); setTimeout(()=>{ map.setView([x.lat,x.lng],17); if(/^p:/.test(x.id||'')) placePopup(x.id.slice(2),[x.lat,x.lng]); },80); }
+  else if(d.spmenu) openMenu(d.spmenu, x.name);
+  else if(d.spstorynew!==undefined){ close(); if(!$('#storyView').hidden) closeStories(); openStoryComposer({place:spotOf(x), where:'place'}); }
+  else if(d.spflare!==undefined){ close(); if(!$('#storyView').hidden) closeStories(); openCompose(); CF.place=spotOf(x); refreshLoc('fl'); }
+  else if(d.spstory!==undefined){ const l=SPOT.stories; close(); openStories(l,+d.spstory); setTimeout(()=>$('#storyView .reel')?.children[+d.spstory]?.scrollIntoView(),60); }
+  else if(d.spping){ close(); if(!$('#storyView').hidden) closeStories(); focusOnMap(d.spping); }
+  else if(d.spev){ close(); if(!$('#storyView').hidden) closeStories(); openEvent(d.spev); }
+  else if(d.spwatch){ close(); if(!$('#storyView').hidden) closeStories(); openWatch(d.spwatch); }
+});
+
 /* composer */
 const SC = {};
 function openStoryComposer(preset={}){
   if(SC.vidUrl) URL.revokeObjectURL(SC.vidUrl);
   Object.assign(SC,{img:null,vid:null,vidUrl:'',bg:0,emoji:'✨',cap:'',event:'',place:null,groups:[],people:[],where:'near',vis:'everyone',q:''},preset);
   if(SC.event){ SC.where='event'; SC.emoji=CATS[EV.byId[SC.event]?.cat]?.e||'✨'; }
-  SC.placeOpts=storyPlaceOptions([]); renderStorySheet(); $('#storyBg').hidden=false;
-  fetch(`/api/places?${nearParam()}&limit=25`).then(r=>r.json()).then(j=>{   // food & drink spots around you
-    SC.placeOpts=storyPlaceOptions(j.places||[]); const sel=$('#scPlace'); if(sel) sel.innerHTML=placeOptionsHtml(); }).catch(()=>{});   // just the list: don't wipe what they're typing
+  if(SC.event&&!SC.place){ const e=EV.byId[SC.event]; if(e?.lat&&e.venue) SC.place={name:e.venue,lat:e.lat,lng:e.lng,e:CATS[e.cat]?.e||'🎉',kind:'Event venue'}; }
+  SC.photoSpots=[]; renderStorySheet(); $('#storyBg').hidden=false;
+  freshFix().then(()=>spotsNear()).then(()=>refreshLoc('sc'));   // suggestions from where you are now
 }
-const placeOptionsHtml = () => '<option value="">No place</option>' + [['been',"Places you've been"],['near','Near you']].map(([g,l])=>{
-  const o=SC.placeOpts.map((x,i)=>[x,i]).filter(([x])=>x.grp===g);
-  return o.length?`<optgroup label="${l}">${o.map(([x,i])=>`<option value="${i}" ${SC.place?.name===x.name?'selected':''}>${esc(x.name)}</option>`).join('')}</optgroup>`:''; }).join('');
-// "Where was this?": places from your own history first (venue-level, only if you keep history), then spots near you.
-function storyPlaceOptions(nearby){
-  const seen=new Set(), out=[], add=(o,grp)=>{ if(!o.name||o.lat==null||seen.has(o.name)) return; seen.add(o.name); out.push({...o,grp}); };
-  [...S.log].reverse().forEach(e=>{ const v=e.v&&venue(e.v); if(v) add({name:v.name,lat:v.lat,lng:v.lng},'been'); });
-  [...EV.list].filter(e=>myRsvp(e.id)==='going'&&e.ts<Date.now()&&e.lat&&e.venue).slice(-10).forEach(e=>add({name:e.venue,lat:e.lat,lng:e.lng},'been'));
-  nearby.forEach(p=>add({name:p.name,lat:p.lat,lng:p.lng},'near'));
-  VENUES.slice().sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).slice(0,10).forEach(v=>add({name:v.name,lat:v.lat,lng:v.lng},'near'));
-  return out.slice(0,45);
-}
+LOCF.sc = {title:'Where was this?', get:()=>SC.place, photo:()=>SC.photoSpots,
+  set:x=>{ SC.cap=$('#scCap')?.value??SC.cap; SC.place=x;
+    if(x?.event&&EV.byId[x.event]&&!SC.event) SC.event=x.event;
+    if(SC.place&&SC.where!=='event') SC.where='place'; else if(!SC.place&&SC.where==='place') SC.where='near'; renderStorySheet(); }};
 function storyEventOptions(){   // what you're going to, then what's on near you in the next day and a half
   const now=Date.now(), mine=EV.list.filter(e=>myRsvp(e.id)&&e.te>now);
   const near=EV.list.filter(e=>e.lat&&e.te>now-3*36e5&&e.ts<now+36*36e5).sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng]));
@@ -2713,7 +2933,7 @@ function renderStorySheet(){
     <input id="scCap" maxlength="140" placeholder="Say something…" value="${esc(SC.cap)}" style="margin-top:10px" autocomplete="off">
     <label class="lbl">📍 Tag an event</label><select id="scEvent"><option value="">No event</option>${evs.map(e=>
       `<option value="${e.id}" ${SC.event===e.id?'selected':''}>${CATS[e.cat].e} ${esc(e.title.slice(0,40))}${e.venue?' · '+esc(e.venue):''}</option>`).join('')}</select>
-    <label class="lbl">📍 Where was this?</label><select id="scPlace">${placeOptionsHtml()}</select>
+    <label class="lbl">📍 Where was this?</label><div id="loc-sc">${locFieldHtml('sc')}</div>
     <label class="lbl">🏘️ Tag your groups</label><div class="tagchips">${mine.map(g=>`<button class="ichip ${SC.groups.includes(g.id)?'on':''}" data-scgroup="${g.id}">${esc(g.e||'🏘️')} ${esc(g.n)}</button>`).join('')
       ||'<span class="meta">Join a group to tag it. Its members see the story on the group page.</span>'}</div>
     <label class="lbl">👥 Tag people</label><div class="tagchips">${SC.people.map(h=>`<button class="ichip on" data-scperson="${esc(h)}">@${esc(h)} ✕</button>`).join('')}</div>
@@ -3153,7 +3373,7 @@ function pingCard(p, compact){
     <div class="row">${av(p.u)}<div class="grow"><div class="handle">${esc(p.u)} ${isFriend(p.u)?'<span class="badge friends">friend</span>':''}${mine?'<span class="badge live">you</span>':''}</div>
       <div class="meta">${a.t&&!mine?a.t+' · ':''}${S.me.astro&&a.z&&!mine?'✨ '+a.z+' · ':''}${a.i.slice(0,3).join(', ')}</div></div>${mine?'':`<button class="btn sm" data-more="post|${p.id}|${esc(p.u)}" aria-label="More options" style="padding:4px 9px">⋯</button>`}${p.group?`<span class="badge party">${esc(groupOf(p.group)?.e||'🏘️')} ${esc(groupOf(p.group)?.n||'Group')}</span>`:visBadge(p.vis)}</div>
     <div class="ptext">${esc(p.t)}</div>
-    <div class="where"><span class="badge">${KINDS[p.k].e} ${KINDS[p.k].l}</span><span class="badge">📍 ${esc(where(p))}</span>${when(p)}</div>
+    <div class="where"><span class="badge">${KINDS[p.k].e} ${KINDS[p.k].l}</span>${p.v?`<button class="badge" data-spotping="${esc(p.id)}">📍 ${esc(where(p))} ›</button>`:`<span class="badge">📍 ${esc(where(p))}</span>`}${when(p)}</div>
     <div class="row"><div class="downs grow">${p.downs.slice(0,5).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:8px">${p.downs.length?p.downs.length+' down':'Be the first'}</span></div>
       <div class="btns"><button class="btn sm" data-map="${p.id}">Map</button>${mine?'':`<button class="btn sm ${downOn?'down-on':'primary'}" data-down="${p.id}">${downOn?"✓ I'm down":"I'm down"}</button>`}</div></div>
   </div>`;
@@ -4004,7 +4224,8 @@ document.addEventListener('change',e=>{
 
 /* compose */
 $('#cKind').innerHTML=Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v.e} ${v.l}</option>`).join('');
-$('#cVenue').innerHTML='<option value="">📍 Near me (fuzzy area)</option>'+VENUES.map(v=>`<option value="${v.id}">${v.name}</option>`).join('');
+const CF = {place:null};
+LOCF.fl = {title:'Where is it?', empty:'Near me (fuzzy area) · tap to pick a place', get:()=>CF.place, set:x=>{ CF.place=x; refreshLoc('fl'); }};
 $('#cIdeas').innerHTML=["anyone down for pool?","drop-in game, need players","grabbing food, join?","RL party, need a 3rd 🚀"].map(t=>`<span class="ichip" style="cursor:pointer" data-idea>${t}</span>`).join('');
 $('#cIdeas').onclick=e=>{ if(e.target.dataset.idea!==undefined) $('#cText').value=e.target.textContent; };
 const segVal = id => document.querySelector(`#${id} .on`).dataset.v;
@@ -4018,13 +4239,14 @@ function openCompose(group){
   $('#cGroup').innerHTML='<option value="">My feed only</option>'+allGroups().filter(g=>isMember(g.id)).map(g=>`<option value="${g.id}" ${g.id===group?'selected':''}>${esc(g.e||'🏘️')} ${esc(g.n)}</option>`).join('');
   document.querySelectorAll('#cWhen button').forEach(x=>x.classList.toggle('on',x.dataset.v==='0')); $('#cAt').hidden=true;
   $('#cText').placeholder="heading to play pool at Buffalo Billiards if anyone's down…";
-  $('#sheetBg').hidden=false; composeHint(); setTimeout(()=>$('#cText').focus(),50);
+  CF.place=null; refreshLoc('fl'); $('#sheetBg').hidden=false; composeHint(); setTimeout(()=>$('#cText').focus(),50);
+  freshFix().then(()=>spotsNear()).then(()=>refreshLoc('fl'));
 }
 $('#compose').onsubmit=async e=>{ e.preventDefault();
   if(needAccount('post a flare')) return;
   const later=segVal('cWhen')==='later', at=later&&Date.parse($('#cAt').value);
   if(later&&!(at>Date.now())) return toast('Pick a date and time in the future.','orange');
-  const v=$('#cVenue').value, mins=later?Math.round((at-Date.now())/M):+segVal('cWhen'), j=()=>(Math.random()-.5)*.012;
+  const v=CF.place, mins=later?Math.round((at-Date.now())/M):+segVal('cWhen'), j=()=>(Math.random()-.5)*.012;
   let p={id:'m'+Date.now(),u:S.me.h,k:$('#cKind').value,t:$('#cText').value.trim(),vis:segVal('cVis'),downs:[],
     start:Date.now()+mins*M,end:Date.now()+(mins+180)*M,created:Date.now()};
   if($('#cGroup').value) p.group=$('#cGroup').value;
@@ -4076,13 +4298,12 @@ const DEMO_REQS = [
 ];
 const LIVE = {mode:'list', streams:SEED_STREAMS.map(s=>({...s,reqs:s.reqs.map(r=>({...r,votes:[...r.votes]}))})), remote:{}, watch:null,
   src:'device', brand:'insta360', facing:'environment', stream:null, srcLabel:'', devices:[], ble:null, demoTimer:null,
-  on:false, my:null, earned:0, draft:{title:'',v:'bw',who:'everyone',delay:5}};
+  on:false, my:null, earned:0, draft:{title:'',v:null,who:'everyone',delay:5}};
 const PREVIEW = Object.assign(document.createElement('video'),{muted:true,playsInline:true,autoplay:true});
 const WATCHV = Object.assign(document.createElement('video'),{muted:true,playsInline:true,autoplay:true,controls:true});
 const liveStreams = () => [...LIVE.streams, ...Object.values(LIVE.remote)].filter(s=>!(LIVE.my&&s.id===LIVE.my.id));
 const streamById = id => LIVE.my&&LIVE.my.id===id ? LIVE.my : liveStreams().find(s=>s.id===id);
 const openReqs = s => s.reqs.filter(r=>r.status==='pending'||r.status==='accepted').length;
-const placeOpts = sel => VENUES.map(v=>`<option value="${v.id}" ${v.id===sel?'selected':''}>${esc(v.name)}</option>`).join('');
 
 /* tabs talk over BroadcastChannel; video goes tab-to-tab over WebRTC (no server needed on one machine) */
 const TAB = Math.random().toString(36).slice(2,8);
@@ -4314,7 +4535,8 @@ async function sendRequest(){
   const kind=segVal('rKind'), tip=+segVal('rTip'), text=$('#rText').value.trim(); if(!text) return;
   if(s.who==='friends'&&!s.remote&&!isFriend(s.u)) return toast(`${esc(s.u)} only takes requests from friends.`,'orange');
   if(tip>S.coins) return toast(`You only have 🪙 ${S.coins}.`,'orange');
-  const r={id:'q'+Date.now().toString(36),by:meH(),kind,place:kind==='visit'?$('#rPlace').value:null,text,tip,votes:[],status:'pending'};
+  if(kind==='visit'&&!LOCF.rq.get()) return toast('Pick a place to send them to.','orange');
+  const r={id:'q'+Date.now().toString(36),by:meH(),kind,place:kind==='visit'?LOCF.rq.get():null,text,tip,votes:[],status:'pending'};
   const btn=$('#reqSend'); btn.disabled=true; btn.textContent='🛡️ Checking it…';
   const v=await screen(r,s); btn.disabled=false; btn.textContent='Send request';
   if(v.verdict==='block') return toast(`🛡️ <b>Not sent.</b> ${esc(v.reason)}`,'orange',[],7000);
@@ -4336,7 +4558,7 @@ function vote(id){
 function startLive(){
   if(needAccount('go live')) return;
   if(!LIVE.stream&&!ingestLive()) return; const d=LIVE.draft;
-  LIVE.my={id:'L'+TAB,u:meH(),title:d.title.trim()||`Live from ${venue(d.v).name}`,v:d.v,cam:LIVE.stream?LIVE.srcLabel:`${CAMS[LIVE.brand]?.l||'Action'} camera`,who:d.who,delay:d.delay,
+  LIVE.my={id:'L'+TAB,u:meH(),title:d.title.trim()||(d.v?`Live from ${venue(d.v).name}`:'Live nearby'),v:d.v,cam:LIVE.stream?LIVE.srcLabel:`${CAMS[LIVE.brand]?.l||'Action'} camera`,who:d.who,delay:d.delay,
     viewers:0,reqs:[],e:'📺',startedAt:Date.now()};
   LIVE.on=true; LIVE.earned=0; logAct('live',{k:'live',v:d.v}); announce(); renderLive(); renderMap();
   toast(`🔴 <b>You're live.</b> ${d.delay?`Your spot shows on the map in ${d.delay} min.`:"You're on the map."}`,'green',[],4000);
@@ -4425,7 +4647,7 @@ function renderWatch(root){
     ${s.who==='off'?'<div class="card meta">Requests are off for this stream.</div>':`<form class="card" id="reqForm">
       <b>Send ${esc(s.u)} a request</b>${s.who==='friends'&&!s.remote&&!isFriend(s.u)?'<p class="meta" style="margin:4px 0 0">Friends only. Add them in Meet → Friends first.</p>':''}
       <div class="seg" id="rKind" style="margin:10px 0"><button type="button" data-v="visit" class="on">📍 Visit a place</button><button type="button" data-v="task">🎯 Do a task</button></div>
-      <select id="rPlace">${placeOpts()}</select>
+      <div id="rPlace"><div id="loc-rq">${locFieldHtml('rq')}</div></div>
       <input id="rText" maxlength="160" style="margin-top:8px" placeholder="Why go? e.g. rate the brisket on stream" autocomplete="off" required>
       <label class="lbl">Tip (only paid if they do it)</label>
       <div class="seg" id="rTip">${[0,1,5,10].map((t,i)=>`<button type="button" data-v="${t}" class="${i?'':'on'}">${t?'🪙 '+t:'No tip'}</button>`).join('')}</div>
@@ -4440,7 +4662,7 @@ function renderStudio(root){
   if(LIVE.on){
     root.innerHTML = `<div class="row" style="margin:6px 0 10px"><button class="btn sm" data-lvback>← Live</button><span class="grow"></span><span class="badge live">🪙 ${LIVE.earned} earned</span></div>
       <div class="lv" id="lvBox"><div class="tag"><span class="onair">● ON AIR</span><span class="badge" id="lvStat"></span></div><div class="ov">📷 ${esc(my.cam)}</div></div>
-      <div class="row" style="margin:12px 0"><div class="grow"><b>${esc(my.title)}</b><div class="meta">📍 ${esc(venue(my.v).name)} · ${my.delay?my.delay+'-min location delay':'no location delay'} · requests: ${my.who}</div></div>
+      <div class="row" style="margin:12px 0"><div class="grow"><b>${esc(my.title)}</b><div class="meta">📍 ${esc(venue(my.v)?.name||'Somewhere nearby')} · ${my.delay?my.delay+'-min location delay':'no location delay'} · requests: ${my.who}</div></div>
         <div class="btns" style="flex:none">${LIVE.demoTimer||!LIVE.stream?'':'<button class="btn sm" data-flip>🔄 Flip</button>'}<button class="btn sm" data-endlive style="border-color:#ff3b5c;color:#ff6b81">End</button></div></div>
       ${CFG.livekit?'<div class="card" id="rsCard" style="margin-bottom:12px"></div>':''}
       <h3>Requests</h3><div id="reqList"></div>`;
@@ -4489,7 +4711,7 @@ function renderStudio(root){
     <h3>2 · Stream</h3>
     <div class="card">
       <input id="lvTitle" maxlength="70" placeholder="What are you up to? e.g. Sunset swim at Barton Springs" value="${esc(d.title)}">
-      <label class="lbl">Where</label><select id="lvPlace">${placeOpts(d.v)}</select>
+      <label class="lbl">Where</label><div id="loc-lv">${locFieldHtml('lv')}</div>
       <label class="lbl">Who can send requests</label>${seg('lvWho',[['everyone','🌐 Everyone'],['friends','👥 Friends'],['off','Off']],d.who)}
       <label class="lbl">Show my spot on the map</label>${seg('lvDelay',[[0,'Right away'],[5,'5 min late'],[15,'15 min late']],d.delay)}
       <p class="meta" style="margin:10px 0 0">🛡️ Viewers only see the venue name, never GPS. A delay keeps people from turning up mid-stream.</p>
@@ -4498,7 +4720,9 @@ function renderStudio(root){
   if(LIVE.stream) $('#lvBox').prepend(PREVIEW);
 }
 document.addEventListener('input',e=>{ if(e.target.id==='lvTitle') LIVE.draft.title=e.target.value; });
-document.addEventListener('change',e=>{ if(e.target.id==='lvPlace') LIVE.draft.v=e.target.value; if(e.target.id==='lvDev') useDevice(e.target.value); });
+document.addEventListener('change',e=>{ if(e.target.id==='lvDev') useDevice(e.target.value); });
+LOCF.lv = {title:'Where are you streaming from?', empty:'Somewhere nearby (no place shown) · tap to pick', get:()=>LIVE.draft.v, set:x=>{ LIVE.draft.v=x; refreshLoc('lv'); }};
+LOCF.rq = {title:'Where should they go?', empty:'Pick a place to send them', get:()=>LIVE.reqFor===LIVE.watch?LIVE.reqPlace:null, set:x=>{ LIVE.reqPlace=x; LIVE.reqFor=LIVE.watch; refreshLoc('rq'); }};
 document.addEventListener('submit',e=>{ if(e.target.id==='reqForm'){ e.preventDefault(); sendRequest(); } });
 setInterval(()=>{ if(map&&!$('#v-map').hidden){ renderLiveMarkers(); renderMapLive(); } },4000);
 setInterval(()=>{ LIVE.streams.forEach(s=>s.viewers=Math.max(3,s.viewers+(hash(s.id+Date.now())%5)-2));
@@ -4529,8 +4753,7 @@ document.addEventListener('input',e=>{
   if(e.target.id==='scQ'){ SC.q=e.target.value.trim(); $('#scCands').innerHTML=storyCands(); }
 });
 document.addEventListener('change',e=>{
-  if(e.target.id==='scPlace'){ SC.place=e.target.value===''?null:SC.placeOpts[+e.target.value];
-    if(SC.place&&SC.where!=='event') SC.where='place'; else if(!SC.place&&SC.where==='place') SC.where='near'; renderStorySheet(); }
+
   if(e.target.id==='scEvent'){ SC.event=e.target.value; const ev=EV.byId[SC.event];
     if(ev){ SC.emoji=CATS[ev.cat].e; SC.where='event'; } else if(SC.where==='event') SC.where='near'; renderStorySheet(); }
 });
@@ -4542,7 +4765,8 @@ $('#storyFile').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''
     if(SC.vidUrl) URL.revokeObjectURL(SC.vidUrl);
     SC.vid=f; SC.vidUrl=URL.createObjectURL(f); SC.img=meta.poster||null; renderStorySheet(); return;
   }
-  try{ if(SC.vidUrl) URL.revokeObjectURL(SC.vidUrl); SC.vid=null; SC.vidUrl=''; SC.img=await shrinkImage(f); renderStorySheet(); }
+  try{ if(SC.vidUrl) URL.revokeObjectURL(SC.vidUrl); SC.vid=null; SC.vidUrl=''; SC.img=await shrinkImage(f); SC.photoSpots=[]; renderStorySheet();
+    photoGps(f).then(g=>g&&spotsAt(g)).then(xs=>{ if(!xs?.length) return; SC.photoSpots=xs.map(x=>({...x,kind:'📷 '+(x.kind||'Photo spot')})); refreshLoc('sc'); }); }
   catch(err){ toast("Couldn't read that photo.",'orange'); } };
 // A video's length and a still from it (the cover on the map and story rings). Some phones' videos can't be
 // decoded by every browser; then there's just no cover, and the video still uploads.

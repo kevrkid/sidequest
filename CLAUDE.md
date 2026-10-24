@@ -301,6 +301,18 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **🌆 Tonight picks** (`tonight_push!` in v2.rb, 5:00-5:15 PM, once a day): up to 3 of tonight's events fitting each
   person's taste (types, venues, friends going ×3); notification kind `tonight` (mutable), push opens `/?tonight=1`.
   `ruby test_tonight.rb` (6).
+- **📍 Add location** (`spots.rb`, `/api/spots`; like Instagram's): one picker (`openPlacePicker(cur, cb)`, sheet
+  `#ppBg`) for stories, flares, live and "visit a place" requests, replacing the old dropdowns (flares and live used
+  the 8 demo `VENUES`; stories only food & drink). Lists: 📷 where the photo was taken (JPEG EXIF GPS, `photoGps`),
+  🎉 events on now within 2 km, 🕘 recent picks (`S.recentSpots`) and history, 📍 near you (fresh GPS fix on open,
+  `freshFix()`; your neighborhood first). Search covers food & drink, sights, parks/lakes/trails, markets and
+  neighborhoods (~4,700); "Search everywhere" = OpenStreetMap Nominatim (tap only, 1/s, cached); "➕ Add …" = your own
+  name at your spot (±100 m). Composers show it as `locFieldHtml(f)` with one-tap suggestion chips (`LOCF` per field).
+  A picked place travels as `v: {name, lat, lng, id, e, kind}` (flares, live) or story `place/lat/lng`; `venue(x)`
+  takes an id or that object; the server cleans it (`spot_ref`) and moderates a typed name with the text. Phones send
+  ~100 m positions here. `ruby test_spots.rb` (15).
+- **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
+  flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
   charge), 4 photos; event sheets have "🏢 Venue phone & hours" (Google by venue name, on tap). OSM `phone` is
   fetched by fetch_places.rb from the next refresh.
