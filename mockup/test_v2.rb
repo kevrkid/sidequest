@@ -316,6 +316,13 @@ t('chat: blocking hides the chat and stops messages') {
   _, th = cc.get('/api/dm/threads')
   check(c == 403 && th['threads'].none? { |x| x['with'] == 'chat_b' }, [c, th])
 }
+t('chat: deleting your account deletes your photos and voice notes') {
+  _, up = cc.req(:post, '/api/dm/voice', 'a' * 5000, 'Content-Type' => 'audio/mp4')
+  _, j = cc.post('/api/dm/send', to: 'chat_a', aud: up['id'])
+  before = ca.req(:get, j['msg']['aud']).first
+  cc.post('/api/account/delete', pw: 'password123', confirm: 'chat_c')
+  check(before == 200 && ca.req(:get, j['msg']['aud']).first == 404 && !File.exist?(File.join($dir, 'data', 'dm', up['id'])), [before, up])
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')
@@ -349,7 +356,7 @@ t('analytics: whitelisted names only; the admin growth report needs the token') 
   amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'evil_thing')
   c1, = amy.get('/api/admin/growth')
   c2, g = amy.req(:get, '/api/admin/growth', nil, 'X-Admin-Token' => 'adm')
-  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 11, g)   # 7 + the 4 chat testers
+  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 10, g)   # 7 + the 4 chat testers, one of whom deleted their account
   "dau #{g['dau'].last}, wau #{g['wau']}"
 }
 t("friends see each other's level and badges; a stranger's quests stay private") {

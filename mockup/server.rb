@@ -1073,6 +1073,12 @@ def delete_user!(d, h)
   d['friends'].each_value { |l| l.delete(h) }
   d['freqs'].reject! { |f| f['from'] == h || f['to'] == h }
   d['groups'].each_value { |g| g['owner'] = nil if g['owner'] == h }
+  d['dms'].each do |k, th|   # their photos and voice notes go with them (two-person chats are deleted whole)
+    th.select { |m| m['f'] == h || !k.start_with?('c:') && k.split('|').include?(h) }.each do |m|
+      [m['img'], m['aud']].compact.each { |u| File.delete(File.join(DM_DIR, File.basename(u))) rescue nil }
+      m.keep_if { |x, _| %w[id f at].include?(x) }['gone'] = true if k.start_with?('c:')
+    end
+  end
   d['dms'].delete_if { |k, _| k.split('|').include?(h) }
   (d['chats'] || {}).each_value { |c| c['members'].delete(h) }
   (d['chats'] || {}).delete_if { |_, c| c['members'].size < 2 && (d['dms'].delete("c:#{c['id']}") || true) }
