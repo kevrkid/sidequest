@@ -30,6 +30,7 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, photos, voice notes, seen, typing
 require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
@@ -1073,6 +1074,9 @@ def delete_user!(d, h)
   d['freqs'].reject! { |f| f['from'] == h || f['to'] == h }
   d['groups'].each_value { |g| g['owner'] = nil if g['owner'] == h }
   d['dms'].delete_if { |k, _| k.split('|').include?(h) }
+  (d['chats'] || {}).each_value { |c| c['members'].delete(h) }
+  (d['chats'] || {}).delete_if { |_, c| c['members'].size < 2 && (d['dms'].delete("c:#{c['id']}") || true) }
+  (d['dm_read'] || {}).delete(h)
   %w[notifs quest saves push taste].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
   (d['ev_chat'] || {}).each_value { |l| l.reject! { |m| m['u'] == h } }
@@ -1804,42 +1808,7 @@ def mount_app(server)
     end
   end
 
-  # ---- private messages: friends only (a mutual wave on Meet makes you friends); blocks end the thread
-  route(server, '/api/dm/threads', get: true) do |_b, h|
-    store(write: false) do |d|
-      hidden = blocked_between(d, h)
-      threads = d['dms'].select { |k, m| k.split('|').include?(h) && m.any? }.map do |k, m|
-        other = (k.split('|') - [h]).first || h
-        { with: other, last: m.last }
-      end
-      { threads: threads.reject { |t| hidden.include?(t[:with]) }.sort_by { |t| -t[:last]['at'] } }
-    end
-  end
-
-  route(server, '/api/dm', get: true) do |_b, h, req|
-    other = req.query['with'].to_s
-    store(write: false) do |d|
-      raise Forbidden, 'Not available.' if blocked_between(d, h).include?(other)
-      { msgs: (d['dms'][dm_key(h, other)] || []).last(200) }
-    end
-  end
-
-  route(server, '/api/dm/send') do |b, h|
-    limit!("dm:#{h}", 120, 3600)
-    to = b['to'].to_s
-    text = b['text'].to_s.strip[0, 1000]
-    raise 'Write a message first.' if text.empty?
-    store do |d|
-      raise 'No such person.' unless d['users'][to]
-      raise Forbidden, 'Not available.' if blocked_between(d, h).include?(to)
-      raise Forbidden, "You can message friends. Wave at them on Meet first." unless friends_of(d, h).include?(to)
-      msg = { 'f' => h, 't' => text, 'at' => now_ms }
-      thread = (d['dms'][dm_key(h, to)] ||= [])
-      thread << msg
-      thread.shift while thread.size > 500
-      { ok: true, msg: msg }
-    end
-  end
+  # ---- private messages: chats.rb (mount_chats)
 
   # ---- RSVPs, posts, groups, stories
   route(server, '/api/rsvp') do |b, h|
@@ -2378,7 +2347,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

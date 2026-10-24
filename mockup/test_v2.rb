@@ -226,6 +226,96 @@ t('group chat: members only; posting notifies members who have talked there') {
   check(c0 == 403 && j['msgs'].map { |m| m['t'] } == ['Field 3 this Sunday?', 'In! Bringing a ball'] &&
         n['notifs'].any? { |x| x['t'] == 'chat' && x['ref'] == "g:#{gid}" } && n['notifs'].any? { |x| x['t'] == 'join' }, [c0, j, gid])
 }
+# ---- Messenger-style chats (chats.rb)
+ca, cb, cc, cz = Who.new('chat_a'), Who.new('chat_b'), Who.new('chat_c'), Who.new('chat_z')
+[ca, cb, cc, cz].each(&:signup)
+[[ca, cb], [ca, cc], [cb, cc]].each { |x, y| x.post('/api/friend', to: y.h, action: 'request'); y.post('/api/friend', to: x.h, action: 'accept') }
+$m1 = nil
+t('chat: send, reply quoting a message, react, unread count and seen') {
+  _, j = ca.post('/api/dm/send', to: 'chat_b', text: 'Pool tonight?')
+  $m1 = j['msg']['id']
+  _, th = cb.get('/api/dm/threads')
+  t1 = th['threads'].find { |x| x['with'] == 'chat_a' }
+  _, r = cb.post('/api/dm/send', to: 'chat_a', text: 'yes! 9?', re: $m1)
+  _, rx = cb.post('/api/dm/react', to: 'chat_a', id: $m1, e: '🔥')
+  cb.post('/api/dm/read', to: 'chat_a')
+  _, dm = ca.get('/api/dm?with=chat_b')
+  _, n = ca.post('/api/notifs')
+  check(t1 && t1['unread'] == 1 && r['msg']['re']['t'] == 'Pool tonight?' && rx['rx'] == { 'chat_b' => '🔥' } &&
+        dm['seen']['chat_b'] >= r['msg']['at'] && n['notifs'].any? { |x| x['t'] == 'dm' && x['ref'] == 'chat_b' } &&
+        dm['msgs'].find { |m| m['id'] == $m1 }['rx'] == { 'chat_b' => '🔥' }, [t1, r, rx, dm['seen']])
+}
+t('chat: tapping the same reaction again takes it off; only the six reactions') {
+  _, rx = cb.post('/api/dm/react', to: 'chat_a', id: $m1, e: '🔥')
+  c, = cb.post('/api/dm/react', to: 'chat_a', id: $m1, e: '💩')
+  check(rx['rx'] == {} && c == 400, [rx, c])
+}
+t('chat: typing shows to the other person for a few seconds') {
+  ca.post('/api/dm/typing', to: 'chat_b')
+  _, dm = cb.get('/api/dm?with=chat_a'); _, own = ca.get('/api/dm?with=chat_b')
+  check(dm['typing'] == ['chat_a'] && own['typing'] == [], [dm['typing'], own['typing']])
+}
+t('chat: photo and a shared event card; photo only for signed-in people') {
+  jpg = 'data:image/jpeg;base64,' + ['\xFF\xD8\xFF\xE0'.b + 'x' * 300].pack('m0')
+  _, j = ca.post('/api/dm/send', to: 'chat_b', img: jpg, text: 'look')
+  _, k = ca.post('/api/dm/send', to: 'chat_b', card: { k: 'event', id: 'e:abc123def456', name: 'Test Show', sub: 'Tonight', e: '🎸', junk: 'x' })
+  c1 = cb.req(:get, j['msg']['img']).first
+  c2 = Net::HTTP.get_response(URI("#{BASE}#{j['msg']['img']}")).code.to_i
+  bad, = ca.post('/api/dm/send', to: 'chat_b', img: 'data:image/png;base64,AAAA')
+  check(j['msg']['img'] =~ %r{\A/dm-img/i[0-9a-f]{16}\.jpg\z} && c1 == 200 && c2 == 404 && bad == 400 &&
+        k['msg']['card'] == { 'k' => 'event', 'id' => 'e:abc123def456', 'name' => 'Test Show', 'sub' => 'Tonight', 'e' => '🎸' }, [j, k, c1, c2, bad])
+  $img = j['msg']
+}
+t('chat: voice note upload, then send; plays in ranges; someone else cannot reuse its id') {
+  c, up = ca.req(:post, '/api/dm/voice', 'a' * 5000, 'Content-Type' => 'audio/mp4')
+  stolen, = cc.post('/api/dm/send', to: 'chat_a', aud: up['id'])
+  _, j = ca.post('/api/dm/send', to: 'chat_b', aud: up['id'], dur: 7)
+  again, = ca.post('/api/dm/send', to: 'chat_b', aud: up['id'])
+  rc, = cb.req(:get, j['msg']['aud'], nil, 'Range' => 'bytes=0-99')
+  wrong, = ca.req(:post, '/api/dm/voice', 'a' * 5000, 'Content-Type' => 'text/plain')
+  check(c == 200 && stolen == 400 && j['msg']['aud'] == "/dm-aud/#{up['id']}" && j['msg']['dur'] == 7 && again == 400 && rc == 206 && wrong == 400,
+        [c, up, stolen, j, again, rc, wrong])
+}
+t('chat: unsend your own (photo deleted), not someone else\'s') {
+  no, = cb.post('/api/dm/unsend', to: 'chat_a', id: $img['id'])
+  ca.post('/api/dm/unsend', to: 'chat_b', id: $img['id'])
+  _, dm = cb.get('/api/dm?with=chat_a')
+  m = dm['msgs'].find { |x| x['id'] == $img['id'] }
+  check(no == 403 && m['gone'] && !m.key?('img') && !m.key?('t') && cb.req(:get, $img['img']).first == 404, [no, m])
+}
+t('chat: strangers can\'t message; group chats need 2+ friends') {
+  c1, = cz.post('/api/dm/send', to: 'chat_a', text: 'hey')
+  c2, = ca.post('/api/chat/new', members: ['chat_b'])
+  c3, = ca.post('/api/chat/new', members: %w[chat_b chat_z])
+  check(c1 == 403 && c2 == 400 && c3 == 400, [c1, c2, c3])
+}
+t('group chat: create, everyone notified, messages, seen by, rename, add, leave; outsiders kept out') {
+  _, g = ca.post('/api/chat/new', name: 'Saturday crew', members: %w[chat_b chat_c chat_z])
+  w = g['with']
+  _, nb = cb.post('/api/notifs')
+  _, th0 = cc.get('/api/dm/threads')
+  cb.post('/api/dm/send', to: w, text: 'Zilker at 2?')
+  _, th = cc.get('/api/dm/threads')
+  cc.post('/api/dm/read', to: w)
+  _, dm = cb.get("/api/dm?with=#{URI.encode_www_form_component(w)}")
+  out, = cz.get("/api/dm?with=#{URI.encode_www_form_component(w)}")
+  out2, = cz.post('/api/dm/send', to: w, text: 'let me in')
+  _, r = cb.post('/api/chat/edit', id: w, name: 'Sat crew 🌳')
+  ca.post('/api/chat/edit', id: w, leave: true)
+  _, after = cb.get("/api/dm?with=#{URI.encode_www_form_component(w)}")
+  gone, = ca.get("/api/dm?with=#{URI.encode_www_form_component(w)}")
+  tt = th['threads'].find { |x| x['with'] == w }
+  check(w =~ /\Ac:[0-9a-f]{10}\z/ && nb['notifs'].any? { |x| x['t'] == 'dm' && x['ref'] == w } && th0['threads'].any? { |x| x['with'] == w } &&
+        tt && tt['name'] == 'Saturday crew' && tt['unread'] == 1 && dm['seen']['chat_c'] > 0 && dm['chat']['members'] == %w[chat_a chat_b chat_c] &&
+        out == 403 && out2 == 403 && r['chat']['name'] == 'Sat crew 🌳' && after['chat']['members'] == %w[chat_b chat_c] &&
+        after['msgs'].last['sys'] && gone == 403, [g, tt, dm, r, after['chat'], gone])
+}
+t('chat: blocking hides the chat and stops messages') {
+  cc.post('/api/block', who: 'chat_b', on: true)
+  c, = cb.post('/api/dm/send', to: 'chat_c', text: 'hi?')
+  _, th = cc.get('/api/dm/threads')
+  check(c == 403 && th['threads'].none? { |x| x['with'] == 'chat_b' }, [c, th])
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')
@@ -259,7 +349,7 @@ t('analytics: whitelisted names only; the admin growth report needs the token') 
   amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'event_open'); amy.post('/api/t', e: 'evil_thing')
   c1, = amy.get('/api/admin/growth')
   c2, g = amy.req(:get, '/api/admin/growth', nil, 'X-Admin-Token' => 'adm')
-  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 7, g)
+  check(c1 == 403 && c2 == 200 && g['events']['event_open'] == 2 && !g['events'].key?('evil_thing') && g['dau'].last >= 2 && g['users'] == 11, g)   # 7 + the 4 chat testers
   "dau #{g['dau'].last}, wau #{g['wau']}"
 }
 t("friends see each other's level and badges; a stranger's quests stay private") {

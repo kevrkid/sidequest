@@ -311,6 +311,15 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   A picked place travels as `v: {name, lat, lng, id, e, kind}` (flares, live) or story `place/lat/lng`; `venue(x)`
   takes an id or that object; the server cleans it (`spot_ref`) and moderates a typed name with the text. Phones send
   ~100 m positions here. `ruby test_spots.rb` (15).
+- **💬 Chats, Messenger-style** (`chats.rb`, replaces the old 3 DM routes; client block "messages, Messenger-style"):
+  1:1 with friends (`d['dms']["a|b"]`, as before) and group chats (`d['chats'][id]`, thread `c:<id>`, you + 2-30 friends,
+  rename / add / leave, system lines `sys`). Tap a bubble → react (6 emoji, one per person, `rx`), reply (`re` quote),
+  copy, unsend (`gone`, files deleted). 📷 photos (JPEG ≤600 KB → `data/dm/i….jpg`, `/dm-img/`), 🎤 voice notes
+  (MediaRecorder → `/api/dm/voice` raw → `aud` id claimed once by its uploader; `/dm-aud/` serves ranges for iPhone),
+  cards (`card {k: event|place|story|flare}`) from 💬 Send on event sheets, place pages and stories (`sendToChat`).
+  Seen = `d['dm_read'][h][thread]` (POST `/api/dm/read`); typing is memory-only (`DM_TYPING`, 6 s). Thread poll 3 s
+  redraws only `#thread` (`renderThreadMsgs`). Notification kind `dm` (mutable), push → `/?dm=<thread>`.
+  Media files need a signed-in cookie. Tests in test_v2.rb ("chat: …", 9).
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra

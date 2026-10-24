@@ -9,7 +9,7 @@ require_relative 'webpush'
 # ---------------------------------------------------------------------------------------------
 # Notifications: per person, newest last, capped. Never across a block; never about yourself.
 NOTIF_MAX = 120
-NOTIF_TYPES = %w[freq friend down going chat join tag like quest joined remind invite tonight].freeze
+NOTIF_TYPES = %w[freq friend down going chat dm join tag like quest joined remind invite tonight].freeze
 
 def notify!(d, to, type, from: nil, ref: nil, text: nil)
   return unless to && d['users'][to] && to != from && NOTIF_TYPES.include?(type)
@@ -49,6 +49,7 @@ def vapid_public() WebPush.b64u(WebPush.pub_raw(vapid_key)) end
 def push_url(type, ref)
   r = ref.to_s
   return '/?tonight=1' if type == 'tonight'
+  return "/?dm=#{URI.encode_www_form_component(r)}" if type == 'dm'
   return "/?ev=#{r.sub('e:', '')}" if r.start_with?('e:')
   return "/?g=#{r.sub('g:', '')}" if r.start_with?('g:')
   type == 'quest' ? '/?quests=1' : '/?inbox=1'

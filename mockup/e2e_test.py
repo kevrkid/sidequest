@@ -556,7 +556,7 @@ with sync_playwright() as pw:
     p1.wait_for_timeout(500)
     p2.evaluate("loadState().then(loadThreads).then(()=>{ meetTab='msgs'; DM.open=null; renderMeet(); })"); p2.wait_for_timeout(500)
     nav(p2, "home"); p2.click("[data-home='meet']"); p2.click("[data-mt='msgs']")
-    check("message arrives with an unread dot", "Pickup Saturday" in p2.locator("#meetBody").inner_text() and p2.locator(".dot-unread").count() == 1)
+    check("message arrives with an unread count", "Pickup Saturday" in p2.locator("#meetBody").inner_text() and p2.locator(".dmn").inner_text() == "1")
     p2.click(f"[data-thread='{TEX}']")
     p2.fill("#dmIn", "yes!! count me in"); p2.press("#dmIn", "Enter"); p2.wait_for_timeout(500)
     p2.screenshot(path=f"{OUT}/11-messages.png")

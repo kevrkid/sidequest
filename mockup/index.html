@@ -546,6 +546,31 @@
   .bub.me{align-self:flex-end;background:linear-gradient(145deg,#2e7cf6,#5b5bf6);color:#fff;border-bottom-right-radius:6px}
   .bub.them{border-bottom-left-radius:6px}
   .bub small{display:block;font-size:10px;opacity:.6;margin-top:2px}
+  .bub{cursor:pointer;position:relative} .bub.gone{background:none;border:1px solid var(--line);color:var(--muted)}
+  .bub img{display:block;max-width:100%;max-height:300px;border-radius:12px;margin:-2px -4px 4px}
+  .bub.pic{padding:4px;background:none} .bub.pic small{padding:0 6px}
+  .bub audio{width:220px;max-width:100%;height:36px;display:block}
+  .dmline{display:flex;flex-direction:column;transition:background .3s;border-radius:12px} .dmline.me{align-items:flex-end} .dmline.them{align-items:flex-start}
+  .dmline.flash{background:#ffffff14}
+  .dmre{font-size:12px;opacity:.85;border-left:3px solid #ffffff66;padding:2px 8px;margin:0 0 5px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dmrx{font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-top:-8px;z-index:1;cursor:pointer}
+  .dmact{margin:4px 0 6px} .dmreacts{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:3px 6px;margin-bottom:6px}
+  .dmreacts button{font-size:22px;background:none;border:0;padding:2px 4px;border-radius:50%} .dmreacts button.on{background:var(--panel2)}
+  .dmday{text-align:center;font-size:11.5px;color:var(--muted);margin:8px 0 2px}
+  .dmwho{font-size:11.5px;color:var(--muted);margin:6px 0 -2px 4px;display:flex;align-items:center;gap:4px}
+  .dmseen{align-self:flex-end;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:2px;margin-top:-2px}
+  .av.xs{width:16px;height:16px;font-size:8px}
+  .dmtyping{display:flex;gap:4px;padding:12px 14px} .dmtyping i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:dmdot 1.2s infinite} .dmtyping i:nth-child(2){animation-delay:.2s} .dmtyping i:nth-child(3){animation-delay:.4s}
+  @keyframes dmdot{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+  .dmform{gap:6px;align-items:center} .dmico{flex:none;background:var(--panel2);border:1px solid var(--line);border-radius:50%;width:40px;height:40px;font-size:18px}
+  .dmrec{color:#ff5470;font-weight:700} .dmrebar{display:flex;align-items:center;gap:8px;background:var(--panel2);border-radius:12px;padding:6px 10px;margin-top:8px;font-size:13px}
+  .dmcard{display:flex;align-items:center;gap:10px;width:240px;max-width:100%;text-align:left;background:#0003;border:1px solid #ffffff22;border-radius:12px;padding:8px;color:inherit;font:inherit;margin:2px 0 4px}
+  .dmcard b{display:block;font-size:14px} .dmcard small{display:block;opacity:.75;font-size:12px}
+  .dmce{font-size:24px;flex:none} .dmci{flex:none;width:44px;height:58px;border-radius:8px;background-size:cover;background-position:center}
+  .dmrow.unread b{color:var(--text)} .dmrow.unread .meta{color:var(--text);font-weight:600}
+  .dmn{background:var(--accent2);color:#fff;border-radius:99px;font-size:11px;font-weight:800;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px}
+  .gav{position:relative;flex:none;width:38px;height:34px} .gav .av{position:absolute;width:25px;height:25px;font-size:11px;border:2px solid var(--panel)} .gav .av:first-child{top:0;left:0} .gav .av:nth-child(2){bottom:0;right:0}
+  .pprow.on{background:var(--panel2)} .chk{color:var(--accent2);font-weight:800;width:20px}
   .dot-unread{width:9px;height:9px;border-radius:50%;background:var(--accent2);flex:none}
 
   /* feed */
@@ -836,6 +861,7 @@
   <div class="sheet-bg" id="searchBg" hidden><div class="sheet" id="searchSheet"></div></div>
   <div class="sheet-bg" id="groupsBg" hidden><div class="sheet" id="groupsSheet"></div></div>
   <div class="sheet-bg" id="storyBg" hidden><div class="sheet" id="storySheet"></div></div>
+  <div class="sheet-bg" id="chatBg" hidden style="z-index:930"><div class="sheet" id="chatSheet"></div></div>
   <div class="sheet-bg" id="spotBg" hidden style="z-index:905"><div class="sheet" id="spotSheet"></div></div>
   <div class="sheet-bg" id="ppBg" hidden style="z-index:960"><div class="sheet" id="ppSheet" style="height:88%"></div></div>
   <div id="storyView" hidden></div>
@@ -2658,6 +2684,7 @@ function reelItem(st, k){
     <div class="rail">
       <button data-stlike="${esc(st.id)}" class="${liked?'on':''}" aria-label="Like"><i>${liked?'❤️':'🤍'}</i><b>${n||''}</b></button>
       ${mine?'':`<button data-streply="${esc(st.u)}" aria-label="Reply"><i>💬</i><b>${T('Reply')}</b></button>`}
+      <button data-stsend="${k}" aria-label="Send in a chat"><i>💬</i><b>${T('Send')}</b></button>
       <button data-stshare="${k}" aria-label="Share"><i>↗</i><b>${T('Share')}</b></button>
       ${storyPos(st)?`<button data-stmap="${k}" aria-label="On the map"><i>📍</i><b>${T('Map')}</b></button>`:''}
       ${mine?'':`<button data-stmore="${esc(st.id)}|${esc(st.u)}" aria-label="More"><i>⋯</i></button>`}
@@ -2872,7 +2899,8 @@ function openSpot(x, looked){
       <button class="btn sm" data-spmap>🗺️ Map</button>
       ${pid?`<button class="btn sm" data-spmenu="${esc(pid)}">🍽️ Menu</button>`:''}
       <button class="btn sm primary" data-spstorynew>📸 Post here</button>
-      <button class="btn sm" data-spflare>📣 Flare here</button></div>
+      <button class="btn sm" data-spflare>📣 Flare here</button>
+      <button class="btn sm" data-spsend>💬 Send</button></div>
     ${lv.length?`<h3>📺 Live here now</h3>${lv.map(s=>`<button class="pprow" data-spwatch="${esc(s.id)}"><span class="ppe">🔴</span><span class="grow"><b>${esc(s.title)}</b><small>@${esc(s.u)}</small></span></button>`).join('')}`:''}
     <h3>📸 Stories here <span class="meta">· last 24 hours</span></h3>
     ${st.length?`<div class="spgrid">${st.map(tile).join('')}</div>`:'<p class="meta">No stories here yet today. Be the first.</p>'}
@@ -3271,53 +3299,256 @@ function renderMeetSheet(){
 }
 
 /* messages */
-const DM = {threads:[], open:null, msgs:[]};
+/* ---------- messages, Messenger-style ----------
+   One-to-one chats with friends and group chats (you + 2-30 friends). Tap a message to react (❤️😂😮😢👍🔥),
+   reply to it, copy it or unsend it. 📷 sends a photo, 🎤 a voice note; events, places and stories can be sent
+   into a chat as cards. "Seen" and "typing…" come with each poll. A thread is a handle or "c:<id>" (group chat).
+   Demo people (no server) keep their chats on this device. */
+const DM = {threads:[], open:null, msgs:[], seen:{}, typing:[], chat:null, re:null, act:null, rec:null, raw:'', mraw:'', readAt:0, typedAt:0};
+const DM_REACTS = ['❤️','😂','😮','😢','👍','🔥'];
+const isGroupChat = w => /^c:/.test(w||'');
 async function loadThreads(){
   if(!AUTHED) return;
   try{ const txt=await (await fetch('/api/dm/threads',{credentials:'same-origin'})).text(); if(txt===DM.raw) return false; DM.raw=txt; DM.threads=JSON.parse(txt).threads||[]; }catch(e){}
   return true;
 }
 function allThreads(){
-  const demo=Object.entries(S.dms).filter(([,m])=>m.length).map(([h,m])=>({with:h,last:m.at(-1)}));
+  const demo=Object.entries(S.dms).filter(([,m])=>m.length).map(([h,m])=>({with:h,last:{...m.at(-1),t:dmPreview(m.at(-1))},unread:m.filter(x=>x.f!==S.me.h&&x.at>(S.dmSeen[h]||0)).length}));
   return [...DM.threads,...demo].sort((a,b)=>b.last.at-a.last.at);
 }
-const dmUnread = () => allThreads().filter(t=>t.last.f!==S.me.h&&t.last.at>(S.dmSeen[t.with]||0)).length;
+const dmUnread = () => allThreads().filter(t=>t.with!==DM.open&&(t.unread??(t.last.f!==S.me.h&&t.last.at>(S.dmSeen[t.with]||0)?1:0))>0).length;
+const dmPreview = m => m.gone?'Unsent a message':m.aud?'🎤 Voice note':m.img?'📷 Photo'+(m.t?': '+m.t:''):m.card&&!m.t?`${m.card.e||'📎'} ${m.card.name}`:(m.t||'');
+const threadName = t => t.group ? t.name : '@'+t.with;
+function threadAv(t){
+  if(!t.group) return av(t.with);
+  const ms=(t.members||[]).filter(h=>h!==S.me.h).slice(0,2);
+  return `<span class="gav">${ms.map(h=>av(h,'sm')).join('')}</span>`;
+}
+const agoShort = at => { const m=Math.round((Date.now()-at)/6e4); return m<1?'now':m<60?m+'m':m<1440?Math.round(m/60)+'h':new Date(at).toLocaleDateString([],{month:'short',day:'numeric'}); };
 function threadsHtml(){
-  const q=meetQ, ts=allThreads().filter(t=>qHit(q,t.with,t.last.t)), others=S.friends.filter(h=>!allThreads().some(t=>t.with===h)&&qHit(q,h));
-  return (ts.map(t=>{ const unread=t.last.f!==S.me.h&&t.last.at>(S.dmSeen[t.with]||0);
-      return `<button class="card row" data-thread="${esc(t.with)}" style="width:100%;text-align:left">${av(t.with)}<div class="grow"><b>@${esc(t.with)}</b>
-        <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.last.f===S.me.h?'You: ':''}${esc(t.last.t)}</div></div>
-        <span class="meta">${clock(t.last.at)}</span>${unread?'<span class="dot-unread"></span>':''}</button>`; }).join('')
+  const q=meetQ, ts=allThreads().filter(t=>qHit(q,t.with,t.name||'',t.last.t,t.members||[])), others=S.friends.filter(h=>!allThreads().some(t=>t.with===h)&&qHit(q,h));
+  return `<div class="row" style="margin-bottom:8px"><b class="grow">${T('Chats')}</b>${AUTHED?`<button class="btn sm" data-dmnewgroup>👥 ${T('New group')}</button>`:''}</div>`
+    + (ts.map(t=>{ const n=t.unread??(t.last.f!==S.me.h&&t.last.at>(S.dmSeen[t.with]||0)?1:0);
+      return `<button class="card row dmrow ${n?'unread':''}" data-thread="${esc(t.with)}" style="width:100%;text-align:left">${threadAv(t)}<div class="grow" style="min-width:0"><b>${esc(threadName(t))}</b>
+        <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.last.f===S.me.h?'You: ':t.group&&t.last.f?'@'+esc(t.last.f)+': ':''}${esc(t.last.t)}</div></div>
+        <span class="meta">${agoShort(t.last.at)}</span>${n?`<span class="dmn">${n>9?'9+':n}</span>`:''}</button>`; }).join('')
     || (q?`<p class="meta">No chats match “${esc(q)}”.</p>`:'<p class="meta">No messages yet. Wave at people on Swipe: when they wave back you can chat.</p>'))
     + (others.length?`<label class="lbl">Start a chat</label><div class="tagchips">${others.map(h=>`<button class="ichip" data-thread="${esc(h)}">${esc(h)}</button>`).join('')}</div>`:'');
 }
+function dmCardHtml(c, i){
+  return `<button class="dmcard" data-dmcard="${i}">${c.img?`<span class="dmci" style="background-image:url('${esc(c.img)}')"></span>`:`<span class="dmce">${esc(c.e||'📎')}</span>`}
+    <span class="grow"><b>${esc(c.name)}</b>${c.sub?`<small>${esc(c.sub)}</small>`:''}</span><span class="meta">›</span></button>`;
+}
+const dayLabel = at => { const d=new Date(at), t=new Date(); const y=new Date(t-864e5);
+  return d.toDateString()===t.toDateString()?'Today':d.toDateString()===y.toDateString()?'Yesterday':d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}); };
+function dmMsgsHtml(){
+  const me=S.me.h, ms=DM.msgs, group=isGroupChat(DM.open);
+  if(!ms.length) return '<p class="meta" style="text-align:center">Say hi 👋 Send something from your feed to do together.</p>';
+  const lastMine=[...ms].reverse().find(m=>m.f===me&&!m.sys);
+  let out='', prevDay='', prev=null;
+  ms.forEach((m,i)=>{
+    const day=dayLabel(m.at); if(day!==prevDay){ out+=`<div class="dmday">${day}</div>`; prevDay=day; prev=null; }
+    if(m.sys){ out+=`<div class="dmday">${esc(m.t)}</div>`; prev=null; return; }
+    const mine=m.f===me, first=!prev||prev.f!==m.f||m.at-prev.at>5*6e4; prev=m;
+    const rx=Object.entries(m.rx||{}), counts={}; rx.forEach(([,e])=>counts[e]=(counts[e]||0)+1);
+    if(group&&!mine&&first) out+=`<div class="dmwho">${av(m.f,'xs')} @${esc(m.f)}</div>`;
+    out+=`<div class="dmline ${mine?'me':'them'}" id="dm-${esc(m.id||i)}">
+      <div class="bub ${mine?'me':'them'} ${m.gone?'gone':''} ${m.img&&!m.t?'pic':''}" data-dmi="${i}">
+        ${m.re?`<div class="dmre" data-dmjump="${esc(m.re.id)}"><b>${m.re.f===me?'You':'@'+esc(m.re.f)}</b> ${esc(m.re.t||'…')}</div>`:''}
+        ${m.gone?'<i>Message unsent</i>':''}
+        ${m.img?`<img src="${esc(m.img)}" alt="Photo" data-dmimg="${esc(m.img)}" loading="lazy">`:''}
+        ${m.aud?`<audio controls preload="none" src="${esc(m.aud)}"></audio>`:''}
+        ${m.card?dmCardHtml(m.card,i):''}
+        ${m.t?`<span class="dmt">${esc(m.t)}</span>`:''}
+        <small>${clock(m.at)}</small></div>
+      ${rx.length?`<div class="dmrx" data-dmi="${i}">${Object.entries(counts).map(([e,n])=>`${e}${n>1?n:''}`).join(' ')}</div>`:''}
+      ${DM.act===i?`<div class="dmact"><div class="dmreacts">${DM_REACTS.map(e=>`<button data-dmreact="${e}" class="${(m.rx||{})[me]===e?'on':''}">${e}</button>`).join('')}</div>
+        <div class="btns"><button class="btn sm" data-dmreply="${i}">↩️ Reply</button>${m.t?`<button class="btn sm" data-dmcopy="${i}">📋 Copy</button>`:''}${mine&&!m.gone?`<button class="btn sm" data-dmunsend="${i}">🗑️ Unsend</button>`:''}</div></div>`:''}
+    </div>`;
+    if(m===lastMine&&!m.gone){
+      const who=Object.entries(DM.seen||{}).filter(([h,at])=>at>=m.at).map(([h])=>h);
+      out+=`<div class="dmseen">${who.length?(group?`Seen by ${who.slice(0,4).map(h=>av(h,'xs')).join('')}${who.length>4?' +'+(who.length-4):''}`:`Seen ${clock(DM.seen[who[0]])}`):isDemoUser(DM.open)?'':'Sent'}</div>`;
+    }
+  });
+  if(DM.typing.length) out+=`<div class="dmline them"><div class="bub them dmtyping" title="${esc(DM.typing.map(h=>'@'+h).join(', '))} typing"><i></i><i></i><i></i></div>${group?`<span class="meta">@${esc(DM.typing[0])}</span>`:''}</div>`;
+  return out;
+}
 function threadHtml(){
-  const h=DM.open;
-  return `<div class="row" style="margin-bottom:8px"><button class="btn sm" data-dmback>←</button>${av(h)}<button class="grow handle" data-profile="${esc(h)}" style="text-align:left">@${esc(h)} ›</button>
-      <button class="btn sm" data-more="user|${esc(h)}|${esc(h)}" style="padding:4px 9px">⋯</button></div>
-    <div class="thread" id="thread">${DM.msgs.map(m=>`<div class="bub ${m.f===S.me.h?'me':'them'}">${esc(m.t)}<small>${clock(m.at)}</small></div>`).join('')
-      ||'<p class="meta" style="text-align:center">Say hi 👋 Suggest something from your feed to do together.</p>'}</div>
-    <form id="dmForm" class="row" style="margin-top:8px"><input id="dmIn" maxlength="1000" placeholder="Message @${esc(h)}…" autocomplete="off"><button class="btn blue">Send</button></form>
+  const w=DM.open, t=allThreads().find(x=>x.with===w)||{with:w}, group=isGroupChat(w), c=DM.chat;
+  const name=group?(c?.name||t.name||'Group chat'):'@'+w;
+  return `<div class="row dmhead"><button class="btn sm" data-dmback>←</button>${group?threadAv({...t,group:true,members:c?.members||t.members}):av(w)}
+      <button class="grow handle" ${group?'data-dminfo':`data-profile="${esc(w)}"`} style="text-align:left;min-width:0">${esc(name)} ›${group?`<div class="meta">${(c?.members||t.members||[]).length} people</div>`:''}</button>
+      ${group?'':`<button class="btn sm" data-more="user|${esc(w)}|${esc(w)}" style="padding:4px 9px">⋯</button>`}</div>
+    <div class="thread" id="thread">${dmMsgsHtml()}</div>
+    <div id="dmReBar">${dmReBar()}</div>
+    <form id="dmForm" class="row dmform">${DM.rec?`<span class="grow dmrec">● ${T('Recording')} <b id="dmRecT">0:00</b></span><button type="button" class="btn sm" data-dmreccancel>${T('Cancel')}</button><button type="button" class="btn blue" data-dmrecsend>${T('Send')}</button>`
+      :`<button type="button" class="dmico" data-dmphoto aria-label="Send a photo">📷</button>${isDemoUser(w)?'':`<button type="button" class="dmico" data-dmrec aria-label="Record a voice note">🎤</button>`}
+      <input id="dmIn" maxlength="1000" placeholder="${T('Message')} ${esc(name)}…" autocomplete="off" enterkeyhint="send"><button class="btn blue">${T('Send')}</button>`}</form>
+    <input type="file" id="dmFile" accept="image/*" hidden>
     <p class="meta" style="margin:8px 0 0">🛡️ Meet in public, and use ⋯ to report or block if anything feels off.</p>`;
+}
+function dmReBar(){
+  const r=DM.re; if(!r) return '';
+  return `<div class="dmrebar"><span class="grow">↩️ ${T('Replying to')} <b>${r.f===S.me.h?'yourself':'@'+esc(r.f)}</b><br><span class="meta">${esc(dmPreview(r).slice(0,80))}</span></span><button class="btn sm" data-dmrex>✕</button></div>`;
+}
+function renderThreadMsgs(keepBottom){   // just the messages: the box you're typing in stays as it is
+  const el=$('#thread'); if(!el) return;
+  const atBottom=keepBottom||el.scrollHeight-el.scrollTop-el.clientHeight<80;
+  el.innerHTML=dmMsgsHtml(); if(atBottom) el.scrollTop=1e9;
+}
+async function fetchThread(w){
+  const txt=await (await fetch('/api/dm?with='+encodeURIComponent(w),{credentials:'same-origin'})).text();
+  const j=JSON.parse(txt); if(j.error) throw new Error(j.error);
+  const changed=txt!==DM.mraw; DM.mraw=txt; DM.msgs=j.msgs||[]; DM.seen=j.seen||{}; DM.typing=j.typing||[]; DM.chat=j.chat||null;
+  return changed;
+}
+function markRead(){
+  const w=DM.open; if(!w) return; S.dmSeen[w]=Date.now(); save();
+  const t=DM.threads.find(x=>x.with===w); if(t) t.unread=0;
+  const last=DM.msgs.at(-1); if(!isDemoUser(w)&&last&&last.f!==S.me.h&&last.at>DM.readAt){ DM.readAt=last.at; api('/api/dm/read',{to:w}).catch(()=>{}); }
 }
 async function openThread(h){
   if(!isDemoUser(h)&&needAccount('message people')) return;
-  DM.open=h;
+  DM.open=h; DM.re=null; DM.act=null; DM.mraw=''; DM.readAt=0; DM.seen={}; DM.typing=[]; DM.chat=null;
   if(isDemoUser(h)) DM.msgs=S.dms[h]||[];
-  else try{ const j=await (await fetch('/api/dm?with='+encodeURIComponent(h),{credentials:'same-origin'})).json(); if(j.error) throw new Error(j.error); DM.msgs=j.msgs||[]; }
+  else try{ await fetchThread(h); }
     catch(e){ toast(esc(e.message),'orange'); DM.open=null; }
-  S.dmSeen[h]=Date.now(); save(); renderMeet(); renderHome(); setTimeout(()=>$('#dmIn')?.focus(),50);
+  markRead(); renderMeet(); renderHome(); setTimeout(()=>$('#dmIn')?.focus(),50);
+}
+async function dmSend(body){   // body: {text, re, img, aud, dur, card}; to the open chat unless body.to
+  const w=body.to||DM.open; if(!w) return;
+  if(isDemoUser(w)){
+    const m={id:'m'+Date.now().toString(36),f:S.me.h,t:body.text||'',at:Date.now(),...(body.img?{img:body.img}:{}),...(body.card?{card:body.card}:{})};
+    const re=body.re&&(S.dms[w]||[]).find(x=>x.id===body.re); if(re) m.re={id:re.id,f:re.f,t:dmPreview(re).slice(0,90)};
+    (S.dms[w] ||= []).push(m); save(); if(DM.open===w){ DM.msgs=S.dms[w]; renderThreadMsgs(true); }
+    const replies=["haha yes 🙌","I'm down, when?","omg same","let's do it this weekend","say less 🔥","what time works?"];
+    setTimeout(()=>{ S.dms[w].push({id:'m'+Date.now().toString(36),f:w,t:replies[hash(m.t||m.at+'')%replies.length],at:Date.now()}); S.dmSeen[w]=Date.now(); save(); if(DM.open===w){ DM.msgs=S.dms[w]; renderThreadMsgs(true); } },1400);
+    return m;
+  }
+  const j=await api('/api/dm/send',{...body,to:w});
+  if(DM.open===w){ DM.msgs.push(j.msg); renderThreadMsgs(true); }
+  loadThreads().then(()=>{ if(!DM.open&&curTab==='meet') renderMeet(); });
+  return j.msg;
 }
 async function sendDm(){
-  const h=DM.open, t=$('#dmIn').value.trim(); if(!h||!t) return; $('#dmIn').value='';
-  if(isDemoUser(h)){
-    (S.dms[h] ||= []).push({f:S.me.h,t,at:Date.now()}); save(); DM.msgs=S.dms[h]; renderMeet();
-    const replies=["haha yes 🙌","I'm down, when?","omg same","let's do it this weekend","say less 🔥","what time works?"];
-    return setTimeout(()=>{ S.dms[h].push({f:h,t:replies[hash(t)%replies.length],at:Date.now()}); S.dmSeen[h]=Date.now(); save(); if(DM.open===h){ DM.msgs=S.dms[h]; renderMeet(); } },1400);
-  }
-  try{ const j=await api('/api/dm/send',{to:h, text:t}); DM.msgs.push(j.msg); S.dmSeen[h]=Date.now(); save(); await loadThreads(); renderMeet(); }
+  const i=$('#dmIn'); if(!i) return; const t=i.value.trim(); if(!DM.open||!t) return; i.value='';
+  const re=DM.re?.id; DM.re=null; $('#dmReBar').innerHTML='';
+  try{ await dmSend({text:t, re}); }catch(e){ i.value=t; toast(esc(e.message),'orange'); }
+}
+async function dmReact(i, e){
+  const m=DM.msgs[i]; if(!m) return; const me=S.me.h; DM.act=null;
+  const rx={...(m.rx||{})}; if(rx[me]===e) delete rx[me]; else rx[me]=e; m.rx=rx; renderThreadMsgs();
+  if(isDemoUser(DM.open)) return save();
+  try{ const j=await api('/api/dm/react',{to:DM.open,id:m.id,e}); m.rx=j.rx; renderThreadMsgs(); }catch(err){ toast(esc(err.message),'orange'); }
+}
+async function dmUnsend(i){
+  const m=DM.msgs[i]; if(!m) return; DM.act=null;
+  if(isDemoUser(DM.open)){ Object.keys(m).forEach(k=>!['id','f','at'].includes(k)&&delete m[k]); m.gone=true; save(); return renderThreadMsgs(); }
+  try{ await api('/api/dm/unsend',{to:DM.open,id:m.id}); Object.keys(m).forEach(k=>!['id','f','at'].includes(k)&&delete m[k]); m.gone=true; renderThreadMsgs(); }
   catch(e){ toast(esc(e.message),'orange'); }
 }
+function dmTyping(){ const w=DM.open; if(!w||isDemoUser(w)||Date.now()-DM.typedAt<3000) return; DM.typedAt=Date.now(); api('/api/dm/typing',{to:w}).catch(()=>{}); }
+// Voice notes: record with the phone's mic (MediaRecorder), upload, send. Up to 3 minutes.
+async function dmRecStart(){
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder) return toast("This browser can't record voice notes.",'orange');
+  let st; try{ st=await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e){ return toast('Allow the microphone to send voice notes.','orange',[],4000); }
+  const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported?.(t))||'';
+  const r=new MediaRecorder(st, type?{mimeType:type}:{}), parts=[];
+  r.ondataavailable=e=>e.data.size&&parts.push(e.data);
+  DM.rec={r, st, parts, t0:Date.now(), send:false, iv:setInterval(()=>{ const s=Math.round((Date.now()-DM.rec.t0)/1000), el=$('#dmRecT'); if(el) el.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; if(s>=180) dmRecStop(true); },500)};
+  r.onstop=async()=>{ const rec=DM.rec; DM.rec=null; clearInterval(rec.iv); rec.st.getTracks().forEach(t=>t.stop()); renderMeet();
+    if(!rec.send) return; const blob=new Blob(rec.parts,{type:(r.mimeType||type||'audio/webm').split(';')[0]}), dur=Math.max(1,Math.round((Date.now()-rec.t0)/1000));
+    if(blob.size<200) return toast('That was too short to send.','orange');
+    try{ const res=await fetch('/api/dm/voice',{method:'POST',credentials:'same-origin',headers:{'Content-Type':blob.type},body:blob});
+      const j=await res.json(); if(j.error) throw new Error(j.error); await dmSend({aud:j.id, dur}); }
+    catch(e){ toast('Could not send the voice note: '+esc(e.message),'orange',[],4500); } };
+  r.start(); renderMeet();
+}
+function dmRecStop(send){ if(!DM.rec) return; DM.rec.send=send; try{ DM.rec.r.stop(); }catch(e){} }
+function openDmCard(c){
+  if(c.k==='event') return openEvent(c.id);
+  if(c.k==='place') return openSpot({id:c.id,name:c.name,lat:c.lat,lng:c.lng,e:c.e,kind:c.sub});
+  if(c.k==='flare') return focusOnMap(c.id);
+  if(c.k==='story'){ const st=allStories().find(x=>x.id===c.id); return st?openStories([st]):toast('That story has expired (stories last 24 hours).','orange'); }
+}
+
+/* New group chat, group info, and "send to…" (a card into one or more chats) share one sheet. */
+const CHS = {mode:'', pick:[], card:null, name:''};
+function openChatSheet(mode, card){
+  if(needAccount('chat with friends')) return;
+  Object.assign(CHS,{mode, pick:[], card:card||null, name:''}); renderChatSheet(); $('#chatBg').hidden=false;
+}
+function renderChatSheet(){
+  const m=CHS.mode, c=DM.chat, fr=S.friends.filter(h=>!isDemoUser(h)||!SV.on);
+  let h='';
+  if(m==='new') h=`<div class="row"><b class="grow" style="font-size:18px">👥 ${T('New group chat')}</b><button class="btn sm" data-chclose>${T('Cancel')}</button></div>
+    <input id="chName" maxlength="40" placeholder="${T('Name it (optional), e.g. Saturday crew')}" value="${esc(CHS.name)}" style="margin-top:10px" autocomplete="off">
+    <label class="lbl">${T('Add at least 2 friends')}</label><div class="tagchips">${fr.map(x=>`<button class="ichip ${CHS.pick.includes(x)?'on':''}" data-chpick="${esc(x)}">${av(x,'xs')} @${esc(x)}</button>`).join('')||`<span class="meta">${T('Make friends on Meet first.')}</span>`}</div>
+    <button class="btn primary" data-chcreate style="width:100%;margin-top:14px;padding:12px" ${CHS.pick.length<2?'disabled':''}>${T('Start chat')}</button>`;
+  else if(m==='info'&&c) h=`<div class="row"><b class="grow" style="font-size:18px">👥 ${esc(c.name)}</b><button class="btn sm" data-chclose>${T('Done')}</button></div>
+    <label class="lbl">${T('Name')}</label><div class="row"><input id="chName" maxlength="40" value="${esc(c.name)}" autocomplete="off"><button class="btn sm" data-chrename>${T('Save')}</button></div>
+    <label class="lbl">${c.members.length} ${T('people')}</label>${c.members.map(x=>`<button class="pprow" data-profile="${esc(x)}">${av(x,'sm')}<span class="grow"><b>@${esc(x)}</b>${x===c.by?'<small>Started the chat</small>':''}</span></button>`).join('')}
+    ${fr.filter(x=>!c.members.includes(x)).length?`<label class="lbl">${T('Add friends')}</label><div class="tagchips">${fr.filter(x=>!c.members.includes(x)).map(x=>`<button class="ichip ${CHS.pick.includes(x)?'on':''}" data-chpick="${esc(x)}">+ @${esc(x)}</button>`).join('')}</div>
+      ${CHS.pick.length?`<button class="btn blue" data-chadd style="width:100%;margin-top:8px">${T('Add')} ${CHS.pick.length}</button>`:''}`:''}
+    <button class="btn" data-chleave style="width:100%;margin-top:16px;color:#ff5470">${T('Leave chat')}</button>`;
+  else if(m==='send'){ const ts=allThreads().slice(0,12), rest=fr.filter(x=>!ts.some(t=>t.with===x));
+    h=`<div class="row"><b class="grow" style="font-size:18px">💬 ${T('Send to…')}</b><button class="btn sm" data-chclose>${T('Cancel')}</button></div>
+    <div style="margin:10px 0">${dmCardHtml(CHS.card,-1)}</div>
+    ${[...ts.map(t=>[t.with,threadName(t),threadAv(t)]),...rest.map(x=>[x,'@'+x,av(x,'sm')])].map(([w,n,a])=>`<button class="pprow ${CHS.pick.includes(w)?'on':''}" data-chpick="${esc(w)}">${a}<span class="grow"><b>${esc(n)}</b></span><span class="chk">${CHS.pick.includes(w)?'✓':''}</span></button>`).join('')
+      ||`<p class="meta">${T('Make friends on Meet first, then you can send them things.')}</p>`}
+    <input id="chMsg" maxlength="300" placeholder="${T('Add a message (optional)')}" style="margin-top:10px" autocomplete="off">
+    <button class="btn primary" data-chsend style="width:100%;margin-top:10px;padding:12px" ${CHS.pick.length?'':'disabled'}>${T('Send')}${CHS.pick.length>1?' · '+CHS.pick.length:''}</button>`; }
+  $('#chatSheet').innerHTML=h;
+}
+const sendToChat = card => openChatSheet('send', card);
+document.addEventListener('click',e=>{   // 💬 Send on an event, a story or a place page
+  const b=e.target.closest('[data-evsend],[data-stsend],[data-spsend]'); if(!b) return; const d=b.dataset;
+  if(d.evsend){ const ev=EV.byId[d.evsend]; if(ev) sendToChat({k:'event',id:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:CATS[ev.cat]?.e||'🎟️'}); }
+  else if(d.stsend!==undefined){ const st=SVW.list[+d.stsend]; if(st) sendToChat({k:'story',id:st.id,name:`@${st.u}'s story`,sub:(st.caption||storyPlace(st)||'').slice(0,80),e:'📸',...(safeImg(st.img)?{img:safeImg(st.img)}:{})}); }
+  else if(d.spsend!==undefined&&SPOT.x){ const x=SPOT.x; sendToChat({k:'place',id:x.id||'',name:x.name,sub:x.kind||x.addr||'',e:x.e||'📍',lat:x.lat,lng:x.lng}); }
+});
+document.addEventListener('click',async e=>{
+  if(e.target.id==='chatBg') return $('#chatBg').hidden=true;
+  const b=e.target.closest('#chatSheet [data-chclose],#chatSheet [data-chpick],#chatSheet [data-chcreate],#chatSheet [data-chrename],#chatSheet [data-chadd],#chatSheet [data-chleave],#chatSheet [data-chsend]'); if(!b) return;
+  const d=b.dataset; CHS.name=$('#chName')?.value??CHS.name;
+  try{
+    if(d.chclose!==undefined) $('#chatBg').hidden=true;
+    else if(d.chpick){ CHS.pick=CHS.pick.includes(d.chpick)?CHS.pick.filter(x=>x!==d.chpick):[...CHS.pick,d.chpick]; const msg=$('#chMsg')?.value; renderChatSheet(); if(msg&&$('#chMsg')) $('#chMsg').value=msg; }
+    else if(d.chcreate!==undefined){ b.disabled=true; const j=await api('/api/chat/new',{name:CHS.name,members:CHS.pick}); $('#chatBg').hidden=true; await loadThreads(); meetTab='msgs'; tab('meet'); openThread(j.with); }
+    else if(d.chrename!==undefined){ const j=await api('/api/chat/edit',{id:DM.open,name:CHS.name}); DM.chat={...DM.chat,...j.chat}; renderChatSheet(); await fetchThread(DM.open); renderMeet(); toast('Renamed.','green',[],1500); }
+    else if(d.chadd!==undefined){ const j=await api('/api/chat/edit',{id:DM.open,add:CHS.pick}); DM.chat={...DM.chat,...j.chat}; CHS.pick=[]; renderChatSheet(); await fetchThread(DM.open); renderMeet(); }
+    else if(d.chleave!==undefined){ if(!confirm('Leave this chat? You won\'t see new messages.')) return; await api('/api/chat/edit',{id:DM.open,leave:true}); $('#chatBg').hidden=true; DM.open=null; await loadThreads(); renderMeet(); }
+    else if(d.chsend!==undefined){ b.disabled=true; const text=($('#chMsg')?.value||'').trim(), to=[...CHS.pick];
+      for(const w of to) await dmSend({to:w, card:CHS.card, text});
+      $('#chatBg').hidden=true; toast(`💬 Sent to ${to.length===1?esc(threadName(allThreads().find(t=>t.with===to[0])||{with:to[0]})):to.length+' chats'}.`,'green',[{l:'Open',cls:'blue',f:()=>{ meetTab='msgs'; tab('meet'); openThread(to[0]); }}],3500); }
+  }catch(err){ b.disabled=false; toast(esc(err.message),'orange'); }
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('#thread [data-dmi],#thread [data-dmreact],#thread [data-dmreply],#thread [data-dmcopy],#thread [data-dmunsend],#thread [data-dmcard],#thread [data-dmjump],#thread [data-dmimg],[data-dmrex],[data-dmphoto],[data-dmrec],[data-dmreccancel],[data-dmrecsend],[data-dminfo],[data-dmnewgroup],#chatSheet [data-dmcard]');
+  if(!b||e.target.closest('audio')) return;
+  const d=b.dataset;
+  if(d.dmreact) return dmReact(DM.act, d.dmreact);
+  if(d.dmreply!==undefined){ DM.re=DM.msgs[+d.dmreply]; DM.act=null; renderThreadMsgs(); $('#dmReBar').innerHTML=dmReBar(); return $('#dmIn')?.focus(); }
+  if(d.dmcopy!==undefined){ navigator.clipboard?.writeText(DM.msgs[+d.dmcopy]?.t||'').then(()=>toast('Copied.','green',[],1200)).catch(()=>{}); DM.act=null; return renderThreadMsgs(); }
+  if(d.dmunsend!==undefined) return dmUnsend(+d.dmunsend);
+  if(d.dmcard!==undefined){ e.stopPropagation(); const c=+d.dmcard<0?CHS.card:DM.msgs[+d.dmcard]?.card; if(c&&+d.dmcard>=0) openDmCard(c); return; }
+  if(d.dmjump){ const el=document.getElementById('dm-'+d.dmjump); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1200); } return; }
+  if(d.dmimg) return window.open(d.dmimg,'_blank','noopener');
+  if(d.dmrex!==undefined){ DM.re=null; return $('#dmReBar').innerHTML=''; }
+  if(d.dmphoto!==undefined) return $('#dmFile').click();
+  if(d.dmrec!==undefined) return dmRecStart();
+  if(d.dmreccancel!==undefined) return dmRecStop(false);
+  if(d.dmrecsend!==undefined) return dmRecStop(true);
+  if(d.dminfo!==undefined) return openChatSheet('info');
+  if(d.dmnewgroup!==undefined) return openChatSheet('new');
+  if(d.dmi!==undefined){ const i=+d.dmi; if(DM.msgs[i]?.gone) return; DM.act=DM.act===i?null:i; renderThreadMsgs(); }
+});
+document.addEventListener('input',e=>{ if(e.target.id==='dmIn') dmTyping(); });
+document.addEventListener('change',async e=>{
+  if(e.target.id!=='dmFile') return; const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{ const img=await shrinkImage(f,1280,.78); const cap=($('#dmIn')?.value||'').trim(); if(cap) $('#dmIn').value='';
+    await dmSend({img, text:cap}); }catch(err){ toast('Could not send that photo: '+esc(err.message||'unreadable'),'orange'); }
+});
 
 /* ---------- report, block, feedback ---------- */
 const REASONS = ['Spam or scam','Harassment','Hate or violence','Sexual content','Unsafe meetup','Fake account','Something else'];
@@ -3959,7 +4190,7 @@ document.addEventListener('click',e=>{
     if(now-SVW.tapT<300){ SVW.tapT=0; clearTimeout(SVW.tapTO); heartBurst(item); if(!storyLiked(st)) likeStory(st.id); return; }
     SVW.tapT=now; const v=md.querySelector('video'); SVW.tapTO=setTimeout(()=>{ if(v) v.paused?v.play().catch(()=>{}):v.pause(); },300); return; }
   if(e.target.closest('[data-msgs]')){ meetTab='msgs'; DM.open=null; tab('meet'); renderMeet(); loadThreads().then(renderMeet); return; }
-  const b=e.target.closest('button'); if(!b) return; const d=b.dataset;
+  const b=e.target.closest('button'); if(!b||!b.isConnected) return; const d=b.dataset;   // isConnected: another handler already redrew it
   if(d.tab) tab(d.tab);
   else if(d.mesec) showMeSec(d.mesec);
   else if(d.down) toggleDown(d.down);
@@ -5632,9 +5863,9 @@ async function shareLink(url, title, text){
 const v2head = (title, close) => `<div class="row"><b class="grow" style="font-size:19px">${title}</b><button class="btn sm" data-v2close="${close}">${T('Close')}</button></div>`;
 
 /* ---- 🔔 notifications ---- */
-const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['chat','Chat replies'],
+const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['dm','Messages'],['chat','Chat replies'],
   ['down','People down for your flares'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)']];
-const NOTIF_E = {freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆'};
+const NOTIF_E = {dm:'💬', freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆'};
 function renderBell(){
   const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
   const n=SV.v2?.unread||0; $('#bellN').textContent=n?(n>9?'9+':String(n)):''; b.classList.toggle('has',!!n);
@@ -5667,6 +5898,7 @@ function renderNotifs(){
 }
 function notifGo(n){
   $('#notifBg').hidden=true;
+  if(n.t==='dm'&&n.ref){ meetTab='msgs'; tab('meet'); return openThread(n.ref); }
   if(n.t==='chat'&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2));
   if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);
   if(n.t==='quest') return openQuests();
@@ -5722,6 +5954,7 @@ function renderEventSheet(e){
       <button class="btn ${mine==='interested'?'blue':''}" data-rsvp="${e.id}" data-st="interested">${mine==='interested'?'★':'☆'} ${T('Interested')}</button>
       <button class="btn ${saved?'fav':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}">${saved?'❤️ '+T('Favorite'):'🤍 '+T('Favorite')}</button>
       <button class="btn" data-evinvite="${e.id}">💌 ${T('Invite')}</button>
+      <button class="btn" data-evsend="${e.id}">💬 ${T('Send')}</button>
       <button class="btn" data-evshare="${e.id}">🔗 ${T('Share')}</button>
     </div>
     <div class="btns" style="margin-top:8px">
@@ -5884,6 +6117,7 @@ function handleDeepLink(){
   if(q.get('quests')) setTimeout(()=>openQuests(),600);
   if(q.get('inbox')) setTimeout(()=>openNotifs(),600);
   if(q.get('tonight')) setTimeout(()=>quick('tonight'),600);
+  if(q.get('dm')) setTimeout(()=>{ meetTab='msgs'; tab('meet'); openThread(q.get('dm').slice(0,40)); },700);
   if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; S.refK=(q.get('rk')||'').slice(0,12); save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
   if(ev) openEvent(ev.startsWith('e:')?ev:'e:'+ev);
   if(sg) setTimeout(()=>{ loadSights(); const t=setInterval(()=>{ if(SG.data){ clearInterval(t); focusSight(sg); } },200); setTimeout(()=>clearInterval(t),8000); },300);
@@ -5958,9 +6192,9 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
   renderAll(); loadEvents(); handleDeepLink(); renderBell(); track('open');
   if(SV.on){ notifyTags(); await loadThreads(); renderHome();
     setInterval(async()=>{ if(document.hidden) return; const a=await loadState(), b=await loadThreads(); if(!a&&!b) return;   // nothing new: no redraw
-      renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!(DM.open&&document.activeElement?.id==='dmIn')) renderMeet(); }, 15000);
-    setInterval(()=>{ if(DM.open&&!$('#v-meet').hidden&&!isDemoUser(DM.open)) fetch('/api/dm?with='+encodeURIComponent(DM.open),{credentials:'same-origin'}).then(r=>r.json())
-      .then(j=>{ if(j.msgs&&j.msgs.length!==DM.msgs.length){ DM.msgs=j.msgs; S.dmSeen[DM.open]=Date.now(); save(); const v=$('#dmIn')?.value; renderMeet(); if(v) $('#dmIn').value=v; } }).catch(()=>{}); }, 4000); }
+      renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!DM.open) renderMeet(); else if(DM.open){ const u=dmUnread(); $('#dmPill').hidden=!u; $('#dmPill').textContent=u; } }, 15000);
+    setInterval(()=>{ if(document.hidden||!DM.open||$('#v-meet').hidden||isDemoUser(DM.open)) return; const w=DM.open;
+      fetchThread(w).then(ch=>{ if(ch&&DM.open===w){ renderThreadMsgs(); markRead(); } }).catch(()=>{}); }, 3000); }
   setInterval(loadEvents, 10*60*1000);
   loadHappy(); setInterval(()=>{ if(!document.hidden) loadHappy(true); }, 10*60*1000);
 })();
