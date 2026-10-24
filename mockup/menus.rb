@@ -21,24 +21,12 @@ MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, partial: {}, day: nil, n
 # failed: id => [time, answer], for 10 minutes; partial: id => what's been read so far
 MENU_PHOTO_MODEL = ENV['SQ_MENU_PHOTO_MODEL'] || 'sonnet'   # reading small print in photos needs the bigger model
 MENU_PHOTO_DAILY = (ENV['SQ_MENU_PHOTO_DAILY'] || 10).to_i   # menus that use Google photos per day (each = up to 10 paid photo fetches)
-MENU_PAR = (ENV['SQ_MENU_PAR'] || 4).to_i          # Claude reads running at once for menus (2 cores, ~1.2 GB free)
+MENU_PAR = (ENV['SQ_MENU_PAR'] || 5).to_i          # Claude reads at once for menus (each CLI ~110 MB; the box has 2 GB)
 MENU_SLOTS = { lock: Mutex.new, cv: ConditionVariable.new, n: 0 }
-MENU_PART = 3_500                                     # characters of menu text per parallel read
+MENU_PART = 2_000                                     # characters of menu text per parallel read (~25 items, ~5 s)
 MENU_WARM_DAILY = (ENV['SQ_MENU_PREWARM_DAILY'] || 300).to_i   # background warm-up reads per day
 MENU_WARM_GAP = (ENV['SQ_MENU_PREWARM_GAP'] || 20).to_i        # seconds between them
 MENU_PDF = ENV['SQ_PDFTOTEXT'] || '/usr/bin/pdftotext'   # poppler-utils, if installed: PDF menus
-MENU_SCHEMA = {
-  type: 'object', required: %w[found sections],
-  properties: {
-    found: { type: 'boolean' },
-    sections: { type: 'array', items: { type: 'object', required: %w[name items], properties: {
-      name: { type: 'string' },
-      items: { type: 'array', items: { type: 'object', required: %w[name], properties: {
-        name: { type: 'string' }, price: { type: 'string' }, desc: { type: 'string' } } } } } } },
-    sources: { type: 'array', items: { type: 'string' } },
-    note: { type: 'string' }
-  }
-}.to_json
 MENU_SYSTEM = <<~TXT
   You read restaurant, bar, cafe and food truck menus and return them as data for a phone app.
   Only real menu items go in: dishes and drinks with their prices, grouped in the menu's own sections, in the menu's
@@ -71,8 +59,43 @@ def menu_slot
   end
 end
 
+# Menus come back as plain lines, not JSON: about a third of the words and one turn instead of two, so a menu
+# reads two to three times faster.
+MENU_LINES = <<~TXT
+
+  Answer with the menu as plain lines and nothing else:
+  ## <the menu's section heading>
+  <item name> | <price> | <short description>
+  (one line per item; leave a part empty when there's none, e.g. "Coffee | $3 |")
+  SOURCE: <address the menu came from>   (one line per address, if asked for sources)
+  NOTE: <one short line for the reader>   (only if needed)
+  No menu found: answer only NONE.
+TXT
+
+def menu_lines(text)
+  secs, sources, notes = [], [], []
+  text.to_s.each_line do |l|
+    l = l.strip.gsub(/\*\*|`/, '')
+    next if l.empty? || l =~ /\A(```|NONE\z)/
+    if (h = l[/\A\#{1,4}\s*(.+)/, 1])
+      secs << { 'name' => h.strip, 'items' => [] } unless h =~ /\A<?(the menu's )?section (name|heading)>?\z/i
+    elsif (u = l[/\ASOURCES?:\s*(\S+)/i, 1])
+      sources << u
+    elsif (n = l[/\ANOTE:\s*(.+)/i, 1])
+      notes << n
+    elsif l.include?('|')
+      name, price, desc = l.sub(/\A[-*•]\s*/, '').split('|', 3).map { |x| x.to_s.strip }
+      next if name.empty? || name =~ /\A-+\z/ || name.casecmp?('item name')
+      secs << { 'name' => '', 'items' => [] } if secs.empty?   # no heading yet: menu_join puts these under the one before
+      secs.last['items'] << { 'name' => name, 'price' => price.to_s, 'desc' => desc.to_s }
+    end
+  end
+  { 'sections' => secs, 'sources' => sources, 'note' => notes.join(' ') }
+end
+
 def menu_claude(prompt, **o)
-  menu_slot { run_claude(prompt, MENU_SCHEMA, system: MENU_SYSTEM, effort: 'low', **o) }
+  out, ms, usd = menu_slot { run_claude(prompt + MENU_LINES, nil, system: MENU_SYSTEM, effort: 'low', **o) }
+  [menu_lines(out), ms, usd]
 end
 
 # GET a public web page: http(s) only, no addresses inside the server's network (checked on the address it
@@ -155,7 +178,10 @@ def menu_clean(o, from)
       n = i['name'].to_s.strip[0, 120]
       { 'name' => n, 'price' => i['price'].to_s.strip[0, 80], 'desc' => i['desc'].to_s.strip[0, 300] }.reject { |_, v| v.empty? } unless n.empty?
     end.compact
-    { 'name' => s['name'].to_s.strip[0, 80], 'items' => items } if items.any?
+    name = s['name'].to_s.strip[0, 80]
+    # SIDES -> Sides (abbreviations like P.M. stay)
+    name = name.split(/(\s+)/).map { |w| w.include?('.') ? w : w.downcase.sub(/[a-z]/, &:upcase) }.join if name =~ /[A-Z]{3}/ && name == name.upcase
+    { 'name' => name, 'items' => items } if items.any?
   end.compact
   { 'sections' => secs, 'sources' => Array(o['sources']).map(&:to_s).grep(%r{\Ahttps?://}).uniq.first(6),
     'note' => o['note'].to_s.strip[0, 400], 'from' => from, 'at' => Time.now.to_i }
@@ -169,7 +195,9 @@ def menu_join(parts, from)
       items = s['items'].reject { |i| k = "#{s['name'].downcase}|#{i['name'].downcase}|#{i['price']}"; seen[k] || !(seen[k] = true) }
       next if items.empty?
       last = secs.last
-      if last && last['name'].casecmp?(s['name'])
+      if s['name'].empty? && !last
+        secs << { 'name' => 'Menu', 'items' => items }
+      elsif last && (s['name'].empty? || last['name'].casecmp?(s['name']))
         last['items'].concat(items)
       elsif (same = secs.find { |x| x['name'].casecmp?(s['name']) })
         same['items'].concat(items)
@@ -238,8 +266,8 @@ def menu_photos(where, g, site = [], progress = nil)
       out, = menu_claude(<<~P, model: grp.first[0] == :site ? MENU_MODEL : MENU_PHOTO_MODEL, timeout: 120, images: grp.map(&:last))
         These are #{said} of #{where}. Some may show its menu: a printed menu, a menu board, a chalkboard, a drinks
         list. Read every menu item and price you can make out in them, grouped in the menu's sections. Ignore photos of
-        food, people or the room. Leave a price empty rather than guess one you can't read. found = false if no picture
-        shows a menu. note = one short line only if needed (e.g. "Only the drinks menu was in the photos").
+        food, people or the room. Leave a price empty rather than guess one you can't read. A note only if needed
+        (e.g. "Only the drinks menu was in the photos").
       P
       m = menu_clean(out, 'photos')
       m['sources'] = (grp.map { |x| x[1] }.compact + (grp.any? { |x| x[0] == :google } ? [g['googleMapsUri']] : [])).grep(%r{\Ahttps?://}).uniq
@@ -251,6 +279,7 @@ def menu_photos(where, g, site = [], progress = nil)
     end
   end.each(&:join)
   m = menu_join(done, 'photos')
+  m['note'] = '' if groups.size > 1   # each read saw only its own pictures ("no drinks menu in the photos")
   warn "[menu] pictures: #{menu_count(m)} items (#{menu_priced(m)} priced) from #{mine.size} site + #{gpics.size} Google, #{(Time.now - t0).round}s"
   m
 end
@@ -276,11 +305,10 @@ def menu_web(p, where, web)
     Find the current full menu with prices for #{where}#{p['kind'] ? " (#{p['kind']})" : ''}.
     #{web ? "Its website: #{web}. " : ''}Look at its own site and online ordering first (Toast, Square,
     ChowNow, Popmenu and the like have full menus with prices), then menu sites and delivery apps. Use the menu of this
-    location when locations differ. Return every section and item you can confirm. sources = the pages it came from.
-    note = one short line for the reader, only if needed (e.g. "Prices from Uber Eats, which can be higher than in person").
-    found = false if you couldn't find a real menu.
+    location when locations differ. Return every section and item you can confirm, with SOURCE lines for the pages it
+    came from, and a note only if needed (e.g. "Prices from Uber Eats, which can be higher than in person").
   P
-  m = menu_clean(out, 'web')
+  m = menu_join([menu_clean(out, 'web')], 'web')
   warn "[menu] #{p['id']} web: #{menu_count(m)} items, #{ms.to_i / 1000}s"
   m
 end
@@ -304,12 +332,11 @@ def menu_find(p, gweb, google = nil, warm: false, progress: nil)
       Thread.new do
         before = k.positive? && parts[k - 1][0] == u ? parts[k - 1][1][-300..] || parts[k - 1][1] : nil
         out, = menu_claude(<<~P, model: MENU_MODEL, timeout: 90)
-          Here is #{parts.size > 1 ? "part #{k + 1} of #{parts.size} of " : ''}the text of #{u}, a page from the website of #{where}.
+          Here is #{parts.size > 1 ? "part #{k + 1} of #{parts.size} of " : ''}the text of a page from the website of #{where}.
           Return the menu items in it.#{before ? " It may start in the middle of a section: if so, give that section the name of the menu heading it falls under (the text just before this part, for context only: #{before.inspect})." : ''}
-          sources = ["#{u}"]. No menu items in this part: found = false, sections = [].
           #{text}
         P
-        done[k] = menu_clean(out, 'site').tap { |m| m['note'] = '' }
+        done[k] = menu_clean(out.merge('sources' => [u]), 'site').tap { |m| m['note'] = '' }
         progress&.call(menu_join(done, 'site'))
       rescue => e
         warn "[menu] #{p['id']} part #{k}: #{e.message[0, 100]}"

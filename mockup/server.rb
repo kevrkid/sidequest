@@ -183,7 +183,8 @@ API_EFFORT = { 'claude-haiku-5-5' => ENV['SQ_HAIKU_EFFORT'] || 'low',
                'claude-sonnet-5-5' => ENV['SQ_SONNET_EFFORT'] || 'medium' }
 
 # effort: 'low' makes the model answer straight away instead of thinking first (Scout uses it: ~1-2 s faster).
-# images: JPEG (or PNG) bytes to show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
+# schema nil: the answer comes back as plain text (one turn, fewer tokens: menus). images: JPEG (or PNG) bytes to
+# show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
 # read the web (menus); pages it reads are untrusted, so only the structured answer comes back.
 def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
   ENGINE == 'api' ? run_claude_api(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
@@ -237,7 +238,7 @@ API_SCHEMAS_LOCK = Mutex.new
 
 def run_claude_api(prompt, schema, system:, model:, timeout:, effort: nil, images: nil, web: false)
   id = API_MODELS[model] || model
-  sent, orig = API_SCHEMAS_LOCK.synchronize do
+  sent, orig = schema && API_SCHEMAS_LOCK.synchronize do
     API_SCHEMAS[schema] ||= begin o = JSON.parse(schema); [api_schema(o), o] end
   end
   body = {
@@ -245,7 +246,7 @@ def run_claude_api(prompt, schema, system:, model:, timeout:, effort: nil, image
     # The system prompt is the same on every call of a kind, so cache it (later reads cost 10%).
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: images ? claude_content(prompt, images) : prompt }],
-    output_config: { format: { type: 'json_schema', schema: sent } }
+    output_config: schema ? { format: { type: 'json_schema', schema: sent } } : {}
   }
   body[:tools] = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 6 }] if web
   body[:output_config][:effort] = effort || API_EFFORT[id] if effort || API_EFFORT[id]
@@ -296,6 +297,7 @@ def run_claude_api(prompt, schema, system:, model:, timeout:, effort: nil, image
   raise "claude declined (#{j.dig('stop_details', 'category') || 'safety'})" if j['stop_reason'] == 'refusal'
   raise 'claude ran out of room before finishing' if j['stop_reason'] == 'max_tokens'
   text = (j['content'] || []).select { |b| b['type'] == 'text' }.map { |b| b['text'] }.join
+  return [text, ((Time.now - started) * 1000).round, api_cost(j['model'] || id, j['usage'] || {})] unless schema
   out = begin JSON.parse(text) rescue raise("claude gave no JSON: #{text[0, 200]}") end
   [api_enforce(orig, out), ((Time.now - started) * 1000).round, api_cost(j['model'] || id, j['usage'] || {})]
 end
@@ -313,8 +315,8 @@ end
 def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
   tools = web ? %w[WebSearch WebFetch] : []
   cmd = [CLAUDE, '-p', '--output-format', images ? 'stream-json' : 'json', '--model', model, '--tools', tools.join(','),
-         '--strict-mcp-config', '--no-session-persistence', '--system-prompt', system,
-         '--json-schema', schema]
+         '--strict-mcp-config', '--no-session-persistence', '--system-prompt', system]
+  cmd += ['--json-schema', schema] if schema   # no schema: plain text back (one turn, fewer tokens: menus)
   cmd += ['--allowedTools', *tools] if web
   cmd += ['--effort', effort] if effort
   # a photo goes in as a stream-json message (the plain-text prompt can't carry one); the answer is the last line
@@ -338,6 +340,7 @@ def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOU
   out = out.to_s.lines.reverse.find { |l| l.include?('"type":"result"') }.to_s if images
   j = begin JSON.parse(out) rescue raise("claude gave no JSON: #{(err.to_s + out.to_s)[0, 300]}") end
   raise "claude error: #{j['result'].to_s[0, 300]}" if j['is_error']
+  return [j['result'].to_s, j['duration_ms'], j['total_cost_usd'].to_f] unless schema
   raise 'claude returned no structured output' unless j['structured_output']
   [j['structured_output'], j['duration_ms'], j['total_cost_usd'].to_f]
 end

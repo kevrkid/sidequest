@@ -78,6 +78,17 @@ check('join: running section merged, repeat dropped, gaps skipped', jj['sections
 dd = menu_dedupe([['a', "Home\nTacos $4\nOpen 11-10\n"], ['b', "Tacos $4\nBarbacoa $5\nOpen 11-10\n"]])
 check('dedupe: lines from an earlier page dropped', dd[1][1] == "Barbacoa $5\n", dd.inspect)
 
+ml = menu_lines("Here you go:\n**Coffee | $3.75 |**\n## Tacos\n- Al pastor | $4.50 | pork, pineapple\nitem name | price | short description\nBarbacoa | $5\n### Drinks\nAgua fresca | | jamaica | or horchata\nSOURCE: https://t.example/menu\nNOTE: Prices from the site.\n")
+check('plain-line answers read back', ml['sections'] == [{ 'name' => '', 'items' => [{ 'name' => 'Coffee', 'price' => '$3.75', 'desc' => '' }] },
+      { 'name' => 'Tacos', 'items' => [{ 'name' => 'Al pastor', 'price' => '$4.50', 'desc' => 'pork, pineapple' }, { 'name' => 'Barbacoa', 'price' => '$5', 'desc' => '' }] },
+      { 'name' => 'Drinks', 'items' => [{ 'name' => 'Agua fresca', 'price' => '', 'desc' => 'jamaica | or horchata' }] }] &&
+      ml['sources'] == ['https://t.example/menu'] && ml['note'] == 'Prices from the site.', ml.inspect)
+check('ALL-CAPS headings read as titles', menu_clean(menu_lines("## HAPPY HOUR (3 P.M. EVERYDAY)\nOysters | $3 |"), 'site')['sections'][0]['name'] == 'Happy Hour (3 P.M. Everyday)')
+check('NONE = no menu', menu_lines("NONE")['sections'].empty?)
+j2 = menu_join([menu_clean(menu_lines("## Tacos\nAl pastor | $4 |"), 'site'), menu_clean(menu_lines("## <section name>\nBarbacoa | $5 |\n## Drinks\nTea | $2 |"), 'site')], 'site')
+check('no heading at the start of a part = the section before; placeholder headings ignored', j2['sections'].map { |x| [x['name'], x['items'].size] } == [['Tacos', 2], ['Drinks', 1]], j2['sections'].inspect)
+check('no heading at all = "Menu"', menu_join([menu_clean(menu_lines("Tea | $2 |"), 'site')], 'site')['sections'][0]['name'] == 'Menu')
+
 Dir.mktmpdir do |d|
   Object.send(:remove_const, :MENU_DIR); Object.const_set(:MENU_DIR, d)
   File.write(menu_file('n1'), JSON.generate(m.merge('at' => Time.now.to_i - 3 * 86_400)))
