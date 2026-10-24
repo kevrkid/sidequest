@@ -285,6 +285,22 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   **Warm-up** (`menu_prewarm`, on with SQ_BETA or `SQ_MENU_PREWARM=1`): one place at a time, best-known first, only
   while no one is waiting, website only (no Google, no web search), `SQ_MENU_PREWARM_DAILY` 300; places with no menu on
   their site go in `data/menus/_tried.json` for 14 days.
+- **❤️ Favorites** (were "Saved", same `/api/saves`, `d['saves']`): 🤍/❤️ `favBtn(k,id,name)` on events (sheet), places
+  (list rows, popups, markets), sights and every dish on a menu (`k: dish`, id `<place id>.<8 hex of the dish name>`
+  from `dishId()`, name `dish · place`; a dish counts as liking its place for Scout's taste). Listed on Me → Profile
+  (`#favCard`, `renderFavs()`, filter chips by kind; a dish opens its menu with the search on it: `openMenu(id, name,
+  retry, dish)`). My plans has a "❤️ My favorites" button there. Private (only you). Max 300.
+- **🍻 Happy hours** (`menu_finds.rb`): every menu read asks for a `HAPPY:` line (OpenStreetMap opening_hours + deals,
+  kept only if `Hours.parse` reads it: `happy_clean`); old menus got a one-off look at their happy-hour sections at
+  start (`happy_backfill`, `happy_checked`). `MenuIndex` keeps an index of data/menus (re-reads changed files, 30 s).
+  `/api/places/happy` → on now first; Search → Food & drink "🍻 Happy hour" tile (`openHappy()`), Home quick button
+  while any are on (`HH`, refreshed every 10 min), a banner on the menu sheet (`hhWhen()` formats the hours).
+- **🍴 Find a dish**: `/api/dishes?q=` (`MenuIndex.dishes`: all words in name/desc/section, "under $X", "open";
+  2 per place; own name, open now, near first). Search → Food & drink box (`#dishQ`, `openDishes()`); Menu opens the
+  place's menu at the dish. Scout: "happy hour" questions (`HAPPY_Q`) and "where can I get…" (`DISH_Q`) get these.
+- **🌆 Tonight picks** (`tonight_push!` in v2.rb, 5:00-5:15 PM, once a day): up to 3 of tonight's events fitting each
+  person's taste (types, venues, friends going ×3); notification kind `tonight` (mutable), push opens `/?tonight=1`.
+  `ruby test_tonight.rb` (6).
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
   charge), 4 photos; event sheets have "🏢 Venue phone & hours" (Google by venue name, on tap). OSM `phone` is
   fetched by fetch_places.rb from the next refresh.

@@ -68,11 +68,13 @@ MENU_LINES = <<~TXT
   (one line per item; leave a part empty when there's none, e.g. "Coffee | $3 |")
   SOURCE: <address the menu came from>   (one line per address, if asked for sources)
   NOTE: <one short line for the reader>   (only if needed)
+  HAPPY: <when, in OpenStreetMap opening_hours form, e.g. Mo-Fr 15:00-18:00; Sa,Su 14:00-17:00> | <the deals in a few words>
+    (only if it shows a happy hour with its times; one line)
   No menu found: answer only NONE.
 TXT
 
 def menu_lines(text)
-  secs, sources, notes = [], [], []
+  secs, sources, notes, happy = [], [], [], nil
   text.to_s.each_line do |l|
     l = l.strip.gsub(/\*\*|`/, '')
     next if l.empty? || l =~ /\A(```|NONE\z)/
@@ -82,6 +84,9 @@ def menu_lines(text)
       sources << u
     elsif (n = l[/\ANOTE:\s*(.+)/i, 1])
       notes << n
+    elsif (hh = l[/\AHAPPY:\s*(.+)/i, 1])
+      w, deals = hh.split('|', 2).map(&:strip)
+      happy ||= { 'hours' => w.to_s, 'deals' => deals.to_s }
     elsif l.include?('|')
       name, price, desc = l.sub(/\A[-*•]\s*/, '').split('|', 3).map { |x| x.to_s.strip }
       next if name.empty? || name =~ /\A-+\z/ || name.casecmp?('item name')
@@ -89,7 +94,7 @@ def menu_lines(text)
       secs.last['items'] << { 'name' => name, 'price' => price.to_s, 'desc' => desc.to_s }
     end
   end
-  { 'sections' => secs, 'sources' => sources, 'note' => notes.join(' ') }
+  { 'sections' => secs, 'sources' => sources, 'note' => notes.join(' '), 'happy' => happy }
 end
 
 def menu_claude(prompt, **o)
@@ -183,7 +188,7 @@ def menu_clean(o, from)
     { 'name' => name, 'items' => items } if items.any?
   end.compact
   { 'sections' => secs, 'sources' => Array(o['sources']).map(&:to_s).grep(%r{\Ahttps?://}).uniq.first(6),
-    'note' => o['note'].to_s.strip[0, 400], 'from' => from, 'at' => Time.now.to_i }
+    'note' => o['note'].to_s.strip[0, 400], 'from' => from, 'at' => Time.now.to_i, 'happy' => happy_clean(o['happy']) }.compact
 end
 
 # Parts read separately, joined in order: a section that runs on into the next part becomes one, repeats dropped.
@@ -207,7 +212,8 @@ def menu_join(parts, from)
   end
   secs.each { |s| s['items'] = s['items'].first(150) }
   { 'sections' => secs.first(60), 'sources' => parts.compact.flat_map { |m| m['sources'] }.uniq.first(6),
-    'note' => parts.compact.map { |m| m['note'] }.reject(&:empty?).uniq.first(2).join(' '), 'from' => from, 'at' => Time.now.to_i }
+    'note' => parts.compact.map { |m| m['note'] }.reject(&:empty?).uniq.first(2).join(' '), 'from' => from, 'at' => Time.now.to_i,
+    'happy' => parts.compact.map { |m| m['happy'] }.compact.first }.compact
 end
 
 # A page's text in parts of about MENU_PART characters, cut between lines.
@@ -358,7 +364,7 @@ def menu_merge(a, b)
     same ? same['items'].concat(items) : secs << { 'name' => s['name'], 'items' => items }
   end
   from = menu_count(b).zero? ? 'photos' : menu_count(a).zero? ? 'web' : 'photos+web'
-  a.merge('sections' => secs, 'sources' => (a['sources'] + b['sources']).uniq.first(6), 'from' => from,
+  a.merge('sections' => secs, 'sources' => (a['sources'] + b['sources']).uniq.first(6), 'from' => from, 'happy' => a['happy'] || b['happy'],
           'note' => [a['note'], b['note']].reject(&:empty?).join(' '))
 end
 
@@ -392,6 +398,7 @@ def menu_job(id, p)
           end
       m['web'] = p['menu'] || p['web'] || g['websiteUri']
       m['pics'] = pics.uniq.first(4)
+      m['happy_checked'] = true   # every read asks for the HAPPY line
       menu_keep(id, m) unless m['failed']
       MENU_JOBS[:lock].synchronize do
         MENU_JOBS[:running].delete(id)
@@ -432,15 +439,27 @@ def menu_prewarm
   return if MENU_JOBS[:lock].synchronize { MENU_JOBS[:warm_on] || !(MENU_JOBS[:warm_on] = true) }
   Thread.new do
     sleep 30
-    # menus kept before menu pictures were saved: look for the website's pictures once (no Claude, no Google)
+    # menus kept before menu pictures and happy hours were saved: look once (pictures: no Claude; happy hours: a quick
+    # read of the menu's happy-hour sections, only when it has some)
     Dir.glob(File.join(MENU_DIR, '*.json')).each do |f|
+      id = File.basename(f, '.json')
+      next if id.start_with?('_')
       m = (JSON.parse(File.read(f)) rescue next)
-      next if m.key?('pics') || !m['web'].to_s.start_with?('http')
-      _, imgs = menu_pages([m['web']])
-      m['pics'] = imgs.map(&:last).uniq.first(4)
-      (cur = menu_cached(File.basename(f, '.json'), stale: true)) && cur['at'] == m['at'] && menu_keep(File.basename(f, '.json'), cur.merge('pics' => m['pics']))
+      add = {}
+      if !m.key?('pics') && m['web'].to_s.start_with?('http')
+        _, imgs = (menu_pages([m['web']]) rescue [nil, []])
+        add['pics'] = imgs.map(&:last).uniq.first(4)
+      end
+      unless m['happy_checked']
+        hh = happy_backfill(id, m) or next   # nil: couldn't ask now, try at the next start
+        add['happy'] = hh unless hh.empty?
+        add['happy_checked'] = true
+      end
+      next if add.empty?
+      (cur = menu_cached(id, stale: true) || (JSON.parse(File.read(f)) rescue nil)) && cur['at'] == m['at'] && menu_keep(id, cur.merge(add))
+      warn "[menu] #{id} backfill: #{add.keys.join(', ')}#{add['happy'] ? " (#{add['happy']['hours']})" : ''}"
     rescue => e
-      warn "[menu] pictures for #{File.basename(f)}: #{e.message[0, 80]}"
+      warn "[menu] backfill #{File.basename(f)}: #{e.message[0, 80]}"
     end
     loop do
       sleep MENU_WARM_GAP
@@ -459,6 +478,7 @@ def menu_prewarm
       if m && menu_count(m).positive?
         m['web'] = p['menu'] || p['web']
         m['pics'] = pics.uniq.first(4)
+        m['happy_checked'] = true
         menu_keep(p['id'], m) unless MENU_JOBS[:lock].synchronize { MENU_JOBS[:running][p['id']] }
       else
         tried = (JSON.parse(File.read(MENU_TRIED)) rescue {})
@@ -475,6 +495,7 @@ end
 
 def mount_menus(server)
   menu_prewarm
+  mount_menu_finds(server)
   # The menu of one of our places (id). The first ask starts the lookup (signed in: it runs on Claude) and says
   # pending, with what's been read so far; the app asks again every second or two until it's all there.
   # warm=1: the app is showing the place (its popup), so start reading the menu before anyone taps Menu.

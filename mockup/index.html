@@ -331,6 +331,12 @@
   .mnpics img{width:100%;height:100%;object-fit:cover;display:block}
   .mnchips button.on{background:var(--accent);border-color:var(--accent);color:#1a0d00}
   .mnsec{scroll-margin-top:calc(var(--mnh,160px) + 6px);content-visibility:auto;contain-intrinsic-size:auto 500px}
+  .mnr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+  .mnr .favb{padding:2px 7px;min-height:0;font-size:13px;background:none;border-color:transparent}
+  .btn.fav{border-color:#ff5c8a;background:#ff5c8a22}
+  .mnhappy{margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,#f7971e33,#ffd20026);border:1px solid #ffb80055}
+  .hhtag{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700;background:#ffb80026;color:#ffd166}
+  .hhtag.now{background:#3ddc9726;color:#3ddc97}
   .mnmore{display:flex;align-items:center;gap:10px;justify-content:center;padding:14px 0;color:var(--muted)}
   .mnmore i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:mnspin .9s linear infinite}
   .mnwait i{display:block;width:34px;height:34px;margin:0 auto 14px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:mnspin .9s linear infinite}
@@ -712,6 +718,7 @@
       <div class="card" id="picCard"></div>
       <div class="card" id="profCard"></div>
       <button class="card myquest" id="myQuest" data-menu="quests" hidden></button>
+      <div class="card" id="favCard"></div>
 
       <h3>Interests</h3>
       <div class="card"><div class="row" style="margin-bottom:10px"><span class="meta grow">Pick as many as you like</span><span id="visInt"></span></div>
@@ -1066,7 +1073,21 @@ const ES = {
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
   'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Make me yours':'Hazme tuyo', 'Tour':'Recorrido', 'Live Translate':'Traducir en vivo', 'What is this?':'¿Qué es esto?', 'Point at a building, landmark, storefront or dish':'Apunta a un edificio, monumento, negocio o platillo',
   'Opening the camera. Point it at what you want to know about and tap the button.':'Abriendo la cámara. Apunta a lo que quieras conocer y toca el botón.',
-  'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Reading the place's own menu. Dishes show up here as they're found.":'Leyendo el menú del lugar. Los platos aparecen aquí a medida que se encuentran.', 'Reading the rest of the menu…':'Leyendo el resto del menú…', 'Menu pictures from their website':'Imágenes del menú de su sitio web', 'Menu picture':'Imagen del menú', 'Google Maps':'Google Maps', "Couldn't find a written menu online for this place.":'No encontramos un menú escrito en línea para este lugar.', 'Google Maps usually has photos of the menu: tap Google Maps above.':'Google Maps suele tener fotos del menú: toca Google Maps arriba.', "Checking the place's own website first, then other menu sources. The first look can take up to a minute.":'Primero revisamos el sitio del lugar y luego otras fuentes de menús. La primera vez puede tardar hasta un minuto.',
+  'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Reading the place's own menu. Dishes show up here as they're found.":'Leyendo el menú del lugar. Los platos aparecen aquí a medida que se encuentran.', 'Reading the rest of the menu…':'Leyendo el resto del menú…', 'Favorite':'Favorito', 'Favorites':'Favoritos', 'My favorites':'Mis favoritos',
+  'Add to favorites':'Agregar a favoritos', 'Remove from favorites':'Quitar de favoritos', 'Removed from favorites':'Quitado de favoritos',
+  'Added to your favorites, on your profile.':'Agregado a tus favoritos, en tu perfil.', 'Food & drink':'Comida y bebida', 'Dishes':'Platos',
+  'Make a free account to keep favorite events, places, dishes and sights.':'Crea una cuenta gratis para guardar tus eventos, lugares, platos y sitios favoritos.',
+  'Tap 🤍 on an event, a place, a dish on a menu or a sight to keep it here.':'Toca 🤍 en un evento, un lugar, un plato del menú o un sitio para guardarlo aquí.',
+  'Happy hour':'Happy hour', '🍻 Happy hour':'🍻 Happy hour', '{n} on now':'{n} ahora', 'Finding happy hours…':'Buscando happy hours…',
+  '{n} on right now, nearest first.':'{n} ahora mismo, los más cercanos primero.', 'None on right now. Coming up:':'Ninguno ahora mismo. Próximos:',
+  'No happy hours found yet. They come from the menus Side Quest reads, and more are added every day.':'Aún no hay happy hours. Vienen de los menús que lee Side Quest y se agregan más cada día.',
+  "From the places' own menus; deals and times can change, so check before you go.":'De los menús de cada lugar; las ofertas y horarios pueden cambiar, confirma antes de ir.',
+  '🍴 Find a dish: birria tacos, espresso martini under $14…':'🍴 Busca un plato: tacos de birria, espresso martini menos de $14…',
+  'Looking through menus…':'Buscando en los menús…', '{n} dishes on menus near you':'{n} platos en menús cerca de ti',
+  'Nothing on the menus we have matches. Try fewer words.':'Nada en los menús coincide. Prueba con menos palabras.', 'under ${n}':'menos de ${n}',
+  'From the menus Side Quest has read so far (more every day). Prices can change.':'De los menús que Side Quest ha leído (más cada día). Los precios pueden cambiar.',
+  'Tonight picks for you (5 PM)':'Planes para esta noche (5 PM)', 'all day':'todo el día', 'Late-night eats':'Comida de noche', 'Early morning':'Temprano', 'Bars':'Bares', 'Clubs':'Clubs',
+  'Food trucks':'Food trucks', 'Coffee':'Café', 'Tacos':'Tacos', 'BBQ':'BBQ', 'Pizza':'Pizza', 'Burgers':'Hamburguesas', 'Asian':'Asiática', 'Sweets':'Dulces', 'Everything':'Todo', 'Menu pictures from their website':'Imágenes del menú de su sitio web', 'Menu picture':'Imagen del menú', 'Google Maps':'Google Maps', "Couldn't find a written menu online for this place.":'No encontramos un menú escrito en línea para este lugar.', 'Google Maps usually has photos of the menu: tap Google Maps above.':'Google Maps suele tener fotos del menú: toca Google Maps arriba.', "Checking the place's own website first, then other menu sources. The first look can take up to a minute.":'Primero revisamos el sitio del lugar y luego otras fuentes de menús. La primera vez puede tardar hasta un minuto.',
   'Make a free account to see full menus':'Crea una cuenta gratis para ver menús completos', 'Try again':'Intentar de nuevo', 'The menu is taking too long.':'El menú está tardando demasiado.',
   "Couldn't look up the menu just now.":'No pudimos buscar el menú ahora.', "Couldn't find a menu online for this place.":'No encontramos un menú en línea para este lugar.',
   'Their website or Google Maps may have photos of it.':'Puede que su sitio o Google Maps tengan fotos del menú.', '🔎 Find a dish or drink…':'🔎 Busca un platillo o bebida…',
@@ -1783,7 +1804,7 @@ for(const [k,v] of Object.entries({clubs:S.mapL.night, bars:S.mapL.night, parks:
   spots:S.mapL.outdoors, openonly:false, landmarks:false, markers:false, art:false, markets:true})) S.mapL[k] ??= v;   // sights start off (too busy); the Sights chip or preset turns them on
 if(!S.sightsOffV2){ S.sightsOffV2=true; S.mapL.landmarks=S.mapL.markers=S.mapL.art=false; }   // once, for phones that saved the old default
 S.mapWhen ??= 'tonight'; S.mapCats ??= [];   // events shown: tonight / weekend / week, and which types ([] = all)
-const FOOD_TILES = [['late','🌙','Late-night eats'],['early','🌅','Early morning'],['bars','🍸','Bars'],['clubs','🪩','Clubs'],['trucks','🚚','Food trucks'],['coffee','☕','Coffee'],
+const FOOD_TILES = [['happy','🍻','Happy hour'],['late','🌙','Late-night eats'],['early','🌅','Early morning'],['bars','🍸','Bars'],['clubs','🪩','Clubs'],['trucks','🚚','Food trucks'],['coffee','☕','Coffee'],
   ['tacos','🌮','Tacos'],['bbq','🍖','BBQ'],['pizza','🍕','Pizza'],['burgers','🍔','Burgers'],['asian','🍜','Asian'],['sweets','🍦','Sweets'],['all','🍽️','Everything']];
 const HOT_FALLBACK = {sixth:{id:'sixth',name:'6th Street'},rainey:{id:'rainey',name:'Rainey Street'},redriver:{id:'redriver',name:'Red River'},
   west6:{id:'west6',name:'West 6th'},soco:{id:'soco',name:'SoCo'},east:{id:'east',name:'East Austin'},domain:{id:'domain',name:'The Domain'},rroldtown:{id:'rroldtown',name:'Old Downtown Round Rock'}};
@@ -1818,11 +1839,53 @@ async function openPlaces(q){
       || `<p class="meta">${S.foodOpen?'Nothing open right now that matches. Turn off "Open now" to see everything.':'No spots found here yet.'}</p>`}</div>
     <p class="meta" style="margin:12px 0 0">Hours from OpenStreetMap; may be out of date. 🍽️ Menu shows the full menu with prices, from the place's own site or other menu sources.</p>`;
 }
-function placeRow(p,zone,after){
+// 🍻 Happy hours, read from the menus we've kept (when, and the deals): on now first, nearest first.
+const HH={now:0, list:null, at:0};
+async function loadHappy(force){
+  if(!force&&HH.list&&Date.now()-HH.at<10*6e4) return HH;
+  try{ const j=await (await fetch(`/api/places/happy?${nearParam()}`)).json(); if(j.results){ HH.list=j.results; HH.now=j.now; HH.at=Date.now(); renderQuick(); } }catch(e){}
+  return HH;
+}
+const DAYW={Mo:'Mon',Tu:'Tue',We:'Wed',Th:'Thu',Fr:'Fri',Sa:'Sat',Su:'Sun'};
+function hhWhen(h){   // "Mo-Fr 15:00-18:00; Sa 14:00-16:00" → "Mon–Fri 3–6 PM · Sat 2–4 PM"
+  const t=x=>{ let [hh,mm]=x.split(':').map(Number); const pm=hh>=12&&hh<24; hh=hh%12||12; return {s:`${hh}${mm?':'+String(mm).padStart(2,'0'):''}`,pm}; };
+  return String(h||'').split(';').map(r=>r.trim().replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g,m=>DAYW[m]).replace(/-(?=[A-Z])/g,'–')
+    .replace(/(\d{1,2}:\d\d)-(\d{1,2}:\d\d)/g,(_,a,b)=>{ if(/^0?0:00$/.test(a)&&b==='24:00') return T('all day'); const A=t(a),B=t(b); return `${A.s}${A.pm===B.pm?'':A.pm?' PM':' AM'}–${B.s} ${B.pm?'PM':'AM'}`; })).join(' · ');
+}
+async function openHappy(){
+  $('#placesSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🍻 ${T('Happy hour')}</b><button class="btn sm" data-pclose>${T('Close')}</button></div><p class="skel">${T('Finding happy hours…')}</p>`;
+  $('#placesBg').hidden=false;
+  await loadHappy(true);
+  const L=HH.list||[]; PL.lastList=L;
+  $('#placesSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🍻 ${T('Happy hour')}</b><button class="btn sm" data-pclose>${T('Close')}</button></div>
+    <p class="meta" style="margin:4px 0 8px">${HH.now?T('{n} on right now, nearest first.',{n:HH.now}):T('None on right now. Coming up:')}</p>
+    ${L.length?L.map(p=>placeRow(p,null,null,`<div><span class="hhtag ${p.happy.now?'now':''}">${esc(p.happy.label)}</span>${p.happy.deals?` <span class="meta">${esc(p.happy.deals)}</span>`:''}</div>`)).join(''):`<p class="meta">${T('No happy hours found yet. They come from the menus Side Quest reads, and more are added every day.')}</p>`}
+    <p class="meta" style="margin-top:12px">${T('From the places\' own menus; deals and times can change, so check before you go.')}</p>`;
+}
+// 🍴 A dish anywhere: every menu we've read, matching all the words; "under $10" and "open" work too.
+async function openDishes(q){
+  q=String(q||'').trim(); if(!q) return;
+  const head=`<div class="row"><b class="grow" style="font-size:19px">🍴 ${esc(q)}</b><button class="btn sm" data-pclose>${T('Close')}</button></div>
+    <form id="dishForm2" style="margin-top:8px"><input id="dishQ2" type="search" value="${esc(q)}" autocomplete="off" enterkeyhint="search"></form>`;
+  $('#placesSheet').innerHTML=head+`<p class="skel">${T('Looking through menus…')}</p>`; $('#placesBg').hidden=false;
+  let j; try{ j=await (await fetch(`/api/dishes?q=${encodeURIComponent(q)}&${nearParam()}`)).json(); if(j.error) throw new Error(j.error); }
+  catch(e){ $('#placesSheet').innerHTML=head+`<p class="meta">${esc(e.message)}</p>`; return; }
+  PL.lastList=j.results; track('search');
+  $('#placesSheet').innerHTML=head+`<p class="meta" style="margin:8px 0">${j.results.length?T('{n} dishes on menus near you',{n:j.results.length}):T('Nothing on the menus we have matches. Try fewer words.')}${j.max?' · '+T('under ${n}',{n:j.max}):''}</p>
+    ${j.results.map(p=>{ const dd=p.dish;
+      return `<div class="prow"><span class="cat thumb" style="width:52px;height:52px;font-size:20px"${thumbAttr({id:p.id})}>${PLACE_E[p.kind]||'🍽️'}</span>
+        <div class="grow"><div class="row" style="gap:8px;align-items:baseline"><b class="grow">${esc(dd.name)}</b>${dd.price?`<span class="pr">${esc(dd.price)}</span>`:''}</div>
+          ${dd.desc?`<div class="meta" style="font-size:12.5px">${esc(dd.desc)}</div>`:''}
+          <div class="meta">${esc(p.name)}${p.mi!=null?` · ${p.mi} mi`:''} · <span class="pst ${p.state}" style="font-size:11px">${esc(p.status)}</span></div>
+          <div class="btns" style="margin-top:6px"><button class="btn sm primary" data-dishmenu="${esc(p.id)}|${esc(dd.name)}">🍽️ ${T('Menu')}</button>${favBtn('dish',dishId(p.id,dd.name),dd.name.slice(0,80)+' · '+p.name.slice(0,50))}</div></div>
+        <button class="btn sm" data-pmap="${esc(p.id)}">Map</button></div>`; }).join('')}
+    <p class="meta" style="margin-top:12px">${T('From the menus Side Quest has read so far (more every day). Prices can change.')}</p>`;
+}
+function placeRow(p,zone,after,extra=''){
   return `<div class="prow"><span class="cat thumb" style="width:52px;height:52px;font-size:20px"${thumbAttr({id:p.id})}>${PLACE_E[p.kind]||'🍽️'}</span>
       <div class="grow"><b>${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.walk?` · 🚶 ${p.walk} min walk`:p.mi!=null?` · ${p.mi} mi`:''}${p.zone&&!zone?` · ${esc(p.zone)}`:''}</div>
-        <div style="margin-top:4px">${p.at_close?`<span class="pst ${p.at_close==='hours unknown'?'unknown':'open'}">${p.at_close==='hours unknown'?'Hours unknown':esc('Open '+p.at_close)}</span>${p.at_close==='hours unknown'?'':` <span class="meta">at ${esc(after)}</span>`}`:`<span class="pst ${p.state}">${esc(p.status)}</span>`}${p.chain?p.chain==='texas'?' <span class="meta">⭐ Texas chain</span>':'':' <span class="meta">📍 Local</span>'}</div>
-        <div class="btns" style="margin-top:6px">${menuBtn(p)}${p.phone?`<a class="btn sm" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}</div></div>
+        <div style="margin-top:4px">${p.at_close?`<span class="pst ${p.at_close==='hours unknown'?'unknown':'open'}">${p.at_close==='hours unknown'?'Hours unknown':esc('Open '+p.at_close)}</span>${p.at_close==='hours unknown'?'':` <span class="meta">at ${esc(after)}</span>`}`:`<span class="pst ${p.state}">${esc(p.status)}</span>`}${p.chain?p.chain==='texas'?' <span class="meta">⭐ Texas chain</span>':'':' <span class="meta">📍 Local</span>'}</div>${extra}
+        <div class="btns" style="margin-top:6px">${menuBtn(p)}${p.phone?`<a class="btn sm" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}${favBtn('place',p.id,p.name)}</div></div>
       <button class="btn sm" data-pmap="${esc(p.id)}">Map</button></div>`;
 }
 // "This club lets out at 2 AM: what's still open to eat nearby?" From a place (q.id) or an event (q.ev).
@@ -1975,7 +2038,7 @@ function marketPopup(m){
     ${m.addr?`<div class="meta">${esc(m.addr)}</div>`:''}
     <div class="btns" style="margin-top:6px">${/^https:\/\//.test(m.web||'')?`<a class="btn sm" href="${esc(m.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
       <a class="btn sm" href="${mapsUrl(m.lat,m.lng)}" target="_blank" rel="noopener">${T('Directions')} ↗</a>
-      ${checkBtn('place',m.id,m.lat,m.lng)}<button class="btn sm ${isSaved('place',m.id)?'blue':''}" data-v2save="place|${esc(m.id)}|${esc(m.name.slice(0,90))}">🔖</button></div>
+      ${checkBtn('place',m.id,m.lat,m.lng)}${favBtn('place',m.id,m.name)}</div>
     <div class="meta" style="font-size:10px;margin-top:6px">${T('Markets change with the seasons: check their site before you go.')}</div>`).openOn(map);
 }
 async function placePopup(id, ll){
@@ -1988,7 +2051,7 @@ async function placePopup(id, ll){
       <div class="btns" style="margin-top:6px">${menuBtn(p)}${p.phone?`<a class="btn sm" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
         <a class="btn sm" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Directions ↗</a>
         ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 Eat after</button>`:''}
-        ${checkBtn('place',p.id,p.lat,p.lng)}<button class="btn sm ${isSaved('place',p.id)?'blue':''}" data-v2save="place|${esc(p.id)}|${esc(p.name.slice(0,90))}" aria-label="${T('Save')}">🔖</button></div>
+        ${checkBtn('place',p.id,p.lat,p.lng)}${favBtn('place',p.id,p.name)}</div>
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
@@ -2072,10 +2135,10 @@ function menuWarm(id){
   if(!AUTHED||(MENU[id]&&!MENU[id].partial)||MENU_WARM.has(id)||MENU_WARM.size>40) return; MENU_WARM.add(id);
   fetch(`/api/place/menu?id=${encodeURIComponent(id)}&warm=1`,{credentials:'same-origin'}).then(r=>r.json()).then(j=>{ if(j.info) MENU_INFO[id]=j.info; if(j.menu&&!j.pending) MENU[id]=j.menu; }).catch(()=>{});
 }
-async function openMenu(id, name, retry){
-  const bg=$('#menuBg'), sh=$('#menuSheet'); sh.dataset.id=id; sh.dataset.name=name; bg.hidden=false; sh.scrollTop=0; sh.dataset.partial='';
+async function openMenu(id, name, retry, dish=''){   // dish: start with the search on that dish
+  const bg=$('#menuBg'), sh=$('#menuSheet'); sh.dataset.id=id; sh.dataset.name=name||PL.byId?.[id]?.[1]||''; name=sh.dataset.name; bg.hidden=false; sh.scrollTop=0; sh.dataset.partial=''; sh.dataset.q=dish;
   const head=`<div class="mnhead"><div class="row"><b class="grow" style="font-size:20px">🍽️ ${esc(name)}</b><button class="btn sm" data-menuclose>✕</button></div>${menuActs(id,name,{web:sh.dataset.web})}</div>`;
-  if(MENU[id]&&!MENU[id].partial&&!retry) return renderMenu();
+  if(MENU[id]&&!MENU[id].partial&&!retry) return renderMenu(dish);
   track('menu_open');
   sh.innerHTML=head+`<div class="mnwait"><i></i><b style="font-size:17px">${T('Finding the menu…')}</b>
     <p class="meta">${T("Reading the place's own menu. Dishes show up here as they're found.")}</p></div>`;
@@ -2084,7 +2147,7 @@ async function openMenu(id, name, retry){
     let j; try{ j=await (await fetch(`/api/place/menu?id=${encodeURIComponent(id)}${retry?'&retry=1':''}`,{credentials:'same-origin'})).json(); }catch(e){ j={error:T("Couldn't reach Side Quest. Check your connection.")}; }
     retry=false; if(j.info) MENU_INFO[id]=j.info;
     if(bg.hidden||sh.dataset.id!==id) return;   // closed, or another menu opened
-    if(j.menu&&!j.pending){ MENU[id]=j.menu; sh.dataset.partial=''; const top=sh.scrollTop; renderMenu($('#menuQ')?.value||''); sh.scrollTop=top; return; }
+    if(j.menu&&!j.pending){ MENU[id]=j.menu; sh.dataset.partial=''; const top=sh.scrollTop; renderMenu($('#menuQ')?.value||sh.dataset.q||''); sh.scrollTop=top; return; }
     if(j.menu?.sections?.length){   // what's been read so far; more on the way
       const n=j.menu.sections.reduce((a,x)=>a+x.items.length,0);
       if(String(n)!==sh.dataset.partial){ sh.dataset.partial=n; MENU[id]={...j.menu,partial:true}; const q=$('#menuQ'); if(q&&q===document.activeElement) menuList(q.value); else { const top=sh.scrollTop; renderMenu(q?.value||''); sh.scrollTop=top; } }
@@ -2125,6 +2188,7 @@ function renderMenu(q=''){
   sh.innerHTML=`<div class="mnhead">${top}
       <input id="menuQ" type="search" placeholder="${T('🔎 Find a dish or drink…')} (${n})" autocomplete="off" value="${esc(q)}">
       <div class="mnchips">${m.sections.map((x,i)=>`<button data-menujump="${i}">${esc(x.name)}</button>`).join('')}</div></div>
+    ${m.happy?`<div class="mnhappy">🍻 <b>${T('Happy hour')}</b> ${esc(hhWhen(m.happy.hours))}${m.happy.deals?`<div class="meta">${esc(m.happy.deals)}</div>`:''}</div>`:''}
     ${menuPics(id,m)}<div id="menuList"></div>${more}
     <p class="meta" style="margin:16px 0 4px">${m.note?esc(m.note)+' ':''}${T('Prices and dishes change: check with the place before you order.')}</p>
     <div class="meta" style="font-size:12px;padding-bottom:10px">${m.from==='site'?T("From the place's website"):m.from==='photos'?T('Read from photos of the menu'):m.from==='photos+web'?T('From photos of the menu and the web'):T('Found on the web')}${(m.sources||[]).length?': '+m.sources.filter((u,i,a)=>a.findIndex(x=>hostOf(x)===hostOf(u))===i).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent2)">${esc(hostOf(u))}</a>`).join(' · '):''}
@@ -2136,7 +2200,8 @@ function renderMenu(q=''){
 function menuList(q){
   const sh=$('#menuSheet'), m=MENU[sh.dataset.id]; if(!m) return;
   const secs=m.sections.map((x,i)=>({...x,i,items:x.items.filter(it=>!q||qHit(q,it.name,it.desc,x.name))})).filter(x=>x.items.length);
-  $('#menuList').innerHTML=secs.map(x=>`<div class="mnsec" id="mns_${x.i}" data-sec="${x.i}"><h3>${esc(x.name)}</h3>${x.items.map(it=>`<div class="mnit"><div><b>${esc(it.name)}</b>${it.desc?`<p>${esc(it.desc)}</p>`:''}</div>${it.price?`<span class="pr">${esc(it.price)}</span>`:''}</div>`).join('')}</div>`).join('')
+  const pid=sh.dataset.id, pn=sh.dataset.name;
+  $('#menuList').innerHTML=secs.map(x=>`<div class="mnsec" id="mns_${x.i}" data-sec="${x.i}"><h3>${esc(x.name)}</h3>${x.items.map(it=>`<div class="mnit"><div><b>${esc(it.name)}</b>${it.desc?`<p>${esc(it.desc)}</p>`:''}</div><div class="mnr">${it.price?`<span class="pr">${esc(it.price)}</span>`:''}${favBtn('dish',dishId(pid,it.name),it.name.slice(0,80)+' · '+pn.slice(0,50))}</div></div>`).join('')}</div>`).join('')
     || `<p class="meta" style="margin-top:16px">${T('Nothing on the menu matches “{q}”.',{q:esc(q)})}</p>`;
   // the chip of the section you're reading lights up and slides into view
   sh._io?.disconnect();
@@ -2265,7 +2330,7 @@ async function sightPopup(id){
     ${s.where?`<div class="meta" style="font-size:11px">📍 ${esc(s.where)}</div>`:''}
     <div id="sgph_${esc(id)}"></div>
     <div class="btns" style="margin-top:8px"><button class="btn sm primary" data-sgtell="${esc(id)}">🔊 ${T('Tell me the story')}</button>
-      ${checkBtn('sight',id,s.lat,s.lng)}<button class="btn sm ${isSaved('sight',id)?'blue':''}" data-v2save="sight|${esc(id)}|${esc(s.name.slice(0,90))}">🔖</button>
+      ${checkBtn('sight',id,s.lat,s.lng)}${favBtn('sight',id,s.name)}
       <button class="btn sm" data-sgshare="${esc(id)}" aria-label="${T('Share')}">🔗</button>
       ${/^https:\/\//.test(s.url||'')?`<a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">${T('Read more')} ↗</a>`:''}
       <a class="btn sm" href="${mapsUrl(s.lat,s.lng)}" target="_blank" rel="noopener">${T('Directions')} ↗</a></div>
@@ -2435,8 +2500,8 @@ function openPlans(){
     ${going.length?going.map(e=>`<div class="pstop"><span class="ptime">${esc(fmtWhen(e.ts,e.tba))}</span><span class="pdot thumb"${e.geo_precise&&e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng}):''}>${CATS[e.cat]?.e||'🎫'}</span>
         <div class="grow"><b>${esc(e.title)}</b>${e.venue?`<div class="meta">${esc(e.venue)}</div>`:''}</div>${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')
       :`<p class="meta">${T('Nothing yet. Tap "I\'m going" on an event and it shows up here.')}</p>`}
-    <label class="lbl" style="margin-top:16px">🔖 ${T('Saved')}</label><div id="savedList"><p class="meta">${T('Loading…')}</p></div>`;
-  $('#plansBg').hidden=false; fillSaved(); track('saved_open');
+    <button class="btn" style="margin-top:16px;width:100%" data-quick="favs">❤️ ${T('My favorites')} ${(SV.v2?.saves||[]).length?`(${SV.v2.saves.length})`:''}</button>`;
+  $('#plansBg').hidden=false; track('saved_open');
 }
 async function savePlan(i){ track('plan_save');
   const m=scS().log[i]; if(!m?.plan) return; if(needAccount('save plans')) return;
@@ -2461,8 +2526,9 @@ function openSearch(){
       `<button data-sfocus="${c}" style="background:${sec.bg}"><i>${CATS[c].e}</i>${TILE_L[c]||CATS[c].l}<span>${counts[c]||0} happening</span></button>`).join('')}</div>`).join('');
   const food = `<div class="row" style="margin-top:16px"><label class="lbl grow" style="margin:0">🍽️ Food & drink</label>
       <span class="meta">Open now</span><button class="toggle ${S.foodOpen?'on':''}" data-popen aria-label="Only places open now"></button></div>
+    <form id="dishForm" style="margin-top:8px"><input id="dishQ" type="search" placeholder="${T('🍴 Find a dish: birria tacos, espresso martini under $14…')}" autocomplete="off" enterkeyhint="search"></form>
     <div class="create-grid three" style="margin-top:8px">${FOOD_TILES.map(([k,e,l])=>
-      `<button data-pcat="${k}" style="background:${k==='late'||k==='clubs'||k==='bars'||k==='trucks'?'linear-gradient(145deg,#3a1c71,#d76d77)':'linear-gradient(145deg,#f7971e,#e8590c)'}"><i>${e}</i>${l}</button>`).join('')}</div>
+      `<button data-pcat="${k}" style="background:${k==='happy'?'linear-gradient(145deg,#f7b733,#fc4a1a)':k==='late'||k==='clubs'||k==='bars'||k==='trucks'?'linear-gradient(145deg,#3a1c71,#d76d77)':'linear-gradient(145deg,#f7971e,#e8590c)'}"><i>${e}</i>${T(l)}${k==='happy'&&HH.now?`<span>${T('{n} on now',{n:HH.now})}</span>`:''}</button>`).join('')}</div>
     <label class="lbl" style="margin-top:14px">🔥 Hot spots</label>
     <div class="create-grid three">${(PL.hot||Object.values(HOT_FALLBACK)).map(z=>`<button data-pzone="${z.id}" style="background:linear-gradient(145deg,#ff512f,#dd2476)"><i>🔥</i>${esc(z.name)}<span>${z.open!=null?`${z.open} open now`:'tap to see'}</span></button>`).join('')}</div>`;
   const hr=new Date().getHours(), foodFirst = hr>=22 || hr<10;   // late night and breakfast: people are mostly looking for food
@@ -3158,6 +3224,7 @@ function showMeSec(sec){   // the profile is split into four tabs; only one show
   meSec=sec;
   document.querySelectorAll('#meTabs button').forEach(b=>b.classList.toggle('on',b.dataset.mesec===sec));
   document.querySelectorAll('[data-mepane]').forEach(p=>p.hidden=p.dataset.mepane!==sec);
+  if(sec==='profile') renderFavs();
   if(!$('#v-me').hidden) $('#v-me').scrollIntoView({block:'start'});
 }
 function renderMe(){
@@ -3585,6 +3652,7 @@ function renderQuick(){
     btn('plans',T('📅 My plans'),'',plans+(SV.plans||[]).length||''),   // always here: your schedule + itineraries
     AUTHED&&SV.v2 ? btn('quests',`🏆 ${T('Lv {n}',{n:SV.v2.level||1})}`) : '',
     un ? btn('msgs',T('💬 New messages'),'',un) : '',
+    HH.now ? btn('happy',T('🍻 Happy hour'),'',HH.now) : '',   // only while some are on
   ].join('');   // quiz, chart and about me live in the name menu, top right
   el.hidden = !el.innerHTML;
 }
@@ -3595,6 +3663,8 @@ function quick(k){
   if(k==='about'){ tab('me'); showMeSec('about'); lifeOpen=(LIFE_SECS.find(([sec])=>LIFE.some(f=>f.sec===sec&&!hasVal(S.me.p[f.k])))||LIFE_SECS[0])[0]; renderLife(); scrollToEl('#lifeCard'); }
   if(k==='msgs'){ meetTab='msgs'; DM.open=null; tab('meet'); renderMeet(); loadThreads().then(renderMeet); }
   if(k==='plans') openPlans();
+  if(k==='favs') openFavs();
+  if(k==='happy') openHappy();
   if(k==='quests') openQuests();
   if(k==='invite') inviteLink();
   if(k==='tonight'){ searchWhen='today'; runSearch(null,''); }
@@ -3722,6 +3792,8 @@ document.addEventListener('click',e=>{
   else if(d.quick) quick(d.quick);
   else if(b.id==='homeBtn') goBack();
   /* food & drink */
+  else if(d.pcat==='happy') openHappy();
+  else if(d.dishmenu){ const [pid,...dn]=d.dishmenu.split('|'); const p=(PL.lastList||[]).find(x=>x.id===pid); openMenu(pid,p?.name||'',false,dn.join('|')); }
   else if(d.pcat!==undefined) openPlaces({cat:d.pcat});
   else if(d.pzone) openPlaces({zone:d.pzone});
   else if(d.popen!==undefined){ S.foodOpen=!S.foodOpen; save(); if(!$('#placesBg').hidden) openPlaces(PLQ); else openSearch(); }
@@ -4484,7 +4556,8 @@ function videoInfo(file){
         fin({duration:v.duration, poster:c.width?c.toDataURL('image/jpeg',.75):null}); }catch(e){ fin({duration:v.duration||0}); } };
     v.onerror=()=>fin({duration:0}); setTimeout(()=>fin({duration:v.duration||0}),8000); });
 }
-document.addEventListener('submit',e=>{ if(e.target.id==='dmForm'){ e.preventDefault(); sendDm(); return; } if(e.target.id==='onbForm'){ e.preventDefault(); onbNext(); return; } if(e.target.id==='sForm'){ e.preventDefault(); runSearch(null, $('#sQ').value.trim()); } });
+document.addEventListener('submit',e=>{ if(e.target.id==='dmForm'){ e.preventDefault(); sendDm(); return; } if(e.target.id==='onbForm'){ e.preventDefault(); onbNext(); return; } if(e.target.id==='sForm'){ e.preventDefault(); runSearch(null, $('#sQ').value.trim()); }
+  if(e.target.id==='dishForm'||e.target.id==='dishForm2'){ e.preventDefault(); const q=$(e.target.id==='dishForm'?'#dishQ':'#dishQ2').value; $('#searchBg')&&($('#searchBg').hidden=true); openDishes(q); } });
 ['storyBg','searchBg','groupsBg','actBg','menuBg'].forEach(id=>$('#'+id).onclick=e=>{ if(e.target.id===id) $('#'+id).hidden=true; });
 $('#feedQ').oninput=e=>{ feedQ=e.target.value; feedN=30; renderFeed(); };
 $('#meetQ').oninput=e=>{ meetQ=e.target.value; renderMeet(); };
@@ -5336,8 +5409,8 @@ const v2head = (title, close) => `<div class="row"><b class="grow" style="font-s
 
 /* ---- 🔔 notifications ---- */
 const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['chat','Chat replies'],
-  ['down','People down for your flares'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite']];
-const NOTIF_E = {freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️'};
+  ['down','People down for your flares'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)']];
+const NOTIF_E = {freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆'};
 function renderBell(){
   const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
   const n=SV.v2?.unread||0; $('#bellN').textContent=n?(n>9?'9+':String(n)):''; b.classList.toggle('has',!!n);
@@ -5423,7 +5496,7 @@ function renderEventSheet(e){
     <div class="evact">
       <button class="btn ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?T('✓ Going'):T("I'm going")}</button>
       <button class="btn ${mine==='interested'?'blue':''}" data-rsvp="${e.id}" data-st="interested">${mine==='interested'?'★':'☆'} ${T('Interested')}</button>
-      <button class="btn ${saved?'blue':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}">🔖 ${saved?T('Saved'):T('Save')}</button>
+      <button class="btn ${saved?'fav':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}">${saved?'❤️ '+T('Favorite'):'🤍 '+T('Favorite')}</button>
       <button class="btn" data-evinvite="${e.id}">💌 ${T('Invite')}</button>
       <button class="btn" data-evshare="${e.id}">🔗 ${T('Share')}</button>
     </div>
@@ -5487,34 +5560,44 @@ async function sendInvites(id){
     toast(`💌 ${T('Invited {n}. They got a message with the link.',{n:j.sent})}`,'green',[],3500); }catch(e){ toast(esc(e.message),'orange'); }
 }
 
-/* ---- 🔖 saved ---- */
+/* ---- ❤️ favorites: events, places, sights and dishes, listed on your profile ---- */
 const isSaved = (k,id) => (SV.v2?.saves||[]).includes(k+':'+id);
+const favBtn = (k,id,name) => { const on=isSaved(k,id);
+  return `<button class="btn sm favb ${on?'fav':''}" data-v2save="${k}|${esc(id)}|${esc(String(name).slice(0,130))}" aria-pressed="${on}" aria-label="${on?T('Remove from favorites'):T('Add to favorites')}">${on?'❤️':'🤍'}</button>`; };
+const dishId = (pid,name) => `${pid}.${(hash(String(name).toLowerCase())>>>0).toString(16).padStart(8,'0').slice(-8)}`;
 async function toggleSave(k, id, name){
-  if(needAccount('save things for later')) return;
+  if(needAccount('keep favorites')) return;
   const on=isSaved(k,id);
   try{ const j=await api('/api/saves',{action:on?'remove':'add', k, id, name}); V2S.saves=j.saves; SV.v2={...(SV.v2||{}), saves:j.saves.map(x=>x.k+':'+x.id)}; }
   catch(e){ return toast(esc(e.message),'orange'); }
-  toast(on?T('Removed from Saved'):`🔖 ${T('Saved. Find it in My plans.')}`,on?'':'green',on?[]:[{l:T('My plans'),cls:'blue',f:openPlans}],2800);
+  toast(on?T('Removed from favorites'):`❤️ ${T('Added to your favorites, on your profile.')}`,on?'':'green',on?[]:[{l:T('My favorites'),cls:'blue',f:openFavs}],2600);
+  document.querySelectorAll(`[data-v2save^="${k}|${CSS.escape(id)}|"]`).forEach(b=>{ if(b.classList.contains('favb')){ b.outerHTML=favBtn(k,id,name); } });
   if(V2S.evOpen&&!$('#evBg').hidden&&EV.byId[V2S.evOpen]) renderEventSheet(EV.byId[V2S.evOpen]);
-  if(!$('#plansBg').hidden) fillSaved();
+  renderFavs();
 }
-async function fillSaved(){
-  const el=$('#savedList'); if(!el) return;
-  if(!AUTHED){ el.innerHTML=`<p class="meta">${T('Make a free account to save events, places and sights.')}</p>`; return; }
-  try{ V2S.saves=(await api('/api/saves',{})).saves; }catch(e){ el.innerHTML=`<p class="meta">${esc(e.message)}</p>`; return; }
-  const E={event:'🎟️', place:'🍽️', sight:'🏛️'};
-  el.innerHTML=V2S.saves.length?V2S.saves.map(x=>{ const ev=x.k==='event'&&EV.byId[x.id], gone=x.k==='event'&&!ev;
-    return `<div class="prow"><span class="cat thumb" style="width:40px;height:40px;font-size:17px">${E[x.k]}</span><div class="grow">
-      <button class="linkbtn" style="color:var(--text);font-weight:700;text-align:left" data-savedgo="${x.k}|${esc(x.id)}">${esc(x.name||x.id)}</button>
-      <div class="meta">${ev?fmtWhen(ev.ts,ev.tba):gone?T('Ended'):x.k==='sight'?T('Sight'):T('Place')}</div></div>
-      <button class="btn sm" data-v2save="${x.k}|${esc(x.id)}|${esc(x.name||'')}" aria-label="${T('Remove')}">✕</button></div>`; }).join('')
-    :`<p class="meta">${T('Tap 🔖 Save on an event, place or sight to keep it here.')}</p>`;
+let favKind='';
+const FAV_K = {event:['🎟️','Events'], place:['🍽️','Food & drink'], dish:['🍴','Dishes'], sight:['🏛️','Sights']};
+async function renderFavs(fetchIt){
+  const el=$('#favCard'); if(!el) return;
+  if(!AUTHED){ el.innerHTML=`<b>❤️ ${T('Favorites')}</b><p class="meta">${T('Make a free account to keep favorite events, places, dishes and sights.')}</p>`; return; }
+  if(fetchIt||!V2S.saves){ try{ V2S.saves=(await api('/api/saves',{})).saves; }catch(e){ el.innerHTML=`<p class="meta">${esc(e.message)}</p>`; return; } }
+  const all=V2S.saves||[], list=all.filter(x=>!favKind||x.k===favKind), n=k=>all.filter(x=>x.k===k).length;
+  el.innerHTML=`<div class="row"><b class="grow">❤️ ${T('Favorites')}</b><span class="meta">${all.length}</span></div>
+    <div class="tagchips" style="margin:8px 0 4px"><button class="ichip ${!favKind?'on':''}" data-favk="">${T('All')}</button>${Object.entries(FAV_K).filter(([k])=>n(k)).map(([k,[e,l]])=>`<button class="ichip ${favKind===k?'on':''}" data-favk="${k}">${e} ${T(l)} ${n(k)}</button>`).join('')}</div>
+    ${list.length?list.map(x=>{ const ev=x.k==='event'&&EV.byId[x.id], gone=x.k==='event'&&!ev, [dn,pn]=x.k==='dish'?String(x.name).split(' · '):[x.name];
+      return `<div class="prow"><span class="cat thumb" style="width:40px;height:40px;font-size:17px">${FAV_K[x.k]?.[0]||'⭐'}</span><div class="grow">
+        <button class="linkbtn" style="color:var(--text);font-weight:700;text-align:left" data-savedgo="${x.k}|${esc(x.id)}|${esc(x.name||'')}">${esc(dn||x.id)}</button>
+        <div class="meta">${ev?fmtWhen(ev.ts,ev.tba)+(ev.venue?' · '+esc(ev.venue):''):gone?T('Ended'):x.k==='dish'?esc(pn||''):x.k==='sight'?T('Sight'):T('Food & drink')}</div></div>
+        <button class="btn sm fav" data-v2save="${x.k}|${esc(x.id)}|${esc(x.name||'')}" aria-label="${T('Remove from favorites')}">❤️</button></div>`; }).join('')
+      :`<p class="meta">${T('Tap 🤍 on an event, a place, a dish on a menu or a sight to keep it here.')}</p>`}`;
 }
-function savedGo(k,id){
+function openFavs(){ $('#plansBg').hidden=true; tab('me'); showMeSec('profile'); renderFavs(true); scrollToEl('#favCard'); }
+function savedGo(k,id,name){
   $('#plansBg').hidden=true;
   if(k==='event') return openEvent(id);
   if(k==='sight') return focusSight(id);
   if(k==='place') return focusPlace(id);
+  if(k==='dish'){ const [dn,pn]=String(name).split(' · '); return openMenu(id.split('.')[0], pn||'', false, dn); }
 }
 
 /* ---- 🏆 quests & check-ins ---- */
@@ -5576,6 +5659,7 @@ function handleDeepLink(){
   if(g) setTimeout(()=>{ if(groupOf?.(g)) openGroup(g); },600);
   if(q.get('quests')) setTimeout(()=>openQuests(),600);
   if(q.get('inbox')) setTimeout(()=>openNotifs(),600);
+  if(q.get('tonight')) setTimeout(()=>quick('tonight'),600);
   if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; S.refK=(q.get('rk')||'').slice(0,12); save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
   if(ev) openEvent(ev.startsWith('e:')?ev:'e:'+ev);
   if(sg) setTimeout(()=>{ loadSights(); const t=setInterval(()=>{ if(SG.data){ clearInterval(t); focusSight(sg); } },200); setTimeout(()=>clearInterval(t),8000); },300);
@@ -5600,7 +5684,7 @@ function renderTonight(){
 }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare],[data-sharetoggle],[data-outgo],[data-nmute]');
+  const t=e.target.closest('[data-evopen],[data-v2close],[data-notifi],[data-pushtoggle],[data-evinvite],[data-evshare],[data-evmore],[data-evmap],[data-v2save],[data-checkin2],[data-invsend],[data-savedgo],[data-questgo],[data-lbtoggle],[data-invitelink],[data-bell],[data-v2join],[data-sgshare],[data-sharetoggle],[data-outgo],[data-nmute],[data-favk]');
   if(!t) return; const d=t.dataset;
   if(d.evopen!==undefined){ const inner=e.target.closest('button,a'); if(inner&&inner!==t) return; return openEvent(d.evopen); }
   if(d.v2close){ $('#'+d.v2close).hidden=true; if(d.v2close==='evBg'){ V2S.evOpen=null; clearInterval(V2S.chatT); } return; }
@@ -5614,7 +5698,8 @@ document.addEventListener('click',e=>{
   if(d.v2save){ const [k,id,...nm]=d.v2save.split('|'); return toggleSave(k,id,nm.join('|')); }
   if(d.checkin2){ const [k,id,lat,lng]=d.checkin2.split('|'); if(k==='event'){ const ev=EV.byId[id]; return ev&&checkInAt('event',id,ev.lat,ev.lng); } return checkInAt(k,id,+lat,+lng); }
   if(d.invsend) return sendInvites(d.invsend);
-  if(d.savedgo){ const [k,...id]=d.savedgo.split('|'); return savedGo(k,id.join('|')); }
+  if(d.savedgo){ const [k,id,...nm]=d.savedgo.split('|'); return savedGo(k,id,nm.join('|')); }
+  if(d.favk!==undefined){ favKind=d.favk; return renderFavs(); }
   if(d.questgo){ const g=QUEST_GO[d.questgo]; if(g){ $('#questBg').hidden=true; g[1](); } return; }
   if(d.lbtoggle!==undefined){ const hid=!V2S.quests.hidden; api('/api/quests/board',{hidden:hid}).then(()=>{ V2S.quests.hidden=hid; openQuests(); }).catch(x=>toast(esc(x.message),'orange')); return; }
   if(d.invitelink!==undefined) return inviteLink();
@@ -5653,6 +5738,7 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
     setInterval(()=>{ if(DM.open&&!$('#v-meet').hidden&&!isDemoUser(DM.open)) fetch('/api/dm?with='+encodeURIComponent(DM.open),{credentials:'same-origin'}).then(r=>r.json())
       .then(j=>{ if(j.msgs&&j.msgs.length!==DM.msgs.length){ DM.msgs=j.msgs; S.dmSeen[DM.open]=Date.now(); save(); const v=$('#dmIn')?.value; renderMeet(); if(v) $('#dmIn').value=v; } }).catch(()=>{}); }, 4000); }
   setInterval(loadEvents, 10*60*1000);
+  loadHappy(); setInterval(()=>{ if(!document.hidden) loadHappy(true); }, 10*60*1000);
 })();
 if(location.protocol.startsWith('http'))
   fetch('/api/health').then(r=>r.json()).then(j=>{ ENGINE_OK=!!j.ok; ENGINE=ENGINE_OK&&AUTHED; MODEL=j.model; renderPicks(); schedule(0); })

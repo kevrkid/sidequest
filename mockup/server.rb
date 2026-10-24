@@ -29,6 +29,7 @@ require 'date'
 require_relative 'lens' # Live Translate: camera text → any of 13 languages (lens.js + /api/translate)
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
+require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
 PORT    = (ENV['PORT'] || 8787).to_i
@@ -466,7 +467,21 @@ end
 
 # "Recommend a local business in Hyde Park": asking for a place in a named area, food word or not
 BIZ_Q = /business(es)?|\bplaces?\b|\bspots?\b|\bshops?\b|\bstores?\b|somewhere|recommend|suggest|favou?rite|\bbest\b|\bgood\b|\blocal\b|hidden gems?|hang ?out|where should|check out|worth (going|trying|a visit)|go-to/i
+HAPPY_Q = /happy\s*hours?/i
+DISH_Q = /\bwhere\b.{0,30}\b(get|find|eat|buy|have|has|serves?|order)\b|\bwho (has|serves|makes|sells)\b|\b(best|good|cheap(est)?)\b.{0,40}\b(in town|near( me)?|around( here)?|nearby)\b/i
 def scout_places(q, near)
+  # happy hours and dishes come from the menus we've read (menu_finds.rb)
+  if q =~ HAPPY_Q
+    h = MenuIndex.happy(near: near, limit: 12)
+    note = "Happy hours from the places' own menus that Side Quest has read: happy.label says when (on now or next), happy.deals " \
+           "what's on. #{h[:now]} are on right now. Lead with ones on now and close by. Other places may have one we haven't read."
+    note = 'No happy hours known yet (they come from the menus Side Quest reads). Say so and suggest from memory, saying it is from memory.' if h[:results].empty?
+    return [h[:results], note]
+  end
+  if q =~ DISH_Q && (r = MenuIndex.dishes(q, near: near, limit: 12))[:results].any?
+    return [r[:results], 'These places have it on their menus (dish = the menu item, its price and section). Name the dish and price; ' \
+                         'lead with ones open now and close by. These are only the menus Side Quest has read so far.']
+  end
   area = Areas.find(q)
   zone = Places::HOTSPOTS.find { |z| q =~ /#{Regexp.escape(z[:name].sub(/\AThe |Old Downtown /, ''))}|\b#{z[:id]}\b/i }
   return [[], nil] unless q =~ FOOD_Q || zone || (area && q =~ BIZ_Q)

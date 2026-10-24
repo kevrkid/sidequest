@@ -221,3 +221,15 @@ Keep this file up to date when features change. Only describe things that exist 
   building, landmark, storefront, mural or dish and tap the shutter: it says what it is and a few facts, and for a
   business or sight opens its menu, hours, phone, photos or story. The camera's switch flips between Translate and Identify.
 - Place and event popups on the map show photos: Side Quest stories posted there first, then Google photos.
+
+## Favorites, happy hours, dishes, tonight picks
+- ❤️ Favorites: tap 🤍 on an event (its page), a place (list rows, map popups), a sight, or any dish on a menu. They're
+  all listed on your profile (Me → Profile → Favorites), with filters for events, food & drink, dishes and sights.
+  Tapping one opens it (a dish opens that restaurant's menu at the dish). Only you see your favorites.
+- 🍻 Happy hour: Search → Food & drink → Happy hour lists places with a happy hour, the ones on right now first, with
+  times and deals read from their menus. Home shows a "🍻 Happy hour" button while some are on. The menu sheet shows
+  a place's happy hour at the top.
+- 🍴 Find a dish: Search → the "Find a dish" box under Food & drink ("birria tacos", "espresso martini under $14",
+  "open now" works). It looks through every menu Side Quest has read; more menus are added every day.
+- 🌆 Tonight picks: at 5 PM, people with notifications on get up to three of tonight's events that fit what they like,
+  friends going first. Turn it off in the bell's "What to tell me about".

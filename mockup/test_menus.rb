@@ -6,7 +6,11 @@ require 'open3'
 require 'tmpdir'
 require 'fileutils'
 class RateLimited < StandardError; end
+ENV['SQ_PLACES_FILE'] ||= File.join(__dir__, 'test_places.json')
+require_relative 'hours'
+require_relative 'places'
 require_relative 'menus'
+require_relative 'menu_finds'
 
 $pass = $fail = 0
 def check(name, ok, extra = '')
@@ -89,6 +93,14 @@ j2 = menu_join([menu_clean(menu_lines("## Tacos\nAl pastor | $4 |"), 'site'), me
 check('no heading at the start of a part = the section before; placeholder headings ignored', j2['sections'].map { |x| [x['name'], x['items'].size] } == [['Tacos', 2], ['Drinks', 1]], j2['sections'].inspect)
 check('no heading at all = "Menu"', menu_join([menu_clean(menu_lines("Tea | $2 |"), 'site')], 'site')['sections'][0]['name'] == 'Menu')
 
+# happy hours: read from the HAPPY line, kept only when the times are real opening-hours
+hl = menu_lines("## Drinks\nMargarita | $8 |\nHAPPY: Mo-Fr 15:00-18:00 | $5 margaritas, half-off apps\n")
+check('HAPPY line read', hl['happy'] == { 'hours' => 'Mo-Fr 15:00-18:00', 'deals' => '$5 margaritas, half-off apps' }, hl['happy'].inspect)
+check('happy hour kept through clean', menu_clean(hl, 'site')['happy'] == { 'hours' => 'Mo-Fr 15:00-18:00', 'deals' => '$5 margaritas, half-off apps' })
+check('happy hour with times nobody can read is dropped', happy_clean('hours' => 'after work', 'deals' => 'x').nil?)
+check('dish questions: words, price cap, open now', MenuIndex.parse('where can I get birria tacos under $5 open now') == [%w[birria taco], 5.0, true],
+      MenuIndex.parse('where can I get birria tacos under $5 open now').inspect)
+
 Dir.mktmpdir do |d|
   Object.send(:remove_const, :MENU_DIR); Object.const_set(:MENU_DIR, d)
   File.write(menu_file('n1'), JSON.generate(m.merge('at' => Time.now.to_i - 3 * 86_400)))
@@ -98,6 +110,16 @@ Dir.mktmpdir do |d|
   File.write(menu_file('n3'), JSON.generate(m.merge('at' => Time.now.to_i - 20 * 86_400)))
   check('cache: an old menu only when asked for (shown while a new read runs)', menu_cached('n3').nil? && menu_cached('n3', stale: true)['stale'] == true)
   check('cache file names are safe', menu_file('../../etc/x') == File.join(d, 'etcx.json'))
+  # the menus as a whole: a dish anywhere, happy hours
+  File.write(menu_file('n1001'), JSON.generate(menu_clean(menu_lines("## Tacos\nBirria Taco | $4.50 | consome\nAl pastor | $3.50 |\n## Drinks\nMexican Coke | $3 |\nHAPPY: Mo-Su 00:00-24:00 | $2 tacos"), 'site')))
+  File.write(menu_file('n1006'), JSON.generate(menu_clean(menu_lines("## Tacos\nBrisket Birria Tacos | $16 | three\n## Sides\nBeans | $4 |"), 'site')))
+  r = MenuIndex.dishes('birria tacos', near: [30.26, -97.74])
+  check('dish search finds it on every menu, nearest/open first', r[:results].map { |x| x[:dish][:name] } == ['Birria Taco', 'Brisket Birria Tacos'], r[:results].map { |x| [x[:name], x[:dish]] }.inspect)
+  check('dish search: a query as raw bytes, with accents', MenuIndex.dishes('BIRRÍA'.b)[:results].size == 2)
+  check('dish search: price cap', MenuIndex.dishes('birria under $5')[:results].map { |x| x[:dish][:name] } == ['Birria Taco'])
+  check('dish search: nothing for no words', MenuIndex.dishes('where can i get')[:results].empty?)
+  hh = MenuIndex.happy(near: [30.26, -97.74])
+  check('happy hours: the place, on now, with deals', hh[:now] == 1 && hh[:results].first[:id] == 'n1001' && hh[:results].first[:happy][:deals] == '$2 tacos', hh.inspect[0, 300])
 end
 puts "\n#{$pass}/#{$pass + $fail} passed"
 exit($fail.zero? ? 0 : 1)

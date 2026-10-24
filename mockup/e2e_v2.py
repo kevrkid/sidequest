@@ -112,7 +112,7 @@ with sync_playwright() as pw:
     a.click("#evSheet [data-rsvp][data-st='going']"); a.wait_for_timeout(700)
     check("going from the details sheet", a.evaluate("id=>myRsvp(id)", ev) == "going" and "Going" in a.inner_text("#evSheet .evact"))
     a.click("#evSheet [data-v2save]"); a.wait_for_timeout(600)
-    check("save an event", a.evaluate("id=>isSaved('event',id)", ev) and "Saved" in a.inner_text("#evSheet .evact"))
+    check("favorite an event", a.evaluate("id=>isSaved('event',id)", ev) and "❤️" in a.inner_text("#evSheet .evact"))
     a.fill("#evChatIn", "Who wants to meet at the door at 7?"); a.click("#evChatForm button")
     a.wait_for_function("document.querySelector('#evChat')?.innerText.includes('meet at the door')", timeout=40000)   # screened by Claude first
     check("post in the event's discussion", "meet at the door" in a.inner_text("#evChat"))
@@ -148,11 +148,12 @@ with sync_playwright() as pw:
     check("opening a shared link lands on the event", title in b.inner_text("#evSheet .evtitle") and "?" not in b.url, b.url)
     close_sheets(b)
 
-    # ---- saved list in My plans
-    a.evaluate("openPlans()"); a.wait_for_selector("#savedList .prow", timeout=8000)
-    check("My plans → Saved lists it", title[:20] in a.inner_text("#savedList"))
-    a.click("#savedList [data-v2save]"); a.wait_for_timeout(700)
-    check("remove from Saved", a.locator("#savedList .prow").count() == 0)
+    # ---- favorites on the profile (My plans links there)
+    a.evaluate("openPlans()"); a.wait_for_selector("#plansSheet [data-quick='favs']", timeout=8000)
+    a.click("#plansSheet [data-quick='favs']"); a.wait_for_selector("#favCard .prow", timeout=8000)
+    check("My plans → My favorites: the profile lists it", title[:20] in a.inner_text("#favCard") and not a.is_hidden("#v-me"))
+    a.click("#favCard [data-v2save]"); a.wait_for_timeout(700)
+    check("remove from favorites", a.locator("#favCard .prow").count() == 0)
     close_sheets(a)
 
     # ---- check in at a historical marker → XP → quest progress

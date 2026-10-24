@@ -9,7 +9,7 @@ require_relative 'webpush'
 # ---------------------------------------------------------------------------------------------
 # Notifications: per person, newest last, capped. Never across a block; never about yourself.
 NOTIF_MAX = 120
-NOTIF_TYPES = %w[freq friend down going chat join tag like quest joined remind invite].freeze
+NOTIF_TYPES = %w[freq friend down going chat join tag like quest joined remind invite tonight].freeze
 
 def notify!(d, to, type, from: nil, ref: nil, text: nil)
   return unless to && d['users'][to] && to != from && NOTIF_TYPES.include?(type)
@@ -48,6 +48,7 @@ def vapid_public() WebPush.b64u(WebPush.pub_raw(vapid_key)) end
 
 def push_url(type, ref)
   r = ref.to_s
+  return '/?tonight=1' if type == 'tonight'
   return "/?ev=#{r.sub('e:', '')}" if r.start_with?('e:')
   return "/?g=#{r.sub('g:', '')}" if r.start_with?('g:')
   type == 'quest' ? '/?quests=1' : '/?inbox=1'
@@ -449,6 +450,41 @@ def weekly_recap!(force: false)
   end
 end
 
+# 5 PM "tonight for you": up to three of tonight's events that fit what each person has liked (going, saves,
+# check-ins), with friends going first. Only people with a taste to go on and something that fits; once a day.
+def tonight_push!(force: false)
+  t = Time.now
+  return unless force || (t.hour == 17 && t.min < 15)
+  day = t.strftime('%F')
+  evs = events_list
+  return if evs.empty?
+  ends = Time.new(t.year, t.month, t.day, 23, 59) + 4 * 3600   # tonight runs to 4 AM
+  tonight = evs.map do |e|
+    s = (Time.parse(e['start'].to_s) rescue nil)
+    [e, s] if s && s > t && s < ends && e['start'].to_s !~ /T00:00(:00)?/
+  end.compact
+  return if tonight.empty?
+  store do |d|
+    sent = (d['tonight_sent'] ||= {})
+    sent.delete_if { |_h, dd| dd < (Date.today - 3).to_s }
+    d['users'].each_key do |h|
+      next if sent[h] == day
+      taste = taste_for(d, h) or next
+      cats, venues = (taste['event_types'] || []).to_h, (taste['venues'] || []).to_h
+      friends = (d['friends'] || {})[h].to_a
+      picks = tonight.map do |e, s|
+        going = friends.count { |f| (d['rsvps']["e:#{e['uid']}"] || {})[f] == 'going' }
+        score = cats[e['category']].to_f + venues[e['venue']].to_f * 1.5 + going * 3
+        [score, e, s, going] if score.positive?
+      end.compact.sort_by { |x| -x[0] }.first(3)
+      next if picks.empty?
+      sent[h] = day
+      text = picks.map { |_, e, s, g| "#{e['title'][0, 40]} #{s.strftime('%-l:%M %p')}#{g.positive? ? " (#{g} friend#{g == 1 ? '' : 's'})" : ''}" }.join(' · ')
+      notify!(d, h, 'tonight', ref: 'tonight', text: "🌆 Tonight for you: #{text}")
+    end
+  end
+end
+
 def v2_background
   store { |d| d['invite_key'] ||= SecureRandom.hex(16) }   # made once and kept, so invite links keep working
   push_worker
@@ -458,6 +494,7 @@ def v2_background
       stats_flush rescue warn("[v2] stats: #{$!.message}")
       remind_due! rescue warn("[v2] reminders: #{$!.message}") if (Time.now.min % 5).zero?
       weekly_recap! rescue warn("[v2] recap: #{$!.message}") if Time.now.min == 7
+      tonight_push! rescue warn("[v2] tonight: #{$!.message}") if Time.now.hour == 17
     end
   end
   at_exit { stats_flush rescue nil }
@@ -469,7 +506,7 @@ def mount_v2(server)
   route(server, '/api/notifs') do |b, h|
     store(write: b['read'] || b.key?('mute') ? true : false) do |d|
       if b['mute'].is_a?(Array)
-        d['users'][h]['mute'] = b['mute'].map(&:to_s) & %w[freq friend down going chat join tag like quest joined remind invite]
+        d['users'][h]['mute'] = b['mute'].map(&:to_s) & NOTIF_TYPES
       end
       list = ((d['notifs'] ||= {})[h] ||= [])
       if b['read'] == 'all' then list.each { |n| n['read'] = true }
@@ -540,11 +577,12 @@ def mount_v2(server)
       k, id = b['k'].to_s, b['id'].to_s
       case b['action']
       when 'add'
-        raise 'Bad item.' unless %w[event place sight].include?(k) && id =~ CHECKIN_RE
+        # dish: id = "<place id>.<8 hex of the dish name>", name = "dish · place" (the app opens that menu at the dish)
+        raise 'Bad item.' unless %w[event place sight dish].include?(k) && id =~ CHECKIN_RE && (k != 'dish' || id =~ /\A[\w:-]+\.[0-9a-f]{8}\z/)
         list.reject! { |x| x['k'] == k && x['id'] == id }
-        list << { 'k' => k, 'id' => id, 'name' => b['name'].to_s[0, 100], 'at' => now_ms }
-        list.shift while list.size > 200
-        remember_taste!(d, h, 'save', k, id)
+        list << { 'k' => k, 'id' => id, 'name' => b['name'].to_s[0, 140], 'at' => now_ms }
+        list.shift while list.size > 300
+        k == 'dish' ? remember_taste!(d, h, 'save', 'place', id.split('.').first) : remember_taste!(d, h, 'save', k, id)
         track!('event_save', h) if k == 'event'
       when 'remove'
         list.reject! { |x| x['k'] == k && x['id'] == id }
