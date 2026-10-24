@@ -45,6 +45,9 @@ im = menu_imgs('<img src="/logo-menu.png" alt="logo"><img data-image="https://cd
                '<img src="/food/tacos.jpg" alt="Our tacos"><img src="data:image/gif;base64,R0" alt="menu"><img src="/m/drinks.jpg?w=1">', 'https://tacos.example/menu')
 check('menu pictures on the page: menus only, no logos or food shots', im == ['https://cdn.example/dinner+10.5.26.png', 'https://tacos.example/m/drinks.jpg?w=1'], im.inspect)
 
+check('prices: $ and bare numbers at line ends', menu_prices("Bibb Salad        15\nWedge Salad   18\n*add Shrimp     +12\nTacos $4.50\nOpen 11 to 10\nCall 512 555 1234") == 4,
+      menu_prices("Bibb Salad        15\nWedge Salad   18\n*add Shrimp     +12\nTacos $4.50\nOpen 11 to 10\nCall 512 555 1234"))
+
 m = menu_clean({ 'sections' => [{ 'name' => 'Tacos', 'items' => [{ 'name' => 'Al pastor', 'price' => '$4.50', 'desc' => '' }, { 'name' => ' ' }] },
                                 { 'name' => 'Empty', 'items' => [] }],
                  'sources' => ['https://tacos.example/menu', 'javascript:alert(1)', 'https://tacos.example/menu'], 'note' => 'n' }, 'site')

@@ -138,6 +138,12 @@ def menu_count(m)
   m['sections'].sum { |s| s['items'].size }
 end
 
+# How many prices a page's text seems to have: "$12", "4.50", or a bare number at the end of a line after a gap
+# ("Wedge Salad        18"), the way many printed menus show them.
+def menu_prices(t)
+  t.scan(/\$\s?\d|\b\d{1,3}\.\d\d\b|[^\d\s] {2,}\+?\d{1,3}(?:\.\d\d)?[ \t]*$/).size
+end
+
 def menu_priced(m)
   m['sections'].sum { |s| s['items'].count { |i| i['price'] } }
 end
@@ -195,7 +201,7 @@ def menu_find(p, gweb, google = nil)
   rescue => e
     warn "[menu] #{u[0, 80]}: #{e.message[0, 80]}"
   end
-  priced = pages.select { |_, t| t.scan(/\$\s?\d|\b\d{1,3}\.\d\d\b/).size >= 4 }
+  priced = pages.select { |_, t| menu_prices(t) >= 4 }
   unless priced.empty?
     text = priced.map { |u, t| "SOURCE #{u}\n#{t[0, 24_000]}" }.join("\n\n")[0, 60_000]
     out, ms, = run_claude(<<~P, MENU_SCHEMA, system: MENU_SYSTEM, model: MENU_MODEL, timeout: 90)
