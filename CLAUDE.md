@@ -279,6 +279,12 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   if the website's weren't enough; the web search starts alongside the pictures. Each finished part is shown at once
   (`MENU_JOBS[:partial]` → `pending` + `menu`; the app polls every 1 s and shows "Reading the rest of the menu…").
   Opening a place popup warms its menu (`warm=1`, 40/hour). Expired menus are still shown while a new read runs.
+  **Menu photos**: the menu file keeps the website's menu pictures (`pics`, up to 4; served shrunk by `/img/menu?id=&i=`,
+  which only ever fetches a saved one) and, when a user's tap made the menu with Google on, which Google Maps photos
+  show the menu (`menu_gscan`: the 10 photos at 400 px, haiku names the menu ones; counts against
+  `SQ_MENU_PHOTO_DAILY`). Google's terms forbid keeping their photos or photo names, so only size + poster are kept
+  (`gpics`) and `/api/place/menupics` re-fetches matching photos fresh (signed in, `menu_gpics`, 1,200 px, max 4).
+  The sheet shows them as "📷 Photos of the menu" above the written menu. Old menus got their `pics` once at start.
   **Warm-up** (`menu_prewarm`, on with SQ_BETA or `SQ_MENU_PREWARM=1`): one place at a time, best-known first, only
   while no one is waiting, website only (no Google, no web search), `SQ_MENU_PREWARM_DAILY` 300; places with no menu on
   their site go in `data/menus/_tried.json` for 14 days.

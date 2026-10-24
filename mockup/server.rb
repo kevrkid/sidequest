@@ -1071,6 +1071,45 @@ EVENTS_CACHE = { at: 0, body: nil, tag: nil }
 IMG_DIR = File.join(ROOT, 'data', 'img')
 IMG_LOCK = Mutex.new   # one resize at a time: the box has two cores
 EV_IMAGES = { at: nil, set: {} }
+
+# A picture from the web, resized to w px wide once and kept a week in data/img/. u must already be one the server
+# chose (an event's or a saved menu's), never whatever the browser asked for. Only real JPEG / PNG / WebP / GIF files
+# reach ffmpeg (checked by their first bytes). No ffmpeg or a failure: a redirect to the original.
+def shrunk_img(u, w)
+  raise 'no ffmpeg' unless File.executable?(FFMPEG_BIN)
+  f = File.join(IMG_DIR, "#{Digest::SHA1.hexdigest(u)}-#{w}.jpg")
+  return f if File.file?(f) && File.mtime(f) > Time.now - 7 * 86_400
+  body, = menu_get(u, max: 8_000_000)
+  body = body.b
+  codec = { "\xFF\xD8".b => 'mjpeg', "\x89PNG".b => 'png', 'GIF8'.b => 'gif' }.find { |m, _| body.start_with?(m) }&.last
+  codec ||= 'webp' if body[0, 4] == 'RIFF'.b && body[8, 4] == 'WEBP'.b
+  raise 'not a picture' unless codec
+  IMG_LOCK.synchronize do
+    Dir.mktmpdir do |d|
+      src, out = File.join(d, 'in'), File.join(d, 'out.jpg')
+      File.binwrite(src, body)
+      _o, st = Open3.capture2e(FFMPEG_BIN, '-v', 'error', '-nostdin', '-protocol_whitelist', 'file', '-f', 'image2', '-c:v', codec, '-i', src,
+                               '-frames:v', '1', '-vf', "scale='min(#{w},iw)':-2", '-q:v', '4', '-y', out)
+      raise 'ffmpeg failed' unless st.success? && File.size?(out)
+      FileUtils.mkdir_p(IMG_DIR)
+      FileUtils.mv(out, f)
+    end
+  end
+  f
+end
+
+def serve_shrunk(res, u, w)
+  return res.status = 404 unless u
+  f = shrunk_img(u, w)
+  res['Content-Type'] = 'image/jpeg'
+  res['Cache-Control'] = 'public, max-age=604800'
+  res.body = File.binread(f)
+rescue => e
+  res.status = 302
+  res['Location'] = u
+  res['Cache-Control'] = 'public, max-age=3600'
+  warn "[img] #{u[0, 80]}: #{e.message}" unless e.message == 'no ffmpeg'
+end
 def event_images   # the picture addresses in the current events list (the only ones /img/ev will fetch)
   return EV_IMAGES[:set] if EV_IMAGES[:at] == EVENTS_CACHE[:at]
   set = {}
@@ -1284,43 +1323,13 @@ def mount_app(server)
   # sees them), resized once and kept a week in data/img/. Without ffmpeg: a redirect to the original.
   server.mount_proc('/img/ev') do |req, res|
     u = req.query['u'].to_s
-    w = req.query['w'] == '960' ? 960 : 480
-    ok = event_images[u]
-    begin
-      raise 'not an event picture' unless ok
-      raise 'no ffmpeg' unless File.executable?(FFMPEG_BIN)
-      f = File.join(IMG_DIR, "#{Digest::SHA1.hexdigest(u)}-#{w}.jpg")
-      unless File.file?(f) && File.mtime(f) > Time.now - 7 * 86_400
-        body, = menu_get(u, max: 8_000_000)
-        body = body.b
-        codec = { "\xFF\xD8".b => 'mjpeg', "\x89PNG".b => 'png', 'GIF8'.b => 'gif' }.find { |m, _| body.start_with?(m) }&.last
-        codec ||= 'webp' if body[0, 4] == 'RIFF'.b && body[8, 4] == 'WEBP'.b
-        raise 'not a picture' unless codec
-        IMG_LOCK.synchronize do
-          Dir.mktmpdir do |d|
-            src, out = File.join(d, 'in'), File.join(d, 'out.jpg')
-            File.binwrite(src, body)
-            _o, st = Open3.capture2e(FFMPEG_BIN, '-v', 'error', '-nostdin', '-protocol_whitelist', 'file', '-f', 'image2', '-c:v', codec, '-i', src,
-                                     '-frames:v', '1', '-vf', "scale='min(#{w},iw)':-2", '-q:v', '5', '-y', out)
-            raise 'ffmpeg failed' unless st.success? && File.size?(out)
-            FileUtils.mkdir_p(IMG_DIR)
-            FileUtils.mv(out, f)
-          end
-        end
-      end
-      res['Content-Type'] = 'image/jpeg'
-      res['Cache-Control'] = 'public, max-age=604800'
-      res.body = File.binread(f)
-    rescue => e
-      if ok
-        res.status = 302
-        res['Location'] = u
-        res['Cache-Control'] = 'public, max-age=3600'
-      else
-        res.status = 404
-      end
-      warn "[img] #{u[0, 80]}: #{e.message}" unless e.message == 'no ffmpeg'
-    end
+    serve_shrunk(res, event_images[u] && u, req.query['w'] == '960' ? 960 : 480)
+  end
+  # A menu picture from a restaurant's own website, saved with its menu (menu id + number): never any other address.
+  server.mount_proc('/img/menu') do |req, res|
+    m = menu_cached(req.query['id'].to_s[0, 30], stale: true) || {}
+    u = Array(m['pics'])[req.query['i'].to_i]
+    serve_shrunk(res, u.to_s.start_with?('http') && u, req.query['w'] == '1600' ? 1600 : 720)
   end
 
   # Birth-city lookup for the Rising sign. The city is only used to get coordinates; the app keeps
