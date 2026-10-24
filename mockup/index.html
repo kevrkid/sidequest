@@ -14,8 +14,9 @@
 <link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="stylesheet" href="/vendor/leaflet.css">
 <script src="/vendor/leaflet.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- the font doesn't hold up the first paint: the system font shows until Inter arrives -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   :root{
     --bg:#070b18; --panel:#10162c; --panel2:#18203f; --line:#253058;
@@ -143,8 +144,10 @@
   .npin.club.many{width:36px;height:36px;position:relative} .npin.many b{position:absolute;right:-6px;top:-6px;min-width:18px;height:18px;border-radius:9px;
     background:#e9408a;color:#fff;font:800 11px/18px Inter,system-ui,sans-serif;text-align:center;padding:0 4px}
   .npin.open{border-color:#3ddc97;box-shadow:0 0 12px #3ddc97aa} .npin.club.open{border-color:#e9408a;box-shadow:0 0 16px #e9408acc}
-  .hotzone{animation:zone 3.2s ease-in-out infinite;filter:drop-shadow(0 0 14px #ff7a18)}
-  .hotzone.quiet{animation:none;filter:none} .hotzone.busy{animation:zone 1.8s ease-in-out infinite;filter:drop-shadow(0 0 22px #ff7a18)}
+  /* the glow is a wide see-through stroke drawn under the zone (a blurred filter repainted the whole map every frame) */
+  .hotzone{animation:zone 3.2s ease-in-out infinite}
+  .hotzone.quiet{animation:none} .hotzone.busy{animation:zone 1.8s ease-in-out infinite}
+  .mapmoving .hotzone{animation-play-state:paused}
   .leaflet-tooltip.hotlabel.quiet{color:#9aa3c7;border-color:#ffffff22;box-shadow:none;opacity:.8}
   @keyframes zone{50%{fill-opacity:.24;stroke-opacity:.9}}
   .leaflet-tooltip.hotlabel{background:#10162cdd;border:1px solid #ff7a1888;color:#ffd2b0;font:700 11px Inter,system-ui,sans-serif;border-radius:99px;padding:2px 8px;box-shadow:0 0 14px #ff7a1855}
@@ -2320,6 +2323,7 @@ async function renderHotZones(){
   if(!S.mapL.zones) return setLabels('zones',[],[]); const named=map.getZoom()>=15, names=[];   // downtown's zones sit close together: names only up close
   PL.hot.forEach(z=>{   // the label sits on the zone's top edge so it never covers the spots inside
     const a=zoneActivity(z), lv=a.level, quiet=lv<.12, busy=lv>=.6;
+    if(!quiet) L.circle([z.lat,z.lng],{radius:z.r,interactive:false,className:'hotglow',color:'#ff7a18',weight:busy?18:12,opacity:busy?.16:.1,fill:false}).addTo(PL.zones);
     const zone=L.circle([z.lat,z.lng],{radius:z.r,className:'hotzone'+(quiet?' quiet':busy?' busy':''),color:'#ff7a18',weight:1+lv*2,opacity:.18+lv*.72,
       fillColor:'#ff7a18',fillOpacity:.015+lv*.22,dashArray:quiet?'3 7':null}).on('click',()=>openPlaces({zone:z.id})).addTo(PL.zones);
     zone.hotId=z.id; zone.hotName=z.name; zone.level=lv; if(!named) return;
@@ -3358,7 +3362,8 @@ function initMap(){
   layer=L.layerGroup().addTo(map); liveLayer=L.layerGroup().addTo(map);
   renderMapChips();
   map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
-  map.on('movestart zoomstart',()=>MAPMOVING=true); map.on('moveend zoomend',()=>MAPMOVING=false);
+  map.on('movestart zoomstart',()=>{ MAPMOVING=true; $('#map').classList.add('mapmoving'); });
+  map.on('moveend zoomend',()=>{ MAPMOVING=false; $('#map').classList.remove('mapmoving'); });
   renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
 }
 function renderMapLive(){
