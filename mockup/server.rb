@@ -183,7 +183,7 @@ API_EFFORT = { 'claude-haiku-5-5' => ENV['SQ_HAIKU_EFFORT'] || 'low',
                'claude-sonnet-5-5' => ENV['SQ_SONNET_EFFORT'] || 'medium' }
 
 # effort: 'low' makes the model answer straight away instead of thinking first (Scout uses it: ~1-2 s faster).
-# images: JPEG bytes to show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
+# images: JPEG (or PNG) bytes to show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
 # read the web (menus); pages it reads are untrusted, so only the structured answer comes back.
 def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
   ENGINE == 'api' ? run_claude_api(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
@@ -191,7 +191,7 @@ def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, e
 end
 
 def claude_content(prompt, images)
-  Array(images).map { |jpg| { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: [jpg].pack('m0') } } } +
+  Array(images).map { |b| { type: 'image', source: { type: 'base64', media_type: b.start_with?("\x89PNG".b) ? 'image/png' : 'image/jpeg', data: [b].pack('m0') } } } +
     [{ type: 'text', text: prompt }]
 end
 

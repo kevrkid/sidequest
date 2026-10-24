@@ -40,12 +40,27 @@ t = menu_text(html.dup, 'text/html')
 check('page text keeps the menu, drops scripts', t.include?("Al pastor & pineapple $4.50") && t.include?('Barbacoa $5') && !t.include?('var a'), t)
 check('page text keeps JSON-LD menus', t.include?('"@type":"Menu"'))
 
+im = menu_imgs('<img src="/logo-menu.png" alt="logo"><img data-image="https://cdn.example/dinner+10.5.26.png" src="x.png" alt="">' \
+               '<img src="/food/tacos.jpg" alt="Our tacos"><img src="data:image/gif;base64,R0" alt="menu"><img src="/m/drinks.jpg?w=1">', 'https://tacos.example/menu')
+check('menu pictures on the page: menus only, no logos or food shots', im == ['https://cdn.example/dinner+10.5.26.png', 'https://tacos.example/m/drinks.jpg?w=1'], im.inspect)
+
 m = menu_clean({ 'sections' => [{ 'name' => 'Tacos', 'items' => [{ 'name' => 'Al pastor', 'price' => '$4.50', 'desc' => '' }, { 'name' => ' ' }] },
                                 { 'name' => 'Empty', 'items' => [] }],
                  'sources' => ['https://tacos.example/menu', 'javascript:alert(1)', 'https://tacos.example/menu'], 'note' => 'n' }, 'site')
 check('clean: empty items and sections dropped', m['sections'] == [{ 'name' => 'Tacos', 'items' => [{ 'name' => 'Al pastor', 'price' => '$4.50' }] }], m.inspect)
 check('clean: only web sources, once', m['sources'] == ['https://tacos.example/menu'], m['sources'].inspect)
 check('count', menu_count(m) == 1)
+
+shot = menu_clean({ 'sections' => [{ 'name' => 'Drinks', 'items' => [{ 'name' => 'Margarita', 'price' => '$12' }] }],
+                    'note' => 'Only the drinks menu was in the photos' }, 'photos').merge('sources' => ['https://maps.google.com/?cid=1'])
+web = menu_clean({ 'sections' => [{ 'name' => 'drinks', 'items' => [{ 'name' => 'margarita', 'price' => '$14' }, { 'name' => 'Paloma', 'price' => '$11' }] },
+                                  { 'name' => 'Food', 'items' => [{ 'name' => 'Oysters', 'price' => 'MP' }] }],
+                   'sources' => ['https://ubereats.com/x'] }, 'web')
+mm = menu_merge(shot, web)
+check('merge: photos first, web adds missing items and sections', mm['sections'].map { |s| [s['name'], s['items'].map { |i| i['name'] }] } ==
+      [['Drinks', %w[Margarita Paloma]], ['Food', ['Oysters']]], mm['sections'].inspect)
+check('merge: photo price kept, both sources, says both', mm['sections'][0]['items'][0]['price'] == '$12' && mm['sources'].size == 2 && mm['from'] == 'photos+web')
+check('merge: web found nothing = photos only', menu_merge(shot, menu_clean({}, 'web'))['from'] == 'photos')
 
 Dir.mktmpdir do |d|
   Object.send(:remove_const, :MENU_DIR); Object.const_set(:MENU_DIR, d)

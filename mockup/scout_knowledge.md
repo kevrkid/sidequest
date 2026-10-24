@@ -209,7 +209,7 @@ Keep this file up to date when features change. Only describe things that exist 
   down closes it. Tapping the Side Quest logo goes straight Home.
 
 ## Not in the app yet (say so honestly if asked)
-- Some menus can't be read (image-only menus); the menu sheet then links the website and Google Maps.
+- Menus that are pictures (on the website or in Google Maps photos) are read too. A few menus still can't be found; the menu sheet then links the website and Google Maps.
 - No password reset by email yet, no app-store app (it installs from the browser: Share → Add to
   Home Screen), no ticket buying, no rides, no payments (live-stream tips are play money).
 

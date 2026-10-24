@@ -1058,7 +1058,7 @@ const ES = {
   "Couldn't look up the menu just now.":'No pudimos buscar el menú ahora.', "Couldn't find a menu online for this place.":'No encontramos un menú en línea para este lugar.',
   'Their website or Google Maps may have photos of it.':'Puede que su sitio o Google Maps tengan fotos del menú.', '🔎 Find a dish or drink…':'🔎 Busca un platillo o bebida…',
   'Prices and dishes change: check with the place before you order.':'Los precios y platillos cambian: confirma con el lugar antes de pedir.',
-  "From the place's website":'Del sitio del lugar', 'Found on the web':'Encontrado en la web', 'Nothing on the menu matches “{q}”.':'Nada en el menú coincide con “{q}”.',
+  "From the place's website":'Del sitio del lugar', 'Found on the web':'Encontrado en la web', 'Read from photos of the menu':'Leído de fotos del menú', 'From photos of the menu and the web':'De fotos del menú y la web', 'Nothing on the menu matches “{q}”.':'Nada en el menú coincide con “{q}”.',
   'Venue phone & hours':'Teléfono y horario del lugar', "Couldn't reach Side Quest. Check your connection.":'No pudimos conectar con Side Quest. Revisa tu conexión.', 'Point your camera at a sign or menu':'Apunta la cámara a un letrero o menú', 'Opening the camera translator. Point it at the text.':'Abriendo el traductor con la cámara. Apúntala al texto.', 'Got it, one sec…':'Listo, un segundo…', "This is how fast I'll talk.":'Así de rápido voy a hablar.', 'Listening… tap again when you’re done':'Escuchando… toca otra vez cuando termines', 'Thinking…':'Pensando…', '⌨️ Type instead':'⌨️ Escribir',
   '🎤 Talk instead':'🎤 Hablar', 'Ask about the app, or what\'s the move…':'Pregunta sobre la app o qué hay que hacer…', 'Ask':'Preguntar',
   'Your guide to Side Quest':'Tu guía de Side Quest', 'Need help? Talk to me! 🎤':'¿Necesitas ayuda? ¡Háblame! 🎤',
@@ -2072,7 +2072,7 @@ function renderMenu(q=''){
       <div class="mnchips">${m.sections.map((x,i)=>`<button data-menujump="${i}">${esc(x.name)}</button>`).join('')}</div></div>
     <div id="menuList"></div>
     <p class="meta" style="margin:16px 0 4px">${m.note?esc(m.note)+' ':''}${T('Prices and dishes change: check with the place before you order.')}</p>
-    <div class="meta" style="font-size:12px">${m.from==='site'?T("From the place's website"):T('Found on the web')}${(m.sources||[]).length?': '+m.sources.filter((u,i,a)=>a.findIndex(x=>hostOf(x)===hostOf(u))===i).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent2)">${esc(hostOf(u))}</a>`).join(' · '):''}
+    <div class="meta" style="font-size:12px">${m.from==='site'?T("From the place's website"):m.from==='photos'?T('Read from photos of the menu'):m.from==='photos+web'?T('From photos of the menu and the web'):T('Found on the web')}${(m.sources||[]).length?': '+m.sources.filter((u,i,a)=>a.findIndex(x=>hostOf(x)===hostOf(u))===i).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent2)">${esc(hostOf(u))}</a>`).join(' · '):''}
       · ${new Date(m.at*1000).toLocaleDateString()}</div>
     <div class="btns" style="margin-top:10px">${/^https?:/.test(m.web||'')?`<a class="btn sm" href="${esc(m.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}<a class="btn sm" href="${esc(maps)}" target="_blank" rel="noopener">Google Maps ↗</a></div>`;
   menuList(q);

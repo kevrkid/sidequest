@@ -263,10 +263,14 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
 - **Menus** (`menus.rb`, `/api/place/menu?id=`): 🍽️ Menu on every food & drink row, popup, Identify card and event
   venue that is one of our places → a big readable sheet (sections as chips, dish search, prices, where it came from).
   Lookup: the place's own pages first (OSM menu link, website, Google's websiteUri; follows menu links, JSON-LD,
-  PDFs when `pdftotext` exists) read by haiku; if that has under 5 items, haiku with WebSearch/WebFetch
+  PDFs when `pdftotext` exists) read by haiku; then pictures of the menu (`menu_photos`, sonnet `SQ_MENU_PHOTO_MODEL`):
+  menu images on its website (`menu_imgs`) plus, with Google on, the place's 10 Google Maps photos at 1600 px
+  (`SQ_MENU_PHOTO_DAILY` 10 lookups/day; each = up to 10 paid photo fetches); 15+ items, half priced = done; else
+  haiku with WebSearch/WebFetch
   (`run_claude(web: true)`) tries online ordering, menu sites and delivery apps and notes caveats. Signed-in only
   (it's Claude); runs in a thread while the app polls; 2 at a time, 15/hour per person, 150/day; kept in
-  `data/menus/<id>.json` 14 days (misses 2 days). `menu_get` refuses private addresses. Image-only menus can't be read.
+  `data/menus/<id>.json` 14 days (misses 2 days). `menu_get` refuses private addresses. Pictures + web results merge
+  (`menu_merge`: pictures first, the web adds missing items). Images reach Claude as JPEG or PNG.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
   charge), 4 photos; event sheets have "🏢 Venue phone & hours" (Google by venue name, on tap). OSM `phone` is
   fetched by fetch_places.rb from the next refresh.

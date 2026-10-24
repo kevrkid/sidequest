@@ -1,7 +1,8 @@
 # Menus: the full menu with prices for a food or drink place someone taps, readable in the app.
 # First the place's own website (OpenStreetMap's menu link, its website, Google's website for it): the pages are
 # fetched here and Claude reads the menu out of the text. When that finds nothing, Claude searches the web for it
-# (the restaurant's online ordering, menu sites, delivery apps) and says where each part came from.
+# (the restaurant's online ordering, menu sites, delivery apps) and says where each part came from. With Google on,
+# Claude first reads pictures of the menu: the ones on its website, and the photos people posted on Google Maps.
 # Found menus are kept for MENU_DAYS (they're our reading of the restaurant's public menu), misses for 2 days.
 # Needs from server.rb: route, limit!, run_claude, store, google_*, Places.
 require 'resolv'
@@ -13,7 +14,9 @@ MENU_MODEL = ENV['SQ_MENU_MODEL'] || 'haiku'
 MENU_DAYS = 14
 MENU_HOURLY = (ENV['SQ_MENU_HOURLY'] || 15).to_i   # new lookups per person per hour
 MENU_DAILY = (ENV['SQ_MENU_DAILY'] || 150).to_i    # new lookups per day, everyone
-MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, day: nil, n: 0 }   # failed: id => [time, answer], for 10 minutes
+MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, day: nil, n: 0, photos: 0 }   # failed: id => [time, answer], for 10 minutes
+MENU_PHOTO_MODEL = ENV['SQ_MENU_PHOTO_MODEL'] || 'sonnet'   # reading small print in photos needs the bigger model
+MENU_PHOTO_DAILY = (ENV['SQ_MENU_PHOTO_DAILY'] || 10).to_i   # menus that use Google photos per day (each = up to 10 paid photo fetches)
 MENU_PDF = ENV['SQ_PDFTOTEXT'] || '/usr/bin/pdftotext'   # poppler-utils, if installed: PDF menus
 MENU_SCHEMA = {
   type: 'object', required: %w[found sections],
@@ -105,6 +108,17 @@ def menu_links(html, base)
   end.compact.uniq.sort_by(&:last).map(&:first).first(4)
 end
 
+# Pictures on a menu page that are the menu itself ("dinner 10.5.26.png", alt "Drinks menu"), not logos or food shots.
+def menu_imgs(html, base)
+  html.scan(/<img\b[^>]*>/i).map do |tag|
+    src = tag[/data-image=["']([^"']+)/i, 1] || tag[/data-src=["']([^"']+)/i, 1] || tag[/\ssrc=["']([^"']+)/i, 1]
+    next unless src && !src.start_with?('data:')
+    words = "#{File.basename(src.split('?').first.to_s)} #{tag[/alt=["']([^"']*)/i, 1]}"
+    next if words =~ /logo|icon|badge/i || words !~ /menu|dinner|lunch|brunch|breakfast|drinks?\b|cocktail|wine|beer|happy.?hour|dessert/i
+    URI.join(base, src.strip).to_s rescue nil
+  end.compact.uniq.first(4)
+end
+
 def menu_clean(o, from)
   secs = Array(o['sections']).first(40).map do |s|
     items = Array(s['items']).first(120).map do |i|
@@ -121,18 +135,59 @@ def menu_count(m)
   m['sections'].sum { |s| s['items'].size }
 end
 
-def menu_find(p, gweb)
+def menu_priced(m)
+  m['sections'].sum { |s| s['items'].count { |i| i['price'] } }
+end
+
+# The menu read by Claude from pictures of it: the website's menu pictures (site: [[page, picture], ...]) and the
+# photos on Google Maps (g = Google's details; menus, menu boards, chalkboards often show up there).
+def menu_photos(where, g, site = [])
+  pic = lambda do |url|
+    body, = (menu_get(url) rescue (return nil))
+    body = body.b
+    body if (body.start_with?("\xFF\xD8".b) || body.start_with?("\x89PNG".b)) && body.bytesize.between?(2_000, 4_000_000)
+  end
+  mine = site.map { |pg, u| (b = pic.(u)) && [pg, b] }.compact
+  gpics = []
+  if g['photos'].to_a.any?
+    MENU_JOBS[:lock].synchronize do
+      if MENU_JOBS[:photos] < MENU_PHOTO_DAILY
+        MENU_JOBS[:photos] += 1
+        gpics = :ok
+      end
+    end
+    gpics = gpics == :ok ? google_photos(g['photos'], 10 - mine.size, 1600).map { |ph| pic.(ph[:url]) }.compact : []
+  end
+  return nil if mine.empty? && gpics.empty?
+  said = [mine.any? ? "#{mine.size} pictures from its website (the first #{mine.size})" : nil,
+          gpics.any? ? "#{gpics.size} photos people posted on Google Maps" : nil].compact.join(' and ')
+  out, ms, = run_claude(<<~P, MENU_SCHEMA, system: MENU_SYSTEM, model: MENU_PHOTO_MODEL, timeout: 150, images: mine.map(&:last) + gpics)
+    These are #{said} of #{where}. Some may show its menu: a printed menu, a menu board, a chalkboard, a drinks
+    list. Read every menu item and price you can make out in them, grouped in the menu's sections. Ignore photos of
+    food, people or the room. Leave a price empty rather than guess one you can't read. When the website's menu and a
+    customer's photo disagree, the website's is the current one. found = false if no picture shows a menu.
+    note = one short line only if needed (e.g. "Only the drinks menu was in the photos").
+  P
+  m = menu_clean(out, 'photos')
+  m['sources'] = (mine.map(&:first) + (gpics.any? ? [g['googleMapsUri']] : [])).grep(%r{\Ahttps?://}).uniq
+  warn "[menu] pictures: #{menu_count(m)} items (#{menu_priced(m)} priced) from #{mine.size} site + #{gpics.size} Google, #{ms.to_i / 1000}s"
+  m
+end
+
+def menu_find(p, gweb, google = nil)
   where = [p['name'], p['addr'], 'Austin area, Texas'].compact.join(', ')
   # 1. the place's own pages
-  pages = []
+  pages, imgs = [], []   # imgs: [page, picture address] of menus posted as pictures
   [p['menu'], p['web'], gweb].compact.uniq.first(2).each do |u|
     body, type, final = menu_get(u)
     pages << [final, menu_text(body, type)]
+    menu_imgs(body, final).each { |i| imgs << [final, i] } if type.include?('html')
     menu_links(body, final).each do |l|
       break if pages.size >= 5
       next if pages.any? { |x| x[0] == l }
       b2, t2, f2 = (menu_get(l) rescue next)
       pages << [f2, menu_text(b2, t2)]
+      menu_imgs(b2, f2).each { |i| imgs << [f2, i] } if t2.include?('html')
     end
   rescue => e
     warn "[menu] #{u[0, 80]}: #{e.message[0, 80]}"
@@ -148,7 +203,13 @@ def menu_find(p, gweb)
     warn "[menu] #{p['id']} site: #{menu_count(m)} items, #{ms.to_i / 1000}s"
     return m if menu_count(m) >= 5
   end
-  # 2. the web
+  # 2. pictures of the menu: on its website, and the photos people posted on Google Maps (google: asks Google for
+  # them, only now that the website's text had no menu)
+  g = google&.call || {}
+  shot = (imgs.any? || g['photos'].to_a.any?) && menu_photos(where, g, imgs.uniq { |x| x[1] }.first(4))
+  shot = nil if shot && menu_count(shot).zero?
+  return shot if shot && menu_count(shot) >= 15 && menu_priced(shot) * 2 >= menu_count(shot)
+  # 3. the web
   out, ms, = run_claude(<<~P, MENU_SCHEMA, system: MENU_SYSTEM, model: MENU_MODEL, timeout: 150, web: true)
     Find the current full menu with prices for #{where}#{p['kind'] ? " (#{p['kind']})" : ''}.
     #{p['web'] || gweb ? "Its website: #{p['web'] || gweb}. " : ''}Look at its own site and online ordering first (Toast, Square,
@@ -159,7 +220,24 @@ def menu_find(p, gweb)
   P
   m = menu_clean(out, 'web')
   warn "[menu] #{p['id']} web: #{menu_count(m)} items, #{ms.to_i / 1000}s"
-  m
+  shot ? menu_merge(shot, m) : m
+end
+
+# The photos' menu with what the web adds: its sections and items the photos don't have (photos often show only
+# the drinks list or a menu board).
+def menu_merge(a, b)
+  have = {}
+  a['sections'].each { |s| s['items'].each { |i| have[i['name'].downcase] = true } }
+  secs = a['sections'].map { |s| { 'name' => s['name'], 'items' => s['items'].dup } }
+  b['sections'].each do |s|
+    items = s['items'].reject { |i| have[i['name'].downcase] }
+    next if items.empty?
+    same = secs.find { |x| x['name'].casecmp?(s['name']) }
+    same ? same['items'].concat(items) : secs << { 'name' => s['name'], 'items' => items }
+  end
+  from = menu_count(b).zero? ? 'photos' : menu_count(a).zero? ? 'web' : 'photos+web'
+  a.merge('sections' => secs, 'sources' => (a['sources'] + b['sources']).uniq.first(6), 'from' => from,
+          'note' => [a['note'], b['note']].reject(&:empty?).join(' '))
 end
 
 def menu_job(id, p)
@@ -167,28 +245,36 @@ def menu_job(id, p)
     return :running if MENU_JOBS[:running][id]
     return :busy if MENU_JOBS[:running].size >= 2   # the box has two cores; the phone asks again in a moment
     day = Time.now.strftime('%F')
-    MENU_JOBS[:day], MENU_JOBS[:n] = day, 0 if MENU_JOBS[:day] != day
+    MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos] = day, 0, 0 if MENU_JOBS[:day] != day
     raise RateLimited, 'Menus are paused until tomorrow.' if MENU_JOBS[:n] >= MENU_DAILY
     MENU_JOBS[:n] += 1
     MENU_JOBS[:running][id] = Thread.new do
-      gweb = nil
-      if GOOGLE && !p['web'] && !p['menu']
+      g, gid = {}, nil   # Google's details for it, when Google is on: website, Maps link, photos
+      if GOOGLE
         begin
-          gid = store(write: false) { |d| (d['gplace'] || {})[id] } || google_place_id(p).tap { |g| store { |d| (d['gplace'] ||= {})[id] = g } }
-          unless gid.empty?
+          gid = store(write: false) { |d| (d['gplace'] || {})[id] } || google_place_id(p).tap { |x| store { |d| (d['gplace'] ||= {})[id] = x } }
+          if !gid.empty? && !p['web'] && !p['menu']
             google_budget!
-            gweb = google_api("places/#{gid}", 'websiteUri')['websiteUri']
+            g = google_api("places/#{gid}", 'websiteUri,googleMapsUri,photos')
           end
         rescue => e
-          warn "[menu] google website for #{id}: #{e.message[0, 80]}"
+          warn "[menu] google details for #{id}: #{e.message[0, 80]}"
         end
       end
-      m = begin menu_find(p, gweb)
+      google = lambda do
+        next g if g.key?('googleMapsUri') || gid.to_s.empty?
+        google_budget!
+        g = google_api("places/#{gid}", 'googleMapsUri,photos')
+      rescue => e
+        warn "[menu] google photos for #{id}: #{e.message[0, 80]}"
+        g = { 'googleMapsUri' => '' }
+      end
+      m = begin menu_find(p, g['websiteUri'], google)
           rescue => e
             warn "[menu] #{id} failed: #{e.message[0, 160]}"
             { 'sections' => [], 'sources' => [], 'note' => '', 'from' => 'none', 'at' => Time.now.to_i, 'failed' => true }
           end
-      m['web'] = p['menu'] || p['web'] || gweb
+      m['web'] = p['menu'] || p['web'] || g['websiteUri']
       FileUtils.mkdir_p(MENU_DIR)
       File.write(menu_file(id), JSON.generate(m)) unless m['failed']
       MENU_JOBS[:lock].synchronize do
