@@ -17,7 +17,7 @@ MENU_MODEL = ENV['SQ_MENU_MODEL'] || 'haiku'
 MENU_DAYS = 14
 MENU_HOURLY = (ENV['SQ_MENU_HOURLY'] || 15).to_i   # new lookups per person per hour
 MENU_DAILY = (ENV['SQ_MENU_DAILY'] || 150).to_i    # new lookups per day, everyone
-MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, partial: {}, day: nil, n: 0, photos: 0, warm: 0, warm_on: false }
+MENU_JOBS = { lock: Mutex.new, running: {}, failed: {}, partial: {}, day: nil, n: 0, photos: 0, warm: 0, warm_web: 0, warm_on: false }
 # failed: id => [time, answer], for 10 minutes; partial: id => what's been read so far
 MENU_PHOTO_MODEL = ENV['SQ_MENU_PHOTO_MODEL'] || 'sonnet'   # reading small print in photos needs the bigger model
 MENU_PHOTO_DAILY = (ENV['SQ_MENU_PHOTO_DAILY'] || 10).to_i   # menus that use Google photos per day (each = up to 10 paid photo fetches)
@@ -25,6 +25,7 @@ MENU_PAR = (ENV['SQ_MENU_PAR'] || 5).to_i          # Claude reads at once for me
 MENU_SLOTS = { lock: Mutex.new, cv: ConditionVariable.new, n: 0 }
 MENU_PART = 2_000                                     # characters of menu text per parallel read (~25 items, ~5 s)
 MENU_WARM_DAILY = (ENV['SQ_MENU_PREWARM_DAILY'] || 300).to_i   # background warm-up reads per day
+MENU_WARM_WEB = (ENV['SQ_MENU_PREWARM_WEB'] || 40).to_i         # of those, web searches for well-known places (popularity 60+)
 MENU_WARM_GAP = (ENV['SQ_MENU_PREWARM_GAP'] || 20).to_i        # seconds between them
 MENU_PDF = ENV['SQ_PDFTOTEXT'] || '/usr/bin/pdftotext'   # poppler-utils, if installed: PDF menus
 MENU_SYSTEM = <<~TXT
@@ -317,7 +318,7 @@ def menu_good?(m)
   m && menu_count(m) >= 15 && menu_priced(m) * 2 >= menu_count(m)
 end
 
-# warm: the background warm-up (website only: no Google, no web search). progress gets what's read so far.
+# warm: the background warm-up (no Google; the web search only when warm == :web). progress gets what's read so far.
 def menu_find(p, gweb, google = nil, warm: false, progress: nil)
   where = [p['name'], p['addr'], 'Austin area, Texas'].compact.join(', ')
   t0 = Time.now
@@ -325,8 +326,9 @@ def menu_find(p, gweb, google = nil, warm: false, progress: nil)
   pages, imgs = menu_pages([p['menu'], p['web'], gweb].compact.uniq.first(2))
   priced = menu_dedupe(pages.select { |_, t| menu_prices(t) >= 4 })
   unless priced.empty?
-    parts = priced.flat_map { |u, t| menu_parts(t[0, 24_000]).map { |x| [u, x] } }
-    parts = menu_parts(priced.map(&:last).join("\n")[0, 60_000], 60_000 / 8).map { |x| [priced[0][0], x] } if parts.size > 12
+    texts = priced.map { |u, t| [u, t[0, 24_000]] }
+    size = [MENU_PART, texts.sum { |_, t| t.size }.clamp(0, 60_000) / 10].max   # about 10 parts at most
+    parts = texts.flat_map { |u, t| menu_parts(t, size).map { |x| [u, x] } }.first(12)
     done = Array.new(parts.size)
     parts.each_with_index.map do |(u, text), k|
       Thread.new do
@@ -349,7 +351,7 @@ def menu_find(p, gweb, google = nil, warm: false, progress: nil)
   # 2. pictures of the menu and the web search, side by side: the website's own menu pictures first (current, and
   # free), then with Google on the photos on Google Maps if those weren't enough. Good pictures win at once; otherwise
   # the web fills in.
-  web = !warm && Thread.new { menu_web(p, where, p['web'] || gweb) rescue (warn("[menu] web: #{$!.message[0, 100]}"); nil) }
+  web = (!warm || warm == :web) && Thread.new { menu_web(p, where, p['web'] || gweb) rescue (warn("[menu] web: #{$!.message[0, 100]}"); nil) }
   shot = imgs.any? ? menu_photos(where, {}, imgs, progress) : nil
   g = (!warm && !menu_good?(shot) && google&.call) || {}
   if g['photos'].to_a.any?
@@ -357,7 +359,7 @@ def menu_find(p, gweb, google = nil, warm: false, progress: nil)
     shot = plus.(menu_photos(where, g, [], ->(x) { progress&.call(plus.(x)) }))
   end
   shot = nil if shot && menu_count(shot).zero?
-  return shot if menu_good?(shot) || (warm && shot)
+  return shot if menu_good?(shot) || (warm == true && shot)
   progress&.call(shot) if shot
   return nil unless web   # warm-up: nothing on the website
   m = web.value || menu_clean({}, 'web')
@@ -386,7 +388,7 @@ def menu_job(id, p)
     return :running if MENU_JOBS[:running][id]
     return :busy if MENU_JOBS[:running].size >= 3   # the box has two cores; the phone asks again in a moment
     day = Time.now.strftime('%F')
-    MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos], MENU_JOBS[:warm] = day, 0, 0, 0 if MENU_JOBS[:day] != day
+    MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos], MENU_JOBS[:warm], MENU_JOBS[:warm_web] = day, 0, 0, 0, 0 if MENU_JOBS[:day] != day
     raise RateLimited, 'Menus are paused until tomorrow.' if MENU_JOBS[:n] >= MENU_DAILY
     MENU_JOBS[:n] += 1
     MENU_JOBS[:running][id] = Thread.new do
@@ -437,13 +439,14 @@ def menu_keep(id, m)
 end
 
 # Background warm-up: one place at a time, best-known first, only while nobody's waiting on a menu: reads the
-# website (text and menu pictures; no Google, no web search) for places with no menu kept, or one about to expire.
+# website (text and menu pictures; no Google) for places with no menu kept, or one about to expire; well-known places
+# (popularity 60+, MENU_WARM_WEB a day) also get the web search when their site has no readable menu.
 # Places whose website had no menu are noted in _tried.json and left for a real tap (which also tries Google and the web).
 MENU_TRIED = File.join(MENU_DIR, '_tried.json')
 def menu_next_warm
   tried = (JSON.parse(File.read(MENU_TRIED)) rescue {})
   now = Time.now.to_i
-  Places.data[:list].select { |p| p['menu'] || p['web'] }.sort_by { |p| -(defined?(Popular) ? Popular[p['id']] : 0) }.find do |p|
+  Places.data[:list].select { |p| p['menu'] || p['web'] }.sort_by { |p| -Popular[p['id']] }.find do |p|
     next false if tried[p['id']].to_i > now - MENU_DAYS * 86_400
     f = menu_file(p['id'])
     !File.file?(f) || File.mtime(f).to_i < now - (MENU_DAYS - 2) * 86_400
@@ -460,14 +463,15 @@ def menu_prewarm
       sleep MENU_WARM_GAP
       MENU_JOBS[:lock].synchronize do
         day = Time.now.strftime('%F')
-        MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos], MENU_JOBS[:warm] = day, 0, 0, 0 if MENU_JOBS[:day] != day
+        MENU_JOBS[:day], MENU_JOBS[:n], MENU_JOBS[:photos], MENU_JOBS[:warm], MENU_JOBS[:warm_web] = day, 0, 0, 0, 0 if MENU_JOBS[:day] != day
       end
       next sleep(600) if MENU_JOBS[:warm] >= MENU_WARM_DAILY
       next unless MENU_JOBS[:lock].synchronize { MENU_JOBS[:running].empty? }
       p = menu_next_warm or (sleep 3600; next)
       MENU_JOBS[:lock].synchronize { MENU_JOBS[:warm] += 1 }
       t0 = Time.now
-      m = begin menu_find(p, nil, warm: true) rescue (warn("[menu] warm #{p['id']}: #{$!.message[0, 100]}"); nil) end
+      big = Popular[p['id']] >= 60 && MENU_JOBS[:lock].synchronize { MENU_JOBS[:warm_web] < MENU_WARM_WEB && (MENU_JOBS[:warm_web] += 1) }
+      m = begin menu_find(p, nil, warm: big ? :web : true) rescue (warn("[menu] warm #{p['id']}: #{$!.message[0, 100]}"); nil) end
       if m && menu_count(m).positive?
         m['web'] = p['menu'] || p['web']
         menu_keep(p['id'], m) unless MENU_JOBS[:lock].synchronize { MENU_JOBS[:running][p['id']] }
