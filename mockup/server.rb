@@ -30,6 +30,7 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'stories_plus'   # Instagram parts of stories: viewers, poll sticker, close friends
 require_relative 'friendmap'   # Snap-Map-style: friends' faces where they are (opt-in, in memory only)
 require_relative 'groups'   # Facebook-Groups-style walls: posts, photos, polls, events, comments, admins, private groups
 require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, photos, voice notes, seen, typing
@@ -1003,6 +1004,7 @@ def prune_stories(d)
   MEDIA[:lock].synchronize do
     MEDIA[:pending].select { |_id, m| m['at'] < now_ms - 3_600_000 }.each do |id, m|
       File.delete(File.join(STORY_DIR, "#{id}.#{m['ext']}")) rescue nil
+      File.delete(File.join(DM_DIR, id)) rescue nil if id.start_with?('a')   # a voice note recorded but never sent
       MEDIA[:pending].delete(id)
     end
   end
@@ -1031,12 +1033,19 @@ def state_for(d, h)
     posts: d['posts'].select { |p| p['end'].to_i > t && !p['removed'] && can_see.call(p['u'], p['vis'] == 'group' ? 'everyone' : p['vis']) &&
                                    !(p['group'] && d['groups'][p['group']]&.dig('priv') && !(d['members'][p['group']] || []).include?(h)) }   # a private group's plans stay inside it
                      .map { |p| p.merge('downs' => p['downs'].reject { |x| hidden.include?(x) }) },
-    stories: d['stories'].select { |x| x['created'].to_i > t - STORY_TTL && !x['removed'] && can_see.call(x['u'], x['vis'], x['people'] || []) }
-                         .map { |x| l = x['likes'] || []; x.merge('likes' => (l - hidden.to_a).size, 'liked' => !!(h && l.include?(h))) },   # counts only: who liked stays here
+    stories: d['stories'].select do |x|
+      next false unless x['created'].to_i > t - STORY_TTL && !x['removed']
+      next x['u'] == h || (!hidden.include?(x['u']) && close_of(d, x['u']).include?(h)) if x['vis'] == 'close'   # 💚 close friends only
+      can_see.call(x['u'], x['vis'], x['people'] || [])
+    end.map do |x|   # counts only: who liked, viewed or voted stays here (the author asks /api/story/viewers)
+      l = x['likes'] || []
+      x.reject { |k, _| %w[views poll].include?(k) }.merge('likes' => (l - hidden.to_a).size, 'liked' => !!(h && l.include?(h)),
+                                                           'poll' => story_poll_out(x['poll'], h), 'vc' => x['u'] == h ? (x['views'] || {}).size : nil).compact
+    end,
     plans: h ? ((d['plans'] || {})[h] || []) : []
   }
   if h
-    out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online' }
+    out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online', close: close_of(d, h) }
     q = (d['quest'] || {})[h] || {}
     out[:v2] = { out: friends_out(d, h), invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
                  xp: q['xp'].to_i, level: level_of(q['xp']), saves: ((d['saves'] || {})[h] || []).map { |x| "#{x['k']}:#{x['id']}" } }
@@ -1105,6 +1114,8 @@ def delete_user!(d, h)
   end
   (d['greqs'] || {}).each_value { |l| l.delete(h) }
   FMAP[:lock].synchronize { FMAP[:at].delete(h) }
+  d['stories'].each { |x| (x['views'] || {}).delete(h); (x.dig('poll', 'votes') || {}).delete(h) }
+  d['users'].each_value { |u| (u['close'] || []).delete(h) }
   d['groups'].each_value { |g| (g['admins'] || []).delete(h) }
   %w[notifs quest saves push taste].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
@@ -2012,7 +2023,8 @@ def mount_app(server)
     raise 'Add a photo, a video or some text.' if img.empty? && !up && st['caption'].to_s.strip.empty?
     raise 'Photo too large.' if img.size > 600_000
     raw = img.empty? ? nil : (img[%r{\Adata:image/jpeg;base64,([A-Za-z0-9+/=]+)\z}, 1] or raise 'Photos must be JPEG.')
-    reviewed = moderate([st['caption'], st['place']].map { |x| x.to_s.strip }.reject(&:empty?).join(' · '))   # a place named by hand is text too
+    poll = story_poll_clean(st['poll'])
+    reviewed = moderate([st['caption'], st['place'], poll && poll['q'], *(poll ? poll['opts'] : [])].map { |x| x.to_s.strip }.reject(&:empty?).join(' · '))   # a place named by hand is text too
     store do |d|
       prune_stories(d)
       blocked = blocked_between(d, h)
@@ -2029,12 +2041,12 @@ def mount_app(server)
                 'event' => st['event'].to_s[0, 40].then { |e| e.empty? ? nil : e },
                 'groups' => Array(st['groups']).map(&:to_s).first(5),
                 'people' => Array(st['people']).map(&:to_s).select { |p| (d['users'][p] || (DEMO && DEMO_HANDLES.include?(p))) && !blocked.include?(p) }.first(10),
-                'vis' => st['vis'] == 'friends' ? 'friends' : 'everyone',
+                'vis' => %w[friends close].include?(st['vis']) ? st['vis'] : 'everyone', 'poll' => poll,
                 'unreviewed' => !reviewed || !raw.nil? || !up.nil? }   # photos and videos aren't machine-checked yet
       d['stories'] << story
       story['people'].each { |x| notify!(d, x, 'tag', from: h, ref: id, text: "📸 @#{h} tagged you in a story") }
       quest_bump!(d, h, 'story')
-      { ok: true, story: story }
+      { ok: true, story: story.merge('poll' => story_poll_out(story['poll'], h), 'vc' => 0).compact }
     end
   end
 
@@ -2390,7 +2402,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

@@ -334,6 +334,13 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   memory only (`FMAP`, gone after 8 h or a restart), never in app.json. `/api/loc/friends` → friends sharing with you
   (faces `.fpin`, layer `friendlocs`; tap → Chat / Profile / Go). Story heat: layer `heat`, ≥2 stories in ~1 km →
   a glow you tap to watch them. Tests in test_v2.rb ("friend map", 3).
+- **📸 Stories, Instagram/TikTok parts** (`stories_plus.rb`; client "story editor"): ✏️ Text & stickers on a photo
+  (`#stEditor`: Aa text with colors / background, emoji, 📍 place, 🕐 time; drag, ➕➖, 🗑; Done draws them into the
+  JPEG, `SC.imgOrig` + `SC.layers` kept for re-editing). 📊 poll sticker (`st.poll`, 2 choices, `/api/story/vote`,
+  counts + your vote in state; who voted only to the author). 👁 viewers: phones batch `/api/story/seen`; author's
+  👁 N on the rail → `/api/story/viewers` (likes, votes). 💚 Close friends: `vis: 'close'`, list `/api/close`
+  (`SV.me.close`), green ring. ▶ For you in the story rail: everyone's stories ranked (`forYouStories`). Photos show
+  whole over a blurred copy (`.media.photo`). Tests in test_v2.rb (2).
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra

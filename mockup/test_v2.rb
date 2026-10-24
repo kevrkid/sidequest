@@ -442,6 +442,31 @@ t('friend map: only chosen friends; pause hides you; ghost mode forgets you') {
   has = ->(x) { x['friends'].any? { |y| y['h'] == 'chat_a' } }
   check(!has.(f) && s['share']['list'] == ['chat_b'] && has.(f2) && !has.(f3) && has.(f4) && !has.(f5), [f, s, f2, f3, f4, f5].map { |x| x.is_a?(Hash) && x['friends'] ? has.(x) : x })
 }
+# ---- stories: viewers, poll sticker, close friends (stories_plus.rb)
+t('story viewers: views counted once, only the author sees who; poll votes, one each') {
+  _, j = ca.post('/api/story', story: { caption: 'Pool night', emoji: '🎱', bg: '', vis: 'everyone', poll: { q: 'Coming?', opts: ['Yes', 'Maybe'] } })
+  sid = j['story']['id']
+  cb.post('/api/story/seen', ids: [sid]); cb.post('/api/story/seen', ids: [sid]); cz.post('/api/story/seen', ids: [sid]); ca.post('/api/story/seen', ids: [sid])
+  _, v1 = cb.post('/api/story/vote', id: sid, opt: 1)
+  _, v2 = cz.post('/api/story/vote', id: sid, opt: 0)
+  _, v3 = cb.post('/api/story/vote', id: sid, opt: 0)   # changing your vote
+  _, vw = ca.post('/api/story/viewers', id: sid)
+  no, = cb.post('/api/story/viewers', id: sid)
+  _, st = cb.get('/api/state')
+  mine = st['stories'].find { |x| x['id'] == sid }
+  _, own = ca.get('/api/state')
+  check(j['story']['poll']['n'] == [0, 0] && v1['poll']['n'] == [0, 1] && v3['poll']['n'] == [2, 0] && v3['poll']['mine'] == 0 &&
+        vw['viewers'].map { |x| x['h'] }.sort == %w[chat_b chat_z] && vw['viewers'].find { |x| x['h'] == 'chat_b' }['vote'] == 0 && no == 403 &&
+        !mine.key?('views') && mine['poll']['mine'] == 0 && !mine.key?('vc') && own['stories'].find { |x| x['id'] == sid }['vc'] == 2, [j['story'], v1, v3, vw, no, mine])
+}
+t('close friends: only people on your list see a 💚 story; the list holds friends only') {
+  _, c = ca.post('/api/close', list: %w[chat_b chat_z])
+  _, j = ca.post('/api/story', story: { caption: 'close only', emoji: '💚', bg: '', vis: 'close' })
+  sid = j['story']['id']
+  _, sb = cb.get('/api/state'); _, sz = cz.get('/api/state'); _, sa = ca.get('/api/state')
+  check(c['close'] == ['chat_b'] && j['story']['vis'] == 'close' && sb['stories'].any? { |x| x['id'] == sid } &&
+        sz['stories'].none? { |x| x['id'] == sid } && sa['stories'].any? { |x| x['id'] == sid } && sa['me']['close'] == ['chat_b'], [c, j['story']['vis']])
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')
