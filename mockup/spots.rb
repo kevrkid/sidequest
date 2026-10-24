@@ -61,7 +61,8 @@ module Spots
         out << [id, name.to_s.strip.sub(/\s*\((austin|texas|austin, texas|tx)\)\z/i, ''), kind, lat.to_f, lng.to_f, fold(name), Popular[id.split(':', 2)[1]], addr]
       end
       places.each { |p| add.("p:#{p['id']}", p['name'], p['kind'], p['lat'], p['lng'], p['addr']) }
-      sights.each { |s| add.("s:#{s['id']}", s['name'], s['kind'], s['lat'], s['lng']) }
+      towns = areas.map { |a| fold(a['name']) } + ['austin', 'greater austin', 'austin texas', 'travis county']
+      sights.each { |s| add.("s:#{s['id']}", s['name'], s['kind'], s['lat'], s['lng']) unless towns.include?(fold(s['name'])) }   # Wikipedia's "Greater Austin" is not a spot
       read('SQ_OUTDOORS_FILE', 'outdoors.json', 'areas').each { |a| add.("o:#{a['id']}", a['name'], a['kind'], *Array(a['c'])) }
       read('SQ_OUTDOORS_FILE', 'outdoors.json', 'spots').each do |s|
         next if s['name'].to_s =~ /\A(boat launch|boat ramp|trailhead|fishing( pier)?)\z/i   # nameless in all but name
@@ -85,7 +86,7 @@ module Spots
     Areas.list.map { |a| [km(lat, lng, a['lat'], a['lng']) / (a['r'] || 1.0).to_f, a] }.select { |x, _| x <= 1.3 }.min_by(&:first)&.last
   end
 
-  # near: [lat, lng] (rounded to ~1 km by the caller, so phones sort the last few hundred metres themselves).
+  # near: [lat, lng], rounded to ~100 m by the caller.
   def search(q, near: nil, limit: 40)
     words = fold(q).split.first(6)
     all = list
@@ -159,7 +160,7 @@ def mount_spots(server)
   route(server, '/api/spots', auth: false, get: true) do |_b, _h, req|
     limit!("spots:#{client_ip(req)}", 900, 3600)
     lat, lng = req.query['lat'].to_f, req.query['lng'].to_f
-    near = lat.between?(-90, 90) && lng.between?(-180, 180) && !(lat.zero? && lng.zero?) ? [lat.round(2), lng.round(2)] : nil   # ~1 km
+    near = lat.between?(-90, 90) && lng.between?(-180, 180) && !(lat.zero? && lng.zero?) ? [lat.round(3), lng.round(3)] : nil   # ~100 m: close enough for "here", never exact GPS
     q = req.query['q'].to_s[0, 60]
     if req.query['anywhere'] == '1'
       raise 'Type a place or an address.' if q.strip.size < 3

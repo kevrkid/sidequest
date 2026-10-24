@@ -2733,7 +2733,7 @@ function spotsBeen(){   // recent picks, then venues from your history and event
 function spotsNow(){   // events on now (or starting within the hour) close by: "At ACL Live · Tonight's show"
   const now=Date.now();
   return EV.list.filter(e=>e.lat&&e.venue&&e.ts<now+36e5&&(e.te||e.ts+3*36e5)>now&&km(ME_POS,[e.lat,e.lng])<2)
-    .sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).slice(0,4)
+    .sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).filter((e,i,a)=>a.findIndex(y=>y.venue===e.venue)===i).slice(0,4)   // one row per venue
     .map(e=>({name:e.venue,lat:e.lat,lng:e.lng,e:CATS[e.cat]?.e||'🎉',kind:e.title.slice(0,40),addr:'',event:e.id,km:km(ME_POS,[e.lat,e.lng])}));
 }
 function openPlacePicker(cur, cb, opt={}){
