@@ -134,7 +134,7 @@
   .lvlpill{font-size:12px;font-weight:800;background:#ff9a3c22;color:#ffd2b0;border:1px solid #ff9a3c66;border-radius:99px;padding:3px 9px}
   .opin{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:13px;background:#0b2233;border:1.5px solid #2ec5ff}
   .opin.trailhead{background:#0d2a1f;border-color:#3ddc97}
-  .od-river{filter:drop-shadow(0 0 4px #2ec5ff99)} .od-trail{filter:drop-shadow(0 0 3px #000)}
+
   .leaflet-tooltip.odlabel{background:transparent;border:0;box-shadow:none;color:#bff5dc;font:700 11px Inter,system-ui,sans-serif;text-shadow:0 1px 3px #000,0 0 6px #000}
   .leaflet-tooltip.odlabel.water{color:#bfe9ff} .leaflet-tooltip.odlabel::before{display:none}
   .npin{display:grid;place-items:center;border-radius:50%;background:#1a1036;border:2px solid #b57bff;line-height:1}
@@ -1254,9 +1254,10 @@ function chart(utcMs, lat, lng){
   return out;
 }
 const signOf = lon => SIGNS[Math.floor(rev(lon)/30)];
+const TZF={};   // one formatter per zone: making one is slow (the map asks for every place on every move)
 function tzOffsetMs(utcMs, tz){   // the zone's offset at that moment, historic DST included
-  const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',
-    hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(new Date(utcMs)).map(x=>[x.type,x.value]));
+  const p=Object.fromEntries((TZF[tz]||=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit'})).formatToParts(new Date(utcMs)).map(x=>[x.type,x.value]));
   return Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second)-utcMs;
 }
 function localToUtc(dateStr, timeStr, tz){
@@ -1472,13 +1473,16 @@ async function api(path, body){
 async function loadState(){
   if(!location.protocol.startsWith('http')) return;
   try{ const r=await fetch('/api/state',{credentials:'same-origin'}); if(!r.ok) throw new Error(r.status);
-    Object.assign(SV,await r.json(),{on:true});
+    const txt=await r.text(); if(txt===SV_RAW&&SV.on) return false; SV_RAW=txt;
+    Object.assign(SV,JSON.parse(txt),{on:true});
     if(AUTHED&&SV.me?.status) S.online = SV.me.status!=='offline';
     const meU=AUTHED&&SV.users?.find(u=>u.h===S.me.h); if(meU&&Date.now()-(S.picT||0)>8000) S.me.pic=meU.pic||'';   // your picture, from any phone (not while a change is still saving)
     // friends come from the server (two-way); demo people stay local
     if(AUTHED&&SV.friends) S.friends=[...new Set([...SV.friends.list, ...S.friends.filter(h=>USERS.some(u=>u.h===h))])];
   }catch(e){ SV.on=false; }
+  return true;
 }
+let SV_RAW='';
 const isDemoUser = h => USERS.some(u=>u.h===h);
 async function addFriend(h){
   if(!isDemoUser(h)&&needAccount('add friends')) return;
@@ -1520,16 +1524,27 @@ function renderSocial(){ renderFeed(); renderFriendsTab(); renderMap(); renderHo
 
 /* ---------- real events (centex_events service) ---------- */
 const EV = {list:[], byId:{}, err:'', loaded:false};
+// Events are asked for the moment the page starts (not after sign-in and state), and the last list is kept on the
+// phone so Home shows events at once on the next visit while the fresh list comes in.
+let EV_PRE = location.protocol.startsWith('http') ? fetch('/api/events').then(r=>r.json()).catch(e=>({error:e.message})) : null;
+function evTake(j){
+  EV.list=j.events.map(e=>{ const ts=Date.parse(e.start);
+    return {...e, ...(e.geo_none?{lat:null,lng:null}:{}),   // no real spot (just "Austin"): no pin, no distance, no Map button
+      id:'e:'+e.uid, ts, te:e.end?Date.parse(e.end):ts+3*36e5, cat:CATS[e.category]?e.category:'other', tba:/T00:00(:00)?/.test(e.start)}; });
+  EV.byId=Object.fromEntries(EV.list.map(e=>[e.id,e])); EV.err=''; seedStoryEvent();
+}
+try{ const c=JSON.parse(localStorage.getItem('sq-ev')||'null'); if(c&&Date.now()-c.at<12*36e5&&c.j?.events){ evTake(c.j); EV.loaded=true; } }catch(e){}
 async function loadEvents(){
-  try{ const j=await (await fetch('/api/events')).json(); if(j.error) throw new Error(j.error);
-    EV.list=j.events.map(e=>{ const ts=Date.parse(e.start);
-      return {...e, ...(e.geo_none?{lat:null,lng:null}:{}),   // no real spot (just "Austin"): no pin, no distance, no Map button
-        id:'e:'+e.uid, ts, te:e.end?Date.parse(e.end):ts+3*36e5, cat:CATS[e.category]?e.category:'other', tba:/T00:00(:00)?/.test(e.start)}; });
-    EV.byId=Object.fromEntries(EV.list.map(e=>[e.id,e])); EV.err=''; seedStoryEvent();
-  }catch(e){ EV.err=e.message; }
+  try{ const pre=EV_PRE; EV_PRE=null; const j=await (pre||fetch('/api/events').then(r=>r.json())); if(j.error) throw new Error(j.error);
+    evTake(j);
+    const keep=()=>{ try{ localStorage.setItem('sq-ev',JSON.stringify({at:Date.now(),j})); }catch(e){} };
+    window.requestIdleCallback?requestIdleCallback(keep):setTimeout(keep,500);
+  }catch(e){ if(!EV.list.length) EV.err=e.message; }
   EV.loaded=true; renderSocial();
   if(V2S.pendingEv){ const id=V2S.pendingEv; V2S.pendingEv=null; openEvent(id); }
 }
+// event pictures come shrunk from our server (480 px for cards, 960 for the event page) instead of full-size posters
+const evImg = (u, w=480) => location.protocol.startsWith('http') ? `/img/ev?w=${w}&u=${encodeURIComponent(u)}` : u;
 const myRsvp = id => S.rsvps[id];
 // Real RSVPs from the server, plus demo users who'd plausibly go (so the demo has some life in it).
 const demoGoing = e => !CFG.demo ? [] : USERS.filter(u=>u.i.some(i=>(INTEREST_CATS[i]||[]).includes(e.cat)) && hash(u.h+e.uid)%5===0).map(u=>u.h);
@@ -1766,7 +1781,9 @@ const nearParam = () => `lat=${ME_POS[0].toFixed(2)}&lng=${ME_POS[1].toFixed(2)}
 const PLACE_E = {restaurant:'🍽️','fast food':'🍔','food truck':'🚚','truck park':'🚚','food hall':'🍱',bakery:'🥐','ice cream':'🍦',cafe:'☕',bar:'🍸',pub:'🍺','beer garden':'🍻',club:'🪩'};
 async function loadHotspots(){ try{ PL.hot=(await (await fetch('/api/places/hotspots')).json()).hotspots; }catch(e){} return PL.hot; }
 // Austin minutes since Monday 00:00, for the map's open/closed colors (lists come pre-sorted from the server)
-function austinMow(){ const t=new Date(Date.now()+tzOffsetMs(Date.now(),'America/Chicago')); return ((t.getUTCDay()+6)%7)*1440+t.getUTCHours()*60+t.getUTCMinutes(); }
+let MOW=[0,0], MAPMOVING=false;   // worked out at most every 10 s: a map redraw asks once per place
+function austinMow(){ const n=Date.now(); if(n-MOW[0]<10000) return MOW[1];
+  const t=new Date(n+tzOffsetMs(n,'America/Chicago')); MOW=[n,((t.getUTCDay()+6)%7)*1440+t.getUTCHours()*60+t.getUTCMinutes()]; return MOW[1]; }
 function placeState(w){
   if(!w) return 'unknown'; const now=austinMow(), W=10080;
   if(w.some(([a,b])=>(a<=now&&now<b)||(a<=now+W&&now+W<b))) return 'open';
@@ -1881,7 +1898,7 @@ function placeLabels(){
 // ones glow, and get their names as you zoom in.
 function renderPlacesLayer(){
   if(!map) return;
-  if(!PL.layer){ PL.canv=L.canvas({padding:.3}); PL.layer=L.layerGroup().addTo(map); }
+  if(!PL.layer){ PL.canv=L.canvas({padding:.3}); PL.haloCanv=L.canvas({padding:.3}); PL.layer=L.layerGroup().addTo(map); }
   PL.layer.clearLayers(); PL.cores={}; clearInterval(PL.pulseT);
   const z=map.getZoom();
   if(!S.mapL.food||!PL.all||z<13) return setLabels('food',[],[]);
@@ -1895,15 +1912,15 @@ function renderPlacesLayer(){
   const keep=spaced(cand,{13:22,14:17,15:13,16:10,17:7}[z]??0,'food'), names=[];
   keep.forEach(({id,name,ll,st,pop})=>{
     const big=st==='open'&&(pop>=45||z>=17);
-    if(big) halos.push(L.circleMarker(ll,{renderer:PL.canv,interactive:false,radius:13,stroke:false,fillColor:'#3ddc97',fillOpacity:.25}).addTo(PL.layer));
+    if(big) halos.push(L.circleMarker(ll,{renderer:PL.haloCanv,interactive:false,radius:13,stroke:false,fillColor:'#3ddc97',fillOpacity:.25}).addTo(PL.layer));
     const core=L.circleMarker(ll,{renderer:PL.canv, radius:st==='open'?(big?6:5):st==='soon'?5:3.5, weight:st==='open'?2:0,
       color:'#eafff4', fillColor:st==='open'?'#3ddc97':st==='soon'?'#ffb800':'#7a83a8', fillOpacity:st==='open'?1:st==='soon'?.9:.55}).addTo(PL.layer);
     core.on('click',()=>placePopup(id,ll)); PL.cores[id]=core;
     if(z>=15&&pop>=({15:55,16:38}[z]??0)) names.push({id,ll,r:7,text:name,score:pop+(st==='open'?5:0),cls:'food '+st,go:()=>placePopup(id,ll)});
   });
   setLabels('food',keep.map(k=>({id:k.id,ll:k.ll,r:7})),names);
-  let k=0;   // a slow breathing glow on the popular open spots in view
-  if(halos.length&&halos.length<600) PL.pulseT=setInterval(()=>{ if($('#v-map').hidden) return; k=(k+1)%40; const r=12+Math.sin(k/40*Math.PI*2)*4; halos.forEach(h=>h.setRadius(r)); },120);
+  let k=0;   // a slow breathing glow on the popular open spots in view (its own canvas: the dots aren't repainted)
+  if(halos.length&&halos.length<300) PL.pulseT=setInterval(()=>{ if($('#v-map').hidden||document.hidden||MAPMOVING) return; k=(k+1)%16; const r=12+Math.sin(k/16*Math.PI*2)*4; halos.forEach(h=>h.setRadius(r)); },250);
 }
 // Farmers markets (data/markets.json): the ones happening today or this weekend stand out from all the way zoomed
 // out, with their hours on the label; the rest of the week they're ordinary pins up close.
@@ -2108,42 +2125,48 @@ function venuePlace(e){   // one of our food & drink places at the venue, for it
 const OD={data:null, layer:null, loading:false};
 const OD_ACTS={biking:'🚲 Biking', hiking:'🥾 Hiking', nature:'🌿 Nature', fishing:'🎣 Fishing', paddleboard:'🏄 Paddleboard', kayak:'🛶 Kayak', canoe:'🛶 Canoe'};
 const OD_SPOT={rental:['🛶','Kayak / paddleboard rental'], launch:['⚓','Boat ramp / put-in'], fishing:['🎣','Fishing spot'], trailhead:['🥾','Trailhead']};
+// Parks, water, rivers and trails are drawn on a canvas (fast to pan and zoom) and made once each: a redraw only
+// adds the ones that came into view and removes the ones that left.
 async function renderOutdoors(){
   if(!map) return;
-  if(!OD.layer){ map.createPane('outdoors').style.zIndex=350; OD.layer=L.layerGroup().addTo(map); }
-  syncMapL(); OD.layer.clearLayers(); if(!S.mapL.outdoors) return setLabels('outdoors',[],[]);
+  if(!OD.layer){ map.createPane('outdoors').style.zIndex=350; OD.canv=L.canvas({pane:'outdoors',padding:.3}); OD.layer=L.layerGroup().addTo(map); OD.spotL=L.layerGroup().addTo(map); OD.made={}; OD.on=new Map(); }
+  syncMapL(); OD.spotL.clearLayers();
+  if(!S.mapL.outdoors){ OD.layer.clearLayers(); OD.on.clear(); return setLabels('outdoors',[],[]); }
   if(!OD.data){ if(OD.loading) return; OD.loading=true;
     try{ OD.data=await (await fetch('/api/outdoors')).json(); }catch(e){ OD.data={areas:[],spots:[]}; } OD.loading=false; }
-  const z=map.getZoom(), b=map.getBounds().pad(.3), names=[], pins=[];
+  const z=map.getZoom(), b=map.getBounds().pad(.3), names=[], pins=[], want=new Map(), R=OD.canv;
+  const tap=a=>e=>areaPopup(a,e.latlng);
   OD.data.areas.forEach(a=>{
     if(!S.mapL[{green:'parks',water:'water',river:'water',trail:'trails'}[a.kind]]) return;
     if(a.kind==='trail'){   // hike & bike trails: dashed, yellow when bikes are welcome, orange for foot only
       if(z<12&&a.km<5||z<11) return;
       if(!b.contains(a.c)&&!a.lines.some(l=>l.some(p=>b.contains(p)))) return;
-      const bike=(a.acts||[]).includes('biking');
-      L.polyline(a.lines,{pane:'outdoors',color:bike?'#ffd23f':'#ff9a3c',weight:z>=14?4:3,opacity:.9,dashArray:z>=13?'6 6':'4 5',lineCap:'round',
-        className:'od-trail'}).on('click',e=>areaPopup(a,e.latlng)).addTo(OD.layer);
+      const bike=(a.acts||[]).includes('biking'), w=z>=14?4:3, dash=z>=13?'6 6':'4 5';
+      want.set(`${a.id}|${w}|${dash}`,()=>L.featureGroup([L.polyline(a.lines,{renderer:R,interactive:false,color:'#000',weight:w+3,opacity:.45,lineCap:'round'}),
+        L.polyline(a.lines,{renderer:R,color:bike?'#ffd23f':'#ff9a3c',weight:w,opacity:.9,dashArray:dash,lineCap:'round'})]).on('click',tap(a)));
       return;
     }
     if(a.kind==='river'){   // rivers are lines: a glowing blue stroke you can tap
       if(!b.contains(a.c)&&!a.lines.some(l=>l.some(p=>b.contains(p)))) return;
-      L.polyline(a.lines,{pane:'outdoors',color:'#2ec5ff',weight:z>=13?6:z>=11?4:3,opacity:.7,lineCap:'round',className:'od-river'})
-        .on('click',e=>areaPopup(a,e.latlng)).addTo(OD.layer);
+      const w=z>=13?6:z>=11?4:3;
+      want.set(`${a.id}|${w}`,()=>L.featureGroup([L.polyline(a.lines,{renderer:R,interactive:false,color:'#2ec5ff',weight:w+6,opacity:.18,lineCap:'round'}),
+        L.polyline(a.lines,{renderer:R,color:'#2ec5ff',weight:w,opacity:.7,lineCap:'round'})]).on('click',tap(a)));
       return;
     }
     if(z<11&&a.km2<2||z<12&&a.km2<.5) return;   // zoomed out: just the big ones
     if(!b.contains(a.c)&&!a.rings.some(r=>r.some(p=>b.contains(p)))) return;
     const water=a.kind==='water', col=water?'#2ec5ff':'#3ddc97';
-    const poly=L.polygon(a.rings,{pane:'outdoors',color:col,weight:1.6,opacity:.75,fillColor:col,fillOpacity:water?.16:.12,smoothFactor:1.5,
-      className:water?'od-water':'od-green'}).on('click',e=>areaPopup(a,e.latlng)).addTo(OD.layer);
+    want.set(a.id,()=>L.polygon(a.rings,{renderer:R,color:col,weight:1.6,opacity:.75,fillColor:col,fillOpacity:water?.16:.12,smoothFactor:1.5}).on('click',tap(a)));
     if(a.name&&(z>=14&&a.km2>=.4||z>=12&&a.km2>=3||z>=15)) names.push({id:a.id,ll:a.c,center:true,text:`${water?'💧':'🌲'} ${a.name}`,score:30+Math.min(40,a.km2*8),cls:'od'+(water?' water':''),go:()=>areaPopup(a,L.latLng(a.c))});
   });
+  for(const [k,l] of OD.on) if(!want.has(k)){ OD.layer.removeLayer(l); OD.on.delete(k); }
+  for(const [k,mk] of want) if(!OD.on.has(k)){ const l=OD.made[k]||=mk(); OD.layer.addLayer(l); OD.on.set(k,l); }
   if(z>=13&&S.mapL.spots) spaced(OD.data.spots.filter(sp=>b.contains([sp.lat,sp.lng])).map(sp=>({sp,ll:[sp.lat,sp.lng]})),z>=17?0:28,'outdoors').forEach(({sp})=>{ const [e,l]=OD_SPOT[sp.kind]||['📍',''];
     pins.push({id:'sp'+sp.lat+sp.lng,ll:[sp.lat,sp.lng],r:12});
     L.marker([sp.lat,sp.lng],{icon:L.divIcon({className:'',html:`<div class="opin ${sp.kind}" title="${esc(sp.name||l)}">${e}</div>`,iconSize:[24,24]})})
       .on('click',()=>L.popup({offset:[0,-4]}).setLatLng([sp.lat,sp.lng]).setContent(`<b>${e} ${esc(sp.name||l)}</b><div class="meta">${esc(l)}</div>
         <div class="btns" style="margin-top:6px">${/^https?:/.test(sp.web||'')?`<a class="btn sm" href="${esc(sp.web)}" target="_blank" rel="noopener">Website ↗</a>`:''}
-        <a class="btn sm" href="${mapsUrl(sp.lat,sp.lng)}" target="_blank" rel="noopener">Directions ↗</a></div>`).openOn(map)).addTo(OD.layer); });
+        <a class="btn sm" href="${mapsUrl(sp.lat,sp.lng)}" target="_blank" rel="noopener">Directions ↗</a></div>`).openOn(map)).addTo(OD.spotL); });
   setLabels('outdoors',pins,names);
 }
 function areaPopup(a, ll){
@@ -2931,7 +2954,8 @@ function renderMeetSheet(){
 const DM = {threads:[], open:null, msgs:[]};
 async function loadThreads(){
   if(!AUTHED) return;
-  try{ const j=await (await fetch('/api/dm/threads',{credentials:'same-origin'})).json(); DM.threads=j.threads||[]; }catch(e){}
+  try{ const txt=await (await fetch('/api/dm/threads',{credentials:'same-origin'})).text(); if(txt===DM.raw) return false; DM.raw=txt; DM.threads=JSON.parse(txt).threads||[]; }catch(e){}
+  return true;
 }
 function allThreads(){
   const demo=Object.entries(S.dms).filter(([,m])=>m.length).map(([h,m])=>({with:h,last:m.at(-1)}));
@@ -3334,6 +3358,7 @@ function initMap(){
   layer=L.layerGroup().addTo(map); liveLayer=L.layerGroup().addTo(map);
   renderMapChips();
   map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
+  map.on('movestart zoomstart',()=>MAPMOVING=true); map.on('moveend zoomend',()=>MAPMOVING=false);
   renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
 }
 function renderMapLive(){
@@ -3428,6 +3453,10 @@ function renderLiveMarkers(){
 
 /* ---------- interactions ---------- */
 function renderAll(){ renderHeader(); renderFeed(); renderFriendsTab(); renderMe(); renderMap(); renderHome(); schedule(); }
+// Screens that aren't showing aren't drawn: the call is remembered and runs when tab() opens that screen.
+const LAZY={};
+function lazyView(view, fn){ return function(...a){ if($('#v-'+view)?.hidden){ LAZY[view]=()=>fn.apply(this,a); return; } delete LAZY[view]; return fn.apply(this,a); }; }
+renderFeed=lazyView('feed',renderFeed); renderMe=lazyView('me',renderMe); renderMap=lazyView('map',renderMap);
 // Online = friends and Meet see you as around, and your location dot stays live on your screen.
 // Offline = you look away to everyone, and the app stops using your location.
 const PRES={x:null, swiped:false};
@@ -3574,6 +3603,7 @@ function tab(t){
   if(t==='home'){ renderHome(); setTimeout(initGoMap,0); }
   if(t==='map'){ if(!map) initMap(); setTimeout(()=>map.invalidateSize(),0); }
   if(!NAVBACK&&(t==='map'||t==='feed')) try{ track(t+'_open'); }catch(e){}
+  if(LAZY[t]){ const f=LAZY[t]; delete LAZY[t]; f(); }
   if(t==='live') renderLive();
   if(t==='feed') schedule(0);
   if(t==='meet') renderMeet();
@@ -5347,7 +5377,7 @@ function renderEventSheet(e){
   const mine=myRsvp(e.id), go=goingList(e), fr=go.filter(isFriend), others=go.filter(h=>!isFriend(h));
   const inter=Object.entries(SV.rsvps[e.id]||{}).filter(([h,st])=>st==='interested'&&h!==S.me.h).length;
   const link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null, now=Date.now(), on=e.ts-36e5<now&&now<e.te+36e5;
-  const hero=/^https:\/\//.test(e.image||'')?`style="background-image:url('${esc(e.image)}')"`:(e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):'');
+  const hero=/^https:\/\//.test(e.image||'')?`style="background-image:url('${esc(evImg(e.image,960))}')"`:(e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):'');
   const desc=(e.description||'').trim(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
   const saved=isSaved('event',e.id), soon=e.ts>now?Math.round((e.ts-now)/6e4):null;
   $('#evSheet').innerHTML=`<div class="evhero thumb" ${hero}><span>${CATS[e.cat].e}</span><button class="btn sm evx" data-v2close="evBg" aria-label="${T('Close')}">✕</button></div>
@@ -5530,7 +5560,7 @@ function renderTonight(){
       <span class="tnt"><b>@${esc(o.h)}</b><span class="meta">📍 ${esc(o.name)} · ${agoT(o.at)}</span></span></button>`).join('')}</div>`:'';
   el.innerHTML=(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>${T('Tonight near you')}</b><button class="linkbtn" data-tab="feed">${T('See all')} ›</button></div>
     <div class="tnrail">${evs.map(e=>{ const fr=goingList(e).filter(isFriend).length;
-      return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(e.image)}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span>
+      return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span>
         <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'');
 }
 
@@ -5583,7 +5613,8 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
   renderHeader();
   renderAll(); loadEvents(); handleDeepLink(); renderBell(); track('open');
   if(SV.on){ notifyTags(); await loadThreads(); renderHome();
-    setInterval(async()=>{ await loadState(); await loadThreads(); renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!(DM.open&&document.activeElement?.id==='dmIn')) renderMeet(); }, 15000);
+    setInterval(async()=>{ if(document.hidden) return; const a=await loadState(), b=await loadThreads(); if(!a&&!b) return;   // nothing new: no redraw
+      renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!(DM.open&&document.activeElement?.id==='dmIn')) renderMeet(); }, 15000);
     setInterval(()=>{ if(DM.open&&!$('#v-meet').hidden&&!isDemoUser(DM.open)) fetch('/api/dm?with='+encodeURIComponent(DM.open),{credentials:'same-origin'}).then(r=>r.json())
       .then(j=>{ if(j.msgs&&j.msgs.length!==DM.msgs.length){ DM.msgs=j.msgs; S.dmSeen[DM.open]=Date.now(); save(); const v=$('#dmIn')?.value; renderMeet(); if(v) $('#dmIn').value=v; } }).catch(()=>{}); }, 4000); }
   setInterval(loadEvents, 10*60*1000);

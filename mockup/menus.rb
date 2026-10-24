@@ -100,8 +100,8 @@ def menu_claude(prompt, **o)
 end
 
 # GET a public web page: http(s) only, no addresses inside the server's network (checked on the address it
-# actually connects to), a few redirects, at most ~2 MB.
-def menu_get(url, hops = 3)
+# actually connects to), a few redirects, at most ~2 MB (max).
+def menu_get(url, hops = 3, max: 2_000_000)
   u = URI(url)
   raise 'not a web address' unless %w[http https].include?(u.scheme) && u.host && [80, 443].include?(u.port)
   ip = Resolv.getaddresses(u.host).find { |a| a =~ /\A[\d.]+\z/ } or raise 'no address'
@@ -116,11 +116,11 @@ def menu_get(url, hops = 3)
     req = Net::HTTP::Get.new(u.request_uri, 'User-Agent' => 'Mozilla/5.0 (compatible; SideQuestMenus/1.0)', 'Accept' => 'text/html,application/pdf,*/*;q=0.5')
     http.request(req) do |r|
       if r.is_a?(Net::HTTPRedirection) && hops.positive? && r['location']
-        return menu_get(URI.join(url, r['location']).to_s, hops - 1)
+        return menu_get(URI.join(url, r['location']).to_s, hops - 1, max: max)
       end
       raise "HTTP #{r.code}" unless r.is_a?(Net::HTTPSuccess)
       body = +''
-      r.read_body { |c| body << c; break if body.bytesize > 2_000_000 }
+      r.read_body { |c| body << c; break if body.bytesize > max }
       return [body, r['content-type'].to_s, url]
     end
   end

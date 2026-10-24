@@ -272,8 +272,10 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   `data/menus/<id>.json` 14 days (misses 2 days). `menu_get` refuses private addresses. Pictures + web results merge
   (`menu_merge`: pictures first, the web adds missing items). Images reach Claude as JPEG or PNG.
   **Speed**: pages fetched in parallel (`menu_pages`), lines repeated across pages dropped (`menu_dedupe`), text read
-  in ~3,500-char parts in parallel (`menu_parts` → `menu_join`), all menu calls at effort low through `menu_slot`
-  (`SQ_MENU_PAR` 4 at once); website menu pictures one per read with haiku, Google photos 3 per read with sonnet, only
+  in ~2,000-char parts in parallel (`menu_parts` → `menu_join`, about 10 parts at most), all menu calls at effort low
+  through `menu_slot` (`SQ_MENU_PAR` 5 at once; each CLI is ~110 MB). Menu answers are plain lines (`MENU_LINES`:
+  `## Section` / `name | price | desc` / `SOURCE:` / `NOTE:`, parsed by `menu_lines`; `run_claude(..., nil)` = plain
+  text): a third of the tokens and one turn instead of structured output's two, 2-3x faster; website menu pictures one per read with haiku, Google photos 3 per read with sonnet, only
   if the website's weren't enough; the web search starts alongside the pictures. Each finished part is shown at once
   (`MENU_JOBS[:partial]` → `pending` + `menu`; the app polls every 1 s and shows "Reading the rest of the menu…").
   Opening a place popup warms its menu (`warm=1`, 40/hour). Expired menus are still shown while a new read runs.
@@ -327,6 +329,16 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   tiles or LiveKit. Without it Scout falls back to the phone's built-in voice.
 - Fixed a V1 bug carried into V2: `endLive` had its `bc({t:'end'})` behind a `//`, so viewers were never told a stream
   ended (V1 still has it). `e2e_live.py` needs `SQ_DEMO=0` (demo mode pads the viewer count).
+- **Speed** (2026-10-24, from a measured audit): map moves no longer freeze (one cached `Intl.DateTimeFormat` per zone
+  in `tzOffsetMs`, `austinMow` worked out every 10 s, outdoors drawn on a canvas and each shape made once and only
+  added / removed as it enters / leaves the view (`OD.made`, `OD.on`), food glow on its own canvas every 250 ms and
+  paused while the map moves). Events are fetched as the page starts (`EV_PRE`) and the last list is kept on the phone
+  (`localStorage` `sq-ev`, 12 h); `/api/events` has an ETag (304) and 2-min cache. Hidden screens aren't drawn
+  (`lazyView` for feed / me / map; `tab()` runs the owed draw). The 15-s refresh skips redraws when `/api/state` and
+  threads are unchanged, and pauses in background tabs. Event pictures go through `/img/ev?u=&w=480|960` (only
+  pictures in the current events list, magic-byte checked, ffmpeg-resized once, kept a week in `data/img/`; without
+  ffmpeg a redirect). Google strip photos are 400 px and fetched in parallel. `/api/places/map` and `/api/sights` are
+  cacheable (15 min / 1 h).
 - **Static files**: ETag + 304 for repeat visits, gzip for text over 1 KB (`GZ_CACHE`; Caddy also compresses in production).
 - **Admin**: Growth panel, flagged event/group chat under "Needs a human look", chat reports with author + text.
 - Run V2: `cd mockup && ./start_v2.sh` (http://localhost:8797, phones https://<Wi-Fi IP>:8444; `--keys` adds the paid

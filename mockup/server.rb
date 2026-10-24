@@ -848,13 +848,18 @@ end
 # Match an OpenStreetMap place to Google's by name near the same spot. Asking only for ids is Google's
 # free "IDs only" search; the id is the one thing their terms let us keep ('' = no match, don't ask again).
 GOOGLE_PHOTOS_DAILY = (ENV['SQ_GOOGLE_PHOTOS_DAILY'] || 300).to_i
-def google_photos(photos, n, width = 640)
+def google_photos(photos, n, width = 400)   # 400 px: sharp in the 92-px strips on a phone, a fifth the bytes of 640+
   Array(photos).first(n).map do |ph|
     google_budget!(:photos, GOOGLE_PHOTOS_DAILY)
-    j = google_api("#{ph['name']}/media?maxWidthPx=#{width}&skipHttpRedirect=true", 'photoUri')
-    a = (ph['authorAttributions'] || []).first || {}
-    { url: j['photoUri'], by: a['displayName'], by_url: a['uri'] }.compact if j['photoUri'].to_s.start_with?('https://')
-  end.compact
+    Thread.new do   # each photo is its own Google call: ask for them all at once
+      j = google_api("#{ph['name']}/media?maxWidthPx=#{width}&skipHttpRedirect=true", 'photoUri')
+      a = (ph['authorAttributions'] || []).first || {}
+      { url: j['photoUri'], by: a['displayName'], by_url: a['uri'] }.compact if j['photoUri'].to_s.start_with?('https://')
+    rescue => e
+      warn "[google] photo: #{e.message[0, 80]}"
+      nil
+    end
+  end.map(&:value).compact
 rescue RateLimited
   []
 end
@@ -1062,7 +1067,17 @@ def dm_key(a, b)
   [a, b].sort.join('|')
 end
 
-EVENTS_CACHE = { at: 0, body: nil }
+EVENTS_CACHE = { at: 0, body: nil, tag: nil }
+IMG_DIR = File.join(ROOT, 'data', 'img')
+IMG_LOCK = Mutex.new   # one resize at a time: the box has two cores
+EV_IMAGES = { at: nil, set: {} }
+def event_images   # the picture addresses in the current events list (the only ones /img/ev will fetch)
+  return EV_IMAGES[:set] if EV_IMAGES[:at] == EVENTS_CACHE[:at]
+  set = {}
+  (JSON.parse(EVENTS_CACHE[:body].to_s)['events'] rescue []).each { |e| set[e['image']] = true if e['image'].to_s.start_with?('https://') }
+  EV_IMAGES.update(at: EVENTS_CACHE[:at], set: set)
+  set
+end
 # Who's around: last time each signed-in person's app checked in. In memory only (not worth a disk
 # write every 15 seconds); someone counts as online if they checked in within 3 minutes and haven't
 # switched themselves to Offline.
@@ -1239,7 +1254,7 @@ def mount_app(server)
   end
 
   # Real events from the scraper service, cached for 5 minutes.
-  server.mount_proc('/api/events') do |_req, res|
+  server.mount_proc('/api/events') do |req, res|
     res['Content-Type'] = 'application/json'
     begin
       if Time.now.to_f - EVENTS_CACHE[:at] > 300 || !EVENTS_CACHE[:body]
@@ -1247,12 +1262,64 @@ def mount_app(server)
         uri = URI("#{EVENTS_API}/api/events?limit=1000&end=#{horizon}")
         r = Net::HTTP.start(uri.host, uri.port, open_timeout: 3, read_timeout: 15) { |http| http.get(uri.request_uri) }
         raise "events service said #{r.code}" unless r.code == '200'
-        EVENTS_CACHE.update(at: Time.now.to_f, body: EventFilter.clean(r.body))   # no kids' activities; real spots for the ones the scraper couldn't place
+        EVENTS_CACHE.update(at: Time.now.to_f, body: EventFilter.clean(r.body), tag: nil)   # no kids' activities; real spots for the ones the scraper couldn't place
       end
-      res.body = EVENTS_CACHE[:body]
+      # phones keep it two minutes, then ask again with the tag and get "not changed" if it isn't
+      tag = EVENTS_CACHE[:tag] ||= %("#{Digest::MD5.hexdigest(EVENTS_CACHE[:body])}")
+      res['ETag'] = tag
+      res['Cache-Control'] = 'public, max-age=120'
+      if req['If-None-Match'] == tag
+        res.status = 304
+      else
+        res.body = EVENTS_CACHE[:body]
+      end
     rescue => e
       res.status = 502
       res.body = JSON.generate(error: "events service unreachable (#{e.message}). Start it: cd ~/claude/live && ./serve.sh")
+    end
+  end
+
+  # Event pictures, shrunk: events link full-size posters (one was a 2.3 MB PNG) that phones show as small cards.
+  # Only pictures named in the current events list, only real JPEG / PNG / WebP / GIF files (checked before ffmpeg
+  # sees them), resized once and kept a week in data/img/. Without ffmpeg: a redirect to the original.
+  server.mount_proc('/img/ev') do |req, res|
+    u = req.query['u'].to_s
+    w = req.query['w'] == '960' ? 960 : 480
+    ok = event_images[u]
+    begin
+      raise 'not an event picture' unless ok
+      raise 'no ffmpeg' unless File.executable?(FFMPEG_BIN)
+      f = File.join(IMG_DIR, "#{Digest::SHA1.hexdigest(u)}-#{w}.jpg")
+      unless File.file?(f) && File.mtime(f) > Time.now - 7 * 86_400
+        body, = menu_get(u, max: 8_000_000)
+        body = body.b
+        codec = { "\xFF\xD8".b => 'mjpeg', "\x89PNG".b => 'png', 'GIF8'.b => 'gif' }.find { |m, _| body.start_with?(m) }&.last
+        codec ||= 'webp' if body[0, 4] == 'RIFF'.b && body[8, 4] == 'WEBP'.b
+        raise 'not a picture' unless codec
+        IMG_LOCK.synchronize do
+          Dir.mktmpdir do |d|
+            src, out = File.join(d, 'in'), File.join(d, 'out.jpg')
+            File.binwrite(src, body)
+            _o, st = Open3.capture2e(FFMPEG_BIN, '-v', 'error', '-nostdin', '-protocol_whitelist', 'file', '-f', 'image2', '-c:v', codec, '-i', src,
+                                     '-frames:v', '1', '-vf', "scale='min(#{w},iw)':-2", '-q:v', '5', '-y', out)
+            raise 'ffmpeg failed' unless st.success? && File.size?(out)
+            FileUtils.mkdir_p(IMG_DIR)
+            FileUtils.mv(out, f)
+          end
+        end
+      end
+      res['Content-Type'] = 'image/jpeg'
+      res['Cache-Control'] = 'public, max-age=604800'
+      res.body = File.binread(f)
+    rescue => e
+      if ok
+        res.status = 302
+        res['Location'] = u
+        res['Cache-Control'] = 'public, max-age=3600'
+      else
+        res.status = 404
+      end
+      warn "[img] #{u[0, 80]}: #{e.message}" unless e.message == 'no ffmpeg'
     end
   end
 
@@ -1306,8 +1373,9 @@ def mount_app(server)
   end
 
   # Sights & history layer: every dot (id, kind, name, lat, lng, year, has photo); the story comes per tap.
-  route(server, '/api/sights', auth: false, get: true) do |_b, _h, req|
+  route(server, '/api/sights', auth: false, get: true) do |_b, _h, req, res|
     limit!("sights:#{client_ip(req)}", 60, 3600)
+    res['Cache-Control'] = 'public, max-age=3600'
     { sights: Sights.for_map }
   end
   route(server, '/api/sight', auth: false, get: true) do |_b, _h, req|
@@ -1316,8 +1384,9 @@ def mount_app(server)
     { sight: s }
   end
 
-  route(server, '/api/places/map', auth: false, get: true) do |_b, _h, req|
+  route(server, '/api/places/map', auth: false, get: true) do |_b, _h, req, res|
     limit!("placesmap:#{client_ip(req)}", 60, 3600)
+    res['Cache-Control'] = 'public, max-age=900'   # weekly hours: the phone works out open / closed itself
     Places.for_map
   end
   route(server, '/api/place', auth: false, get: true) do |_b, _h, req|
