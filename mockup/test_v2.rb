@@ -43,7 +43,14 @@ pid = spawn({ 'PORT' => PORT.to_s, 'SQ_MODERATE' => '0', 'SQ_DEMO' => '0', 'SQ_P
               'SQ_ENGINE' => 'cli', 'CLAUDE_BIN' => FAKE_CLAUDE, 'SQ_USE_API_KEY' => nil,
               'SQ_FFMPEG_BIN' => FAKE_FFMPEG, 'SQ_WHISPER_BIN' => FAKE_WHISPER, 'SQ_WHISPER_MODEL' => File.join(dir, 'fake_model.bin') },
             'ruby', 'server.rb', chdir: dir, out: log, err: log)
-at_exit { Process.kill('TERM', pid) rescue nil; FileUtils.rm_rf(dir) }
+def stop_server(pid)   # TERM, and KILL if it hasn't gone in 3 s (a leftover would answer the next run's requests)
+  Process.kill('TERM', pid)
+  30.times { return if Process.waitpid(pid, Process::WNOHANG); sleep 0.1 }
+  Process.kill('KILL', pid); Process.waitpid(pid)
+rescue StandardError
+  nil
+end
+at_exit { stop_server(pid); FileUtils.rm_rf(dir) }
 
 class Who
   attr_reader :h
@@ -345,10 +352,10 @@ t('group wall: post with a photo, like, comment; members notified; non-members c
 }
 t('group poll: one vote each, change your vote, counts') {
   _, p = ca.post('/api/group/post', id: $g, t: '', poll: { q: 'Which night?', opts: %w[Fri Sat Sun] })
-  pid = p['post']['id']
-  ca.post('/api/group/act', id: $g, pid: pid, do: 'vote', opt: 0)
-  cb.post('/api/group/act', id: $g, pid: pid, do: 'vote', opt: 0)
-  _, v = cb.post('/api/group/act', id: $g, pid: pid, do: 'vote', opt: 1)
+  qid = p['post']['id']
+  ca.post('/api/group/act', id: $g, pid: qid, do: 'vote', opt: 0)
+  cb.post('/api/group/act', id: $g, pid: qid, do: 'vote', opt: 0)
+  _, v = cb.post('/api/group/act', id: $g, pid: qid, do: 'vote', opt: 1)
   bad, = ca.post('/api/group/post', id: $g, poll: { q: 'x', opts: ['only one'] })
   o = v['post']['poll']['opts']
   check(o.map { |x| x['n'] } == [1, 1, 0] && o[1]['mine'] && !o[0]['mine'] && bad == 400, [o, bad])
@@ -394,6 +401,13 @@ t('private group: join requests, admins approve, wall / members / photos hidden 
         st['members'][$g] == [] && gstate['mcount'] == 2 && gstate['req'] && img == 404 &&
         n['notifs'].any? { |x| x['text'].include?('asked to join') } && rq['requests'] == ['chat_z'] && ap['ok'] &&
         feed2['role'] == 'member' && feed2['posts'].size >= 3, [s['group'], j, feed, st['members'][$g], gstate, img, rq['requests'], feed2['role']])
+}
+t('only the owner deletes a group; then it is gone for everyone') {
+  no, = cb.post('/api/group/admin', id: $g, do: 'delete')
+  _, ok = ca.post('/api/group/admin', id: $g, do: 'delete')
+  gone, = cb.post('/api/group/feed', id: $g)
+  _, st = cb.get('/api/state')
+  check(no == 403 && ok['deleted'] && gone == 400 && st['groups'].none? { |x| x['id'] == $g }, [no, ok, gone])
 }
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
@@ -492,7 +506,7 @@ pid2 = spawn({ 'PORT' => '8800', 'SQ_MODERATE' => '1', 'SQ_DEMO' => '0', 'SQ_ENG
                'SQ_API_URL' => 'http://127.0.0.1:9/v1/messages', 'SQ_PLACES_FILE' => 'test_places.json', 'SQ_SIGHTS_FILE' => 'test_sights.json',
                'SQ_EVENTS_API' => "http://127.0.0.1:#{EV_PORT}", 'SQ_LIVEKIT_URL' => nil },
              'ruby', 'server.rb', chdir: dir2, out: File.join(dir2, 'log'), err: File.join(dir2, 'log'))
-at_exit { Process.kill('TERM', pid2) rescue nil; FileUtils.rm_rf(dir2) }
+at_exit { stop_server(pid2); FileUtils.rm_rf(dir2) }
 Object.send(:remove_const, :BASE); BASE = 'http://127.0.0.1:8800'
 40.times { break if (Net::HTTP.get_response(URI("#{BASE}/api/health")) rescue nil); sleep 0.25 }
 sv, vw = Who.new('streamer_v2'), Who.new('viewer_v2'); sv.signup; vw.signup

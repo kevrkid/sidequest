@@ -199,6 +199,15 @@ def mount_groups(server)
         raise Forbidden, 'Only the owner can remove an admin.' if (g['admins'] || []).include?(who) && g['owner'] != h
         (d['members'][g['id']] || []).delete(who)
         (g['admins'] || []).delete(who)
+      when 'delete'   # the owner ends the group: wall, photos, chat and members go
+        raise Forbidden, 'Only the person who started the group can delete it.' unless g['owner'] == h
+        ((d['gposts'] || {}).delete(g['id']) || []).each { |p| File.delete(File.join(GROUP_DIR, File.basename(p['img']))) rescue nil if p['img'] }
+        File.delete(File.join(GROUP_DIR, File.basename(g['cover']))) rescue nil if g['cover']
+        (d['ev_chat'] || {}).delete("g:#{g['id']}")
+        (d['greqs'] || {}).delete(g['id'])
+        d['members'][g['id']] = []
+        g.keep_if { |k, _| %w[id n owner created].include?(k) }['removed'] = true
+        next { ok: true, deleted: true }
       when 'settings'
         raise Forbidden, 'Only admins can change the group.' unless admin
         if b.key?('d')

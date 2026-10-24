@@ -1804,7 +1804,8 @@ function gManageHtml(){
     <label class="lbl">${T('Who can see posts')}</label>${segHtml('gsPriv',[['0','🌐 Public: anyone'],['1','🔒 Private: members only']],g.priv?'1':'0')}
     <label class="lbl">${T('Cover photo')}</label><div class="btns"><button class="btn sm" data-gscover>📷 ${g.cover?T('Change'):T('Add a cover')}</button>${g.cover?`<button class="btn sm" data-gsnocover>${T('Remove')}</button>`:''}</div>
     <input type="file" id="gsFile" accept="image/*" hidden>
-    <button class="btn primary" data-gssave style="width:100%;margin-top:14px">${T('Save changes')}</button>`;
+    <button class="btn primary" data-gssave style="width:100%;margin-top:14px">${T('Save changes')}</button>
+    ${gRole()==='owner'?`<button class="btn" data-gsdelete style="width:100%;margin-top:18px;color:#ff5470">🗑️ ${T('Delete this group')}</button>`:''}`;
 }
 async function gAct(body){   // like / comment / vote / going: swap in the updated post
   try{ const j=await api('/api/group/act',{id:GRP.id,...body}); const l=GRP.data?.posts||[], i=l.findIndex(p=>p.id===j.post.id); if(i>=0) l[i]=j.post; renderGBody(); return j; }
@@ -1840,7 +1841,7 @@ document.addEventListener('click',e=>{   // the group sheet's two on/off pickers
 });
 document.addEventListener('click',async e=>{
   if(!e.target.closest('#groupSheet')) return;
-  const b=e.target.closest('[data-gtab],[data-gpkind],[data-gpphoto],[data-gpnoimg],[data-gpaddopt],[data-gpsend],[data-gplike],[data-gpcom],[data-gpall],[data-gpvote],[data-gpgoing],[data-gpmenu],[data-gppin],[data-gpdel],[data-gpuncom],[data-gpplace],[data-gpnewev],[data-greq],[data-gadmin],[data-gkick],[data-gssave],[data-gscover],[data-gsnocover],[data-gsend]');
+  const b=e.target.closest('[data-gtab],[data-gpkind],[data-gpphoto],[data-gpnoimg],[data-gpaddopt],[data-gpsend],[data-gplike],[data-gpcom],[data-gpall],[data-gpvote],[data-gpgoing],[data-gpmenu],[data-gppin],[data-gpdel],[data-gpuncom],[data-gpplace],[data-gpnewev],[data-greq],[data-gadmin],[data-gkick],[data-gssave],[data-gscover],[data-gsnocover],[data-gsend],[data-gsdelete]');
   if(!b) return; const d=b.dataset; e.stopPropagation();
   if(d.gtab){ GRP.tab=d.gtab; return renderGroupPage(); }
   if(d.gpkind){ const t=$('#gpText')?.value; GRP.kind=GRP.kind===d.gpkind?'text':d.gpkind; renderGBody(); if(t&&$('#gpText')) $('#gpText').value=t; return; }
@@ -1863,6 +1864,8 @@ document.addEventListener('click',async e=>{
   if(d.gadmin) return gAdminDo({do:'admin', who:d.gadmin, on:d.on==='1'}, d.on==='1'?`⭐ @${esc(d.gadmin)} is an admin.`:'Admin removed.');
   if(d.gkick){ if(!confirm(`Remove @${d.gkick} from the group?`)) return; return gAdminDo({do:'kick', who:d.gkick}, 'Removed.'); }
   if(d.gscover!==undefined) return $('#gsFile').click();
+  if(d.gsdelete!==undefined){ if(!confirm('Delete this group for everyone? Its posts, photos and chat are deleted too. This cannot be undone.')) return;
+    try{ await api('/api/group/admin',{id:GRP.id,do:'delete'}); $('#groupBg').hidden=true; await loadState(); renderSocial(); renderMeet(); toast('Group deleted.','green',[],2500); }catch(err){ toast(esc(err.message),'orange'); } return; }
   if(d.gsnocover!==undefined) return gAdminDo({do:'settings', cover:''}, 'Cover removed.');
   if(d.gssave!==undefined) return gAdminDo({do:'settings', d:$('#gsD').value, rules:$('#gsR').value.split('\n'), priv:segVal('gsPriv')==='1'}, '✓ Saved.');
   if(d.gsend){ const g=groupOf(d.gsend); return sendToChat({k:'group',id:g.id,name:g.n,sub:`${g.priv?'🔒 Private':'🌐 Public'} group · ${gCount(g)} members`,e:g.e||'🏘️'}); }
