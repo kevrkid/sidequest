@@ -409,6 +409,39 @@ t('only the owner deletes a group; then it is gone for everyone') {
   _, st = cb.get('/api/state')
   check(no == 403 && ok['deleted'] && gone == 400 && st['groups'].none? { |x| x['id'] == $g }, [no, ok, gone])
 }
+# ---- friends on the map (friendmap.rb)
+t('friend map: ghost mode by default; nothing is kept until you share') {
+  _, r = ca.post('/api/loc', lat: 30.2672, lng: -97.7431)
+  _, f = cb.get('/api/loc/friends')
+  check(r['shared'] == false && f['friends'].none? { |x| x['h'] == 'chat_a' }, [r, f])
+}
+t('friend map: all friends see you, rounded to ~500 m unless you pick exact; strangers never') {
+  ca.post('/api/loc/settings', mode: 'friends')
+  ca.post('/api/loc', lat: 30.26721, lng: -97.74312)
+  _, f = cb.get('/api/loc/friends'); _, z = cz.get('/api/loc/friends')
+  a = f['friends'].find { |x| x['h'] == 'chat_a' }
+  ca.post('/api/loc/settings', precise: true); ca.post('/api/loc', lat: 30.26721, lng: -97.74312)
+  _, f2 = cb.get('/api/loc/friends')
+  a2 = f2['friends'].find { |x| x['h'] == 'chat_a' }
+  check(a && a['lat'] == 30.265 && a['lng'] == -97.745 && !a['precise'] && z['friends'].none? { |x| x['h'] == 'chat_a' } &&
+        a2['lat'] == 30.26721 && a2['precise'], [a, a2, z])
+}
+t('friend map: only chosen friends; pause hides you; ghost mode forgets you') {
+  ca.post('/api/loc/settings', mode: 'some', list: %w[chat_z])   # not a friend: dropped
+  _, f = cb.get('/api/loc/friends')
+  _, s = ca.post('/api/loc/settings', mode: 'some', list: %w[chat_b])
+  ca.post('/api/loc', lat: 30.3, lng: -97.7)
+  _, f2 = cb.get('/api/loc/friends')
+  ca.post('/api/loc/settings', pause_h: 1)
+  _, f3 = cb.get('/api/loc/friends')
+  ca.post('/api/loc/settings', pause_h: 0); ca.post('/api/loc', lat: 30.3, lng: -97.7)
+  _, f4 = cb.get('/api/loc/friends')
+  ca.post('/api/loc/settings', mode: 'off')
+  ca.post('/api/loc/settings', mode: 'friends')
+  _, f5 = cb.get('/api/loc/friends')
+  has = ->(x) { x['friends'].any? { |y| y['h'] == 'chat_a' } }
+  check(!has.(f) && s['share']['list'] == ['chat_b'] && has.(f2) && !has.(f3) && has.(f4) && !has.(f5), [f, s, f2, f3, f4, f5].map { |x| x.is_a?(Hash) && x['friends'] ? has.(x) : x })
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')

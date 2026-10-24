@@ -328,6 +328,12 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   and edit (about, rules, privacy, cover); only the owner picks admins. Private (`g['priv']`): join → `d['greqs']`,
   outsiders see name/count/friends in it only (state hides members, `mcount`; private groups' flares stay inside).
   Notification kind `group`. Report kind `gpost`. Tests in test_v2.rb (6); demo groups keep the simple page.
+- **🧑‍🤝‍🧑 Friends on the map, Snap-Map-style** (`friendmap.rb`; client "friends on the map"): 👻 button on the map →
+  share sheet: Ghost (default) / All friends / Only… (picked friends), Exact or ~500 m squares (default), pause 1/3/8 h.
+  Phones POST `/api/loc` at most ~1/min while open (`sendMyLoc`, from `setMyPos` + a 30 s timer); positions are in
+  memory only (`FMAP`, gone after 8 h or a restart), never in app.json. `/api/loc/friends` → friends sharing with you
+  (faces `.fpin`, layer `friendlocs`; tap → Chat / Profile / Go). Story heat: layer `heat`, ≥2 stories in ~1 km →
+  a glow you tap to watch them. Tests in test_v2.rb ("friend map", 3).
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra

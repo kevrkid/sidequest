@@ -203,6 +203,13 @@
   .chip{flex:none;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 11px;font-weight:600;font-size:12px;white-space:nowrap}
   .chip.on{background:var(--text);color:#0b0f20;border-color:var(--text)}
   .mapctl{position:absolute;right:10px;top:54px;z-index:455;display:flex;flex-direction:column;gap:8px}
+  .mapctl button.on{border-color:var(--accent2);background:#123049f2}
+  .fpin{display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 10px #000a)}
+  .fpin .av{width:42px;height:42px;font-size:17px;border:3px solid #2ec5ff}
+  .fpin b{font-size:11px;background:#10162cf2;border-radius:99px;padding:1px 7px;margin-top:-6px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fpin i{font-style:normal;font-size:10px;color:#cfe6ff;text-shadow:0 1px 3px #000}
+  .sheat{filter:blur(6px);animation:sheat 3s ease-in-out infinite} .sheat.hot{animation-duration:1.8s}
+  @keyframes sheat{50%{opacity:.65}}
   .mapctl button{width:44px;height:44px;border-radius:14px;background:#10162cf2;border:1px solid var(--line);font-size:19px;box-shadow:0 6px 16px #0007}
   .maphint{position:absolute;left:50%;top:56px;transform:translateX(-50%);z-index:456;display:flex;gap:10px;align-items:center;max-width:calc(100% - 90px);
     background:#10162cf5;border:1px solid var(--line);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:600;box-shadow:0 8px 20px #0008}
@@ -746,7 +753,7 @@
     <section class="view" id="v-map">
       <div id="map"></div>
       <div class="mapchips" id="mapChips"></div>
-      <div class="mapctl"><button data-mlayers aria-label="Map layers" title="Map layers">🗂</button><button data-mlocate aria-label="My location" title="My location">📍</button>
+      <div class="mapctl"><button data-mlayers aria-label="Map layers" title="Map layers">🗂</button><button data-mlocate aria-label="My location" title="My location">📍</button><button data-mshare aria-label="Location sharing" title="Location sharing">👻</button>
         <button data-msearch aria-label="Search the map" title="Search the map">🔍</button></div>
       <div class="maphint" id="mapHint" hidden></div>
       <div class="maplive" id="mapLive"></div>
@@ -879,6 +886,7 @@
   <div class="sheet-bg" id="searchBg" hidden><div class="sheet" id="searchSheet"></div></div>
   <div class="sheet-bg" id="groupsBg" hidden><div class="sheet" id="groupsSheet"></div></div>
   <div class="sheet-bg" id="storyBg" hidden><div class="sheet" id="storySheet"></div></div>
+  <div class="sheet-bg" id="shareBg" hidden style="z-index:925"><div class="sheet" id="shareSheet"></div></div>
   <div class="sheet-bg" id="chatBg" hidden style="z-index:930"><div class="sheet" id="chatSheet"></div></div>
   <div class="sheet-bg" id="spotBg" hidden style="z-index:905"><div class="sheet" id="spotSheet"></div></div>
   <div class="sheet-bg" id="ppBg" hidden style="z-index:960"><div class="sheet" id="ppSheet" style="height:88%"></div></div>
@@ -2049,7 +2057,7 @@ function focusOnMap(id){
 /* ---------- food & drink (OpenStreetMap places; searched on the server, see places.rb) ---------- */
 S.foodOpen ??= true;
 S.mapL ??= {events:true, night:true, food:S.mapFood??true, live:true, posts:true, stories:false, zones:true};   // map layers, each on/off
-S.mapL.outdoors ??= true;
+S.mapL.outdoors ??= true; S.mapL.friendlocs ??= true; S.mapL.heat ??= true;
 for(const [k,v] of Object.entries({clubs:S.mapL.night, bars:S.mapL.night, parks:S.mapL.outdoors, water:S.mapL.outdoors, trails:S.mapL.outdoors,
   spots:S.mapL.outdoors, openonly:false, landmarks:false, markers:false, art:false, markets:true})) S.mapL[k] ??= v;   // sights start off (too busy); the Sights chip or preset turns them on
 if(!S.sightsOffV2){ S.sightsOffV2=true; S.mapL.landmarks=S.mapL.markers=S.mapL.art=false; }   // once, for phones that saved the old default
@@ -4092,7 +4100,7 @@ function centerGoMap(){   // put your position under the blue dot (70% down the 
   goMap.setView(ME_POS,15,{animate:false}); goMap.panBy([0,-h*.2],{animate:false});
 }
 function setMyPos(lat,lng,acc){
-  ME_POS=[lat,lng]; ME_ACC=acc||0; ME_FIX=Date.now();
+  ME_POS=[lat,lng]; ME_ACC=acc||0; ME_FIX=Date.now(); if(typeof sendMyLoc==='function') sendMyLoc();
   if(meMark){ meMark.setLatLng(ME_POS); meAcc.setLatLng(ME_POS).setRadius(Math.max(ME_ACC,1)); }
   centerGoMap();
 }
@@ -4187,8 +4195,16 @@ function renderMap(){
       social.push({id:'st'+p.join(),ll:p,r:34,rx:40,dy:6});
     });
   }
+  // Heat: where lots of stories were posted today (~1 km), a glow to tap and watch them all, like Snap Map.
+  if(S.mapL.heat&&mapFilter!=='feed'){
+    const hc={}; allStories().forEach(st=>{ const p=storyPos(st); if(!p) return; const k=p[0].toFixed(2)+','+p[1].toFixed(2); (hc[k] ||= []).push([st,p]); });
+    Object.values(hc).filter(x=>x.length>=2).forEach(x=>{ const lat=x.reduce((a,[,p])=>a+p[0],0)/x.length, lng=x.reduce((a,[,p])=>a+p[1],0)/x.length, n=x.length;
+      L.circle([lat,lng],{radius:220+Math.min(n,12)*60,className:'sheat'+(n>=5?' hot':''),stroke:false,fillColor:n>=5?'#ff3b5c':'#ffb800',fillOpacity:.35+Math.min(n,10)*.04})
+        .addTo(layer).on('click',()=>openStories(x.map(([st])=>st).reverse())).bindTooltip(`📸 ${n} stories here today`,{direction:'top'});
+    });
+  }
   DC.pins.social=social;
-  renderLiveMarkers(); renderNightLayer(); renderOutdoors(); renderSights();
+  renderLiveMarkers(); renderNightLayer(); renderOutdoors(); renderSights(); renderFriendLocs();
 }
 const okThumb = t => /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(t||'') ? t : null;   // thumbnails arrive from other devices: accept only JPEG data
 const thumbHtml = (s, sm) => `<div class="lthumb ${sm?'sm':''}">${okThumb(s.thumb)?`<img src="${s.thumb}" alt="">`:`<div class="ff">${esc(s.e&&s.e!=='📺'?s.e:'📡')}</div>`}
@@ -4205,6 +4221,72 @@ function renderLiveMarkers(){
       .addTo(liveLayer).on('click',()=>mine?(LIVE.mode='studio',tab('live')):openWatch(s.id));
   });
 }
+
+/* ---------- friends on the map (Snap-Map-style) ----------
+   Off until you turn it on (👻 on the map). Then your phone sends where it is about once a minute while the app is
+   open, and the friends you chose see your face there (exact, or a ~500 m square) for up to 8 hours. Friends who
+   share with you show up the same way; tap one to chat, see their profile or get directions. */
+const FMAP = {friends:[], me:{mode:'off',list:[],precise:false,until:0}, sentAt:0, sentPos:null, layer:null, loaded:false};
+const fmPaused = () => FMAP.me.until>Date.now();
+const fmOn = () => FMAP.me.mode!=='off'&&!fmPaused();
+async function loadFriendLocs(){
+  if(!SV.on||!AUTHED) return;
+  try{ const j=await (await fetch('/api/loc/friends',{credentials:'same-origin'})).json(); if(j.error) return; FMAP.friends=j.friends||[]; FMAP.me=j.me||FMAP.me; FMAP.loaded=true; }catch(e){ return; }
+  renderFriendLocs(); renderShareBtn();
+}
+function sendMyLoc(force){
+  if(!SV.on||!AUTHED||!fmOn()||!ME_FIX||Date.now()-ME_FIX>5*6e4) return;
+  if(!force&&Date.now()-FMAP.sentAt<6e4&&FMAP.sentPos&&km(FMAP.sentPos,ME_POS)<.08) return;
+  FMAP.sentAt=Date.now(); FMAP.sentPos=[...ME_POS];
+  api('/api/loc',{lat:ME_POS[0],lng:ME_POS[1]}).catch(()=>{});
+}
+function renderFriendLocs(){
+  if(!map) return; if(!FMAP.layer) FMAP.layer=L.layerGroup().addTo(map); FMAP.layer.clearLayers();
+  if(!S.mapL.friendlocs) return;
+  FMAP.friends.forEach(f=>{
+    const ll=[f.lat,f.lng];
+    if(!f.precise) L.circle(ll,{radius:280,color:'#2ec5ff',weight:1,opacity:.5,fillOpacity:.08,interactive:false}).addTo(FMAP.layer);
+    L.marker(ll,{zIndexOffset:900,icon:L.divIcon({className:'',iconSize:[56,64],iconAnchor:[28,30],
+      html:`<div class="fpin">${av(f.h)}<b>${esc(f.h)}</b><i>${agoShort(f.at)}${f.precise?'':' · approx.'}</i></div>`})})
+      .addTo(FMAP.layer).bindPopup(()=>`<div class="row">${av(f.h)}<div><b>@${esc(f.h)}</b><div class="meta">${f.precise?'Here':'Around here'} ${agoShort(f.at)==='now'?'right now':agoShort(f.at)+' ago'} · ${spotDist(km(ME_POS,ll))} away</div></div></div>
+        <div class="btns" style="margin-top:8px"><button class="btn sm blue" data-thread="${esc(f.h)}" data-fmchat>💬 Chat</button><button class="btn sm" data-profile="${esc(f.h)}">👤 Profile</button>
+        <a class="btn sm" href="${mapsUrl(f.lat,f.lng)}" target="_blank" rel="noopener">🧭 Go</a></div>`);
+  });
+}
+function renderShareBtn(){ const b=$('[data-mshare]'); if(!b) return; b.textContent=fmOn()?'🧑‍🤝‍🧑':'👻'; b.title=b.ariaLabel=fmOn()?'Sharing your location with friends':'Ghost mode: friends can’t see you'; b.classList.toggle('on',fmOn()); }
+function openShareSheet(){
+  if(needAccount('share your location with friends')) return;
+  renderShareSheet(); $('#shareBg').hidden=false; if(!FMAP.loaded) loadFriendLocs().then(renderShareSheet);
+}
+function renderShareSheet(){
+  const m=FMAP.me, fr=S.friends.filter(h=>!isDemoUser(h)||!SV.on), p=fmPaused();
+  $('#shareSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📍 ${T('Share my location')}</b><button class="btn sm primary" data-shclose>${T('Done')}</button></div>
+    <p class="meta" style="margin:6px 0 10px">${m.mode==='off'?'👻 Ghost mode: no one sees where you are.':p?`⏸️ Paused until ${clock(m.until)}. Friends can’t see you.`:`Friends you chose see your face on their map while the app is open, for up to 8 hours after.`}</p>
+    ${segHtml('shMode',[['off','👻 Ghost'],['friends','👥 All friends'],['some','✅ Only…']],m.mode)}
+    ${m.mode==='some'?`<label class="lbl">${T('Who can see you')}</label><div class="tagchips">${fr.map(h=>`<button class="ichip ${m.list.includes(h)?'on':''}" data-shpick="${esc(h)}">${av(h,'xs')} @${esc(h)}</button>`).join('')||`<span class="meta">${T('Make friends on Meet first.')}</span>`}</div>`:''}
+    ${m.mode!=='off'?`<div class="row lsub" style="margin-top:12px"><span class="grow"><b>${T('Exact location')}</b><div class="meta">${m.precise?T('Friends see exactly where you are.'):T('Off: friends see a ~500 m area, not the building.')}</div></span><button class="toggle ${m.precise?'on':''}" data-shprecise aria-label="Exact location"></button></div>
+      <label class="lbl">${T('Take a break')}</label><div class="btns">${p?`<button class="btn sm blue" data-shpause="0">▶️ ${T('Show me again')}</button>`:[1,3,8].map(h=>`<button class="btn sm" data-shpause="${h}">⏸️ ${h} h</button>`).join('')}</div>`:''}
+    <h3>👥 ${T('Friends sharing with you')}</h3>${FMAP.friends.length?FMAP.friends.map(f=>`<button class="pprow" data-shfocus="${esc(f.h)}">${av(f.h,'sm')}<span class="grow"><b>@${esc(f.h)}</b><small>${agoShort(f.at)==='now'?'right now':agoShort(f.at)+' ago'} · ${spotDist(km(ME_POS,[f.lat,f.lng]))} away</small></span><span class="meta">›</span></button>`).join('')
+      :`<p class="meta">${T('No friends are sharing with you right now.')}</p>`}`;
+}
+async function shareSet(body){
+  try{ const j=await api('/api/loc/settings',body); FMAP.me=j.share; renderShareSheet(); renderShareBtn(); if(fmOn()) sendMyLoc(true); }
+  catch(e){ toast(esc(e.message),'orange'); }
+}
+document.addEventListener('click',e=>{
+  if(e.target.id==='shareBg') return $('#shareBg').hidden=true;
+  const b=e.target.closest('[data-mshare],#shareSheet [data-shclose],#shMode button,#shareSheet [data-shpick],#shareSheet [data-shprecise],#shareSheet [data-shpause],#shareSheet [data-shfocus],[data-fmchat]'); if(!b) return;
+  const d=b.dataset;
+  if(d.mshare!==undefined) return openShareSheet();
+  if(d.shclose!==undefined) return $('#shareBg').hidden=true;
+  e.stopPropagation();
+  if(d.fmchat!==undefined){ map.closePopup(); meetTab='msgs'; tab('meet'); return openThread(d.thread); }
+  if(b.parentElement.id==='shMode'){ if(d.v!=='off'&&!ME_FIX) startLocating(true); return shareSet({mode:d.v}); }
+  if(d.shpick){ const l=FMAP.me.list.includes(d.shpick)?FMAP.me.list.filter(x=>x!==d.shpick):[...FMAP.me.list,d.shpick]; return shareSet({list:l}); }
+  if(d.shprecise!==undefined) return shareSet({precise:!FMAP.me.precise});
+  if(d.shpause!==undefined) return shareSet({pause_h:+d.shpause});
+  if(d.shfocus){ const f=FMAP.friends.find(x=>x.h===d.shfocus); if(!f) return; $('#shareBg').hidden=true; tab('map'); S.mapL.friendlocs=true; save(); setTimeout(()=>{ map.setView([f.lat,f.lng],15); renderFriendLocs(); },80); }
+}, true);
 
 /* ---------- interactions ---------- */
 function renderAll(){ renderHeader(); renderFeed(); renderFriendsTab(); renderMe(); renderMap(); renderHome(); schedule(); }
@@ -5231,16 +5313,16 @@ const MAP_CATS=[
   {k:'night', e:'🌙', l:'Night', subs:[['clubs','🪩 Clubs'],['bars','🍸 Bars (street level)']]},
   {k:'zones', e:'🔥', l:'Hot spots', subs:[['zones','🔥 Hot spots: glow brighter the more is open and happening']]},
   {k:'outdoors', e:'🌲', l:'Outdoors', subs:[['parks','🌳 Parks & nature'],['water','💧 Lakes & rivers'],['trails','🚲 Hike & bike trails'],['spots','🛶 Rentals, ramps & trailheads']]},
-  {k:'friends', e:'👥', l:'Friends', subs:[['posts','📍 Flares'],['live','📺 Live streams'],['stories','📸 Stories']]},
+  {k:'friends', e:'👥', l:'Friends', subs:[['friendlocs','🧑‍🤝‍🧑 Friends sharing where they are'],['posts','📍 Flares'],['live','📺 Live streams'],['stories','📸 Stories'],['heat','🔥 Story heat: busy spots today']]},
   {k:'food', e:'🍔', l:'Food', subs:[['food','🍔 Food & drink spots'],['markets','🧺 Farmers markets (big on weekends)'],['openonly','🟢 Open now only',true]]},   // true: a setting, not a layer
   {k:'sights', e:'🏛️', l:'Sights', subs:[['landmarks','🏛️ Landmarks & museums'],['markers','🪧 Historical markers'],['art','🎨 Statues, murals & views']]},
 ];
 const MAP_PRESETS={
   night:['🌙 Night out',{events:1,clubs:1,bars:1,zones:1,food:1,openonly:1,posts:1,live:1},'tonight'],
   outdoors:['🌲 Outdoors day',{parks:1,water:1,trails:1,spots:1,posts:1,live:1,markets:1}],
-  friends:['👥 Friends',{posts:1,live:1,stories:1}],
+  friends:['👥 Friends',{friendlocs:1,posts:1,live:1,stories:1,heat:1}],
   sights:['🏛️ Sightseeing',{landmarks:1,markers:1,art:1,parks:1,food:1,posts:1,markets:1}],
-  all:['✨ Everything',{events:1,clubs:1,bars:1,zones:1,parks:1,water:1,trails:1,spots:1,posts:1,live:1,stories:1,food:1,markets:1,landmarks:1,markers:1,art:1}],
+  all:['✨ Everything',{friendlocs:1,heat:1,events:1,clubs:1,bars:1,zones:1,parks:1,water:1,trails:1,spots:1,posts:1,live:1,stories:1,food:1,markets:1,landmarks:1,markers:1,art:1}],
   none:['○ Clear',{}],
 };
 const layerKeys = c => c.subs.filter(s=>!s[2]).map(s=>s[0]);
@@ -6396,6 +6478,7 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
   if(SV.on){ notifyTags(); await loadThreads(); renderHome();
     setInterval(async()=>{ if(document.hidden) return; const a=await loadState(), b=await loadThreads(); if(!a&&!b) return;   // nothing new: no redraw
       renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!DM.open) renderMeet(); else if(DM.open){ const u=dmUnread(); $('#dmPill').hidden=!u; $('#dmPill').textContent=u; } }, 15000);
+    loadFriendLocs(); setInterval(()=>{ if(!document.hidden){ loadFriendLocs(); sendMyLoc(); } }, 30000);
     setInterval(()=>{ if(document.hidden||!DM.open||$('#v-meet').hidden||isDemoUser(DM.open)) return; const w=DM.open;
       fetchThread(w).then(ch=>{ if(ch&&DM.open===w){ renderThreadMsgs(); markRead(); } }).catch(()=>{}); }, 3000); }
   setInterval(loadEvents, 10*60*1000);

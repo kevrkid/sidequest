@@ -30,6 +30,7 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'friendmap'   # Snap-Map-style: friends' faces where they are (opt-in, in memory only)
 require_relative 'groups'   # Facebook-Groups-style walls: posts, photos, polls, events, comments, admins, private groups
 require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, photos, voice notes, seen, typing
 require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
@@ -1103,6 +1104,7 @@ def delete_user!(d, h)
     end
   end
   (d['greqs'] || {}).each_value { |l| l.delete(h) }
+  FMAP[:lock].synchronize { FMAP[:at].delete(h) }
   d['groups'].each_value { |g| (g['admins'] || []).delete(h) }
   %w[notifs quest saves push taste].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
@@ -2388,7 +2390,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }
