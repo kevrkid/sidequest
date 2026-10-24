@@ -315,7 +315,9 @@ def menu_find(p, gweb, warm: false, progress: nil, pics: nil)
   # 1. the place's own pages, read in parallel parts
   pages, imgs = menu_pages([p['menu'], p['web'], gweb].compact.uniq.first(2))
   pics&.concat(imgs.map(&:last))
-  priced = menu_dedupe(pages.select { |_, t| menu_prices(t) >= 4 })
+  # pages with prices, and pages that say when happy hour is (often its own page, or the home page)
+  priced = menu_dedupe(pages.select { |_, t| menu_prices(t) >= 4 || t =~ /happy\s*hours?\b.{0,80}\d/im })
+  site_happy = nil
   unless priced.empty?
     texts = priced.map { |u, t| [u, t[0, 24_000]] }
     size = [MENU_PART, texts.sum { |_, t| t.size }.clamp(0, 60_000) / 10].max   # about 10 parts at most
@@ -338,17 +340,19 @@ def menu_find(p, gweb, warm: false, progress: nil, pics: nil)
     m = menu_join(done, 'site')
     warn "[menu] #{p['id']} site: #{menu_count(m)} items in #{parts.size} parts, #{(Time.now - t0).round}s"
     return m if menu_count(m) >= 5
+    site_happy = m['happy']   # the menu itself comes from elsewhere, but the site's happy hour still counts
   end
   # 2. the menu pictures on its website and the web search, side by side: good pictures win at once; otherwise the
   # web fills in.
   web = (!warm || warm == :web) && Thread.new { menu_web(p, where, p['web'] || gweb) rescue (warn("[menu] web: #{$!.message[0, 100]}"); nil) }
   shot = imgs.any? ? menu_photos(where, imgs, progress) : nil
   shot = nil if shot && menu_count(shot).zero?
-  return shot if menu_good?(shot) || (warm == true && shot)
+  hh = ->(x) { x && site_happy && !x['happy'] ? x.merge('happy' => site_happy) : x }
+  return hh.(shot) if menu_good?(shot) || (warm == true && shot)
   progress&.call(shot) if shot
-  return nil unless web   # warm-up: nothing on the website
+  return (site_happy ? menu_clean({ 'happy' => site_happy }, 'site') : nil) unless web   # warm-up: no menu on the website
   m = web.value || menu_clean({}, 'web')
-  shot ? menu_merge(shot, m) : m
+  hh.(shot ? menu_merge(shot, m) : m)
 end
 
 # The photos' menu with what the web adds: its sections and items the photos don't have (photos often show only
@@ -475,7 +479,7 @@ def menu_prewarm
       big = Popular[p['id']] >= 60 && MENU_JOBS[:lock].synchronize { MENU_JOBS[:warm_web] < MENU_WARM_WEB && (MENU_JOBS[:warm_web] += 1) }
       pics = []
       m = begin menu_find(p, nil, warm: big ? :web : true, pics: pics) rescue (warn("[menu] warm #{p['id']}: #{$!.message[0, 100]}"); nil) end
-      if m && menu_count(m).positive?
+      if m && (menu_count(m).positive? || m['happy'])   # a happy hour alone is worth keeping too
         m['web'] = p['menu'] || p['web']
         m['pics'] = pics.uniq.first(4)
         m['happy_checked'] = true
