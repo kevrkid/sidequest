@@ -39,7 +39,7 @@ def dm_out(th)
 end
 
 def dm_card(c)
-  return nil unless c.is_a?(Hash) && %w[event place story flare].include?(c['k'])
+  return nil unless c.is_a?(Hash) && %w[event place story flare group].include?(c['k'])
   { 'k' => c['k'], 'id' => c['id'].to_s[0, 60], 'name' => c['name'].to_s.gsub(/[[:cntrl:]]/, ' ')[0, 80], 'sub' => c['sub'].to_s.gsub(/[[:cntrl:]]/, ' ')[0, 80],
     'e' => c['e'].to_s[0, 4], 'lat' => (Float(c['lat']) rescue nil), 'lng' => (Float(c['lng']) rescue nil),
     'img' => c['img'].to_s[%r{\A/story-img/s[0-9a-f]{12}\.jpg\z}] }.compact.reject { |_, v| v == '' }

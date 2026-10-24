@@ -30,6 +30,7 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'groups'   # Facebook-Groups-style walls: posts, photos, polls, events, comments, admins, private groups
 require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, photos, voice notes, seen, typing
 require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
@@ -1019,9 +1020,15 @@ def state_for(d, h)
       u.slice('h', 'c', 'pic', 'public', 'joined').merge('online' => u['status'] != 'offline' && PRESENCE[u['h']].to_i > t - ONLINE_MS)
     end,
     rsvps: d['rsvps'].transform_values { |m| m.reject { |who, _| hidden.include?(who) } }.reject { |_k, m| m.empty? },
-    members: d['members'].transform_values { |m| m.reject { |who| hidden.include?(who) } },
-    groups: d['groups'].values.reject { |g| g['removed'] },
-    posts: d['posts'].select { |p| p['end'].to_i > t && !p['removed'] && can_see.call(p['u'], p['vis'] == 'group' ? 'everyone' : p['vis']) }
+    members: d['members'].to_h do |gid, m|
+      m = m.reject { |who| hidden.include?(who) }
+      [gid, d['groups'][gid]&.dig('priv') && !m.include?(h) ? m.select { |x| friends.include?(x) } : m]
+    end,
+    groups: d['groups'].values.reject { |g| g['removed'] }.map do |g|
+      g.merge('mcount' => (d['members'][g['id']] || []).size, 'req' => ((d['greqs'] || {})[g['id']] || []).include?(h) || nil).compact
+    end,
+    posts: d['posts'].select { |p| p['end'].to_i > t && !p['removed'] && can_see.call(p['u'], p['vis'] == 'group' ? 'everyone' : p['vis']) &&
+                                   !(p['group'] && d['groups'][p['group']]&.dig('priv') && !(d['members'][p['group']] || []).include?(h)) }   # a private group's plans stay inside it
                      .map { |p| p.merge('downs' => p['downs'].reject { |x| hidden.include?(x) }) },
     stories: d['stories'].select { |x| x['created'].to_i > t - STORY_TTL && !x['removed'] && can_see.call(x['u'], x['vis'], x['people'] || []) }
                          .map { |x| l = x['likes'] || []; x.merge('likes' => (l - hidden.to_a).size, 'liked' => !!(h && l.include?(h))) },   # counts only: who liked stays here
@@ -1083,6 +1090,20 @@ def delete_user!(d, h)
   (d['chats'] || {}).each_value { |c| c['members'].delete(h) }
   (d['chats'] || {}).delete_if { |_, c| c['members'].size < 2 && (d['dms'].delete("c:#{c['id']}") || true) }
   (d['dm_read'] || {}).delete(h)
+  (d['gposts'] || {}).each_value do |l|   # group posts: theirs go (photos too), their likes, votes and comments
+    l.each do |p|
+      if p['u'] == h
+        File.delete(File.join(GROUP_DIR, File.basename(p['img']))) rescue nil if p['img']
+        p.keep_if { |k, _| %w[id u at].include?(k) }['removed'] = true
+        next
+      end
+      (p['likes'] || []).delete(h); (p['going'] || []).delete(h)
+      (p['poll'] || {}).fetch('opts', []).each { |o| (o['votes'] || []).delete(h) }
+      (p['comments'] || []).reject! { |c| c['u'] == h }
+    end
+  end
+  (d['greqs'] || {}).each_value { |l| l.delete(h) }
+  d['groups'].each_value { |g| (g['admins'] || []).delete(h) }
   %w[notifs quest saves push taste].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
   (d['ev_chat'] || {}).each_value { |l| l.reject! { |m| m['u'] == h } }
@@ -1789,13 +1810,17 @@ def mount_app(server)
   route(server, '/api/report') do |b, h|
     limit!("report:#{h}", 20, 3600)
     kind = b['kind'].to_s
-    raise 'bad report' unless %w[post story user group stream chat].include?(kind)
+    raise 'bad report' unless %w[post story user group stream chat gpost].include?(kind)
     # a live stream: note whose it is now, since stream ids only exist while the stream runs
     about = kind == 'stream' ? live_owner(b['id'].to_s[0, 40]) : nil
     store do |d|
       if kind == 'chat'   # an event or group chat message: keep who wrote it and what it said for the reviewer
         msg = (d['ev_chat'] || {}).values.flatten.find { |m| m['id'] == b['id'].to_s } or raise 'That message is gone.'
         about = msg['u']; b['note'] = "#{msg['t']} #{b['note']}".strip
+      end
+      if kind == 'gpost'   # a group wall post
+        gp = (d['gposts'] || {}).values.flatten.find { |p| p['id'] == b['id'].to_s } or raise 'That post is gone.'
+        about = gp['u']; b['note'] = "#{gp['t']} #{gp.dig('poll', 'q')} #{gp.dig('ev', 'title')} #{b['note']}".squeeze(' ').strip
       end
       d['reports'] << { 'id' => "r#{SecureRandom.hex(4)}", 'by' => h, 'kind' => kind, 'target' => b['id'].to_s[0, 40],
                         'reason' => b['reason'].to_s[0, 40], 'note' => b['note'].to_s[0, 300], 'at' => now_ms, 'status' => 'open',
@@ -1869,12 +1894,22 @@ def mount_app(server)
 
   route(server, '/api/group/join') do |b, h|
     store do |d|
-      m = (d['members'][b['id'].to_s[0, 20]] ||= [])
-      if b['on'] && !m.include?(h)
-        g = d['groups'][b['id'].to_s[0, 20]]
-        notify!(d, g['owner'], 'join', from: h, ref: g['id'], text: "👥 @#{h} joined #{g['name'].to_s[0, 50]}") if g
+      gid = b['id'].to_s[0, 20]
+      m = (d['members'][gid] ||= [])
+      g = d['groups'][gid]
+      reqs = ((d['greqs'] ||= {})[gid] ||= [])
+      if b['on'] && !m.include?(h) && g && g['priv']   # a private group: ask, and its admins say yes or no
+        unless reqs.include?(h)
+          reqs << h
+          [g['owner'], *(g['admins'] || [])].compact.uniq.each { |a| notify!(d, a, 'group', from: h, ref: "g:#{gid}", text: "🔒 @#{h} asked to join #{g['n'].to_s[0, 50]}") }
+        end
+        next { ok: true, members: m, requested: true }
       end
-      b['on'] ? (m << h unless m.include?(h)) : m.delete(h)
+      if b['on'] && !m.include?(h) && g
+        notify!(d, g['owner'], 'join', from: h, ref: g['id'], text: "👥 @#{h} joined #{g['n'].to_s[0, 50]}")
+      end
+      reqs.delete(h) unless b['on']
+      b['on'] ? (m << h unless m.include?(h)) : (m.delete(h); (g['admins'] || []).delete(h) if g)
       { ok: true, members: m }
     end
   end
@@ -1888,7 +1923,7 @@ def mount_app(server)
       id = "g#{SecureRandom.hex(3)}"
       d['groups'][id] = { 'id' => id, 'n' => name, 'e' => b['e'].to_s[0, 4], 'd' => b['d'].to_s[0, 160],
                           'cat' => b['cat'].to_s[0, 20], 'owner' => h, 'created' => Time.now.utc.iso8601,
-                          'unreviewed' => !reviewed }
+                          'unreviewed' => !reviewed, 'priv' => !!b['priv'] }
       d['members'][id] = [h]
       { ok: true, group: d['groups'][id] }
     end
@@ -2353,7 +2388,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

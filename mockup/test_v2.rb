@@ -323,6 +323,78 @@ t('chat: deleting your account deletes your photos and voice notes') {
   cc.post('/api/account/delete', pw: 'password123', confirm: 'chat_c')
   check(before == 200 && ca.req(:get, j['msg']['aud']).first == 404 && !File.exist?(File.join($dir, 'data', 'dm', up['id'])), [before, up])
 }
+# ---- Facebook-Groups-style walls (groups.rb)
+$g = nil
+t('group wall: post with a photo, like, comment; members notified; non-members can read a public wall but not post') {
+  _, g = ca.post('/api/group/create', n: 'Wall Test Crew', d: 'testing', e: '🧪', cat: 'community')
+  $g = g['group']['id']
+  cb.post('/api/group/join', id: $g, on: true)
+  jpg = 'data:image/jpeg;base64,' + ['\xFF\xD8\xFF\xE0'.b + 'x' * 300].pack('m0')
+  _, p = ca.post('/api/group/post', id: $g, t: 'First post!', img: jpg)
+  $p = p['post']['id']
+  _, l = cb.post('/api/group/act', id: $g, pid: $p, do: 'like')
+  _, c = cb.post('/api/group/act', id: $g, pid: $p, do: 'comment', t: 'Welcome 👋')
+  _, n = cb.post('/api/notifs')
+  _, n2 = ca.post('/api/notifs')
+  _, feed = cz.post('/api/group/feed', id: $g)
+  no, = cz.post('/api/group/post', id: $g, t: 'hi')
+  img = cz.req(:get, p['post']['img']).first
+  check(p['post']['img'] =~ %r{\A/group-img/p[0-9a-f]{16}\.jpg\z} && l['post']['likes'] == 1 && l['post']['liked'] && c['post']['comments'].size == 1 &&
+        n['notifs'].any? { |x| x['t'] == 'group' && x['ref'] == "g:#{$g}" } && n2['notifs'].any? { |x| x['t'] == 'group' && x['text'].include?('commented') } &&
+        feed['posts'].size == 1 && feed['role'] == 'none' && no == 403 && img == 200, [p, l, feed['role'], no, img])
+}
+t('group poll: one vote each, change your vote, counts') {
+  _, p = ca.post('/api/group/post', id: $g, t: '', poll: { q: 'Which night?', opts: %w[Fri Sat Sun] })
+  pid = p['post']['id']
+  ca.post('/api/group/act', id: $g, pid: pid, do: 'vote', opt: 0)
+  cb.post('/api/group/act', id: $g, pid: pid, do: 'vote', opt: 0)
+  _, v = cb.post('/api/group/act', id: $g, pid: pid, do: 'vote', opt: 1)
+  bad, = ca.post('/api/group/post', id: $g, poll: { q: 'x', opts: ['only one'] })
+  o = v['post']['poll']['opts']
+  check(o.map { |x| x['n'] } == [1, 1, 0] && o[1]['mine'] && !o[0]['mine'] && bad == 400, [o, bad])
+}
+t('group event: time and place, going list, past times refused') {
+  at = (Time.now.to_f * 1000).to_i + 86_400_000
+  _, p = cb.post('/api/group/post', id: $g, t: 'Bring a ball', ev: { title: 'Sunday pickup', at: at, place: { name: 'Zilker Park', lat: 30.267, lng: -97.77 } })
+  _, gg = ca.post('/api/group/act', id: $g, pid: p['post']['id'], do: 'going', on: true)
+  old, = cb.post('/api/group/post', id: $g, ev: { title: 'Yesterday', at: at - 3 * 86_400_000 })
+  check(p['post']['ev']['place']['name'] == 'Zilker Park' && gg['post']['going'].sort == %w[chat_a chat_b] && old == 400, [p, gg, old])
+}
+t('group admins: pin, remove others\' posts and comments; members cannot') {
+  no, = cb.post('/api/group/admin', id: $g, do: 'pin', pid: $p, on: true)
+  ca.post('/api/group/post', id: $g, t: 'newer post')
+  _, ok = ca.post('/api/group/admin', id: $g, do: 'pin', pid: $p, on: true)
+  _, feed = cb.post('/api/group/feed', id: $g)
+  _, mine = cb.post('/api/group/post', id: $g, t: 'oops')
+  _, rm = ca.post('/api/group/admin', id: $g, do: 'remove', pid: mine['post']['id'])
+  _, feed2 = cb.post('/api/group/feed', id: $g)
+  check(no == 403 && ok['ok'] && feed['posts'][0]['id'] == $p && feed['posts'][0]['pinned'] && rm['ok'] &&
+        feed2['posts'].none? { |x| x['id'] == mine['post']['id'] }, [no, feed['posts'].map { |x| x['id'] }])
+}
+t('owner makes an admin; admins can remove members but not the owner') {
+  _, a = ca.post('/api/group/admin', id: $g, do: 'admin', who: 'chat_b', on: true)
+  cz.post('/api/group/join', id: $g, on: true)
+  _, k = cb.post('/api/group/admin', id: $g, do: 'kick', who: 'chat_z')
+  no, = cb.post('/api/group/admin', id: $g, do: 'kick', who: 'chat_a')
+  _, feed = ca.post('/api/group/feed', id: $g)
+  check(a['group']['admins'] == ['chat_b'] && k['ok'] && no == 403 && !feed['members'].include?('chat_z') && feed['admins'].include?('chat_b'), [a, k, no, feed['members']])
+}
+t('private group: join requests, admins approve, wall / members / photos hidden from outsiders') {
+  _, s = ca.post('/api/group/admin', id: $g, do: 'settings', priv: true, d: 'Now private', rules: ['Be kind', '', 'No selling'])
+  _, j = cz.post('/api/group/join', id: $g, on: true)
+  _, feed = cz.post('/api/group/feed', id: $g)
+  _, st = cz.get('/api/state')
+  img = cz.req(:get, (ca.post('/api/group/feed', id: $g)[1]['posts'].find { |x| x['img'] } || {})['img'].to_s).first
+  _, n = ca.post('/api/notifs')
+  _, rq = ca.post('/api/group/feed', id: $g)
+  _, ap = cb.post('/api/group/admin', id: $g, do: 'approve', who: 'chat_z')
+  _, feed2 = cz.post('/api/group/feed', id: $g)
+  gstate = st['groups'].find { |x| x['id'] == $g }
+  check(s['group']['priv'] && s['group']['rules'] == ['Be kind', 'No selling'] && j['requested'] && feed['locked'] && feed['posts'] == [] &&
+        st['members'][$g] == [] && gstate['mcount'] == 2 && gstate['req'] && img == 404 &&
+        n['notifs'].any? { |x| x['text'].include?('asked to join') } && rq['requests'] == ['chat_z'] && ap['ok'] &&
+        feed2['role'] == 'member' && feed2['posts'].size >= 3, [s['group'], j, feed, st['members'][$g], gstate, img, rq['requests'], feed2['role']])
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')

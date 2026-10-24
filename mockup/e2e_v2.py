@@ -184,12 +184,12 @@ with sync_playwright() as pw:
     # ---- group chat (members only)
     gid = b.evaluate("api('/api/group/create',{n:'V2 Test Runners',d:'Easy 5k loops',e:'🏃',cat:'sports'}).then(j=>j.group.id)")
     b.evaluate("loadState()"); b.wait_for_timeout(500)
-    b.evaluate(f"openGroup('{gid}')"); b.wait_for_selector("#gChatForm")
+    b.evaluate(f"openGroup('{gid}')"); b.click("[data-gtab='chat']"); b.wait_for_selector("#gChatForm")   # the chat has its own tab
     b.fill("#gChatIn", "Saturday 8am at the bridge?"); b.click("#gChatForm button")
     b.wait_for_function("document.querySelector('#gChat')?.innerText.includes('8am at the bridge')", timeout=40000)
     check("group chat: members can talk", True)
     a.evaluate("loadState()"); a.wait_for_timeout(500); a.evaluate(f"openGroup('{gid}')"); a.wait_for_timeout(500)
-    check("…non-members don't see the chat until they join", a.locator("#gChat").count() == 0)
+    check("…non-members don't see the chat until they join", a.locator("#gChat").count() == 0 and a.locator("[data-gtab='chat']").count() == 0)
     close_sheets(a); close_sheets(b)
 
     # ---- profile badges between friends

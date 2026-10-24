@@ -320,6 +320,14 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   Seen = `d['dm_read'][h][thread]` (POST `/api/dm/read`); typing is memory-only (`DM_TYPING`, 6 s). Thread poll 3 s
   redraws only `#thread` (`renderThreadMsgs`). Notification kind `dm` (mutable), push → `/?dm=<thread>`.
   Media files need a signed-in cookie. Tests in test_v2.rb ("chat: …", 9).
+- **🏘️ Group pages, Facebook-Groups-style** (`groups.rb`; client "A group's page"): cover photo, 🌐/🔒, Join / Ask to
+  join / Requested, Invite (a `group` card into chats), rules, tabs Posts · Events · Chat · Members · ⚙️ Manage.
+  Wall `d['gposts'][gid]`: text + photo (`/group-img/`, private groups' photos to members only), 📊 polls (2-6, one
+  vote each unless `multi`), 📅 events (time, place via the location picker `LOCF.gp`, going list), 👍 likes,
+  comments, 📌 pinned first. `/api/group/feed|post|act|admin`. Roles: owner + `g['admins']` pin/remove/approve/kick
+  and edit (about, rules, privacy, cover); only the owner picks admins. Private (`g['priv']`): join → `d['greqs']`,
+  outsiders see name/count/friends in it only (state hides members, `mcount`; private groups' flares stay inside).
+  Notification kind `group`. Report kind `gpost`. Tests in test_v2.rb (6); demo groups keep the simple page.
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra

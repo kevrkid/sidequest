@@ -570,7 +570,25 @@
   .dmrow.unread b{color:var(--text)} .dmrow.unread .meta{color:var(--text);font-weight:600}
   .dmn{background:var(--accent2);color:#fff;border-radius:99px;font-size:11px;font-weight:800;min-width:20px;height:20px;display:grid;place-items:center;padding:0 5px}
   .gav{position:relative;flex:none;width:38px;height:34px} .gav .av{position:absolute;width:25px;height:25px;font-size:11px;border:2px solid var(--panel)} .gav .av:first-child{top:0;left:0} .gav .av:nth-child(2){bottom:0;right:0}
-  .pprow.on{background:var(--panel2)} .chk{color:var(--accent2);font-weight:800;width:20px}
+  .pprow.on{background:var(--panel2)}
+  /* group pages */
+  .gcover{position:relative;height:130px;margin:-18px -16px 0;border-radius:22px 22px 0 0;background-size:cover;background-position:center;display:grid;place-items:center}
+  .gce{font-size:52px;filter:drop-shadow(0 4px 12px #0006)} .gcx{position:absolute;top:12px;right:12px;background:#000a}
+  .gtabs .chip{flex:none} .gcomp textarea{flex:1;margin:0;resize:vertical;min-height:44px}
+  .gpimg{position:relative;margin-top:8px} .gpimg img{width:100%;max-height:260px;object-fit:cover;border-radius:12px} .gpimg button{position:absolute;top:6px;right:6px}
+  .gpoll,.gpev{display:flex;flex-direction:column;gap:6px;margin-top:8px} .gpoll input,.gpev input{margin:0}
+  .btn.on{border-color:var(--accent2);color:var(--accent2)}
+  .gpphoto{display:block;width:calc(100% + 28px);margin:8px -14px;max-height:420px;object-fit:cover}
+  .gpevent{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:12px;padding:10px;margin-top:8px}
+  .gpdate{flex:none;width:46px;text-align:center;background:var(--panel);border-radius:10px;padding:4px 0} .gpdate b{display:block;font-size:11px;color:#ff5470;text-transform:uppercase} .gpdate span{font-size:20px;font-weight:800}
+  .gppoll{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+  .gpopt{position:relative;display:flex;gap:8px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:9px 10px;overflow:hidden;font:inherit}
+  .gpopt .bar{position:absolute;left:0;top:0;bottom:0;background:#2e7cf633;z-index:0} .gpopt>*{position:relative} .gpopt.mine{border-color:var(--accent2)}
+  .gpbar{display:flex;border-top:1px solid var(--line);margin-top:10px;padding-top:4px} .gpbar button{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-weight:700;padding:6px} .gpbar button.on{color:var(--accent2)}
+  .gpcoms{display:flex;flex-direction:column;gap:8px;margin-top:6px} .gpc{display:flex;gap:8px;font-size:14px} .gpc .grow{background:var(--panel2);border-radius:12px;padding:6px 10px}
+  .gpcform{gap:6px;margin-top:8px} .gpcform input{margin:0;flex:1}
+  .linkish{background:none;border:0;color:var(--muted);font:inherit;font-size:12px;padding:0;text-decoration:underline;cursor:pointer}
+  .grules{margin:8px 0 0;padding-left:20px;font-size:14px} .chk{color:var(--accent2);font-weight:800;width:20px}
   .dot-unread{width:9px;height:9px;border-radius:50%;background:var(--accent2);flex:none}
 
   /* feed */
@@ -1656,31 +1674,210 @@ const membersOf = id => [...new Set([...(groupOf(id)?.m||[]), ...(SV.members[id]
 const isMember = id => membersOf(id).includes(S.me.h);
 async function joinGroup(id, on){
   if(needAccount('join groups')) return;
-  if(SV.on){ try{ SV.members[id]=(await api('/api/group/join',{id,on})).members; }catch(e){ return toast(esc(e.message),'orange'); } }
+  if(SV.on){ try{ const j=await api('/api/group/join',{id,on}); SV.members[id]=j.members;
+      const g=SV.groups.find(x=>x.id===id); if(g){ g.req=on&&!!j.requested; g.mcount=j.requested?g.mcount:j.members.length; }
+      if(j.requested){ if(!$('#groupBg').hidden) openGroup(id); return toast(`🔒 Asked to join <b>${esc(groupOf(id).n)}</b>. An admin will let you in.`,'green',[],3500); } }
+    catch(e){ return toast(esc(e.message),'orange'); } }
   else { S.joined=S.joined.filter(x=>x!==id).concat(on?[id]:[]); save(); }
   if(on) logAct('group',{c:groupOf(id)?.cat});
-  renderSocial(); renderMeet(); if(!$('#groupBg').hidden) openGroup(id);
+  renderSocial(); renderMeet(); if(!$('#groupBg').hidden){ GRP.data=null; openGroup(id); }
   toast(on?`🏘️ You joined <b>${esc(groupOf(id).n)}</b>. Their posts show up in your feed.`:`Left ${esc(groupOf(id).n)}.`,on?'green':'',[],3000);
 }
-function openGroup(id){
-  const g=groupOf(id), m=membersOf(id), member=isMember(id), aff=affinity(), hc=Object.fromEntries(historySummary().cats);
-  const posts=allPings().filter(p=>p.group===id).sort((a,b)=>a.start-b.start);
-  const evs=EV.list.filter(e=>e.cat===g.cat&&e.te>Date.now()&&e.ts<Date.now()+14*864e5).map(e=>({e,...scoreEvent(e,aff,hc)})).sort((a,b)=>b.s-a.s).slice(0,4);
-  $('#groupSheet').innerHTML = `<div class="row"><span class="cat">${esc(g.e||'🏘️')}</span><div class="grow"><b style="font-size:18px">${esc(g.n)}</b>
-      <div class="meta">${CATS[g.cat]?.e||''} ${CATS[g.cat]?.l||''} · ${m.length} member${m.length===1?'':'s'}</div></div>
-      ${g.owner?`<button class="btn sm" data-more="group|${g.id}|" aria-label="Report group" style="padding:4px 9px">⋯</button>`:''}<button class="btn sm" data-gclose>Close</button></div>
-    <p style="margin:12px 0">${esc(g.d||'')}</p>
-    <div class="downs" style="margin-bottom:12px">${m.slice(0,8).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:8px">${esc(list(m.filter(isFriend).slice(0,2)))||''}${m.some(isFriend)?' and others':''}</span></div>
-    <div class="btns">${member?`<button class="btn primary" data-gpost="${id}">📣 Post to the group</button><button class="btn" data-gjoin="${id}" data-on="0">Leave</button>`
-      :`<button class="btn primary" data-gjoin="${id}" data-on="1">Join group</button>`}</div>
-    ${(()=>{ const r=storyRail(id); return r?`<h3>Stories</h3>${r}`:''; })()}
-    ${member&&SV.groups.some(x=>x.id===id)&&AUTHED?`<h3>💬 ${T('Group chat')}</h3><div id="gChat" class="evchat"><p class="meta">${T('Loading…')}</p></div>
-      <form class="row" id="gChatForm" data-gid="${id}" style="gap:6px;margin-top:8px"><input id="gChatIn" maxlength="400" placeholder="${T('Say something to the group…')}" autocomplete="off" style="flex:1"><button class="btn primary" type="submit">${T('Send')}</button></form>`:''}
-    <h3>Group posts</h3>${posts.map(p=>pingCard(p)).join('')||'<p class="meta">No posts yet. Be the first to plan something.</p>'}
-    ${evs.length?`<h3>${CATS[g.cat].e} Coming up around town</h3>${evs.map(x=>eventCard(x.e,x.r)).join('')}`:''}`;
-  $('#groupBg').hidden=false;
-  if($('#gChat')) loadGroupChat(id);
+/* A group's page, Facebook-Groups-style: cover and join button on top, then Posts (a wall with photos, polls and
+   group events, likes and comments, pinned first), Events, Chat, Members, and ⚙️ Manage for admins (join
+   requests, admins, description, rules, privacy, cover). Demo groups (no server) keep the simpler page. */
+const GRP = {id:null, tab:'posts', data:null, kind:'text', img:null, opts:['',''], open:{}, busy:false};
+const gCount = g => g.mcount ?? membersOf(g.id).length;
+function openGroup(id, tabName){
+  const g=groupOf(id); if(!g) return;
+  if(GRP.id!==id){ Object.assign(GRP,{id, tab:'posts', data:null, kind:'text', img:null, opts:['',''], open:{}}); }
+  if(tabName) GRP.tab=tabName;
+  renderGroupPage(); $('#groupBg').hidden=false; $('#groupSheet').scrollTop=0;
+  if(SV.on&&AUTHED&&SV.groups.some(x=>x.id===id)) loadGroupFeed(id);
 }
+async function loadGroupFeed(id){
+  try{ const j=await api('/api/group/feed',{id}); if(GRP.id!==id) return; GRP.data=j; const g=SV.groups.find(x=>x.id===id); if(g) Object.assign(g,j.group,{mcount:j.mcount}); }
+  catch(e){ GRP.data={error:e.message}; }
+  if(GRP.id===id&&!$('#groupBg').hidden) renderGroupPage();
+}
+const gRole = () => GRP.data?.role || (isMember(GRP.id)?'member':'none');
+const gAdmin = () => ['owner','admin'].includes(gRole());
+function renderGroupPage(){
+  const id=GRP.id, g=groupOf(id), m=membersOf(id), role=gRole(), member=['owner','admin','member'].includes(role)||(!GRP.data&&isMember(id));
+  const real=SV.groups.some(x=>x.id===id), locked=GRP.data?.locked||(g.priv&&!member), reqs=GRP.data?.requests||[];
+  const cover=g.cover?`background-image:url('${esc(g.cover)}')`:`background:${STORY_BGS[hash(id)%STORY_BGS.length]}`;
+  const tabs=[['posts','Posts'],['events','Events'],...(member&&real&&AUTHED?[['chat','Chat']]:[]),['members','Members'],...(gAdmin()?[['manage','⚙️ Manage'+(reqs.length?` (${reqs.length})`:'')]]:[])];
+  let body='';
+  if(locked) body=`<div class="card" style="text-align:center;padding:26px 14px"><div style="font-size:34px">🔒</div><b>${T('This group is private')}</b>
+      <p class="meta">${T('Only members see who is in it and what they post.')}${m.length?` ${esc(list(m.slice(0,2)))} ${m.length>1?'are':'is'} in it.`:''}</p></div>`;
+  else if(GRP.tab==='posts') body=gPostsHtml(member,real);
+  else if(GRP.tab==='events') body=gEventsHtml(member,real);
+  else if(GRP.tab==='chat') body=`<div id="gChat" class="evchat"><p class="meta">${T('Loading…')}</p></div>
+      <form class="row" id="gChatForm" data-gid="${id}" style="gap:6px;margin-top:8px"><input id="gChatIn" maxlength="400" placeholder="${T('Say something to the group…')}" autocomplete="off" style="flex:1"><button class="btn primary" type="submit">${T('Send')}</button></form>`;
+  else if(GRP.tab==='members') body=gMembersHtml();
+  else if(GRP.tab==='manage') body=gManageHtml();
+  $('#groupSheet').innerHTML=`<div class="gcover" style="${cover}"><span class="gce">${g.cover?'':esc(g.e||'🏘️')}</span>
+      <button class="btn sm gcx" data-gclose aria-label="Close">✕</button></div>
+    <div class="row" style="margin-top:10px;align-items:flex-start"><div class="grow"><b style="font-size:20px">${esc(g.n)}</b>
+      <div class="meta">${g.priv?'🔒 Private':'🌐 Public'} group · ${gCount(g)} member${gCount(g)===1?'':'s'}${CATS[g.cat]?' · '+CATS[g.cat].e+' '+CATS[g.cat].l:''}</div></div>
+      ${g.owner?`<button class="btn sm" data-more="group|${g.id}|" aria-label="Report group" style="padding:4px 9px">⋯</button>`:''}</div>
+    ${g.d?`<p style="margin:8px 0">${esc(g.d)}</p>`:''}
+    <div class="downs" style="margin:6px 0 10px">${m.slice(0,8).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:8px">${m.some(isFriend)?esc(list(m.filter(isFriend).slice(0,2)))+(m.filter(isFriend).length>2?' and others':'')+' '+(m.filter(isFriend).length>1?'are':'is')+' here':''}</span></div>
+    <div class="btns">${member?`<button class="btn sm" data-gjoin="${id}" data-on="0">✓ ${T('Joined')} · ${T('Leave')}</button>`
+        :role==='requested'||g.req?`<button class="btn sm" disabled>⏳ ${T('Requested')}</button>`
+        :`<button class="btn primary" data-gjoin="${id}" data-on="1">${g.priv?'🔒 '+T('Ask to join'):T('Join group')}</button>`}
+      ${member?`<button class="btn sm" data-gpost="${id}">📣 ${T('Make a plan')}</button>`:''}${real?`<button class="btn sm" data-gsend="${id}">💬 ${T('Invite')}</button>`:''}</div>
+    ${g.rules?.length&&!locked?`<details class="lcat" style="margin-top:10px"><summary><b>📜 ${T('Group rules')}</b></summary><ol class="grules">${g.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ol></details>`:''}
+    ${locked?'':`<div class="chiprow gtabs" style="margin-top:12px">${tabs.map(([k,l])=>`<button class="chip ${GRP.tab===k?'on':''}" data-gtab="${k}">${l}</button>`).join('')}</div>`}
+    <div id="gBody">${body}</div>`;
+  if(GRP.tab==='chat'&&$('#gChat')) loadGroupChat(id);
+}
+function gComposerHtml(){
+  const k=GRP.kind;
+  return `<div class="card gcomp"><div class="row">${av(S.me.h)}<textarea id="gpText" rows="2" maxlength="2000" placeholder="${k==='poll'?T('Ask the group something…'):k==='event'?T('What is it? Any details…'):T('Write something to the group…')}"></textarea></div>
+    ${GRP.img?`<div class="gpimg"><img src="${GRP.img}" alt=""><button class="btn sm" data-gpnoimg>✕</button></div>`:''}
+    ${k==='poll'?`<div class="gpoll">${GRP.opts.map((o,i)=>`<input data-gpopt="${i}" maxlength="60" placeholder="${T('Choice')} ${i+1}" value="${esc(o)}" autocomplete="off">`).join('')}
+      ${GRP.opts.length<6?`<button class="btn sm" data-gpaddopt>+ ${T('Add a choice')}</button>`:''}</div>`:''}
+    ${k==='event'?`<div class="gpev"><input id="gpEvT" maxlength="80" placeholder="${T('Event name, e.g. Sunday pickup at Zilker')}" autocomplete="off">
+      <input id="gpEvAt" type="datetime-local"><div id="loc-gp">${locFieldHtml('gp')}</div></div>`:''}
+    <div class="row" style="margin-top:8px;gap:6px"><button class="btn sm ${k==='text'&&!GRP.img?'':''}" data-gpphoto>📷 ${T('Photo')}</button>
+      <button class="btn sm ${k==='poll'?'on':''}" data-gpkind="poll">📊 ${T('Poll')}</button><button class="btn sm ${k==='event'?'on':''}" data-gpkind="event">📅 ${T('Event')}</button>
+      <span class="grow"></span><button class="btn primary sm" data-gpsend>${T('Post')}</button></div>
+    <input type="file" id="gpFile" accept="image/*" hidden></div>`;
+}
+function gPostCard(p){
+  const me=S.me.h, admin=gAdmin(), cs=p.comments||[], showAll=GRP.open[p.id], ev=p.ev;
+  const total=p.poll?p.poll.opts.reduce((a,o)=>a+o.n,0):0;
+  return `<div class="card gpost" id="gp-${esc(p.id)}">
+    <div class="row">${av(p.u)}<div class="grow"><button class="handle" data-profile="${esc(p.u)}">@${esc(p.u)}</button>${(GRP.data?.admins||[]).includes(p.u)?' <span class="badge">admin</span>':''}
+      <div class="meta">${p.pinned?'📌 Pinned · ':''}${agoT(p.at)}</div></div>
+      ${p.u===me||admin?`<button class="btn sm" data-gpmenu="${esc(p.id)}" style="padding:4px 9px">⋯</button>`:`<button class="btn sm" data-more="gpost|${esc(p.id)}|${esc(p.u)}" style="padding:4px 9px">⋯</button>`}</div>
+    ${GRP.open['m'+p.id]?`<div class="btns" style="margin:6px 0">${admin?`<button class="btn sm" data-gppin="${esc(p.id)}">${p.pinned?'Unpin':'📌 Pin to top'}</button>`:''}
+      <button class="btn sm" data-gpdel="${esc(p.id)}" style="color:#ff5470">🗑️ ${T('Delete post')}</button></div>`:''}
+    ${p.t?`<div class="ptext" style="white-space:pre-wrap">${esc(p.t)}</div>`:''}
+    ${p.img?`<img class="gpphoto" src="${esc(p.img)}" alt="" loading="lazy">`:''}
+    ${ev?`<div class="gpevent"><div class="gpdate"><b>${new Date(ev.at).toLocaleDateString([],{month:'short'})}</b><span>${new Date(ev.at).getDate()}</span></div>
+      <div class="grow"><b>${esc(ev.title)}</b><div class="meta">${esc(fmtWhen(ev.at))}${ev.place?` · <button class="placetag" data-gpplace="${esc(p.id)}">📍 ${esc(ev.place.name)}</button>`:''}</div>
+      <div class="meta">${(p.going||[]).length} going${(p.going||[]).some(isFriend)?' · '+esc(list((p.going||[]).filter(isFriend).slice(0,2))):''}</div></div>
+      <button class="btn sm ${(p.going||[]).includes(me)?'down-on':'primary'}" data-gpgoing="${esc(p.id)}">${(p.going||[]).includes(me)?"✓ Going":"Going"}</button></div>`:''}
+    ${p.poll?`<div class="gppoll"><b>📊 ${esc(p.poll.q)}</b>${p.poll.opts.map((o,i)=>{ const pc=total?Math.round(o.n*100/total):0;
+      return `<button class="gpopt ${o.mine?'mine':''}" data-gpvote="${esc(p.id)}|${i}"><span class="bar" style="width:${pc}%"></span><span class="grow">${o.mine?'✓ ':''}${esc(o.t)}</span><span class="meta">${o.n?`${pc}% · ${o.n}`:''}</span></button>`; }).join('')}
+      <div class="meta">${total} vote${total===1?'':'s'}</div></div>`:''}
+    <div class="gpbar"><button data-gplike="${esc(p.id)}" class="${p.liked?'on':''}">👍 ${p.likes||''} ${T('Like')}</button><button data-gpcom="${esc(p.id)}">💬 ${cs.length||''} ${T('Comment')}</button></div>
+    ${cs.length?`<div class="gpcoms">${cs.length>3&&!showAll?`<button class="meta linkish" data-gpall="${esc(p.id)}">${T('View all {n} comments',{n:cs.length})}</button>`:''}
+      ${(showAll?cs:cs.slice(-3)).map(c=>`<div class="gpc">${av(c.u,'sm')}<div class="grow"><b>@${esc(c.u)}</b> ${esc(c.t)}<div class="meta">${agoT(c.at)}${c.u===me||admin?` · <button class="linkish" data-gpuncom="${esc(p.id)}|${esc(c.id)}">${T('Remove')}</button>`:''}</div></div></div>`).join('')}</div>`:''}
+    ${GRP.open['c'+p.id]||cs.length?`<form class="row gpcform" data-gpcform="${esc(p.id)}"><input maxlength="600" placeholder="${T('Write a comment…')}" autocomplete="off"><button class="btn sm blue">${T('Send')}</button></form>`:''}
+  </div>`;
+}
+function gPostsHtml(member, real){
+  const id=GRP.id, posts=allPings().filter(p=>p.group===id).sort((a,b)=>a.start-b.start);
+  if(!real) return `${(()=>{ const r=storyRail(id); return r?`<h3>Stories</h3>${r}`:''; })()}<h3>Plans</h3>${posts.map(p=>pingCard(p)).join('')||'<p class="meta">No posts yet.</p>'}`;
+  const d=GRP.data, wall=d?.posts||[];
+  return `${member&&AUTHED?gComposerHtml():''}
+    ${(()=>{ const r=storyRail(id); return r?`<h3>Stories</h3>${r}`:''; })()}
+    ${posts.length?`<h3>📣 Plans happening</h3>${posts.map(p=>pingCard(p)).join('')}`:''}
+    ${d?.error?`<p class="meta">${esc(d.error)}</p>`:!d?`<p class="meta">${T('Loading…')}</p>`:wall.map(gPostCard).join('')||`<div class="card meta" style="text-align:center">${T('No posts yet. Say hi, share a photo, or start a poll.')}</div>`}`;
+}
+function gEventsHtml(member, real){
+  const g=groupOf(GRP.id), now=Date.now(), aff=affinity(), hc=Object.fromEntries(historySummary().cats);
+  const mine=(GRP.data?.posts||[]).filter(p=>p.ev&&p.ev.at>now-3*36e5).sort((a,b)=>a.ev.at-b.ev.at);
+  const evs=EV.list.filter(e=>e.cat===g.cat&&e.te>now&&e.ts<now+14*864e5).map(e=>({e,...scoreEvent(e,aff,hc)})).sort((a,b)=>b.s-a.s).slice(0,6);
+  return `${member&&real&&AUTHED?`<button class="btn primary" data-gpnewev style="width:100%;margin-bottom:8px">📅 ${T('Plan a group event')}</button>`:''}
+    <h3>📅 ${T('Group events')}</h3>${mine.map(gPostCard).join('')||`<p class="meta">${T('Nothing planned yet.')}</p>`}
+    ${evs.length?`<h3>${CATS[g.cat]?.e||''} ${T('Coming up around town')}</h3>${evs.map(x=>eventCard(x.e,x.r)).join('')}`:''}`;
+}
+function gMembersHtml(){
+  const d=GRP.data, ms=d?.members||membersOf(GRP.id), admins=d?.admins||[groupOf(GRP.id).owner].filter(Boolean), me=S.me.h, role=gRole();
+  const sorted=[...ms].sort((a,b)=>(admins.includes(b)-admins.includes(a))||(isFriend(b)-isFriend(a)));
+  return sorted.map(h=>`<div class="pprow" style="cursor:default">${av(h,'sm')}<span class="grow"><button class="handle" data-profile="${esc(h)}">@${esc(h)}</button>
+      <small>${h===groupOf(GRP.id).owner?'⭐ Started the group':admins.includes(h)?'⭐ Admin':isFriend(h)?'Friend':''}</small></span>
+      ${role==='owner'&&h!==me?`<button class="btn sm" data-gadmin="${esc(h)}" data-on="${admins.includes(h)?0:1}">${admins.includes(h)?T('Remove admin'):T('Make admin')}</button>`:''}
+      ${gAdmin()&&h!==me&&h!==groupOf(GRP.id).owner&&(role==='owner'||!admins.includes(h))?`<button class="btn sm" data-gkick="${esc(h)}" style="color:#ff5470">${T('Remove')}</button>`:''}</div>`).join('');
+}
+function gManageHtml(){
+  const g=groupOf(GRP.id), reqs=GRP.data?.requests||[];
+  return `<h3>🔒 ${T('Join requests')}</h3>${reqs.map(h=>`<div class="pprow" style="cursor:default">${av(h,'sm')}<span class="grow"><button class="handle" data-profile="${esc(h)}">@${esc(h)}</button>${isFriend(h)?'<small>Your friend</small>':''}</span>
+      <button class="btn sm primary" data-greq="${esc(h)}" data-ok="1">${T('Approve')}</button><button class="btn sm" data-greq="${esc(h)}" data-ok="0">${T('Decline')}</button></div>`).join('')||`<p class="meta">${g.priv?T('No one waiting.'):T('Public group: people join straight away.')}</p>`}
+    <h3>⚙️ ${T('Settings')}</h3>
+    <label class="lbl">${T('About')}</label><textarea id="gsD" rows="3" maxlength="300">${esc(g.d||'')}</textarea>
+    <label class="lbl">${T('Rules (one per line)')}</label><textarea id="gsR" rows="3" maxlength="1400" placeholder="Be kind&#10;No selling">${esc((g.rules||[]).join('\n'))}</textarea>
+    <label class="lbl">${T('Who can see posts')}</label>${segHtml('gsPriv',[['0','🌐 Public: anyone'],['1','🔒 Private: members only']],g.priv?'1':'0')}
+    <label class="lbl">${T('Cover photo')}</label><div class="btns"><button class="btn sm" data-gscover>📷 ${g.cover?T('Change'):T('Add a cover')}</button>${g.cover?`<button class="btn sm" data-gsnocover>${T('Remove')}</button>`:''}</div>
+    <input type="file" id="gsFile" accept="image/*" hidden>
+    <button class="btn primary" data-gssave style="width:100%;margin-top:14px">${T('Save changes')}</button>`;
+}
+async function gAct(body){   // like / comment / vote / going: swap in the updated post
+  try{ const j=await api('/api/group/act',{id:GRP.id,...body}); const l=GRP.data?.posts||[], i=l.findIndex(p=>p.id===j.post.id); if(i>=0) l[i]=j.post; renderGBody(); return j; }
+  catch(e){ toast(esc(e.message),'orange'); }
+}
+async function gAdminDo(body, ok){
+  try{ const j=await api('/api/group/admin',{id:GRP.id,...body}); const g=SV.groups.find(x=>x.id===GRP.id); if(g&&j.group) Object.assign(g,j.group); if(ok) toast(ok,'green',[],1800); await loadGroupFeed(GRP.id); return j; }
+  catch(e){ toast(esc(e.message),'orange'); }
+}
+function renderGBody(){   // just the tab, so a half-typed post or comment elsewhere isn't lost
+  const el=$('#gBody'); if(!el) return renderGroupPage();
+  const keep={}; el.querySelectorAll('[data-gpcform] input').forEach(i=>{ if(i.value) keep[i.closest('form').dataset.gpcform]=i.value; });
+  const t=$('#gpText')?.value; const real=SV.groups.some(x=>x.id===GRP.id), member=['owner','admin','member'].includes(gRole());
+  if(GRP.tab==='posts') el.innerHTML=gPostsHtml(member,real); else if(GRP.tab==='events') el.innerHTML=gEventsHtml(member,real);
+  else if(GRP.tab==='members') el.innerHTML=gMembersHtml(); else if(GRP.tab==='manage') el.innerHTML=gManageHtml(); else return;
+  Object.entries(keep).forEach(([pid,v])=>{ const i=el.querySelector(`[data-gpcform="${pid}"] input`); if(i) i.value=v; }); if(t&&$('#gpText')) $('#gpText').value=t;
+}
+async function gSendPost(btn){
+  const t=($('#gpText')?.value||'').trim(), body={id:GRP.id, t};
+  if(GRP.img) body.img=GRP.img;
+  if(GRP.kind==='poll'){ const opts=[...document.querySelectorAll('[data-gpopt]')].map(i=>i.value.trim()).filter(Boolean); if(!t) return toast('Write the question first.','orange'); if(opts.length<2) return toast('Add at least 2 choices.','orange'); body.poll={q:t,opts}; body.t=''; }
+  if(GRP.kind==='event'){ const title=($('#gpEvT')?.value||'').trim(), at=Date.parse($('#gpEvAt')?.value||''); if(!title) return toast('Name the event.','orange'); if(!(at>Date.now())) return toast('Pick a date and time in the future.','orange');
+    body.ev={title, at, place:GRP.place||null}; }
+  btn.disabled=true; btn.textContent=T('Posting…');
+  try{ const j=await api('/api/group/post',body); (GRP.data.posts ||= []).unshift(j.post); Object.assign(GRP,{kind:'text', img:null, opts:['',''], place:null});
+    if(GRP.data.posts.some(p=>p.pinned)) GRP.data.posts.sort((a,b)=>(!!b.pinned-!!a.pinned)||b.at-a.at);
+    renderGroupPage(); toast(`🏘️ ${T('Posted to the group.')}`,'green',[],2000); }
+  catch(e){ btn.disabled=false; btn.textContent=T('Post'); toast(esc(e.message),'orange'); }
+}
+document.addEventListener('click',e=>{   // the group sheet's two on/off pickers (privacy when starting a group, and in Manage)
+  const sb=e.target.closest('#gsPriv button,#ngPriv button'); if(!sb) return;
+  sb.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===sb));
+});
+document.addEventListener('click',async e=>{
+  if(!e.target.closest('#groupSheet')) return;
+  const b=e.target.closest('[data-gtab],[data-gpkind],[data-gpphoto],[data-gpnoimg],[data-gpaddopt],[data-gpsend],[data-gplike],[data-gpcom],[data-gpall],[data-gpvote],[data-gpgoing],[data-gpmenu],[data-gppin],[data-gpdel],[data-gpuncom],[data-gpplace],[data-gpnewev],[data-greq],[data-gadmin],[data-gkick],[data-gssave],[data-gscover],[data-gsnocover],[data-gsend]');
+  if(!b) return; const d=b.dataset; e.stopPropagation();
+  if(d.gtab){ GRP.tab=d.gtab; return renderGroupPage(); }
+  if(d.gpkind){ const t=$('#gpText')?.value; GRP.kind=GRP.kind===d.gpkind?'text':d.gpkind; renderGBody(); if(t&&$('#gpText')) $('#gpText').value=t; return; }
+  if(d.gpphoto!==undefined) return $('#gpFile').click();
+  if(d.gpnoimg!==undefined){ GRP.img=null; return renderGBody(); }
+  if(d.gpaddopt!==undefined){ GRP.opts=[...document.querySelectorAll('[data-gpopt]')].map(i=>i.value); GRP.opts.push(''); return renderGBody(); }
+  if(d.gpsend!==undefined) return gSendPost(b);
+  if(d.gplike) return gAct({pid:d.gplike, do:'like'});
+  if(d.gpcom){ GRP.open['c'+d.gpcom]=true; renderGBody(); return $(`[data-gpcform="${d.gpcom}"] input`)?.focus(); }
+  if(d.gpall){ GRP.open[d.gpall]=true; return renderGBody(); }
+  if(d.gpvote){ const [pid,i]=d.gpvote.split('|'); return gAct({pid, do:'vote', opt:+i}); }
+  if(d.gpgoing){ const p=(GRP.data?.posts||[]).find(x=>x.id===d.gpgoing); return gAct({pid:d.gpgoing, do:'going', on:!(p?.going||[]).includes(S.me.h)}); }
+  if(d.gpmenu){ GRP.open['m'+d.gpmenu]=!GRP.open['m'+d.gpmenu]; return renderGBody(); }
+  if(d.gppin){ GRP.open['m'+d.gppin]=false; const p=(GRP.data?.posts||[]).find(x=>x.id===d.gppin); return gAdminDo({do:'pin', pid:d.gppin, on:!p?.pinned}, p?.pinned?'Unpinned.':'📌 Pinned to the top.'); }
+  if(d.gpdel){ if(!confirm('Delete this post?')) return; return gAdminDo({do:'remove', pid:d.gpdel}, 'Post deleted.'); }
+  if(d.gpuncom){ const [pid,cid]=d.gpuncom.split('|'); return gAct({pid, do:'uncomment', cid}); }
+  if(d.gpplace){ const p=(GRP.data?.posts||[]).find(x=>x.id===d.gpplace); if(p?.ev?.place) openSpot(p.ev.place); return; }
+  if(d.gpnewev!==undefined){ GRP.tab='posts'; GRP.kind='event'; renderGroupPage(); return $('#gpText')?.scrollIntoView({block:'center'}); }
+  if(d.greq) return gAdminDo({do:d.ok==='1'?'approve':'decline', who:d.greq}, d.ok==='1'?`✅ @${esc(d.greq)} is in.`:'Declined.');
+  if(d.gadmin) return gAdminDo({do:'admin', who:d.gadmin, on:d.on==='1'}, d.on==='1'?`⭐ @${esc(d.gadmin)} is an admin.`:'Admin removed.');
+  if(d.gkick){ if(!confirm(`Remove @${d.gkick} from the group?`)) return; return gAdminDo({do:'kick', who:d.gkick}, 'Removed.'); }
+  if(d.gscover!==undefined) return $('#gsFile').click();
+  if(d.gsnocover!==undefined) return gAdminDo({do:'settings', cover:''}, 'Cover removed.');
+  if(d.gssave!==undefined) return gAdminDo({do:'settings', d:$('#gsD').value, rules:$('#gsR').value.split('\n'), priv:segVal('gsPriv')==='1'}, '✓ Saved.');
+  if(d.gsend){ const g=groupOf(d.gsend); return sendToChat({k:'group',id:g.id,name:g.n,sub:`${g.priv?'🔒 Private':'🌐 Public'} group · ${gCount(g)} members`,e:g.e||'🏘️'}); }
+}, true);
+document.addEventListener('submit',e=>{
+  const f=e.target.closest('[data-gpcform]'); if(!f) return; e.preventDefault();
+  const i=f.querySelector('input'), t=i.value.trim(); if(!t) return; i.value='';
+  gAct({pid:f.dataset.gpcform, do:'comment', t}).then(j=>{ if(!j) i.value=t; });
+});
+document.addEventListener('change',async e=>{
+  if(e.target.id==='gpFile'){ const f=e.target.files[0]; e.target.value=''; if(!f) return; try{ GRP.img=await shrinkImage(f,1400,.8); const t=$('#gpText')?.value; renderGBody(); if(t) $('#gpText').value=t; }catch(err){ toast("Couldn't read that photo.",'orange'); } }
+  if(e.target.id==='gsFile'){ const f=e.target.files[0]; e.target.value=''; if(!f) return; try{ gAdminDo({do:'settings', cover:await shrinkImage(f,1400,.8)}, '✓ Cover updated.'); }catch(err){ toast("Couldn't read that photo.",'orange'); } }
+});
+document.addEventListener('input',e=>{ if(e.target.dataset?.gpopt!==undefined) GRP.opts[+e.target.dataset.gpopt]=e.target.value; });
+
 const chatMsg = m => `<div class="evmsg ${m.u===S.me.h?'me':''}">${av(m.u,'sm')}<div class="grow"><b>@${esc(m.u)}</b> <span class="meta">${agoT(m.at)}</span><div>${esc(m.t)}</div></div>${m.u===S.me.h?'':`<button class="msgmore" data-more="chat|${esc(m.id)}|${esc(m.u)}" aria-label="${T('Report or block')}">⋯</button>`}</div>`;
 const chatHtml = msgs => msgs.length?msgs.map(chatMsg).join('')
   :`<p class="meta">${T('No one has said anything yet. Start it off!')}</p>`;
@@ -1689,9 +1886,9 @@ async function loadGroupChat(id, text){
   try{ const j=await api('/api/group/chat',text?{id,text}:{id}); if(el()){ el().innerHTML=chatHtml(j.msgs); el().scrollTop=1e6; } }
   catch(e){ if(text) toast(esc(e.message),'orange'); else if(el()) el().innerHTML=`<p class="meta">${esc(e.message)}</p>`; }
 }
-const groupCard = (g, mine) => { const m=membersOf(g.id), fr=m.filter(isFriend);
+const groupCard = (g, mine) => { const m=membersOf(g.id), fr=m.filter(isFriend), n=gCount(g);
   return `<div class="card row" style="cursor:pointer" data-gopen="${g.id}"><span class="cat">${esc(g.e||'🏘️')}</span>
-    <div class="grow"><b>${esc(g.n)}</b><div class="meta">${m.length} member${m.length===1?'':'s'}${fr.length?` · ${esc(list(fr.slice(0,2)))} ${fr.length>1?'are':'is'} in it`:''} · ${esc(CATS[g.cat]?.l||'')}</div></div>
+    <div class="grow"><b>${esc(g.n)}</b><div class="meta">${g.priv?'🔒 ':''}${n} member${n===1?'':'s'}${fr.length?` · ${esc(list(fr.slice(0,2)))} ${fr.length>1?'are':'is'} in it`:''} · ${esc(CATS[g.cat]?.l||'')}</div></div>
     ${mine?'<span class="badge live">joined</span>':`<button class="btn sm primary" data-gjoin="${g.id}" data-on="1">Join</button>`}</div>`; };
 
 /* ---------- the feed: one ranked, filterable list of events, flares, people and groups ---------- */
@@ -2603,7 +2800,7 @@ function groupsHtml(){
   const q=meetQ, hit=g=>qHit(q,g.n,g.d,CATS[g.cat]?.l), mine=allGroups().filter(g=>isMember(g.id)&&hit(g)), sec=!q&&groupsSec!=null&&SECTIONS[groupsSec];
   const browse=allGroups().filter(g=>!isMember(g.id)&&(!sec||sec.cats.includes(g.cat))&&hit(g));
   const small = g => `<div class="card row" style="cursor:pointer;margin-bottom:8px;padding:10px" data-gopen="${g.id}"><span class="cat" style="width:36px;height:36px;font-size:18px">${esc(g.e||'🏘️')}</span>
-    <div class="grow"><b>${esc(g.n)}</b><div class="meta">${membersOf(g.id).length} member${membersOf(g.id).length===1?'':'s'}</div></div>
+    <div class="grow"><b>${esc(g.n)}</b><div class="meta">${g.priv?'🔒 Private · ':''}${gCount(g)} member${gCount(g)===1?'':'s'}</div></div>
     ${isMember(g.id)?'<span class="meta">›</span>':`<button class="btn sm primary" data-gjoin="${g.id}" data-on="1">Join</button>`}</div>`;
   return `<div class="create-grid" style="margin-top:0;grid-template-columns:1fr">
       <button data-newgroup style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>➕</i>Start a group<span>Your crew, your rules</span></button></div>
@@ -2834,6 +3031,7 @@ document.addEventListener('click',e=>{
 
 /* The "📍 Add location" row in each composer, with a few one-tap suggestions under it (the photo's spot first). */
 const LOCF = {};   // field id → {get, set, title, empty, photo}
+LOCF.gp = {title:'Where is it?', empty:'Add a place (optional)', get:()=>GRP.place, set:x=>{ GRP.place=x; refreshLoc('gp'); }};
 function locFieldHtml(f){
   const F=LOCF[f], cur=F.get(), sug=locSugg(f);
   return `<button type="button" class="locbtn${cur?' on':''}" data-locopen="${f}"><span>${cur?esc(cur.e||'📍'):'📍'}</span><span class="grow">${cur?`<b>${esc(cur.name)}</b>${cur.kind?`<small>${esc(cur.kind)}</small>`:''}`:esc(F.empty||'Add location')}</span>${cur?`<span class="locx" data-locclear="${f}" aria-label="Remove location">✕</span>`:'<span class="meta">›</span>'}</button>
@@ -3469,6 +3667,7 @@ function openDmCard(c){
   if(c.k==='event') return openEvent(c.id);
   if(c.k==='place') return openSpot({id:c.id,name:c.name,lat:c.lat,lng:c.lng,e:c.e,kind:c.sub});
   if(c.k==='flare') return focusOnMap(c.id);
+  if(c.k==='group') return groupOf(c.id)?openGroup(c.id):toast('That group is gone.','orange');
   if(c.k==='story'){ const st=allStories().find(x=>x.id===c.id); return st?openStories([st]):toast('That story has expired (stories last 24 hours).','orange'); }
 }
 
@@ -4971,12 +5170,13 @@ function newGroup(){
     <label class="lbl">Name</label><input id="ngName" maxlength="40" placeholder="e.g. Tuesday Night Pickleball" autocomplete="off">
     <label class="lbl">What's it about?</label><select id="ngCat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v.e} ${v.l}</option>`).join('')}</select>
     <label class="lbl">One line about it</label><input id="ngDesc" maxlength="160" placeholder="Who it's for, when you meet" autocomplete="off">
+    <label class="lbl">Who can see posts</label>${segHtml('ngPriv',[['0','🌐 Public'],['1','🔒 Private (you approve who joins)']],'0')}
     <button class="btn primary" data-ngcreate style="width:100%;margin-top:14px;padding:13px">Create group</button>`;
   $('#groupBg').hidden=false; setTimeout(()=>$('#ngName').focus(),50);
 }
 async function createGroup(){
   const n=$('#ngName').value.trim(), cat=$('#ngCat').value; if(!n) return toast('Give your group a name.','orange');
-  try{ const j=await api('/api/group/create',{n,e:CATS[cat].e,cat,d:$('#ngDesc').value.trim()}); await loadState(); renderSocial(); openGroup(j.group.id);
+  try{ const j=await api('/api/group/create',{n,e:CATS[cat].e,cat,d:$('#ngDesc').value.trim(),priv:segVal('ngPriv')==='1'}); await loadState(); renderSocial(); openGroup(j.group.id);
     toast(`🏘️ <b>${esc(n)}</b> is live. Post something to get it going.`,'green'); }catch(e){ toast(esc(e.message),'orange'); }
 }
 document.addEventListener('input',e=>{
@@ -5863,9 +6063,9 @@ async function shareLink(url, title, text){
 const v2head = (title, close) => `<div class="row"><b class="grow" style="font-size:19px">${title}</b><button class="btn sm" data-v2close="${close}">${T('Close')}</button></div>`;
 
 /* ---- 🔔 notifications ---- */
-const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['dm','Messages'],['chat','Chat replies'],
+const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['dm','Messages'],['group','Posts, comments and requests in your groups'],['chat','Chat replies'],
   ['down','People down for your flares'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)']];
-const NOTIF_E = {dm:'💬', freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆'};
+const NOTIF_E = {group:'🏘️', dm:'💬', freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆'};
 function renderBell(){
   const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
   const n=SV.v2?.unread||0; $('#bellN').textContent=n?(n>9?'9+':String(n)):''; b.classList.toggle('has',!!n);
@@ -5899,7 +6099,7 @@ function renderNotifs(){
 function notifGo(n){
   $('#notifBg').hidden=true;
   if(n.t==='dm'&&n.ref){ meetTab='msgs'; tab('meet'); return openThread(n.ref); }
-  if(n.t==='chat'&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2));
+  if((n.t==='chat'||n.t==='group')&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2), n.t==='chat'?'chat':null);
   if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);
   if(n.t==='quest') return openQuests();
   if(n.t==='down'&&n.ref) return focusOnMap(n.ref);
