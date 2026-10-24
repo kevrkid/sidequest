@@ -102,10 +102,13 @@ def menu_links(html, base)
     next if href =~ /\A(mailto|tel|javascript):/i
     u = URI.join(base, href.strip).to_s rescue next
     h = URI(u).host.to_s.sub(/\Awww\./, '')
-    # online ordering always has the menu; on the place's own site, links that say menu / food / drinks
-    next unless h =~ MENU_HOSTS || (h == host && "#{href} #{words}" =~ /menu|food|drinks|\beat\b/i)
-    [u, (u =~ /\.pdf\b/i ? 0 : 1)]
-  end.compact.uniq.sort_by(&:last).map(&:first).first(4)
+    # online ordering always has the menu; on the place's own site, links that say menu / food / drinks; menu PDFs
+    # wherever they're kept (site builders put them on their own file hosts)
+    said = "#{href} #{words}" =~ /menu|food|drinks|\beat\b|dinner|lunch|brunch|breakfast|dessert|happy.?hour/i
+    pdf = u =~ /\.pdf\b/i
+    next unless h =~ MENU_HOSTS || (said && (h == host || pdf))
+    [u, (pdf ? 0 : 1)]
+  end.compact.uniq.sort_by(&:last).map(&:first).first(5)
 end
 
 # Pictures on a menu page that are the menu itself ("dinner 10.5.26.png", alt "Drinks menu"), not logos or food shots.
@@ -183,7 +186,7 @@ def menu_find(p, gweb, google = nil)
     pages << [final, menu_text(body, type)]
     menu_imgs(body, final).each { |i| imgs << [final, i] } if type.include?('html')
     menu_links(body, final).each do |l|
-      break if pages.size >= 5
+      break if pages.size >= 6
       next if pages.any? { |x| x[0] == l }
       b2, t2, f2 = (menu_get(l) rescue next)
       pages << [f2, menu_text(b2, t2)]

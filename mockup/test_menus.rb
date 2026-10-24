@@ -29,13 +29,14 @@ end
 html = <<~H
   <html><head><title>x</title><script>var a="$1.00 $2.00 $3.00"</script></head><body>
   <nav><a href="/menu">Our Menu</a> <a href="/about">About</a> <a href="https://order.toasttab.com/online/x">Order</a>
-  <a href="https://evil.example.com/menu">menu elsewhere</a> <a href="/files/dinner.pdf">Dinner menu (PDF)</a>
+  <a href="https://evil.example.com/menu">menu elsewhere</a> <a href="/files/dinner.pdf">Dinner menu (PDF)</a> <a href="https://cdn.files.example/x/Clarks_Lunch%2010.23.26.pdf">Lunch</a>
+  <a href="https://cdn.files.example/x/press-kit.pdf">Press</a>
   <a href="mailto:a@b.c">menu by mail</a></nav>
   <h2>Tacos</h2><ul><li>Al pastor &amp; pineapple <b>$4.50</b></li><li>Barbacoa $5</li></ul>
   <script type="application/ld+json">{"@type":"Menu","name":"Main"}</script></body></html>
 H
 links = menu_links(html, 'https://www.tacos.example/home')
-check('menu links: same site and menu hosts, PDFs first', links == ['https://www.tacos.example/files/dinner.pdf', 'https://www.tacos.example/menu', 'https://order.toasttab.com/online/x'], links.inspect)
+check('menu links: same site, menu PDFs anywhere, menu hosts; PDFs first', links == ['https://www.tacos.example/files/dinner.pdf', 'https://cdn.files.example/x/Clarks_Lunch%2010.23.26.pdf', 'https://www.tacos.example/menu', 'https://order.toasttab.com/online/x'], links.inspect)
 t = menu_text(html.dup, 'text/html')
 check('page text keeps the menu, drops scripts', t.include?("Al pastor & pineapple $4.50") && t.include?('Barbacoa $5') && !t.include?('var a'), t)
 check('page text keeps JSON-LD menus', t.include?('"@type":"Menu"'))
