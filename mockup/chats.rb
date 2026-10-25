@@ -285,6 +285,30 @@ def plan_post!(d, key, h, text)
   (d['dms'][key] ||= []) << { 'id' => "m#{SecureRandom.hex(5)}", 'f' => h, 't' => text, 'at' => now_ms, 'sys' => true }
 end
 
+# Locked-in plans: a nudge two hours before (to everyone going), and a nudge to the organizer if the vote has sat
+# open for a day. Called with the event reminders, every 5 minutes.
+def plan_remind!
+  t = now_ms
+  store do |d|
+    (d['chats'] || {}).each_value do |c|
+      pl = c['plan'] or next
+      key = "c:#{c['id']}"
+      if pl['status'] == 'set' && (at = pl.dig('pick', 'at').to_i) > t && at < t + 2 * 3_600_000 && !pl['reminded']
+        pl['reminded'] = t
+        o = pl['opts'].find { |x| x['id'] == pl.dig('pick', 'opt') } || {}
+        (pl['going'] || []).each do |h|
+          notify!(d, h, 'remind', ref: key, text: "⏰ #{pl['title']} at #{Time.at(at / 1000).strftime('%-l:%M %p')}: #{o['name']}")
+        end
+      elsif pl['status'] == 'voting' && pl['at'].to_i < t - 86_400_000 && !pl['nudged']
+        pl['nudged'] = t
+        n = (pl['opts'].flat_map { |o| o['votes'].to_a } + pl['times'].flat_map { |x| x['votes'].to_a }).uniq.size
+        next if n < 2
+        notify!(d, pl['by'], 'dm', ref: key, text: "🗳️ #{n} #{n == 1 ? 'person has' : 'people have'} voted on #{pl['title']}. Lock in the top pick?")
+      end
+    end
+  end
+end
+
 def mount_plans(server)
   route(server, '/api/hangout/new') do |b, h|
     limit!("hangout:#{h}", 20, 3600)
@@ -333,6 +357,7 @@ def mount_plans(server)
         o = pl['opts'].find { |x| x['id'] == b['opt'].to_s } or raise 'Pick the winning option.'
         t = b['time'] && pl['times'][b['time'].to_i]
         at = t ? t['at'] : o['at']
+        pl.delete('reminded')
         pl.merge!('status' => 'set', 'pick' => { 'opt' => o['id'], 'at' => at }.compact, 'going' => ([h] + o['votes'].to_a).uniq & c['members'])
         when_s = at ? Time.at(at / 1000).strftime('%a %b %-d, %-l:%M %p') : nil
         plan_post!(d, key, h, "📅 It's on: #{o['name']}#{when_s ? " · #{when_s}" : ''}")

@@ -347,12 +347,15 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   counts + your vote in state; who voted only to the author). 👁 viewers: phones batch `/api/story/seen`; author's
   👁 N on the rail → `/api/story/viewers` (likes, votes). 💚 Close friends: `vis: 'close'`, list `/api/close`
   (`SV.me.close`), green ring. ▶ For you in the story rail: everyone's stories ranked (`forYouStories`). Photos show
-  whole over a blurred copy (`.media.photo`). Tests in test_v2.rb (2).
+  whole over a blurred copy (`.media.photo`). 💬 Reply opens the chat with the story attached (`DM.stCard`, shown in
+  `#dmReBar`); the first message carries it as a `story` card with the photo. Tests in test_v2.rb (2).
 - **🗳️ Plans with friends** (`mount_plans` in chats.rb; client "plans with friends"): 📅 Make plans (Chats), 🗳️ Plan it
   (event sheet), Plan with friends (place page) → sheet: title, 1-6 options (event / place via picker / idea), up to 4
   times, friends → `/api/hangout/new` makes a group chat (`c['plan']`) with the vote pinned on top (`#planCard`).
   `/api/hangout/act`: vote (options and times, as many as work), add, lock (organizer: top pick), unlock, going.
   Locked → "It's on" + chat line + notification, 📅 .ics download (`planIcs`), Google Calendar link, directions.
+  `plan_remind!` (every 5 min, with event reminders): ⏰ `remind` to the going list 2 h before (`pl['reminded']`,
+  cleared on re-lock), and a nudge to the organizer when a vote with ≥2 voters has sat open a day (`pl['nudged']`).
   Tests in test_v2.rb ("plans", 2). (Separate from `/api/plans`, which are your own saved itineraries.)
 - **📝 Public posts** (`wall.rb`; client "public posts"): Feed has ✨ For you | 📝 Posts (`#feedMode`). A post = text and/or
   photo (`/wall-img/`, friends-only photos to friends only) + optional place (`LOCF.wp`), 🌐 everyone / 👥 friends; likes,

@@ -3787,6 +3787,7 @@ function threadHtml(){
     <p class="meta" style="margin:8px 0 0">🛡️ Meet in public, and use ⋯ to report or block if anything feels off.</p>`;
 }
 function dmReBar(){
+  const c=DM.stCard; if(c) return `<div class="dmrebar">${c.img?`<span class="dmci" style="background-image:url('${esc(c.img)}')"></span>`:'<span class="dmce">📸</span>'}<span class="grow">↩️ ${T('Replying to')} <b>${esc(c.name)}</b>${c.sub?`<br><span class="meta">${esc(c.sub)}</span>`:''}</span><button class="btn sm" data-dmrex>✕</button></div>`;
   const r=DM.re; if(!r) return '';
   return `<div class="dmrebar"><span class="grow">↩️ ${T('Replying to')} <b>${r.f===S.me.h?'yourself':'@'+esc(r.f)}</b><br><span class="meta">${esc(dmPreview(r).slice(0,80))}</span></span><button class="btn sm" data-dmrex>✕</button></div>`;
 }
@@ -3809,7 +3810,7 @@ function markRead(){
 }
 async function openThread(h){
   if(!isDemoUser(h)&&needAccount('message people')) return;
-  DM.open=h; DM.re=null; DM.act=null; DM.mraw=''; DM.readAt=0; DM.seen={}; DM.typing=[]; DM.chat=null;
+  DM.open=h; DM.re=null; DM.stCard=null; DM.act=null; DM.mraw=''; DM.readAt=0; DM.seen={}; DM.typing=[]; DM.chat=null;
   if(isDemoUser(h)) DM.msgs=S.dms[h]||[];
   else try{ await fetchThread(h); }
     catch(e){ toast(esc(e.message),'orange'); DM.open=null; }
@@ -3832,8 +3833,8 @@ async function dmSend(body){   // body: {text, re, img, aud, dur, card}; to the 
 }
 async function sendDm(){
   const i=$('#dmIn'); if(!i) return; const t=i.value.trim(); if(!DM.open||!t) return; i.value='';
-  const re=DM.re?.id; DM.re=null; $('#dmReBar').innerHTML='';
-  try{ await dmSend({text:t, re}); }catch(e){ i.value=t; toast(esc(e.message),'orange'); }
+  const re=DM.re?.id, card=DM.stCard; DM.re=null; DM.stCard=null; $('#dmReBar').innerHTML='';
+  try{ await dmSend({text:t, re, ...(card?{card}:{})}); }catch(e){ i.value=t; DM.stCard=card; $('#dmReBar').innerHTML=dmReBar(); toast(esc(e.message),'orange'); }
 }
 async function dmReact(i, e){
   const m=DM.msgs[i]; if(!m) return; const me=S.me.h; DM.act=null;
@@ -3957,7 +3958,7 @@ document.addEventListener('click',e=>{
   if(d.dmcard!==undefined){ e.stopPropagation(); const c=+d.dmcard<0?CHS.card:DM.msgs[+d.dmcard]?.card; if(c&&+d.dmcard>=0) openDmCard(c); return; }
   if(d.dmjump){ const el=document.getElementById('dm-'+d.dmjump); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'),1200); } return; }
   if(d.dmimg) return window.open(d.dmimg,'_blank','noopener');
-  if(d.dmrex!==undefined){ DM.re=null; return $('#dmReBar').innerHTML=''; }
+  if(d.dmrex!==undefined){ DM.re=null; DM.stCard=null; return $('#dmReBar').innerHTML=''; }
   if(d.dmphoto!==undefined) return $('#dmFile').click();
   if(d.dmrec!==undefined) return dmRecStart();
   if(d.dmreccancel!==undefined) return dmRecStop(false);
@@ -5029,7 +5030,8 @@ document.addEventListener('click',e=>{
   else if(d.phstory){ const all=allStories(), i=all.findIndex(x=>x.id===d.phstory); map?.closePopup(); if(i>=0) openStories([all[i],...all.filter((_,k)=>k!==i).reverse()]); }
   else if(d.streply){ const h=d.streply; if(needAccount('reply to a story')) return;
     if(!isFriend(h)) return toast(`Messages are for friends. Wave at <b>@${esc(h)}</b> in Meet first.`,'orange',[{l:'Profile',cls:'blue',f:()=>{ closeStories(); openProfile(h); }}],4000);
-    closeStories(); meetTab='msgs'; tab('meet'); openThread(h); }
+    const st=SVW.list[SVW.i], card=st&&st.u===h?{k:'story',id:st.id,name:`@${st.u}'s story`,sub:(st.caption||storyPlace(st)||'').slice(0,80),e:'📸',...(safeImg(st.img)?{img:safeImg(st.img)}:{})}:null;
+    closeStories(); meetTab='msgs'; tab('meet'); openThread(h).then(()=>{ if(card&&DM.open===h){ DM.stCard=card; const b=$('#dmReBar'); if(b) b.innerHTML=dmReBar(); } }); }
   else if(d.stshare) shareStory(SVW.list[+d.stshare]);
   else if(d.stmap){ const st=SVW.list[+d.stmap], p=storyPos(st); closeStories(); if(p){ tab('map'); S.mapL.stories=true; save(); renderMapChips(); renderMap(); setTimeout(()=>map.setView(p,16),80); } }
   else if(d.actclose!==undefined){ $('#actBg').hidden=true; }   // the story feed underneath keeps playing
@@ -6629,7 +6631,7 @@ function renderNotifs(){
 }
 function notifGo(n){
   $('#notifBg').hidden=true;
-  if(n.t==='dm'&&n.ref){ meetTab='msgs'; tab('meet'); return openThread(n.ref); }
+  if((n.t==='dm'||n.t==='remind'&&/^c:/.test(n.ref||''))&&n.ref){ meetTab='msgs'; tab('meet'); return openThread(n.ref); }
   if(n.t==='like'&&/^w[0-9a-f]{12}$/.test(n.ref||'')) return openWallPost(n.ref);
   if((n.t==='chat'||n.t==='group')&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2), n.t==='chat'?'chat':null);
   if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);

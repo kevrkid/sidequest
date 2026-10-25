@@ -270,11 +270,14 @@ with sync_playwright() as pw:
     check("swipe in from the right edge goes forward again", p1.evaluate("curTab") == "feed", p1.evaluate("curTab"))
     # sights & history: landmarks, Texas historical markers (with the plaque text), a story per tap
     nav(p1, "map"); p1.wait_for_timeout(700); p1.evaluate("void map.setView([30.2700,-97.7410],15)"); p1.wait_for_timeout(900)
-    marks15 = p1.locator(".sgpin.markers").count()
-    p1.evaluate("void map.setView([30.2700,-97.7410],17)"); p1.wait_for_timeout(900)   # crowded spots thin out zoomed out, fill in up close
+    marks15, lands15 = p1.locator(".sgpin.markers").count(), p1.locator(".sgpin.landmarks").count()
+    # crowded spots thin out zoomed out, fill in up close (centered between the two test markers, ~330 m apart;
+    # events off, since a test event sits on the Ferry Landing marker and events win the spot)
+    p1.evaluate("S.mapL.events=false; refreshMapLayers(); void map.setView([30.2675,-97.7410],17)"); p1.wait_for_timeout(900)
     check("Sights layer: landmarks and historical markers on the map, more as you zoom in",
-          p1.locator(".sgpin.landmarks").count() >= 1 and p1.locator(".sgpin.markers").count() >= 2 and p1.locator(".sgpin.markers").count() >= marks15,
-          f"{p1.locator('.sgpin.landmarks').count()} landmarks, {p1.locator('.sgpin.markers').count()} markers, zoom {p1.evaluate('map.getZoom()')}, {p1.evaluate('JSON.stringify([S.mapL.markers,S.mapL.landmarks])')}")
+          lands15 >= 1 and p1.locator(".sgpin.markers").count() >= 2 and p1.locator(".sgpin.markers").count() >= marks15,
+          f"{lands15} landmarks at 15, {p1.locator('.sgpin.markers').count()} markers, zoom {p1.evaluate('map.getZoom()')}, {p1.evaluate('JSON.stringify([S.mapL.markers,S.mapL.landmarks])')}")
+    p1.evaluate("S.mapL.events=true; refreshMapLayers()")
     p1.evaluate("sightPopup('m9001')"); p1.wait_for_selector("[data-sgtell='m9001']", timeout=10000)
     pop = p1.locator(".leaflet-popup-content").last.inner_text()
     check("tapping a marker shows its plaque text, year and credit", "moonlight towers" in pop and "1970" in pop and "Texas Historical Commission" in pop, pop[:90].replace("\n", " | "))

@@ -49,7 +49,7 @@ def vapid_public() WebPush.b64u(WebPush.pub_raw(vapid_key)) end
 def push_url(type, ref)
   r = ref.to_s
   return '/?tonight=1' if type == 'tonight'
-  return "/?dm=#{URI.encode_www_form_component(r)}" if type == 'dm'
+  return "/?dm=#{URI.encode_www_form_component(r)}" if type == 'dm' || r.start_with?('c:')
   return "/?ev=#{r.sub('e:', '')}" if r.start_with?('e:')
   return "/?g=#{r.sub('g:', '')}" if r.start_with?('g:')
   type == 'quest' ? '/?quests=1' : '/?inbox=1'
@@ -496,6 +496,7 @@ def v2_background
       sleep 60
       stats_flush rescue warn("[v2] stats: #{$!.message}")
       remind_due! rescue warn("[v2] reminders: #{$!.message}") if (Time.now.min % 5).zero?
+      plan_remind! rescue warn("[v2] plan reminders: #{$!.message}") if (Time.now.min % 5).zero?
       weekly_recap! rescue warn("[v2] recap: #{$!.message}") if Time.now.min == 7
       tonight_push! rescue warn("[v2] tonight: #{$!.message}") if Time.now.hour == 17
     end
