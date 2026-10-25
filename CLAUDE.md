@@ -341,6 +341,12 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   👁 N on the rail → `/api/story/viewers` (likes, votes). 💚 Close friends: `vis: 'close'`, list `/api/close`
   (`SV.me.close`), green ring. ▶ For you in the story rail: everyone's stories ranked (`forYouStories`). Photos show
   whole over a blurred copy (`.media.photo`). Tests in test_v2.rb (2).
+- **🗳️ Plans with friends** (`mount_plans` in chats.rb; client "plans with friends"): 📅 Make plans (Chats), 🗳️ Plan it
+  (event sheet), Plan with friends (place page) → sheet: title, 1-6 options (event / place via picker / idea), up to 4
+  times, friends → `/api/hangout/new` makes a group chat (`c['plan']`) with the vote pinned on top (`#planCard`).
+  `/api/hangout/act`: vote (options and times, as many as work), add, lock (organizer: top pick), unlock, going.
+  Locked → "It's on" + chat line + notification, 📅 .ics download (`planIcs`), Google Calendar link, directions.
+  Tests in test_v2.rb ("plans", 2). (Separate from `/api/plans`, which are your own saved itineraries.)
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra

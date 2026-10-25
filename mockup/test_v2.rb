@@ -467,6 +467,38 @@ t('close friends: only people on your list see a 💚 story; the list holds frie
   check(c['close'] == ['chat_b'] && j['story']['vis'] == 'close' && sb['stories'].any? { |x| x['id'] == sid } &&
         sz['stories'].none? { |x| x['id'] == sid } && sa['stories'].any? { |x| x['id'] == sid } && sa['me']['close'] == ['chat_b'], [c, j['story']['vis']])
 }
+# ---- plans with friends (chats.rb mount_plans)
+t('plans: start a vote, friends notified, everyone votes, the organizer locks it in, going list') {
+  at = (Time.now.to_f * 1000).to_i + 2 * 86_400_000
+  _, j = ca.post('/api/hangout/new', title: 'Saturday night', members: %w[chat_b chat_z],
+                 opts: [{ k: 'event', ref: 'e:abc123def456', name: 'Test Show', sub: 'Test Hall', e: '🎸' }, { k: 'idea', name: 'Tacos then karaoke' }, { name: '' }],
+                 times: [at, at + 3_600_000])
+  w = j['with']
+  _, n = cb.post('/api/notifs')
+  _, dm = cb.get("/api/dm?with=#{URI.encode_www_form_component(w)}")
+  pl = dm['chat']['plan']
+  o1, o2 = pl['opts'].map { |o| o['id'] }
+  cb.post('/api/hangout/act', id: w, do: 'vote', opt: o2); ca.post('/api/hangout/act', id: w, do: 'vote', opt: o2); ca.post('/api/hangout/act', id: w, do: 'vote', opt: o1)
+  _, v = cb.post('/api/hangout/act', id: w, do: 'vote', time: 1)
+  no, = cb.post('/api/hangout/act', id: w, do: 'lock', opt: o2)
+  _, add = cb.post('/api/hangout/act', id: w, do: 'add', opt: { name: 'Bowling' })
+  _, lk = ca.post('/api/hangout/act', id: w, do: 'lock', opt: o2, time: 1)
+  late, = cb.post('/api/hangout/act', id: w, do: 'vote', opt: o1)
+  _, g = cb.post('/api/hangout/act', id: w, do: 'going', on: false)
+  _, n2 = cb.post('/api/notifs')
+  _, dm2 = cb.get("/api/dm?with=#{URI.encode_www_form_component(w)}")
+  check(w =~ /\Ac:/ && dm['chat']['members'] == %w[chat_a chat_b] && n['notifs'].any? { |x| x['ref'] == w && x['text'].include?('make plans') } &&
+        pl['opts'].size == 2 && pl['times'].size == 2 && v['plan']['opts'].find { |o| o['id'] == o2 }['votes'].sort == %w[chat_a chat_b] &&
+        no == 403 && add['plan']['opts'].size == 3 && lk['plan']['status'] == 'set' && lk['plan']['pick'] == { 'opt' => o2, 'at' => at + 3_600_000 } &&
+        lk['plan']['going'].sort == %w[chat_a chat_b] && late == 400 && g['plan']['going'] == ['chat_a'] &&
+        n2['notifs'].any? { |x| x['text'].include?("It's on") } && dm2['msgs'].any? { |m| m['sys'] && m['t'].include?("It's on: Tacos then karaoke") }, [pl, v, no, lk, late, g])
+}
+t('plans: need a name, an option and a friend') {
+  c1, = ca.post('/api/hangout/new', title: '', opts: [{ name: 'x' }], members: ['chat_b'])
+  c2, = ca.post('/api/hangout/new', title: 'x', opts: [], members: ['chat_b'])
+  c3, = ca.post('/api/hangout/new', title: 'x', opts: [{ name: 'y' }], members: ['chat_z'])
+  check([c1, c2, c3] == [400, 400, 400], [c1, c2, c3])
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')

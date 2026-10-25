@@ -57,7 +57,7 @@ def mount_chats(server)
         if k.start_with?('c:')
           c = chats[k[2..]] or next
           next unless c['members'].include?(h)
-          with, extra = k, { name: c['name'], members: c['members'], group: true }
+          with, extra = k, { name: c['name'], members: c['members'], group: true, plan: c['plan'] && c['plan']['status'] }.compact
         else
           next unless k.split('|').include?(h)
           with = (k.split('|') - [h]).first || h
@@ -85,7 +85,7 @@ def mount_chats(server)
       th = d['dms'][key] || []
       seen = others.to_h { |x| [x, ((d['dm_read'] || {})[x] || {})[key].to_i] }
       { msgs: dm_out(th).reject { |m| hidden.include?(m['f']) }, seen: seen, typing: typing.reject { |x| hidden.include?(x) },
-        chat: c && { id: c['id'], name: c['name'], members: c['members'], by: c['by'] } }.compact
+        chat: c && { id: c['id'], name: c['name'], members: c['members'], by: c['by'], plan: c['plan'] }.compact }.compact
     end
   end
 
@@ -265,6 +265,89 @@ def mount_chats(server)
       else
         res.body = File.binread(file)
       end
+    end
+  end
+end
+
+# ---- Plans with friends: a group chat with a plan pinned on top (c['plan']). Options are events, places or ideas
+# (2-6), times are optional (up to 4); everyone votes for as many as work; the organizer locks one in, then it's a
+# calendar event with a going list. Same members and rules as the chat it lives in.
+def plan_opt_clean(o)
+  return nil unless o.is_a?(Hash)
+  name = o['name'].to_s.gsub(/[[:cntrl:]]/, ' ').strip[0, 80]
+  return nil if name.empty?
+  { 'id' => SecureRandom.hex(3), 'k' => %w[event place idea].include?(o['k']) ? o['k'] : 'idea', 'name' => name, 'sub' => o['sub'].to_s.gsub(/[[:cntrl:]]/, ' ')[0, 80],
+    'ref' => o['ref'].to_s[0, 60], 'e' => o['e'].to_s[0, 4], 'at' => o['at'].to_i.positive? ? o['at'].to_i : nil,
+    'lat' => (Float(o['lat']) rescue nil), 'lng' => (Float(o['lng']) rescue nil), 'votes' => [] }.compact.reject { |_, v| v == '' }
+end
+
+def plan_post!(d, key, h, text)
+  (d['dms'][key] ||= []) << { 'id' => "m#{SecureRandom.hex(5)}", 'f' => h, 't' => text, 'at' => now_ms, 'sys' => true }
+end
+
+def mount_plans(server)
+  route(server, '/api/hangout/new') do |b, h|
+    limit!("hangout:#{h}", 20, 3600)
+    title = b['title'].to_s.gsub(/[[:cntrl:]]/, ' ').strip[0, 60]
+    opts = Array(b['opts']).map { |o| plan_opt_clean(o) }.compact.first(6)
+    times = Array(b['times']).map(&:to_i).select { |t| t > now_ms - 3_600_000 && t < now_ms + 400 * 86_400_000 }.uniq.sort.first(4)
+    raise 'Name the plan, e.g. Saturday night.' if title.empty?
+    raise 'Add at least one option to vote on.' if opts.empty?
+    raise Forbidden, 'Not posted: please reword that.' unless moderate([title, *opts.map { |o| o['name'] }].join(' · '))
+    store do |d|
+      fr = friends_of(d, h)
+      people = Array(b['members']).map(&:to_s).uniq.select { |x| fr.include?(x) && !blocked_between(d, h).include?(x) }.first(30)
+      raise 'Invite at least one friend.' if people.empty?
+      id = SecureRandom.hex(5)
+      plan = { 'title' => title, 'opts' => opts, 'times' => times.map { |t| { 'at' => t, 'votes' => [] } }, 'by' => h, 'status' => 'voting', 'going' => [], 'at' => now_ms }
+      (d['chats'] ||= {})[id] = { 'id' => id, 'name' => "📅 #{title}", 'members' => [h] + people, 'by' => h, 'at' => now_ms, 'plan' => plan }
+      plan_post!(d, "c:#{id}", h, "@#{h} started a plan: vote for what works")
+      people.each { |x| notify!(d, x, 'dm', from: h, ref: "c:#{id}", text: "📅 @#{h} wants to make plans: #{title}. Vote on what works!") }
+      track!('hangout_new', h)
+      { ok: true, with: "c:#{id}" }
+    end
+  end
+
+  # Vote (for as many options and times as work), lock one in (the organizer), say you're going, or add an option.
+  route(server, '/api/hangout/act') do |b, h|
+    limit!("hangoutact:#{h}", 400, 3600)
+    store do |d|
+      key, others, c = dm_thread!(d, h, b['id'])
+      pl = c && c['plan'] or raise 'No plan in this chat.'
+      case b['do']
+      when 'vote'
+        x = (b['time'] ? pl['times'][b['time'].to_i] : pl['opts'].find { |o| o['id'] == b['opt'].to_s }) or raise 'No such choice.'
+        raise "It's already decided." if pl['status'] == 'set'
+        v = (x['votes'] ||= [])
+        v.include?(h) ? v.delete(h) : v << h
+      when 'add'
+        raise "It's already decided." if pl['status'] == 'set'
+        o = plan_opt_clean(b['opt']) or raise 'Name the option.'
+        raise Forbidden, 'Not posted: please reword that.' unless moderate(o['name'])
+        raise 'That is plenty of options (6).' if pl['opts'].size >= 6
+        o['votes'] = [h]
+        pl['opts'] << o
+        plan_post!(d, key, h, "@#{h} added #{o['name']}")
+      when 'lock'
+        raise Forbidden, 'Only the person who started the plan can lock it in.' unless pl['by'] == h
+        o = pl['opts'].find { |x| x['id'] == b['opt'].to_s } or raise 'Pick the winning option.'
+        t = b['time'] && pl['times'][b['time'].to_i]
+        at = t ? t['at'] : o['at']
+        pl.merge!('status' => 'set', 'pick' => { 'opt' => o['id'], 'at' => at }.compact, 'going' => ([h] + o['votes'].to_a).uniq & c['members'])
+        when_s = at ? Time.at(at / 1000).strftime('%a %b %-d, %-l:%M %p') : nil
+        plan_post!(d, key, h, "📅 It's on: #{o['name']}#{when_s ? " · #{when_s}" : ''}")
+        others.each { |x| notify!(d, x, 'dm', from: h, ref: key, text: "📅 It's on: #{pl['title']}: #{o['name']}#{when_s ? " · #{when_s}" : ''}") }
+      when 'unlock'
+        raise Forbidden, 'Only the person who started the plan can change it.' unless pl['by'] == h
+        pl['status'] = 'voting'; pl.delete('pick')
+        plan_post!(d, key, h, "@#{h} reopened the vote")
+      when 'going'
+        raise 'Lock in a plan first.' unless pl['status'] == 'set'
+        g = (pl['going'] ||= [])
+        b['on'] ? (g << h unless g.include?(h)) : g.delete(h)
+      else raise 'bad action'
+      end
+      { ok: true, plan: pl }
     end
   end
 end
