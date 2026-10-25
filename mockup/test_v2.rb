@@ -499,6 +499,59 @@ t('plans: need a name, an option and a friend') {
   c3, = ca.post('/api/hangout/new', title: 'x', opts: [{ name: 'y' }], members: ['chat_z'])
   check([c1, c2, c3] == [400, 400, 400], [c1, c2, c3])
 }
+# ---- public posts (wall.rb) and rewards (rewards.rb)
+$wp = nil
+t('posts: public post with a photo and a place earns coins; likes, comments, friends-only stays with friends') {
+  _, r0 = cz.get('/api/rewards')
+  jpg = 'data:image/jpeg;base64,' + ['\xFF\xD8\xFF\xE0'.b + 'x' * 300].pack('m0')
+  _, j = cz.post('/api/wall/post', t: 'Sunset at the bridge', img: jpg, place: { name: 'Congress Bridge', lat: 30.2615, lng: -97.7451 })
+  $wp = j['post']['id']
+  _, f = cb.post('/api/wall/post', t: 'friends only thing', vis: 'friends')
+  _, l = ca.post('/api/wall/act', id: $wp, do: 'like')
+  _, c = ca.post('/api/wall/act', id: $wp, do: 'comment', t: 'gorgeous')
+  _, all = ca.get('/api/wall?scope=all&lat=30.26&lng=-97.74')
+  _, zs = cz.get('/api/wall?scope=all')
+  _, near = ca.get('/api/wall?scope=near&lat=30.26&lng=-97.74')
+  guest = Net::HTTP.get_response(URI("#{BASE}/api/wall?scope=all"))
+  gp = JSON.parse(guest.body)['posts']
+  _, n = cz.post('/api/notifs')
+  check(j['post']['img'] =~ %r{\A/wall-img/w[0-9a-f]{12}\.jpg\z} && j['coins'] == r0['coins'] + 3 && l['post']['likes'] == 1 && c['post']['comments'].size == 1 &&
+        all['posts'].any? { |x| x['id'] == $wp } && all['posts'].any? { |x| x['id'] == f['post']['id'] } && zs['posts'].none? { |x| x['id'] == f['post']['id'] } &&
+        near['posts'].map { |x| x['id'] } == [$wp] && gp.any? { |x| x['id'] == $wp } && gp.none? { |x| x['vis'] == 'friends' } &&
+        n['notifs'].any? { |x| x['ref'] == $wp && x['from'] == 'chat_a' }, [j['coins'], r0['coins'], near['posts'].size, l['post']['likes'], c['post']['comments'].size,
+        all['posts'].map { |x| x['id'] }, f['post']['id'], zs['posts'].map { |x| x['id'] }, gp.map { |x| x['id'] }, n['notifs'].map { |x| x['text'] }])
+}
+t('posts: only the author deletes or boosts; boosting costs coins') {
+  no, = ca.post('/api/wall/act', id: $wp, do: 'delete')
+  _, r = cz.get('/api/rewards')
+  b1, = cz.post('/api/wall/act', id: $wp, do: 'boost')
+  check(no == 403 && (r['coins'] < 40 ? b1 == 400 : b1 == 200), [no, r['coins'], b1])
+}
+t('rewards: daily streak and weekly XP; leaderboards for Austin this week and friends; hiding takes you off') {
+  _, r = cz.get('/api/rewards')
+  _, wk = ca.get('/api/leaderboard?scope=week')
+  _, fr = cz.get('/api/leaderboard?scope=friends')
+  cz.post('/api/quests/board', hidden: true)
+  _, wk2 = ca.get('/api/leaderboard?scope=week')
+  cz.post('/api/quests/board', hidden: false)
+  check(r['day_streak'] == 1 && r['weekly']['id'] && r['frames'].size == 5 && wk['rows'].is_a?(Array) && fr['rows'].map { |x| x['h'] }.include?('chat_z') &&
+        wk2['rows'].none? { |x| x['h'] == 'chat_z' }, [r['day_streak'], wk['rows'], fr['rows'], wk2['rows']])
+}
+t('rewards: frames cost coins once, then you can wear them; tips are held, paid or returned') {
+  poor, = ca.post('/api/rewards/frame', id: 'disco')
+  # give chat_a coins the honest way: check-ins at test sights
+  [['sight', 'm9001'], ['sight', 'w1001'], ['sight', 'm9002'], ['sight', 'o1']].each { |k, id| ca.post('/api/checkin', k: k, id: id) }
+  _, r = ca.get('/api/rewards')
+  _, h1 = ca.post('/api/coins/tip', do: 'hold', ref: 'qtest1', n: 5, to: 'chat_b')
+  _, rb = cb.get('/api/rewards')
+  _, p1 = ca.post('/api/coins/tip', do: 'pay', ref: 'qtest1')
+  _, rb2 = cb.get('/api/rewards')
+  again, = ca.post('/api/coins/tip', do: 'pay', ref: 'qtest1')
+  ca.post('/api/coins/tip', do: 'hold', ref: 'qtest2', n: 5, to: 'chat_b')
+  _, rf = ca.post('/api/coins/tip', do: 'refund', ref: 'qtest2')
+  check(poor == 400 && r['coins'] >= 10 && h1['coins'] == r['coins'] - 5 && rb2['coins'] == rb['coins'] + 5 && again == 400 && rf['coins'] == p1['coins'],
+        [poor, r['coins'], h1, rb, rb2, again, rf])
+}
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')
   _, s = mal.get('/api/state')

@@ -203,6 +203,19 @@
   .chip{flex:none;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 11px;font-weight:600;font-size:12px;white-space:nowrap}
   .chip.on{background:var(--text);color:#0b0f20;border-color:var(--text)}
   .mapctl{position:absolute;right:10px;top:54px;z-index:455;display:flex;flex-direction:column;gap:8px}
+  /* public posts + rewards */
+  .wcomp textarea{flex:1;margin:0;resize:vertical;min-height:48px} .wcomp .seg{flex:none}
+  .wphoto{display:block;width:calc(100% + 28px);margin:8px -14px 4px;max-height:520px;object-fit:cover;background:#000}
+  .boostb{color:#ffb800;font-weight:800}
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px} .pgi{position:relative;aspect-ratio:1;border:0;border-radius:6px;background:var(--panel2) center/cover;color:var(--text);font:inherit;font-size:11px;padding:6px;overflow:hidden;text-align:left}
+  .pgi b{position:absolute;left:5px;bottom:4px;font-size:11px;text-shadow:0 1px 3px #000}
+  .rwcard{display:flex;gap:8px} .rwstat{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+  .rwstat b{display:block;font-size:20px} .rwstat small{color:var(--muted);font-size:11.5px}
+  .frames{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px} .frm{flex:none;width:84px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 4px;color:var(--text);font:inherit;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .frm.on{border-color:var(--accent2)} .frm .av{width:40px;height:40px;font-size:16px} .frm small{font-size:11px;color:var(--muted)} .frm b{font-size:12px}
+  .av.fr-gold{box-shadow:0 0 0 2px #0b0f20,0 0 0 4px #ffd166} .av.fr-neon{box-shadow:0 0 0 2px #0b0f20,0 0 0 4px #b57bff,0 0 12px #b57bff}
+  .av.fr-fire{box-shadow:0 0 0 2px #0b0f20,0 0 0 4px #ff5a1f,0 0 14px #ffb800} .av.fr-leaf{box-shadow:0 0 0 2px #0b0f20,0 0 0 4px #3ddc97}
+  .av.fr-disco{box-shadow:0 0 0 2px #0b0f20,0 0 0 4px #2ec5ff,0 0 0 6px #ff3b5c,0 0 14px #fff8}
   /* story editor + stickers */
   #stEditor{position:absolute;inset:0;z-index:950;background:#000;display:flex;flex-direction:column}
   .edtop{display:flex;gap:8px;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 10px 8px}
@@ -795,6 +808,7 @@
     </section>
 
     <section class="view" id="v-feed" hidden>
+      <div class="seg" id="feedMode" style="margin-bottom:10px"><button type="button" data-v="foryou" class="on">✨ For you</button><button type="button" data-v="posts">📝 Posts</button></div>
       <div class="row"><h2 class="grow">Your feed</h2><button class="btn sm" id="feedMapBtn">🗺 Map it</button><button class="btn sm" data-fcustom>⚙️ Customize</button></div>
       <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:8px 0 10px">
       <div class="chiprow" id="feedCats"></div>
@@ -1289,7 +1303,7 @@ function km(a,b){const R=6371,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1])
 function when(p){const n=Date.now(); if(p.start<=n) return `<span class="badge live">● Live till ${clock(p.end)}</span>`;
   const m=Math.round((p.start-n)/M); return `<span class="badge">🕒 ${m<60?`in ${m} min`:`at ${clock(p.start)}`}</span>`;}
 const visBadge = v => ({broadcast:'<span class="badge broadcast">🌐 Broadcast</span>',friends:'<span class="badge friends">👥 Friends</span>',party:'<span class="badge party">🎮 Party</span>'})[v]||'';
-const av = (h,cls='') => { const u=user(h)||{c:'#888'}, p=u.pic||'';
+const av = (h,cls='') => { const u=user(h)||{c:'#888'}, p=u.pic||''; if(u.frame&&/^[a-z]+$/.test(u.frame)) cls+=' fr-'+u.frame;
   if(p.startsWith('photo:')) return `<span class="av ${cls}" style="background:${u.c} url('/avatar/${encodeURIComponent(h)}.jpg?v=${encodeURIComponent(p.slice(6))}') center/cover" title="${esc(h)}"></span>`;
   if(p.startsWith('emoji:')) return `<span class="av emo ${cls}" style="background:${u.c}" title="${esc(h)}">${esc(p.slice(6))}</span>`;
   return `<span class="av ${cls}" style="background:${u.c}" title="${esc(h)}">${esc((h||'?')[0].toUpperCase())}</span>`; };
@@ -1462,6 +1476,9 @@ function compatCard(c, theirName){
 // Someone else's profile: what you share, your astro compatibility, and the answers they made public.
 function openProfile(h){
   const u=user(h); if(!u||h===S.me.h) return;
+  if(SV.on&&u.real) setTimeout(()=>fetch(`/api/wall?scope=user&h=${encodeURIComponent(h)}`,{credentials:'same-origin'}).then(r=>r.json()).then(j=>{
+    const el=$('#actSheet'); if(!el||$('#actBg').hidden||!(j.posts||[]).length) return; WL.top=[...j.posts,...WL.top];
+    el.insertAdjacentHTML('beforeend',`<label class="lbl">📝 ${T('Posts')} · ${j.posts.length}</label><div class="pgrid">${j.posts.slice(0,12).map(p=>`<button class="pgi" data-wopen="${esc(p.id)}" style="${p.img?`background-image:url('${esc(p.img)}')`:''}">${p.img?'':`<span>${esc((p.t||'').slice(0,60))}</span>`}${p.likes?`<b>❤️ ${p.likes}</b>`:''}</button>`).join('')}</div>`); }).catch(()=>{}),50);
   const m=matchPerson(u), p=u.p||{}, ty=u.t&&TYPES[u.t], ch=chartOf(u), ac=S.me.astro&&astroCompat(myChart(),ch), pct=Math.min(99,Math.round(35+m.s*4));
   const big3=['sun','moon','rising'].filter(k=>ch[k]).map(k=>`${PLANETS.find(x=>x[0]===k)[1]} ${ch[k]}`).join(' · ');
   const secs=LIFE_SECS.map(([sec,title])=>{ const rows=LIFE.filter(f=>f.sec===sec&&hasVal(p[f.k])).map(f=>
@@ -1620,7 +1637,8 @@ async function loadState(){
     const txt=await r.text(); if(txt===SV_RAW&&SV.on) return false; SV_RAW=txt;
     Object.assign(SV,JSON.parse(txt),{on:true});
     if(AUTHED&&SV.me?.status) S.online = SV.me.status!=='offline';
-    const meU=AUTHED&&SV.users?.find(u=>u.h===S.me.h); if(meU&&Date.now()-(S.picT||0)>8000) S.me.pic=meU.pic||'';   // your picture, from any phone (not while a change is still saving)
+    const meU=AUTHED&&SV.users?.find(u=>u.h===S.me.h); if(meU&&Date.now()-(S.picT||0)>8000) S.me.pic=meU.pic||''; if(meU) S.me.frame=meU.frame;
+    if(AUTHED&&SV.v2?.coins!=null) S.coins=SV.v2.coins;   // coins live on the server once you have an account   // your picture, from any phone (not while a change is still saving)
     // friends come from the server (two-way); demo people stay local
     if(AUTHED&&SV.friends) S.friends=[...new Set([...SV.friends.list, ...S.friends.filter(h=>USERS.some(u=>u.h===h))])];
   }catch(e){ SV.on=false; }
@@ -1638,7 +1656,7 @@ async function addFriend(h){
 async function friendAct(h, action){
   try{ await api('/api/friend',{to:h, action}); await loadState(); renderAll(); }catch(e){ toast(esc(e.message),'orange'); }
 }
-const realUser = u => ({h:u.h, c:u.c||'#9aa3c7', pic:u.pic||'', i:u.public?.interests||[], t:u.public?.type, z:u.public?.sun_sign, on:!!u.online, haunts:[], p:u.public||{}, real:true, joined:u.joined});
+const realUser = u => ({h:u.h, c:u.c||'#9aa3c7', pic:u.pic||'', frame:u.frame, i:u.public?.interests||[], t:u.public?.type, z:u.public?.sun_sign, on:!!u.online, haunts:[], p:u.public||{}, real:true, joined:u.joined});
 const people = () => USERS.concat(SV.users.filter(u=>!USERS.some(x=>x.h===u.h)).map(realUser));
 let syncT;
 function syncProfile(){   // public answers go to everyone; matching-only answers stay on the server for the matcher
@@ -2053,6 +2071,7 @@ const liveCard = ls => `<div class="card"><div class="kicker">📺 Live now · $
   ${ls.map(s=>`<button class="chip" data-watch="${s.id}" style="display:flex;align-items:center;gap:6px"><span class="onair">LIVE</span>${esc(s.u)} · ${esc(s.title.slice(0,28))}</button>`).join('')}</div></div>`;
 function renderFeed(){
   if(!$('#feedList')) return;
+  if(FEED_MODE.m==='posts') return renderWallView();
   const items=FEED_LAST=feedItems(), f=S.feed;
   $('#feedCats').innerHTML = `<button class="chip ${!feedFocus?'on':''}" data-ffocus="">All</button>`+Object.entries(CATS)
     .filter(([k])=>k!=='other'&&!f.off.includes(k)).map(([k,v])=>`<button class="chip ${feedFocus===k?'on':''}" data-ffocus="${k}">${v.e} ${v.l}</button>`).join('');
@@ -2066,7 +2085,7 @@ function renderFeed(){
   $('#feedList').innerHTML = (!feedQ&&!feedFocus?storyRail():'') + (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
       ${plans.slice(0,4).map(e=>`<div class="row" style="margin:6px 0"><span>${CATS[e.cat].e}</span><span class="grow"><b>${esc(e.title)}</b> <span class="meta">${fmtWhen(e.ts,e.tba)}</span></span>
       ${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')}</div>`:'')
-    + items.slice(0,feedN).map(card).join('')
+    + items.slice(0,feedN).map((x,i)=>card(x)+(i%4===2&&WL.top[(i-2)/4]&&!feedQ&&!feedFocus?wallCard(WL.top[(i-2)/4]):'')).join('')
     + (items.length>feedN?`<button class="btn" data-fmore style="width:100%;margin-bottom:12px">Show more (${items.length-feedN})</button>`:'')
     + (items.length?'':`<p class="sub">Nothing matches${feedQ?` “${esc(feedQ)}”`:''}. Try a longer time range or turn more categories on in ⚙️ Customize.</p>`);
   renderPicks();
@@ -3851,6 +3870,7 @@ function openDmCard(c){
   if(c.k==='place') return openSpot({id:c.id,name:c.name,lat:c.lat,lng:c.lng,e:c.e,kind:c.sub});
   if(c.k==='flare') return focusOnMap(c.id);
   if(c.k==='group') return groupOf(c.id)?openGroup(c.id):toast('That group is gone.','orange');
+  if(c.k==='post') return openWallPost(c.id);
   if(c.k==='story'){ const st=allStories().find(x=>x.id===c.id); return st?openStories([st]):toast('That story has expired (stories last 24 hours).','orange'); }
 }
 
@@ -3883,6 +3903,12 @@ function renderChatSheet(){
   $('#chatSheet').innerHTML=h;
 }
 const sendToChat = card => openChatSheet('send', card);
+async function openWallPost(id){   // one public post, in the sheet (from a chat card or a profile)
+  try{ const j=await (await fetch('/api/wall/one?id='+encodeURIComponent(id),{credentials:'same-origin'})).json(); if(j.error) throw new Error(j.error);
+    WL.top=[j.post,...WL.top.filter(p=>p.id!==id)]; $('#chatSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📝 ${T('Post')}</b><button class="btn sm" data-chclose>${T('Close')}</button></div>`+wallCard(j.post);
+    CHS.mode='post'; $('#chatBg').hidden=false; }
+  catch(e){ toast(esc(e.message),'orange'); }
+}
 function scCloseHtml(){
   if(SC.vis!=='close') return ''; const cl=SV.me?.close||[], fr=S.friends.filter(h=>!isDemoUser(h)||!SV.on);
   return `<p class="meta" style="margin:8px 0 4px">💚 ${cl.length?T('Only your {n} close friends see it.',{n:cl.length}):T('Pick your close friends:')}</p>
@@ -4046,6 +4072,132 @@ document.addEventListener('click',async e=>{
 }, true);
 document.addEventListener('input',e=>{ if(e.target.id==='plEvQ'){ const v=e.target.value; renderPlanSheet(); const i=$('#plEvQ'); if(i){ i.value=v; i.focus(); } } });
 document.addEventListener('keydown',e=>{ if(e.target.id==='plIdea'&&e.key==='Enter'){ e.preventDefault(); $('[data-pladdidea]')?.click(); } });
+
+/* ---------- public posts (the Posts feed), Instagram/Facebook-style ----------
+   A photo and/or text, an optional place, for everyone or friends; likes, comments, boosts. Ranked on the server:
+   fresh, friends, close by, liked; boosted posts first near them for 6 hours. */
+const WL = {scope:'all', posts:null, img:null, place:null, vis:'everyone', open:{}, at:0, top:[]};
+const FEED_MODE = {m:'foryou'};
+async function loadWall(force){
+  if(!SV.on) return; if(!force&&WL.posts&&Date.now()-WL.at<30000) return;
+  try{ const j=await (await fetch(`/api/wall?scope=${WL.scope}&${nearParam()}`,{credentials:'same-origin'})).json(); WL.posts=j.posts||[]; WL.at=Date.now();
+    if(WL.scope==='all') WL.top=WL.posts.slice(0,6); }catch(e){ WL.posts ||= []; }
+}
+function wallCard(p){
+  const me=S.me.h, mine=p.u===me, cs=p.comments||[], all=WL.open[p.id];
+  return `<div class="card wpost" id="wp-${esc(p.id)}">
+    <div class="row">${av(p.u)}<div class="grow"><button class="handle" data-profile="${esc(p.u)}">@${esc(p.u)}</button>${isFriend(p.u)?' <span class="badge friends">friend</span>':''}
+      <div class="meta">${agoT(p.at)}${p.vis==='friends'?' · 👥 Friends':''}${p.place?` · <button class="placetag" data-wplace="${esc(p.id)}">📍 ${esc(p.place.name)}</button>`:''}${p.boosted?' · <span class="boostb">🚀 Boosted</span>':''}</div></div>
+      <button class="btn sm" data-wmenu="${esc(p.id)}" style="padding:4px 9px">⋯</button></div>
+    ${WL.open['m'+p.id]?`<div class="btns" style="margin:6px 0">${mine?`${p.boosted?'':`<button class="btn sm" data-wboost="${esc(p.id)}">🚀 Boost · ${SV.v2?.boost_cost||40} 🪙</button>`}<button class="btn sm" data-wdel="${esc(p.id)}" style="color:#ff5470">🗑️ Delete</button>`
+      :`<button class="btn sm" data-more="wall|${esc(p.id)}|${esc(p.u)}">🚩 Report or block</button>`}<button class="btn sm" data-wsend="${esc(p.id)}">💬 Send</button></div>`:''}
+    ${p.t?`<div class="ptext" style="white-space:pre-wrap">${esc(p.t)}</div>`:''}
+    ${p.img?`<img class="wphoto" src="${esc(p.img)}" alt="" loading="lazy" data-wdbl="${esc(p.id)}">`:''}
+    <div class="gpbar"><button data-wlike="${esc(p.id)}" class="${p.liked?'on':''}">${p.liked?'❤️':'🤍'} ${p.likes||''}</button><button data-wcom="${esc(p.id)}">💬 ${cs.length||''}</button><button data-wsend="${esc(p.id)}">↗ ${T('Send')}</button></div>
+    ${cs.length?`<div class="gpcoms">${cs.length>2&&!all?`<button class="linkish" data-wall="${esc(p.id)}">${T('View all {n} comments',{n:cs.length})}</button>`:''}
+      ${(all?cs:cs.slice(-2)).map(c=>`<div class="gpc">${av(c.u,'sm')}<div class="grow"><b>@${esc(c.u)}</b> ${esc(c.t)}<div class="meta">${agoT(c.at)}${c.u===me||mine?` · <button class="linkish" data-wuncom="${esc(p.id)}|${esc(c.id)}">${T('Remove')}</button>`:''}</div></div></div>`).join('')}</div>`:''}
+    ${WL.open['c'+p.id]?`<form class="row gpcform" data-wcform="${esc(p.id)}"><input maxlength="600" placeholder="${T('Add a comment…')}" autocomplete="off"><button class="btn sm blue">${T('Post')}</button></form>`:''}
+  </div>`;
+}
+function wallComposerHtml(){
+  if(!AUTHED) return `<div class="card meta" style="text-align:center">${T('Sign up to post.')} <button class="btn sm primary" data-wsignup>${T('Join')}</button></div>`;
+  return `<div class="card wcomp"><div class="row" style="align-items:flex-start">${av(S.me.h)}<textarea id="wText" rows="2" maxlength="2200" placeholder="${T('What’s happening around town?')}"></textarea></div>
+    ${WL.img?`<div class="gpimg"><img src="${WL.img}" alt=""><button class="btn sm" data-wnoimg>✕</button></div>`:''}
+    <div id="loc-wp" style="margin-top:8px">${locFieldHtml('wp')}</div>
+    <div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-wphoto>📷 ${T('Photo')}</button>${segHtml('wVis',[['everyone','🌐'],['friends','👥']],WL.vis)}
+      <span class="grow meta" style="text-align:right">+${(SV.v2&&3)||3} 🪙</span><button class="btn primary sm" data-wpost>${T('Post')}</button></div>
+    <input type="file" id="wFile" accept="image/*" hidden></div>`;
+}
+function renderWallView(){
+  const el=$('#feedList'); if(!el) return;
+  el.innerHTML=wallComposerHtml()+`<div class="chiprow" style="margin:6px 0 8px">${[['all','✨ Everyone'],['friends','👥 Friends'],['near','📍 Near me']].map(([k,l])=>`<button class="chip ${WL.scope===k?'on':''}" data-wscope="${k}">${l}</button>`).join('')}</div>`
+    +(WL.posts===null?`<p class="meta">${T('Loading…')}</p>`:WL.posts.map(wallCard).join('')||`<div class="card meta" style="text-align:center;padding:24px">${WL.scope==='friends'?T('No posts from friends yet.'):WL.scope==='near'?T('No posts near you yet. Be the first.'):T('No posts yet. Be the first!')}</div>`);
+}
+function setFeedMode(m){
+  FEED_MODE.m=m; document.querySelectorAll('#feedMode button').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
+  ['#feedCats','#feedWhen','#feedMeta','#fyStrip'].forEach(s=>{ const x=$(s); if(x) x.hidden=m!=='foryou'; });
+  if(m==='posts'){ renderWallView(); loadWall(true).then(()=>{ if(FEED_MODE.m==='posts') renderWallView(); }); }
+  else renderFeed();
+}
+LOCF.wp = {title:'Where is this?', empty:'Add location', get:()=>WL.place, set:x=>{ WL.place=x; refreshLoc('wp'); }};
+async function wallAct(id, body, ok){
+  try{ const j=await api('/api/wall/act',{id,...body}); if(j.coins!=null&&SV.v2){ SV.v2.coins=j.coins; S.coins=j.coins; }
+    const L=WL.posts||[], i=L.findIndex(p=>p.id===id); if(j.deleted){ if(i>=0) L.splice(i,1); } else if(i>=0) L[i]=j.post;
+    const ti=WL.top.findIndex(p=>p.id===id); if(ti>=0){ if(j.deleted) WL.top.splice(ti,1); else WL.top[ti]=j.post; }
+    redrawWallCard(id, j.deleted?null:j.post); if(ok) toast(ok,'green',[],2000); return j; }
+  catch(e){ toast(esc(e.message),'orange'); }
+}
+function redrawWallCard(id, p){ document.querySelectorAll(`#wp-${CSS.escape(id)}`).forEach(el=>{ if(!p) return el.remove(); const keep=el.querySelector('[data-wcform] input')?.value; el.outerHTML=wallCard(p);
+  if(keep){ const i=document.querySelector(`#wp-${CSS.escape(id)} [data-wcform] input`); if(i) i.value=keep; } }); }
+document.addEventListener('click',async e=>{
+  const wo=e.target.closest('[data-wopen]'); if(wo){ e.stopPropagation(); $('#actBg').hidden=true; return openWallPost(wo.dataset.wopen); }
+  const b=e.target.closest('#feedMode button,[data-wscope],[data-wphoto],[data-wnoimg],[data-wpost],[data-wlike],[data-wcom],[data-wall],[data-wuncom],[data-wmenu],[data-wdel],[data-wboost],[data-wplace],[data-wsend],[data-wsignup],#wVis button');
+  if(!b) return; const d=b.dataset; const find=id=>(WL.posts||[]).concat(WL.top).find(p=>p.id===id);
+  if(b.parentElement?.id==='feedMode') return setFeedMode(d.v);
+  if(b.parentElement?.id==='wVis'){ WL.vis=d.v; b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); return; }
+  e.stopPropagation();
+  if(d.wsignup!==undefined) return needAccount('post');
+  if(d.wscope){ WL.scope=d.wscope; WL.posts=null; renderWallView(); await loadWall(true); return renderWallView(); }
+  if(d.wphoto!==undefined) return $('#wFile').click();
+  if(d.wnoimg!==undefined){ const t=$('#wText')?.value; WL.img=null; renderWallView(); if(t) $('#wText').value=t; return; }
+  if(d.wpost!==undefined){ const t=($('#wText')?.value||'').trim(); if(!t&&!WL.img) return toast('Add a photo or write something.','orange');
+    b.disabled=true; b.textContent=T('Posting…');
+    try{ const j=await api('/api/wall/post',{t, img:WL.img, place:WL.place, vis:WL.vis}); if(SV.v2){ SV.v2.coins=j.coins; S.coins=j.coins; }
+      Object.assign(WL,{img:null,place:null}); (WL.posts ||= []).unshift(j.post); renderWallView(); renderQuick?.(); toast(`📝 ${T('Posted!')} 🪙 ${j.coins}`,'green',[],2200); }
+    catch(err){ b.disabled=false; b.textContent=T('Post'); toast(esc(err.message),'orange'); } return; }
+  if(d.wlike){ if(needAccount('like posts')) return; return wallAct(d.wlike,{do:'like'}); }
+  if(d.wcom){ if(needAccount('comment')) return; WL.open['c'+d.wcom]=true; const p=find(d.wcom); if(p) redrawWallCard(d.wcom,p); return $(`[data-wcform="${d.wcom}"] input`)?.focus(); }
+  if(d.wall){ WL.open[d.wall]=true; const p=find(d.wall); if(p) redrawWallCard(d.wall,p); return; }
+  if(d.wuncom){ const [id,cid]=d.wuncom.split('|'); return wallAct(id,{do:'uncomment',cid}); }
+  if(d.wmenu){ WL.open['m'+d.wmenu]=!WL.open['m'+d.wmenu]; const p=find(d.wmenu); if(p) redrawWallCard(d.wmenu,p); return; }
+  if(d.wdel){ if(!confirm('Delete this post?')) return; return wallAct(d.wdel,{do:'delete'},'Post deleted.'); }
+  if(d.wboost){ WL.open['m'+d.wboost]=false; return wallAct(d.wboost,{do:'boost'},'🚀 Boosted for 6 hours.'); }
+  if(d.wplace){ const p=find(d.wplace); if(p?.place) openSpot(p.place); return; }
+  if(d.wsend){ const p=find(d.wsend); if(p) sendToChat({k:'post',id:p.id,name:`@${p.u}'s post`,sub:(p.t||p.place?.name||'').slice(0,80),e:'📝'}); return; }
+}, true);
+document.addEventListener('dblclick',e=>{ const im=e.target.closest('[data-wdbl]'); if(!im) return; const p=(WL.posts||[]).concat(WL.top).find(x=>x.id===im.dataset.wdbl); if(p&&!p.liked) wallAct(p.id,{do:'like'}); });
+document.addEventListener('submit',e=>{ const f=e.target.closest('[data-wcform]'); if(!f) return; e.preventDefault(); const i=f.querySelector('input'), t=i.value.trim(); if(!t) return; i.value='';
+  wallAct(f.dataset.wcform,{do:'comment',t}).then(j=>{ if(!j) i.value=t; }); });
+document.addEventListener('change',async e=>{ if(e.target.id!=='wFile') return; const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{ const t=$('#wText')?.value; WL.img=await shrinkImage(f,1400,.8); renderWallView(); if(t) $('#wText').value=t; }catch(err){ toast("Couldn't read that photo.",'orange'); } });
+
+/* ---------- rewards: coins, streak, weekly challenge, frames, leaderboards (in the Quests sheet) ---------- */
+const LB = {scope:'week', data:null};
+function rewardsHtml(rw){
+  if(!rw) return '';
+  const w=rw.weekly;
+  return `<div class="rwcard"><div class="rwstat"><b>🪙 ${rw.coins}</b><small>${T('coins')}</small></div><div class="rwstat"><b>🔥 ${rw.day_streak}</b><small>${T('day streak')}</small></div><div class="rwstat"><b>⚡ ${rw.week_xp}</b><small>${T('XP this week')}</small></div></div>
+    <div class="qcard ${w.done?'done':'featured'}" style="margin-top:10px"><div class="kicker" style="color:#ffd166;margin-bottom:6px">📆 ${T('This week in Austin')} · ${T('ends {d}',{d:new Date(w.ends+'T00:00').toLocaleDateString([],{weekday:'short'})})}</div>
+      <div class="row"><span class="qe">${w.e}</span><div class="grow"><b>${esc(T(w.name))}</b><div class="meta">${esc(T(w.desc))}</div></div><span class="qxp">+${w.coins} 🪙</span></div>
+      <div class="bar"><b style="width:${Math.round(w.have*100/w.goal)}%"></b></div><div class="meta" style="margin-top:6px">${w.done?'✓ '+T('Done! Coins added.'):`${w.have}/${w.goal}`}</div></div>
+    <details class="lcat" style="margin-top:10px"><summary><b>🪙 ${T('How to earn coins')}</b></summary><div class="meta" style="line-height:1.9;margin-top:6px">
+      📍 ${T('Check in somewhere')}: +${rw.earn.checkin} · 📝 ${T('Public post')}: +${rw.earn.post} · 📸 ${T('Story')}: +${rw.earn.story} · 🔥 ${T('Flare')}: +${rw.earn.flare}<br>
+      🗳️ ${T('Lock in a plan')}: +${rw.earn.plan} · 💌 ${T('A friend joins from your invite')}: +${rw.earn.recruit} · 🏆 ${T('Quests pay half their XP in coins')}<br>
+      🔥 ${T('Streak: do something every day for +2 a day per day in a row (up to +20)')}</div></details>
+    <label class="lbl">🖼️ ${T('Profile frames')} <span class="meta">· ${T('spend your coins')}</span></label>
+    <div class="frames">${rw.frames.map(f=>`<button class="frm ${rw.frame===f.id?'on':''}" data-frame="${f.id}"><span class="av fr-${f.id}" style="background:${S.me.c||'#2ec5ff'}">${esc((S.me.h||'?')[0].toUpperCase())}</span><small>${esc(f.label)}</small><b>${f.owned?(rw.frame===f.id?T('Wearing'):T('Wear')):f.cost+' 🪙'}</b></button>`).join('')}
+      ${rw.frame?`<button class="frm" data-frame=""><span class="av" style="background:${S.me.c||'#2ec5ff'}">${esc((S.me.h||'?')[0].toUpperCase())}</span><small>${T('No frame')}</small><b>${T('Take off')}</b></button>`:''}</div>
+    <p class="meta">🚀 ${T('Boost one of your public posts to the top of the feed near it for 6 hours: {n} 🪙 (⋯ on the post).',{n:rw.boost_cost})}</p>`;
+}
+function leaderboardHtml(){
+  const d=LB.data, tabs=[['week',T('Austin · this week')],['all',T('Austin · all time')],['friends',T('Friends')]];
+  return `<label class="lbl">🏆 ${T('Leaderboard')}</label><div class="chiprow">${tabs.map(([k,l])=>`<button class="chip ${LB.scope===k?'on':''}" data-lbscope="${k}">${l}</button>`).join('')}</div>
+    <div id="lbRows">${!d?`<p class="meta">${T('Loading…')}</p>`:d.rows.map((r,i)=>`<div class="lbrow ${r.h===S.me.h?'me':''}"><b class="rank">${i<3?['🥇','🥈','🥉'][i]:i+1}</b>${av(r.h,'sm')}<span class="grow"><button class="handle" data-profile="${esc(r.h)}">@${esc(r.h)}</button> <span class="meta">· ${T('Lv {n}',{n:r.level})}${r.streak>1?` · 🔥${r.streak}`:''}</span></span><b>${r.xp} XP</b></div>`).join('')
+      +(d.me&&d.me.rank>d.rows.length?`<div class="lbrow me"><b class="rank">${d.me.rank}</b>${av(S.me.h,'sm')}<span class="grow">@${esc(S.me.h)}</span><b>${d.me.xp} XP</b></div>`:'')
+      +(d.rows.length<2?`<p class="meta">${LB.scope==='friends'?T('Add friends to compete.'):T('Check in, post and finish quests to get on the board.')}</p>`:'')}</div>`;
+}
+async function loadLeaderboard(scope){
+  LB.scope=scope||LB.scope; LB.data=null; const el=$('#lbBox'); if(el) el.innerHTML=leaderboardHtml();
+  try{ LB.data=await (await fetch('/api/leaderboard?scope='+LB.scope,{credentials:'same-origin'})).json(); }catch(e){ LB.data={rows:[]}; }
+  const el2=$('#lbBox'); if(el2) el2.innerHTML=leaderboardHtml();
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-frame],[data-lbscope]'); if(!b) return; const d=b.dataset; e.stopPropagation();
+  if(d.lbscope){ LB.picked=true; return loadLeaderboard(d.lbscope); }
+  if(d.frame!==undefined){ try{ const rw=await api('/api/rewards/frame',{id:d.frame}); V2S.quests.rewards=rw; if(SV.v2) SV.v2.coins=rw.coins; S.coins=rw.coins;
+      const me=SV.users.find(u=>u.h===S.me.h); if(me) me.frame=rw.frame||undefined; S.me.frame=rw.frame||undefined; save();
+      renderQuests(); toast(rw.frame?`🖼️ ${T('Frame on!')}`:T('Frame off.'),'green',[],1800); }catch(err){ toast(esc(err.message),'orange'); } }
+}, true);
 
 /* ---------- report, block, feedback ---------- */
 const REASONS = ['Spam or scam','Harassment','Hate or violence','Sexual content','Unsafe meetup','Fake account','Something else'];
@@ -4672,7 +4824,7 @@ function renderQuick(){
   // Only what's useful right now; swipe, story, flare and go live already have their own quadrants.
   el.innerHTML = [
     btn('plans',T('📅 My plans'),'',plans+(SV.plans||[]).length||''),   // always here: your schedule + itineraries
-    AUTHED&&SV.v2 ? btn('quests',`🏆 ${T('Lv {n}',{n:SV.v2.level||1})}`) : '',
+    AUTHED&&SV.v2 ? btn('quests',`🏆 ${T('Lv {n}',{n:SV.v2.level||1})} · 🪙 ${SV.v2.coins||0}${SV.v2.day_streak>1?` · 🔥${SV.v2.day_streak}`:''}`) : '',
     un ? btn('msgs',T('💬 New messages'),'',un) : '',
     HH.now ? btn('happy',T('🍻 Happy hour'),'',HH.now) : '',   // only while some are on
   ].join('');   // quiz, chart and about me live in the name menu, top right
@@ -5326,7 +5478,9 @@ function leaveWatch(){ const s=LIVE.watch&&streamById(LIVE.watch); LK.view?.disc
   if(s?.remote){ PCS[s.peer]?.close(); delete PCS[s.peer]; bc({t:'leave',to:s.peer}); } WATCHV.srcObject=null; LIVE.watch=null; }
 function reqStatusToast(s,r){
   if(r.status==='accepted') toast(`🏃 <b>${esc(s.u)}</b> accepted your request: “${esc(r.text)}”`,'green');
-  if(r.status==='declined'){ S.coins+=r.tip; save(); toast(`<b>${esc(s.u)}</b> passed on your request.${r.tip?` Your 🪙${r.tip} is back.`:''}`,'orange'); }
+  const srv=r.tip&&AUTHED&&SV.on&&r.by===meH();
+  if(srv&&(r.status==='declined'||r.status==='done')) api('/api/coins/tip',{do:r.status==='done'?'pay':'refund',ref:r.id}).then(j=>{ S.coins=j.coins; if(SV.v2) SV.v2.coins=j.coins; const c=$('#coinBadge'); if(c) c.textContent='🪙 '+S.coins; }).catch(()=>{});
+  if(r.status==='declined'){ if(!srv) S.coins+=r.tip; save(); toast(`<b>${esc(s.u)}</b> passed on your request.${r.tip?` Your 🪙${r.tip} is back.`:''}`,'orange'); }
   if(r.status==='done') toast(`✅ <b>${esc(s.u)}</b> did it!${r.tip?` Your 🪙${r.tip} tip went through.`:''}`,'green');
   const c=$('#coinBadge'); if(c) c.textContent='🪙 '+S.coins; renderQueue();
 }
@@ -5347,7 +5501,9 @@ async function sendRequest(){
   if(v.verdict==='block') return toast(`🛡️ <b>Not sent.</b> ${esc(v.reason)}`,'orange',[],7000);
   if(v.verdict==='revise') return toast(`🛡️ <b>Almost.</b> ${esc(v.reason)}${v.suggestion?`<br><span class="meta">Try: “${esc(v.suggestion)}”</span>`:''}`,'orange',
     v.suggestion?[{l:'Use that',cls:'blue',f:()=>{ const i=$('#rText'); if(i) i.value=v.suggestion; }}]:[],9000);
-  r.why=v.reason; if(v.pass) r.pass=v.pass; S.coins-=tip; save();
+  r.why=v.reason; if(v.pass) r.pass=v.pass;
+  if(tip&&AUTHED&&SV.on){ try{ const j=await api('/api/coins/tip',{do:'hold',ref:r.id,n:tip,to:s.u}); S.coins=j.coins; if(SV.v2) SV.v2.coins=j.coins; }catch(e){ return toast(esc(e.message),'orange'); } }
+  else S.coins-=tip; save();
   if($('#rText')) $('#rText').value=''; if($('#coinBadge')) $('#coinBadge').textContent='🪙 '+S.coins;
   s.reqs.push(r); renderQueue(); logAct('request',{k:'live',v:r.place});
   toast(`📨 Sent to <b>${esc(s.u)}</b>${tip?` with a 🪙${tip} tip, held until they do it`:''}`,'green',[],3500);
@@ -6474,6 +6630,7 @@ function renderNotifs(){
 function notifGo(n){
   $('#notifBg').hidden=true;
   if(n.t==='dm'&&n.ref){ meetTab='msgs'; tab('meet'); return openThread(n.ref); }
+  if(n.t==='like'&&/^w[0-9a-f]{12}$/.test(n.ref||'')) return openWallPost(n.ref);
   if((n.t==='chat'||n.t==='group')&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2), n.t==='chat'?'chat':null);
   if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);
   if(n.t==='quest') return openQuests();
@@ -6645,7 +6802,8 @@ async function openQuests(){
   $('#questSheet').innerHTML=v2head(`🏆 ${T('Quests')}`,'questBg')+`<p class="meta">${T('Loading…')}</p>`; $('#questBg').hidden=false;
   try{ const r=await fetch('/api/quests',{credentials:'same-origin'}); V2S.quests=await r.json(); if(V2S.quests.error) throw new Error(V2S.quests.error); }
   catch(e){ $('#questSheet').innerHTML=v2head(`🏆 ${T('Quests')}`,'questBg')+`<p class="meta">${esc(e.message)}</p>`; return; }
-  renderQuests();
+  if(!LB.picked) LB.scope=S.friends.some(h=>!isDemoUser(h))?'friends':'week';   // friends first: that's who you race
+  renderQuests(); loadLeaderboard();
 }
 function renderQuests(){
   const q=V2S.quests, pct=Math.min(100,Math.round((q.xp-q.this_at)*100/Math.max(1,q.next_at-q.this_at)));
@@ -6655,16 +6813,16 @@ function renderQuests(){
       <div class="row"><b class="grow">${q.xp} XP</b><span class="meta">${T('{n} to level {l}',{n:q.next_at-q.xp,l:q.level+1})}</span></div>
       <div class="bar xp"><b style="width:${pct}%"></b></div>
       <div class="meta" style="margin-top:6px">🔥 ${T('{n}-week streak',{n:q.streak||0})} · 📍 ${T('{n} check-ins',{n:q.checkins})} · 🏆 ${done}/${q.quests.length}</div></div></div>
+    ${rewardsHtml(q.rewards)}
     <p class="meta" style="margin:10px 2px">${T("Get out, check in, level up. Tap 📍 Check in on a sight, place, park or event when you're there: your phone checks you're close, and Side Quest only learns the place, never your exact location.")}</p>
     <div class="qgrid">${q.quests.slice().sort((a,b)=>(b.id===q.featured)-(a.id===q.featured)).map(x=>{ const go=QUEST_GO[x.id], f=x.id===q.featured&&!x.done;
       return `<div class="qcard ${x.done?'done':''} ${f?'featured':''}">${f?`<div class="kicker" style="color:#ffd166;margin-bottom:6px">⭐ ${T('Quest of the week · 1.5× XP')}</div>`:''}<div class="row"><span class="qe">${x.e}</span><div class="grow"><b>${esc(T(x.name))}</b><div class="meta">${esc(T(x.desc))}</div></div><span class="qxp">+${f?Math.round(x.xp*1.5):x.xp}</span></div>
         <div class="bar"><b style="width:${Math.round(x.have*100/x.goal)}%"></b></div>
         <div class="row" style="margin-top:6px"><span class="meta grow">${x.done?`✓ ${T('Done')}`:`${x.have}/${x.goal}`}</span>${!x.done&&go?`<button class="btn sm" data-questgo="${x.id}">${esc(T(go[0]))}</button>`:''}</div></div>`; }).join('')}</div>
     ${q.recent.length?`<label class="lbl">${T('Recent check-ins')}</label>${q.recent.map(c=>`<div class="log"><span>📍 ${esc(c.name)}</span><span class="meta" style="margin-left:auto">${agoT(c.at)}</span></div>`).join('')}`:''}
-    <label class="lbl">${T('Friends leaderboard')}</label>
-    ${q.board.length>1?q.board.map((r,i)=>`<div class="lbrow ${r.h===S.me.h?'me':''}"><b class="rank">${i+1}</b>${av(r.h,'sm')}<span class="grow">@${esc(r.h)} <span class="meta">· ${T('Lv {n}',{n:r.level})}</span></span><b>${r.xp} XP</b></div>`).join('')
-      :`<p class="meta">${T('Add friends to compete. Your invite link:')} <button class="linkbtn" data-invitelink>${T('copy it')}</button></p>`}
-    <div class="row" style="margin-top:10px"><span class="grow meta">${T("Show me on friends' leaderboards")}</span><button class="toggle ${q.hidden?'':'on'}" data-lbtoggle aria-label="leaderboard"></button></div>
+    <div id="lbBox">${leaderboardHtml()}</div>
+    <p class="meta">${T('More friends, more competition. Your invite link:')} <button class="linkbtn" data-invitelink>${T('copy it')}</button> (+25 🪙 ${T('when they join')})</p>
+    <div class="row" style="margin-top:10px"><span class="grow meta">${T("Show me on leaderboards")}</span><button class="toggle ${q.hidden?'':'on'}" data-lbtoggle aria-label="leaderboard"></button></div>
     <div class="row" style="margin-top:10px"><span class="grow meta">${T('Show friends where I check in (the place, for 3 hours)')}</span><button class="toggle ${q.share?'on':''}" data-sharetoggle aria-label="share check-ins"></button></div>`;
 }
 async function checkInAt(k, id, lat, lng){
@@ -6770,6 +6928,8 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
     setInterval(async()=>{ if(document.hidden) return; const a=await loadState(), b=await loadThreads(); if(!a&&!b) return;   // nothing new: no redraw
       renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!DM.open) renderMeet(); else if(DM.open){ const u=dmUnread(); $('#dmPill').hidden=!u; $('#dmPill').textContent=u; } }, 15000);
     loadFriendLocs(); setInterval(()=>{ if(!document.hidden){ loadFriendLocs(); sendMyLoc(); } }, 30000);
+    loadWall().then(()=>{ if(FEED_MODE.m==='foryou') renderFeed(); });   // the best public posts, woven into For you
+    setInterval(()=>{ if(document.hidden||$('#v-feed').hidden) return; if(FEED_MODE.m==='foryou') loadWall().then(renderFeed); }, 60000);
     setInterval(()=>{ if(document.hidden||!DM.open||$('#v-meet').hidden||isDemoUser(DM.open)) return; const w=DM.open;
       fetchThread(w).then(ch=>{ if(ch&&DM.open===w){ renderThreadMsgs(); markRead(); } }).catch(()=>{}); }, 3000); }
   setInterval(loadEvents, 10*60*1000);

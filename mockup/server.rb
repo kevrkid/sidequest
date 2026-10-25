@@ -30,6 +30,8 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'wall'   # public posts: photos and text that stay, likes, comments, boosts
+require_relative 'rewards'   # 🪙 coins, daily streaks, weekly challenge, leaderboards
 require_relative 'stories_plus'   # Instagram parts of stories: viewers, poll sticker, close friends
 require_relative 'friendmap'   # Snap-Map-style: friends' faces where they are (opt-in, in memory only)
 require_relative 'groups'   # Facebook-Groups-style walls: posts, photos, polls, events, comments, admins, private groups
@@ -1020,7 +1022,8 @@ def state_for(d, h)
   end
   out = {
     users: d['users'].values.reject { |u| hidden.include?(u['h']) }.map do |u|
-      u.slice('h', 'c', 'pic', 'public', 'joined').merge('online' => u['status'] != 'offline' && PRESENCE[u['h']].to_i > t - ONLINE_MS)
+      u.slice('h', 'c', 'pic', 'public', 'joined').merge('online' => u['status'] != 'offline' && PRESENCE[u['h']].to_i > t - ONLINE_MS,
+                                                         'frame' => frame_of(d, u['h'])).compact
     end,
     rsvps: d['rsvps'].transform_values { |m| m.reject { |who, _| hidden.include?(who) } }.reject { |_k, m| m.empty? },
     members: d['members'].to_h do |gid, m|
@@ -1047,7 +1050,8 @@ def state_for(d, h)
   if h
     out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online', close: close_of(d, h) }
     q = (d['quest'] || {})[h] || {}
-    out[:v2] = { out: friends_out(d, h), invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
+    rq = (d['quest'] || {})[h] || {}
+    out[:v2] = { coins: rq['coins'].to_i, day_streak: day_streak(rq), out: friends_out(d, h), invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
                  xp: q['xp'].to_i, level: level_of(q['xp']), saves: ((d['saves'] || {})[h] || []).map { |x| "#{x['k']}:#{x['id']}" } }
     # friends' levels and quest badges (friends only; everyone else just sees the app as before)
     out[:badges] = (friends.to_a + [h]).map { |x| qq = (d['quest'] || {})[x]; qq && [x, { lvl: level_of(qq['xp']), done: (qq['done'] || {}).keys }] }.compact.to_h
@@ -1116,6 +1120,14 @@ def delete_user!(d, h)
   FMAP[:lock].synchronize { FMAP[:at].delete(h) }
   d['stories'].each { |x| (x['views'] || {}).delete(h); (x.dig('poll', 'votes') || {}).delete(h) }
   d['users'].each_value { |u| (u['close'] || []).delete(h) }
+  (d['wall'] || []).each do |p|   # public posts: theirs go with their photos; their likes and comments too
+    if p['u'] == h
+      File.delete(File.join(WALL_DIR, File.basename(p['img']))) rescue nil if p['img']
+      p.keep_if { |k, _| %w[id u at].include?(k) }['removed'] = true
+    else
+      (p['likes'] || []).delete(h); (p['comments'] || []).reject! { |c| c['u'] == h }
+    end
+  end
   d['groups'].each_value { |g| (g['admins'] || []).delete(h) }
   %w[notifs quest saves push taste].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }
@@ -1823,13 +1835,17 @@ def mount_app(server)
   route(server, '/api/report') do |b, h|
     limit!("report:#{h}", 20, 3600)
     kind = b['kind'].to_s
-    raise 'bad report' unless %w[post story user group stream chat gpost].include?(kind)
+    raise 'bad report' unless %w[post story user group stream chat gpost wall].include?(kind)
     # a live stream: note whose it is now, since stream ids only exist while the stream runs
     about = kind == 'stream' ? live_owner(b['id'].to_s[0, 40]) : nil
     store do |d|
       if kind == 'chat'   # an event or group chat message: keep who wrote it and what it said for the reviewer
         msg = (d['ev_chat'] || {}).values.flatten.find { |m| m['id'] == b['id'].to_s } or raise 'That message is gone.'
         about = msg['u']; b['note'] = "#{msg['t']} #{b['note']}".strip
+      end
+      if kind == 'wall'   # a public post
+        wp = (d['wall'] || []).find { |p| p['id'] == b['id'].to_s } or raise 'That post is gone.'
+        about = wp['u']; b['note'] = "#{wp['t']} #{b['note']}".strip
       end
       if kind == 'gpost'   # a group wall post
         gp = (d['gposts'] || {}).values.flatten.find { |p| p['id'] == b['id'].to_s } or raise 'That post is gone.'
@@ -2402,7 +2418,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

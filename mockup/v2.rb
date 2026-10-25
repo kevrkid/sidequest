@@ -106,6 +106,7 @@ def quest_bump!(d, h, key, by = 1)
   q = quest_rec(d, h)
   q['n'][key] = q['n'][key].to_i + by
   quest_award!(d, h)
+  did_something!(d, h, key)   # rewards.rb: streak + coins
 end
 
 def week_key(t) Time.at(t / 1000).strftime('%G-%V') end
@@ -136,7 +137,8 @@ def quest_award!(d, h)
     next if q['done'][qd[:id]] || prog[qd[:id]].to_i < qd[:goal]
     q['done'][qd[:id]] = now_ms
     xp = featured_quest[:id] == qd[:id] ? (qd[:xp] * 1.5).round : qd[:xp]
-    q['xp'] += xp
+    xp_add!(d, h, xp)
+    coins_add!(d, h, (xp / 2.0).round)   # a finished quest pays coins too
     notify!(d, h, 'quest', ref: qd[:id], text: "#{qd[:e]} Quest complete: #{qd[:name]} (+#{xp} XP#{xp > qd[:xp] ? ', quest of the week' : ''})")
   end
 end
@@ -525,7 +527,7 @@ def mount_v2(server)
       board = ([h] + friends_of(d, h).to_a).select { |x| d['users'][x] && (x == h || !d['users'][x]['lb_hidden']) }
                                            .map { |x| q = (d['quest'] || {})[x] || {}; { h: x, xp: q['xp'].to_i, level: level_of(q['xp']), badges: (q['done'] || {}).size } }
                                            .sort_by { |r| -r[:xp] }.first(30)
-      quest_view(d, h).merge(board: board, hidden: !!d['users'][h]['lb_hidden'], share: !!d['users'][h]['share_checkins'])
+      quest_view(d, h).merge(board: board, hidden: !!d['users'][h]['lb_hidden'], share: !!d['users'][h]['share_checkins'], rewards: rewards_view(d, h))
     end
   end
   route(server, '/api/quests/board') do |b, h|   # show or hide me on friends' leaderboards; share check-ins with friends
@@ -560,13 +562,14 @@ def mount_v2(server)
       q['checkins'] << { 'k' => k, 'id' => id, 'name' => tgt[:name].to_s[0, 80], 'tags' => tags, 'zone' => zone && zone[:id], 'at' => now_ms }
       remember_taste!(d, h, 'checkin', k, id) unless k == 'area'
       q['checkins'].shift while q['checkins'].size > 500
-      q['xp'] += CHECKIN_XP
+      xp_add!(d, h, CHECKIN_XP)
       quest_award!(d, h)
+      did_something!(d, h, 'checkin')
       track!('checkin', h)
       newly = (q['done'].keys - before).map { |qid| QUESTS.find { |x| x[:id] == qid } }
       newly.each { track!('quest_done') }
       gain = CHECKIN_XP + newly.sum { |x| featured_quest[:id] == x[:id] ? (x[:xp] * 1.5).round : x[:xp] }
-      { ok: true, name: tgt[:name], xp_gain: gain, completed: newly }.merge(quest_view(d, h))
+      { ok: true, name: tgt[:name], xp_gain: gain, completed: newly, coins: q['coins'].to_i }.merge(quest_view(d, h))
     end
   end
 

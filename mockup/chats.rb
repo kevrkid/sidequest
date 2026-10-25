@@ -39,7 +39,7 @@ def dm_out(th)
 end
 
 def dm_card(c)
-  return nil unless c.is_a?(Hash) && %w[event place story flare group].include?(c['k'])
+  return nil unless c.is_a?(Hash) && %w[event place story flare group post].include?(c['k'])
   { 'k' => c['k'], 'id' => c['id'].to_s[0, 60], 'name' => c['name'].to_s.gsub(/[[:cntrl:]]/, ' ')[0, 80], 'sub' => c['sub'].to_s.gsub(/[[:cntrl:]]/, ' ')[0, 80],
     'e' => c['e'].to_s[0, 4], 'lat' => (Float(c['lat']) rescue nil), 'lng' => (Float(c['lng']) rescue nil),
     'img' => c['img'].to_s[%r{\A/story-img/s[0-9a-f]{12}\.jpg\z}] }.compact.reject { |_, v| v == '' }
@@ -336,6 +336,7 @@ def mount_plans(server)
         pl.merge!('status' => 'set', 'pick' => { 'opt' => o['id'], 'at' => at }.compact, 'going' => ([h] + o['votes'].to_a).uniq & c['members'])
         when_s = at ? Time.at(at / 1000).strftime('%a %b %-d, %-l:%M %p') : nil
         plan_post!(d, key, h, "📅 It's on: #{o['name']}#{when_s ? " · #{when_s}" : ''}")
+        did_something!(d, h, 'plan')
         others.each { |x| notify!(d, x, 'dm', from: h, ref: key, text: "📅 It's on: #{pl['title']}: #{o['name']}#{when_s ? " · #{when_s}" : ''}") }
       when 'unlock'
         raise Forbidden, 'Only the person who started the plan can change it.' unless pl['by'] == h

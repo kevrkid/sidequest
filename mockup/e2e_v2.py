@@ -166,7 +166,7 @@ with sync_playwright() as pw:
     actx.set_geolocation({"latitude": 30.20, "longitude": -97.80, "accuracy": 15}); a.wait_for_timeout(1500)
     a.click(".leaflet-popup [data-checkin2]"); a.wait_for_timeout(700)
     check("too far away: no check-in, says how far", "away" in a.inner_text("#toasts"))
-    a.evaluate("map.closePopup(); openQuests()"); a.wait_for_selector("#questSheet .qcard")
+    a.evaluate("map.closePopup(); openQuests()"); a.wait_for_selector("#questSheet .qcard"); a.wait_for_selector("#lbRows .lbrow")   # the board loads on its own
     qs = a.inner_text("#questSheet")
     check("quests: level, XP and the History buff at 1/5", "LEVEL" in qs and "1/5" in qs)
     check("friends leaderboard lists both", AMY in qs and BO in qs)

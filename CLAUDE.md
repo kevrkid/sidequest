@@ -251,8 +251,15 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   Items are LINES (tesseract groups lines into paragraphs differently each read); a paragraph is translated as one
   text and its lines handed back one per line (`solo` fallback when the counts differ). Reads cycle `PLAN` (960 px,
   1440 px, and ±8° turned ones that only count for tilted text); tesseract must run PSM 3 (its default 6 reads walls
-  as text). Overlay colours are the sign's own (Otsu split, medians). Moving-camera test kit (fake camera with frame
-  numbers + per-line ground truth, gen.py/track_live.py/flow.py) is in `mockup/lens_test/` (its out/ isn't committed).
+  as text). Overlay colours are the sign's own (Otsu split, medians). **✨ Detect** (`from:'auto'`, the default): one
+  ~768 px JPEG to `/api/lens/lang` (haiku vision, ~1 s, $0.0004; 120/hour) names the language, then the reader switches
+  to it (`st.det`, `rlang()`; the English reader runs meanwhile and Latin-script lines are kept). Asked when the camera
+  settles, again only after 6 s without text (backing off to once a minute). **🖼 Photo** (top right): a picture from the
+  phone shown whole (`st.photo`, `.lz-still`, contain instead of cover), read once at 2200 px, up to 90 lines (live: 30);
+  works with the camera blocked. Cached translations match a slightly different reading only when its numbers are the
+  same (`same()`): before, menu lines that differed only in price borrowed each other's translations. Moving-camera test kit (fake camera with frame
+  numbers + per-line ground truth, gen.py/track_live.py/flow.py; photo.py for Detect + photos) is in `mockup/lens_test/`
+  (its out/ isn't committed).
 - **What is this?** (lens.js Identify mode + `identify.rb`): the camera's second mode (switch above the shutter; Scout's
   orange "🔍 What is this?" button, or asking Scout "what is this building"). The shutter sends one ~1024 px JPEG
   with GPS + compass heading to `/api/lens/identify`; sonnet (`SQ_LOOK_MODEL`, effort low, ~5-7 s) sees the photo
@@ -347,6 +354,16 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   `/api/hangout/act`: vote (options and times, as many as work), add, lock (organizer: top pick), unlock, going.
   Locked → "It's on" + chat line + notification, 📅 .ics download (`planIcs`), Google Calendar link, directions.
   Tests in test_v2.rb ("plans", 2). (Separate from `/api/plans`, which are your own saved itineraries.)
+- **📝 Public posts** (`wall.rb`; client "public posts"): Feed has ✨ For you | 📝 Posts (`#feedMode`). A post = text and/or
+  photo (`/wall-img/`, friends-only photos to friends only) + optional place (`LOCF.wp`), 🌐 everyone / 👥 friends; likes,
+  comments, delete, 🚀 boost (40 🪙, first near it for 6 h). `/api/wall?scope=all|friends|near|user` ranks on the server;
+  the best 6 are woven into For you; profiles show a posts grid; 💬 Send as a `post` card; report kind `wall`.
+- **🪙 Rewards** (`rewards.rb`): coins kept on the server (`d['quest'][h]['coins']`), earned for check-ins, posts, stories,
+  flares, locked-in plans (daily caps `COIN_CAP`), quests (half their XP), invites (+25), daily streak (`days`, +2/day per
+  day in a row, up to +20). All XP goes through `xp_add!` (weekly totals `wk`). Weekly Austin challenge (`WEEKLY`, rotates
+  by ISO week, +coins +100 XP). Spend: profile frames (`FRAMES`, buy once, wear any: `.av.fr-*`), boosts, live tips
+  (`/api/coins/tip` hold → pay / refund; unclaimed back after 2 days). Quests sheet: rewards card + leaderboard tabs
+  (`/api/leaderboard?scope=friends|week|all`, Friends first if you have friends; `lb_hidden` opts out of all).
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
