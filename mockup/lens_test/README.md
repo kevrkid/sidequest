@@ -14,3 +14,5 @@ the words it covers.
                                          # writes each prompt to $LENS_PROMPT_FILE and answers "ES: <line>" per line)
 
 Needs Playwright + Pillow. Start the server from a throwaway copy with empty data (see CLAUDE.md).
+    LENS_PROMPT_FILE=... FAKE_LANG_FILE=... python photo.py   # Detect + 🖼 photos (a French sign, a 45-line menu, no camera);
+                                         # the fake Claude answers the language question with what's in $FAKE_LANG_FILE

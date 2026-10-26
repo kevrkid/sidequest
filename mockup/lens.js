@@ -1,7 +1,7 @@
 /* Live Translate: point the phone's camera at text (signs, menus, labels) and read it in another language, drawn
    right over the words and pinned to them as the camera moves. Self-contained so any web app can use it: Side Quest
    opens it from Scout, and lens.html runs it on its own page.
-     Lens.open({to:'es', from:'en', translate, onClose, standalone, mode, identify, onPlace, onSight, lang})
+     Lens.open({to:'es', from:'auto', translate, detect, onClose, standalone, mode, identify, onPlace, onSight, lang})
    - Two modes, switched above the shutter: Translate, and Identify ("what is this?"): the shutter takes one photo and
      identify(jpegDataUrl, {lat, lng, heading, lang}) says what's in it (default: POST /api/lens/identify, identify.rb).
      onPlace(place, 'menu'|'info') and onSight(sight) let the app open what it found; without them it shows links.
@@ -11,7 +11,10 @@
      with Lucas-Kanade, one move/zoom/turn fitted with RANSAC) and the translations move with the picture.
    - translate(texts, from, to) → Promise<string[]> does the translating (a text can be several lines: each line's
      translation comes back on its own line); by default it POSTs
-     {lines, from, to} to /api/translate (lens.rb). Only the text goes there, never the picture. */
+     {lines, from, to} to /api/translate (lens.rb). Only the text goes there, never the picture.
+   - from:'auto' (Detect, the default) finds the language itself: detect(jpegDataUrl) → Promise<code|''|'other'> looks at
+     one small picture (default: POST /api/lens/lang, lens.rb) and the reader switches to that language's data.
+   - 🖼 translates a photo from the phone instead of the camera (only the text read from it leaves the phone). */
 (function(){
 'use strict';
 const BASE = (()=>{ try{ return new URL('.', document.currentScript?.src || location.href).href; }catch(e){ return '/'; } })();
@@ -24,11 +27,15 @@ const LANGS = [
   ['vi','Tiếng Việt','Vietnamese','vie','vi-VN']];
 const L = Object.fromEntries(LANGS.map(l=>[l[0],l]));
 const RTL = new Set(['ar']);
+const LATIN = new Set(['en','es','fr','de','it','pt','vi']);   // the English reader gets these roughly right while the language is found
 const CSS = `
 .lz{position:fixed;inset:0;z-index:3000;background:#000;color:#fff;font:15px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .lz button{font:inherit;color:#fff;cursor:pointer}
+.lz [hidden]{display:none!important}
 .lz video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lz-still{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.lz.photo video{visibility:hidden}
 .lz-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lz-box{position:absolute;left:0;top:0;transform-origin:0 0;box-sizing:border-box;display:flex;align-items:center;padding:0 .2em;border-radius:.16em;
   white-space:pre-line;overflow:hidden;line-height:1.12;font-weight:650;letter-spacing:-.01em;pointer-events:auto;opacity:0;
@@ -98,7 +105,7 @@ const CSS = `
 .lz-modes{position:absolute;left:50%;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 98px);transform:translateX(-50%);display:flex;padding:3px;border-radius:999px}
 .lz .lz-modes button{border:0;background:none;border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap}
 .lz .lz-modes button.on{background:#fff;color:#111}
-.lz.look .lz-langs,.lz.look .lz-layer,.lz.look .lz-bot .lz-side{visibility:hidden}
+.lz.look .lz-langs,.lz.look .lz-layer,.lz.look .lz-bot .lz-side,.lz.look [data-a="photo"]{visibility:hidden}
 .lz-title{flex:1;text-align:center;font-weight:700;font-size:16px;display:none}
 .lz.look .lz-title{display:block}
 .lz.look .lz-langs{display:none}
@@ -134,6 +141,9 @@ function sim(a, b){
   A.forEach((c,p)=>{ n+=Math.min(c,B.get(p)||0); tot+=c; }); B.forEach(c=>tot+=c);
   return tot ? 2*n/tot : 0;
 }
+// the numbers in a line (prices, times, dish numbers): two readings that differ there are different lines
+const nums = n => (n.match(/\d+/g)||[]).join(' ');
+const same = (a, b, t) => sim(a,b)>=t && nums(a)===nums(b);
 function loadTesseract(){
   if(window.Tesseract) return Promise.resolve();
   return loadTesseract.p ||= new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=BASE+'vendor/tesseract/tesseract.min.js';
@@ -146,6 +156,13 @@ async function defaultIdentify(img, ctx){
   if(r.status===401) throw new Error('Sign in to Side Quest to use Identify.');
   if(!r.ok||j.error) throw new Error(j.error||"Couldn't tell what that is. Try again.");
   return j;
+}
+async function defaultDetect(img){
+  const r=await fetch('/api/lens/lang', {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({img})});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===401) throw Object.assign(new Error('Sign in to translate.'),{auth:true});
+  if(!r.ok||j.error) throw new Error(j.error||"Couldn't tell the language.");
+  return j.lang||'';
 }
 async function defaultTranslate(lines, from, to){
   const r = await fetch('/api/translate',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({lines,from,to})});
@@ -281,23 +298,26 @@ function track(T, gray, w, h){
 function open(opts={}){
   if(ui) return ui.api;
   if(!document.getElementById('lz-css')){ const s=document.createElement('style'); s.id='lz-css'; s.textContent=CSS; document.head.appendChild(s); }
-  const st = { from:pick(opts,'from','en'), to:pick(opts,'to',/^es/.test(navigator.language)?'en':'es'), live:true, closed:false,
+  const st = { from:pick(opts,'from','auto'), to:pick(opts,'to',/^es/.test(navigator.language)?'en':'es'), live:true, closed:false,
+    det:null, detBusy:false, detTry:0, detAt:0, detGap:3000, textAt:0, photo:null, rn:false, camErr:'',
     stream:null, cam:null, torch:false, zoom:1, zoomMax:1, wp:null, wlang:null, w:null, loadPct:null, readerFail:0,
     items:[], id:0, reads:0, ms:0, cache:new Map(), inflight:false, again:false, noTry:0, ocr:false, lastOcr:0, gen:0,
     pose:{a:1,b:0,tx:0,ty:0}, T:newTracker(), vel:null, fails:0, epoch:0, speed:0, vw:0, vh:0, sc:0,
     showOrig:false, err:'', errUntil:0, fatal:'', mode:opts.mode==='look'?'look':'tr', look:null, heading:null };
-  if(!L[st.from]) st.from='en'; if(!L[st.to]) st.to='es';
-  const translate = opts.translate || defaultTranslate;
+  if(st.from!=='auto'&&!L[st.from]) st.from='auto'; if(!L[st.to]) st.to='es';
+  const translate = opts.translate || defaultTranslate, detect = opts.detect || defaultDetect;
+  const rlang = () => st.from==='auto' ? st.det||'en' : st.from;   // the language the reader reads
   const root=document.createElement('div'); root.className='lz'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Live Translate');
-  const opt = sel => LANGS.map(l=>`<option value="${l[0]}"${l[0]===sel?' selected':''}>${esc(l[1])}</option>`).join('');
-  root.innerHTML = `<video playsinline muted autoplay></video><div class="lz-layer"></div>
+  const opt = (sel, auto) => (auto?`<option value="auto"${sel==='auto'?' selected':''}>✨ Detect</option>`:'')+LANGS.map(l=>`<option value="${l[0]}"${l[0]===sel?' selected':''}>${esc(l[1])}</option>`).join('');
+  root.innerHTML = `<video playsinline muted autoplay></video><canvas class="lz-still" hidden></canvas><div class="lz-layer"></div>
     <div class="lz-aim"><i></i><i></i><i></i><i></i><b></b></div>
     <div class="lz-top">${opts.standalone?'<span class="lz-ib" aria-hidden="true"></span>':'<button class="lz-ib lz-glass" data-a="close" aria-label="Close">✕</button>'}
       <div class="lz-title">What is this?</div>
-      <div class="lz-langs lz-glass"><label><select data-k="from" aria-label="Translate from">${opt(st.from)}</select></label>
+      <div class="lz-langs lz-glass"><label><select data-k="from" aria-label="Translate from">${opt(st.from,true)}</select></label>
         <button class="lz-sw" data-a="swap" aria-label="Swap languages">⇄</button>
         <label><select data-k="to" aria-label="Translate to">${opt(st.to)}</select></label></div>
-      <button class="lz-ib lz-glass" data-a="torch" aria-label="Flashlight" style="visibility:hidden">🔦</button></div>
+      <button class="lz-ib lz-glass" data-a="torch" aria-label="Flashlight" hidden>🔦</button>
+      <button class="lz-ib lz-glass" data-a="photo" aria-label="Translate a photo">🖼</button><input type="file" accept="image/*" hidden></div>
     <div class="lz-stat lz-glass off" role="status"><span></span><span></span></div>
     <button class="lz-zoom lz-glass" data-a="zoom" hidden style="bottom:calc(max(18px,env(safe-area-inset-bottom)) + 146px)">1×</button>
     <div class="lz-modes lz-glass" role="tablist"><button data-mode="tr" role="tab">🌐 Translate</button><button data-mode="look" role="tab">🔍 Identify</button></div>
@@ -305,7 +325,8 @@ function open(opts={}){
       <button class="lz-shut" data-a="freeze" aria-label="Freeze the picture"><i></i></button>
       <button class="lz-side" data-a="orig" aria-label="Show the original text" aria-pressed="false"><span class="lz-glass">Aa</span>Original</button></div>`;
   document.body.appendChild(root);
-  const $=s=>root.querySelector(s), video=$('video'), layer=$('.lz-layer');
+  const $=s=>root.querySelector(s), video=$('video'), layer=$('.lz-layer'), still=$('.lz-still');
+  const dims = () => st.photo ? [st.photo.w, st.photo.h] : [video.videoWidth, video.videoHeight];   // the picture being read: the camera's or a photo's
   const small=document.createElement('canvas'), sctx=small.getContext('2d');   // on the GPU: the frame is shrunk there and only the small copy is read back
   const grab=document.createElement('canvas'), gctx=grab.getContext('2d');
   ui = {root, st};
@@ -315,7 +336,7 @@ function open(opts={}){
   const retire = wp => { const job=st.job; wp?.then(w=>Promise.resolve(job).catch(()=>{}).finally(()=>w?.terminate())).catch(()=>{}); };
   // The text reader for the "from" language (one at a time; switching language starts a new one)
   function reader(){
-    const lang=L[st.from][3];
+    const lang=L[rlang()][3];
     if(st.wlang===lang&&st.wp) return st.wp;
     retire(st.wp); st.wlang=lang; st.w=null; st.loadPct=null;
     return st.wp = loadTesseract().then(()=>Tesseract.createWorker(lang, 1, { workerPath:BASE+'vendor/tesseract/worker.min.js', corePath:BASE+'vendor/tesseract/',
@@ -327,11 +348,12 @@ function open(opts={}){
   async function camera(){
     try{ st.stream = await navigator.mediaDevices.getUserMedia({audio:false, video:{facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080}}}); }
     catch(e){ st.fatal = /NotAllowed|Security/.test(e.name) ? 'Camera blocked. Allow the camera for this site in your browser or phone settings.'
-                                                            : "Couldn't start the camera. Is another app using it?"; render(); return false; }
+                                                            : "Couldn't start the camera. Is another app using it?";
+      st.camErr=st.fatal; render(); return false; }   // 🖼 still works: a photo needs no camera
     if(st.closed){ st.stream.getTracks().forEach(t=>t.stop()); return false; }
     video.srcObject=st.stream; await video.play().catch(()=>{});
     st.cam=st.stream.getVideoTracks()[0]; const caps=st.cam?.getCapabilities?.()||{};
-    if(caps.torch) $('[data-a="torch"]').style.visibility='visible';
+    if(caps.torch) $('[data-a="torch"]').hidden=false;
     if(caps.zoom&&caps.zoom.max>=2){ st.zoomMax=Math.min(caps.zoom.max,4); $('[data-a="zoom"]').hidden=false; }
     return true;
   }
@@ -372,6 +394,7 @@ function open(opts={}){
       else if(st.fails===4){ st.epoch++; st.items.forEach(it=>{ it.stale=true; }); }   // lost it: hide until the next read finds them again
     }else st.speed*=.6;
     if(!st.w&&!st.wp&&performance.now()-st.readerFail>5000) reader();
+    if(st.from==='auto'&&st.speed<1&&wantDetect()) findLang(vf||video);
     if(st.w&&!st.ocr&&!document.hidden&&st.speed<1&&performance.now()-st.lastOcr>150) read(false, vf||video);   // reads this same frame
     vf?.close();
     render();
@@ -391,13 +414,14 @@ function open(opts={}){
   }
 
   // One read: grab the frame (with the pose at this exact moment), read it, and fold what it found into the translations
-  async function read(full, src=video){
+  async function read(full, src=st.photo?still:video){
     const w=st.w; if(!w||st.ocr) return; st.ocr=true;
     const pose={...st.pose}, epoch=st.epoch, gen=st.gen;
     try{
       // Live reads take turns: a quick small look (big text reads best there), a sharper one for small print, and two
       // turned ±8° (the reader misses lines tilted more than ~5°, which a hand-held phone often is)
-      const vw=video.videoWidth, vh=video.videoHeight, [len,phi]=full?[1600,0]:PLAN[st.reads++%PLAN.length];
+      const [vw,vh]=dims(); if(!vw) return;   // no picture yet (the camera didn't start)
+      const [len,phi]=full?[st.photo?2200:1600,0]:PLAN[st.reads++%PLAN.length];   // a photo: often a whole menu in small print
       const k=Math.min(1,len/Math.max(vw,vh)), cw=grab.width=Math.round(vw*k), ch=grab.height=Math.round(vh*k);
       if(phi){ gctx.fillStyle='#808080'; gctx.fillRect(0,0,cw,ch); gctx.setTransform(Math.cos(phi),Math.sin(phi),-Math.sin(phi),Math.cos(phi),cw/2,ch/2);
         gctx.drawImage(src,-cw/2,-ch/2,cw,ch); gctx.setTransform(1,0,0,1,0,0); }
@@ -411,11 +435,14 @@ function open(opts={}){
       const c=Math.cos(phi), sn=Math.sin(phi);   // back from the read's picture to the camera frame
       merge(lines(data).map(p=>{ const dx=p.x-cw/2, dy=p.y-ch/2;
         return {...p, x:(c*dx+sn*dy)/k+vw/2, y:(-sn*dx+c*dy)/k+vh/2, w:p.w/k, h:p.h/k, th:p.th-phi}; })
-        .filter(p=>!phi||Math.abs(p.th+phi)<.07&&Math.abs(p.th)>.05), pose, full, k, phi);   // a turned read only speaks for text tilted its way
+        .filter(p=>!phi||Math.abs(p.th+phi)<.07&&Math.abs(p.th)>.05), pose, full, k, phi);
+      if(st.items.some(it=>!it.stale)) st.textAt=performance.now();   // a turned read only speaks for text tilted its way
     }catch(e){ if(!st.closed) flash(e.message||'Something went wrong reading the text.'); }
     finally{ st.ocr=false; st.lastOcr=performance.now(); if(!st.closed) render(); }
   }
-  function readNow(){ (function go(){ if(st.closed||st.live) return; if(st.ocr||!st.w) return setTimeout(go,80); read(true); })(); }
+  // one careful read of the still picture, as soon as the reader is free (asked for twice, it still reads once)
+  function readNow(){ if(st.rn) return; st.rn=true;
+    (function go(){ if(st.closed||st.live) return st.rn=false; if(st.ocr||!st.w||st.detBusy) return setTimeout(go,80); st.rn=false; read(true); })(); }
   // Every line the reader found, in the read's own pixels. Lines are what's tracked (the reader finds the same lines
   // read after read, but groups them into paragraphs differently); `para` says which lines it read as one paragraph.
   function lines(data){
@@ -446,7 +473,7 @@ function open(opts={}){
         out.push({text:l.text, n:norm(l.text), para, conf:l.conf, lines:1, x:(x0+x1)/2, y:(y0+y1)/2, w:W+2*pad+H*.3, h:H+2*pad, th, col:colors(pal,x0-m,y0-m,x1+m,y1+m)});
       }
     }
-    return out.slice(0,40);
+    return out.slice(0,st.live?40:90);
   }
   // The sign's own colors, so the translation looks printed on it: split the pixels in the box into light and dark,
   // the bigger group is the background and the other is the ink
@@ -484,7 +511,7 @@ function open(opts={}){
 
   // Fold a read into what's on screen: the same text near the same spot is the same sign (it glides there, doesn't jump)
   function merge(ps, pose, full, k, phi){
-    const P=inv(pose), s=Math.hypot(pose.a,pose.b), turn=Math.atan2(pose.b,pose.a), now=performance.now(), vw=st.vw||video.videoWidth, vh=st.vh||video.videoHeight;
+    const P=inv(pose), s=Math.hypot(pose.a,pose.b), turn=Math.atan2(pose.b,pose.a), now=performance.now(), [vw,vh]=dims();
     const found=ps.map(p=>{ const [x,y]=app(P,p.x,p.y); return {...p, x, y, w:p.w/s, h:p.h/s, th:p.th-turn}; });
     const used=new Set(), paras=new Map();
     for(const f of found){
@@ -517,7 +544,8 @@ function open(opts={}){
       if(!inView&&now-it.seen>15000) return drop(it);       // off to the side: kept a while in case the camera comes back
       return true;
     });
-    if(st.items.length>30) st.items.sort((a,b)=>b.seen-a.seen).splice(30).forEach(drop);
+    const most=st.live?30:90;   // a still picture can be a whole menu
+    if(st.items.length>most) st.items.sort((a,b)=>b.seen-a.seen).splice(most).forEach(drop);
     fill(full);
   }
   const overlap=(a,b)=>{ const ix=Math.max(0,Math.min(a.x+a.w/2,b.x+b.w/2)-Math.max(a.x-a.w/2,b.x-b.w/2)), iy=Math.max(0,Math.min(a.y+a.h/2,b.y+b.h/2)-Math.max(a.y-a.h/2,b.y-b.h/2));
@@ -529,7 +557,7 @@ function open(opts={}){
     if(f.col){ it.col=it.col&&!snap?{bg:it.col.bg.map((v,i)=>v*.6+f.col.bg[i]*.4), fg:it.col.fg.map((v,i)=>v*.6+f.col.fg[i]*.4)}:f.col; it.look=paint(it.col); }
     if(it.text!==f.text) it.dirty=true;
     it.text=f.text; it.n=f.n; it.conf=f.conf; it.hits++; it.miss=0; it.stale=false; it.seen=now;
-    if(it.tr!=null&&sim(it.src,f.n)<.6){ const k=known(f.n); if(k!=null){ it.tr=k; it.src=f.n; it.dirty=true; } else it.want=true; }   // the words really changed
+    if(it.tr!=null&&!same(it.src,f.n,.6)){ const k=known(f.n); if(k!=null){ it.tr=k; it.src=f.n; it.dirty=true; } else it.want=true; }   // the words really changed
   }
   function drop(it){ it.el?.remove(); it.el=null; return false; }
   function clear(){ st.items.forEach(drop); st.items=[]; }
@@ -537,7 +565,7 @@ function open(opts={}){
   function known(n){
     const hit=st.cache.get(key(n)); if(hit!=null) return hit;
     const pre=st.from+'>'+st.to+':';
-    for(const [kk,v] of st.cache) if(kk.startsWith(pre)&&sim(kk.slice(pre.length),n)>=.8) return v;
+    for(const [kk,v] of st.cache) if(kk.startsWith(pre)&&same(kk.slice(pre.length),n,.8)) return v;   // a slightly different reading of a line we have
     return null;
   }
   function setTr(it, t){ it.tr=t; it.src=it.n; it.want=false; it.dirty=true; }
@@ -553,7 +581,8 @@ function open(opts={}){
     const jobs=new Map();
     for(const it of need){ const g=it.solo||!it.group ? [it] : it.group.filter(x=>st.items.includes(x));
       const t=g.map(x=>x.text).join('\n'); if(!jobs.has(t)&&jobs.size<30) jobs.set(t,g); }
-    const texts=[...jobs.keys()], from=st.from, to=st.to, gen=st.gen, pre=from+'>'+to+':';
+    if(need.some(it=>![...jobs.values()].some(g=>g.includes(it)))) st.again=true;   // more than one request's worth: the rest go next
+    const texts=[...jobs.keys()], from=st.from==='auto'?st.det||'auto':st.from, to=st.to, gen=st.gen, pre=st.from+'>'+to+':';
     st.inflight=true; render();
     try{
       const out=await translate(texts, from, to);
@@ -591,10 +620,10 @@ function open(opts={}){
   const el0 = it => it.el.dir==='rtl' ? it.ew-it.w*st.sc/2 : it.w*st.sc/2;
   function render(){
     if(st.closed) return;
-    const W=root.clientWidth, H=root.clientHeight, vw=video.videoWidth, vh=video.videoHeight;
+    const W=root.clientWidth, H=root.clientHeight, [vw,vh]=dims();
     let any=false;
     if(vw){
-      const sc=Math.max(W/vw,H/vh), ox=(W-vw*sc)/2, oy=(H-vh*sc)/2, P=st.pose;
+      const sc=(st.photo?Math.min:Math.max)(W/vw,H/vh), ox=(W-vw*sc)/2, oy=(H-vh*sc)/2, P=st.pose;   // a photo is shown whole, the camera fills the screen
       if(sc!==st.sc){ st.sc=sc; st.items.forEach(it=>{ it.dirty=true; }); }
       for(const it of st.items){
         const mode = it.stale ? '' : it.orig||st.showOrig ? 'orig' : it.tr ? 'tr' : it.tr==null ? 'wait' : '';
@@ -616,11 +645,13 @@ function open(opts={}){
     const now=performance.now(); let t='', k='';
     if(st.fatal){ t=st.fatal; k='err'; }
     else if(st.err&&now<st.errUntil){ t=st.err; k='err'; }
-    else if(!st.stream) { t='Starting the camera…'; k='busy'; }
+    else if(!st.stream&&!st.photo) { t='Starting the camera…'; k='busy'; }
     else if(st.mode==='look') { [t,k] = st.looking?['Looking…','busy']:st.look?['','']:['Point at a place, sign or dish and tap ◯','']; }
-    else if(!st.w) { t=`Getting ready to read ${L[st.from][2]}…`+(st.loadPct!=null&&st.loadPct<100?` ${st.loadPct}%`:''); k='busy'; }
+    else if(st.from==='auto'&&!st.det&&st.detBusy&&!any) { t='Finding the language…'; k='busy'; }
+    else if(!st.w) { t=`Getting ready to read ${L[rlang()][2]}…`+(st.loadPct!=null&&st.loadPct<100?` ${st.loadPct}%`:''); k='busy'; }
     else if(st.inflight) { t='Translating…'; k='busy'; }
-    else if(!st.live) { t=st.ocr?'Reading…':any?'Tap a translation to see the original':'No text found. Get closer and try again.'; k=st.ocr?'busy':''; }
+    else if(!st.live&&any&&!st.ocr&&!st.detBusy&&!st.inflight) { t=hint('Tap a translation to see the original'); }
+    else if(!st.live) { t=st.ocr||st.detBusy?'Reading…':any?'':st.photo?'No text found in this photo.':'No text found. Get closer and try again.'; k=st.ocr||st.detBusy?'busy':''; }
     else if(any) { t='Live'; k='live'; }
     else if(st.speed>=1) t='Hold steady…';
     else { t='Point at a sign, menu or label'; }
@@ -628,6 +659,9 @@ function open(opts={}){
     el.firstChild.className = k==='busy'?'lz-spin':k==='live'?'lz-dot':k==='err'?'lz-dot err':'';
     el.firstChild.hidden = !k; el.lastChild.textContent=t; el.classList.toggle('off',!t);
   }
+  // a tip shows for a few seconds, then gets out of the way (on a menu it would sit on a line)
+  function hint(t){ const now=performance.now(); if(st.hint!==t){ st.hint=t; st.hintAt=now; setTimeout(()=>{ if(!st.closed) render(); },4100); }
+    return now-st.hintAt<4000 ? t : ''; }
   function list(refresh){
     let sh=root.querySelector('.lz-sheet');
     if(!refresh&&sh){ sh.remove(); return; }
@@ -635,7 +669,7 @@ function open(opts={}){
     for(const it of st.items.filter(it=>it.tr&&!it.stale).sort((a,b)=>a.y-b.y||a.x-b.x)){ if(done.has(it)) continue;
       const g=(it.group||[]).filter(x=>x.tr&&!x.stale&&!done.has(x)&&st.items.includes(x)); if(!g.includes(it)) g.push(it);
       g.sort((a,b)=>a.y-b.y).forEach(x=>done.add(x)); rows.push({text:g.map(x=>x.text).join('\n'), tr:g.map(x=>x.tr).join('\n')}); }
-    const html=`<div class="lz-grab"></div><div class="lz-head"><span>Text in view<small>${esc(L[st.from][1])} → ${esc(L[st.to][1])}</small></span>
+    const html=`<div class="lz-grab"></div><div class="lz-head"><span>Text in view<small>${esc(L[rlang()][1])} → ${esc(L[st.to][1])}</small></span>
       <button class="lz-mini" data-a="list" aria-label="Close the list">✕</button></div>` + (rows.length ? rows.map(it=>`<div class="lz-card">
       <div><small>${esc(it.text)}</small><div class="t" dir="${RTL.has(st.to)?'rtl':'auto'}">${esc(it.tr)}</div></div>
       <button class="lz-mini" data-say="${esc(it.tr)}" aria-label="Read aloud">🔊</button><button class="lz-mini" data-copy="${esc(it.tr)}" aria-label="Copy">⧉</button></div>`).join('')
@@ -644,24 +678,80 @@ function open(opts={}){
     if(sh.dataset.html!==html){ sh.dataset.html=html; sh.innerHTML=html; }
   }
   function freeze(on){
-    st.live=!on; const b=$('[data-a="freeze"]'); b.classList.toggle('frozen',on); b.setAttribute('aria-label',on?'Back to live':'Freeze the picture');
+    if(!on&&st.photo) unphoto();
+    st.live=!on; st.hint=null; const b=$('[data-a="freeze"]'); b.classList.toggle('frozen',on); b.setAttribute('aria-label',on?'Back to live':'Freeze the picture');
     if(on){ video.pause(); try{ navigator.vibrate?.(12); }catch(e){} readNow(); }   // the picture stops now; a closer read once the current one is done
     else { st.items.forEach(it=>{ if(it.orig){ it.orig=false; it.dirty=true; } }); video.play().catch(()=>{}); }
     render();
   }
   function setLang(k, v){
-    if(k==='swap'){ [st.from,st.to]=[st.to,st.from]; $('.lz-sw').classList.toggle('spin'); }
+    if(k==='swap'){ const was=st.from==='auto'?st.det||(st.to==='en'?'es':'en'):st.from; st.from=st.to; st.to=was===st.from?(st.from==='en'?'es':'en'):was;
+      $('.lz-sw').classList.toggle('spin'); }
     else st[k]=v;
+    if(k!=='to'){ st.det=null; st.detTry=0; detName(); }
     $('[data-k="from"]').value=st.from; $('[data-k="to"]').value=st.to; remember(st); st.gen++;
-    if(k!=='to'){ clear(); reader(); }
+    if(k!=='to'){ clear(); reader(); if(!st.live) st.from==='auto'?findLang().then(readNow):readNow(); }
     else { st.items.forEach(it=>{ it.tr=null; it.src=null; it.want=false; it.dirty=true; }); fill(true); }
     render();
   }
+  // ---- Detect: which language the text is in, from one small picture ----
+  // Asked when the camera is steady and nothing's known yet, and again when the reader hasn't seen text for a while
+  // (the camera moved on to something in another language); a picture with no text waits a few seconds before the next try
+  function wantDetect(){
+    const now=performance.now();
+    if(st.detBusy||now<st.detTry||document.hidden) return false;
+    return !st.det || now-st.textAt>6000&&now-st.detAt>10000;
+  }
+  async function findLang(src=st.photo?still:video){
+    if(st.detBusy) return; st.detBusy=true; const gen=st.gen; render();
+    try{
+      const [vw,vh]=dims(); if(!vw) return;
+      const c=document.createElement('canvas'), k=Math.min(1,768/Math.max(vw,vh)); c.width=Math.round(vw*k); c.height=Math.round(vh*k);
+      c.getContext('2d').drawImage(src,0,0,c.width,c.height);
+      const got=await detect(c.toDataURL('image/jpeg',.8));
+      if(st.closed||gen!==st.gen||st.from!=='auto') return;
+      const now=performance.now(); st.detAt=now;
+      // nothing new (no text, or the same language): ask less and less often, up to once a minute
+      if(!L[got]||got===st.det){ st.detTry=now+st.detGap; st.detGap=Math.min(60000,st.detGap*2);
+        if(got==='other'&&!st.det) flash("That language isn't one I can read yet."); return; }
+      st.detTry=now+2000; st.detGap=3000;
+      const was=rlang(); st.det=got; detName();
+      if(LATIN.has(was)!==LATIN.has(got)||!st.textAt) clear();   // another alphabet: what the old reader made of it is noise
+      st.textAt=now; reader();
+    }catch(e){ st.detTry=performance.now()+30000; if(!st.closed&&!st.det) flash(e.auth?'Sign in first, then open the translator again.':e.message); }
+    finally{ st.detBusy=false; if(!st.closed) render(); }
+  }
+  function detName(){ const o=$('[data-k="from"] option[value="auto"]'); if(o) o.textContent=st.det?'✨ '+L[st.det][1]:'✨ Detect'; }
+
+  // ---- 🖼 a photo from the phone instead of the camera: shown whole, read once, carefully ----
+  async function photo(file){
+    if(!file) return;
+    const url=URL.createObjectURL(file), img=new Image();
+    try{ img.src=url; await img.decode(); }catch(e){ URL.revokeObjectURL(url); return flash("Couldn't open that photo."); }
+    if(st.closed) return URL.revokeObjectURL(url);
+    const k=Math.min(1,2400/Math.max(img.naturalWidth,img.naturalHeight));
+    still.width=Math.max(1,Math.round(img.naturalWidth*k)); still.height=Math.max(1,Math.round(img.naturalHeight*k));
+    still.getContext('2d').drawImage(img,0,0,still.width,still.height); URL.revokeObjectURL(url);   // the phone's own way up (EXIF)
+    root.querySelector('.lz-sheet')?.remove();
+    st.photo={w:still.width, h:still.height}; still.hidden=false; root.classList.add('photo'); st.fatal='';
+    if(!st.w&&!st.wp) reader();
+    st.gen++; st.epoch++; clear(); st.pose={a:1,b:0,tx:0,ty:0}; st.textAt=0; st.hint=null;
+    st.live=false; video.pause(); const b=$('[data-a="freeze"]'); b.classList.add('frozen'); b.setAttribute('aria-label','Back to the camera');
+    render();
+    if(st.from==='auto') await findLang(still);   // a new picture may be in another language
+    readNow();
+  }
+  function unphoto(){
+    st.photo=null; still.hidden=true; root.classList.remove('photo'); st.gen++; st.epoch++; clear(); st.fatal=st.camErr;
+    st.T=newTracker(); st.pose={a:1,b:0,tx:0,ty:0}; st.vw=0;
+  }
+
   // ---- Identify: one photo → what it is ----
   function setMode(m){
     if(m===st.mode) return; st.mode=m; root.classList.toggle('look',m==='look');
     root.querySelectorAll('[data-mode]').forEach(b=>{ b.classList.toggle('on',b.dataset.mode===m); b.setAttribute('aria-selected',b.dataset.mode===m); });
     root.querySelector('.lz-sheet')?.remove(); st.look=null;
+    if(st.photo) unphoto();
     if(!st.live){ st.live=true; video.play().catch(()=>{}); $('[data-a="freeze"]').classList.remove('frozen'); }
     $('[data-a="freeze"]').setAttribute('aria-label', m==='look'?'Identify what is in the picture':'Freeze the picture');
     if(m==='look') compass(); else { clear(); st.T=newTracker(); st.pose={a:1,b:0,tx:0,ty:0}; }
@@ -727,6 +817,7 @@ function open(opts={}){
       if(opts.onPlace){ close(); return opts.onPlace(r.place, pl); }
       return window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(`${r.place.name} ${r.place.addr||''}`),'_blank','noopener'); }
     if(a==='list') return list();
+    if(a==='photo'){ const f=$('input[type=file]'); f.value=''; return f.click(); }
     if(a==='swap') return setLang('swap');
     if(a==='orig'){ st.showOrig=!st.showOrig; const b=$('[data-a="orig"]'); b.classList.toggle('on',st.showOrig); b.setAttribute('aria-pressed',st.showOrig); return render(); }
     if(a==='torch'){ st.torch=!st.torch; st.cam?.applyConstraints({advanced:[{torch:st.torch}]}).catch(()=>{}); $('[data-a="torch"]').classList.toggle('on',st.torch); return; }
@@ -736,10 +827,11 @@ function open(opts={}){
     const cp=e.target.closest('[data-copy]'); if(cp){ navigator.clipboard?.writeText(cp.dataset.copy).then(()=>{ cp.textContent='✓'; setTimeout(()=>cp.textContent='⧉',1200); }).catch(()=>{}); return; }
     const bx=e.target.closest('.lz-box'); if(bx){ const it=st.items.find(x=>x.id===+bx.dataset.id); if(it){ it.orig=!it.orig; render(); } }
   });
-  root.addEventListener('change',e=>{ const k=e.target.dataset.k; if(k) setLang(k, e.target.value); });
+  root.addEventListener('change',e=>{ if(e.target.type==='file') return photo(e.target.files[0]); const k=e.target.dataset.k; if(k) setLang(k, e.target.value); });
   addEventListener('resize',render);
   root.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===st.mode));
   if(st.mode==='look'){ root.classList.add('look'); compass(); $('[data-a="freeze"]').setAttribute('aria-label','Identify what is in the picture'); }
+  detName();
   (async()=>{ render(); if(!(await camera())) return; render(); if(st.mode==='tr') reader(); next(); })();   // Identify needs no text reader
   ui.api = {close, freeze, root, _st:st};
   return ui.api;

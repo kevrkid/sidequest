@@ -20,7 +20,8 @@ with sync_playwright() as p:
     pg.on("pageerror",lambda e:errs.append(str(e))); pg.on("console",lambda m: m.type=="error" and not any(x in m.text for x in ("diacritics","boxClip","pixScan","401")) and errs.append(m.text))
     ctx.add_init_script("{const g=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices); navigator.mediaDevices.getUserMedia=c=>g({audio:false,video:true});}")
     pg.goto(BASE, wait_until="load")
-    pg.evaluate("fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({h:'lensflow1',pw:'password123',adult:true,terms:true})})")
+    pg.evaluate("""(async()=>{ const j=b=>({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}), me={h:'lensflow1',pw:'password123'};
+      const r=await fetch('/api/signup',j({...me,adult:true,terms:true})); if(!r.ok) await fetch('/api/login',j(me)); })()""")   # rerunnable
     pg.reload(wait_until="load"); pg.wait_for_timeout(1200)
     pg.evaluate("document.querySelectorAll('#welcomeBg,#onbBg').forEach(x=>x.hidden=true); openScoutVoice(true)"); pg.wait_for_timeout(400)
     pg.click("[data-sc=lens]"); pg.wait_for_timeout(700)
@@ -50,8 +51,8 @@ with sync_playwright() as p:
     pg.screenshot(path=O+"/5-list.png")
     pg.click(".lz-sheet [data-a=list]")
     pg.select_option("[data-k=to]","fr"); t=time.time()
-    while time.time()-t<20 and "French" not in open(os.environ["LENS_PROMPT_FILE"]).read(): pg.wait_for_timeout(250)
-    ok("new language: remembered and translated again", pg.evaluate("localStorage.getItem('lens')")=='{"from":"en","to":"fr"}' and "into French" in open(os.environ["LENS_PROMPT_FILE"]).read())
+    while time.time()-t<20 and "into French" not in open(os.environ["LENS_PROMPT_FILE"]).read(): pg.wait_for_timeout(250)
+    ok("new language: remembered and translated again", pg.evaluate("localStorage.getItem('lens')")=='{"from":"auto","to":"fr"}' and "into French" in open(os.environ["LENS_PROMPT_FILE"]).read(), pg.evaluate("localStorage.getItem('lens')"))
     pg.click("[data-a=freeze]"); pg.wait_for_timeout(300)
     ok("back to live", not pg.evaluate("document.querySelector('.lz video').paused"))
     pg.select_option("[data-k=to]","es")
