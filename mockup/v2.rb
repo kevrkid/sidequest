@@ -489,7 +489,10 @@ def tonight_push!(force: false)
 end
 
 def v2_background
-  store { |d| d['invite_key'] ||= SecureRandom.hex(16) }   # made once and kept, so invite links keep working
+  store do |d|
+    d['invite_key'] ||= SecureRandom.hex(16)   # made once and kept, so invite links keep working
+    (d['wall'] || []).reject! { |p| !d['users'][p['u']] }   # posts of deleted accounts (older ones left a placeholder)
+  end
   push_worker
   Thread.new do
     loop do

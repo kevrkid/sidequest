@@ -1124,11 +1124,12 @@ def delete_user!(d, h)
   (d['wall'] || []).each do |p|   # public posts: theirs go with their photos; their likes and comments too
     if p['u'] == h
       File.delete(File.join(WALL_DIR, File.basename(p['img']))) rescue nil if p['img']
-      p.keep_if { |k, _| %w[id u at].include?(k) }['removed'] = true
+      p['gone'] = true
     else
       (p['likes'] || []).delete(h); (p['comments'] || []).reject! { |c| c['u'] == h }
     end
   end
+  (d['wall'] || []).reject! { |p| p['gone'] }   # nothing of theirs stays, not even their name on a placeholder
   d['groups'].each_value { |g| (g['admins'] || []).delete(h) }
   %w[notifs quest saves push taste].each { |k| (d[k] || {}).delete(h) }
   (d['notifs'] || {}).each_value { |l| l.reject! { |n| n['from'] == h } }

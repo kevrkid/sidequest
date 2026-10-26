@@ -327,12 +327,15 @@ t('chat: blocking hides the chat and stops messages') {
   _, th = cc.get('/api/dm/threads')
   check(c == 403 && th['threads'].none? { |x| x['with'] == 'chat_b' }, [c, th])
 }
-t('chat: deleting your account deletes your photos and voice notes') {
+t('chat: deleting your account deletes your photos, voice notes and public posts (no placeholder left)') {
   _, up = cc.req(:post, '/api/dm/voice', 'a' * 5000, 'Content-Type' => 'audio/mp4')
   _, j = cc.post('/api/dm/send', to: 'chat_a', aud: up['id'])
   before = ca.req(:get, j['msg']['aud']).first
+  _, wp = cc.post('/api/wall/post', t: 'leaving soon')
   cc.post('/api/account/delete', pw: 'password123', confirm: 'chat_c')
-  check(before == 200 && ca.req(:get, j['msg']['aud']).first == 404 && !File.exist?(File.join($dir, 'data', 'dm', up['id'])), [before, up])
+  wall = JSON.parse(File.read(File.join($dir, 'data', 'app.json')))['wall'] rescue nil   # (written atomically after each change)
+  check(before == 200 && ca.req(:get, j['msg']['aud']).first == 404 && !File.exist?(File.join($dir, 'data', 'dm', up['id'])) &&
+        wall && wall.none? { |x| x['id'] == wp['post']['id'] || x['u'] == 'chat_c' }, [before, up, wall&.map { |x| x['u'] }])
 }
 # ---- Facebook-Groups-style walls (groups.rb)
 $g = nil
