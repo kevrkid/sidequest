@@ -113,7 +113,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   during the delay.)
 - **Your picture**: 📸 Take a photo (in-app camera: front camera in a round preview, shutter / retake / use,
   480 px square JPEG; no camera access → the phone's own camera via `capture="user"`) or a chosen photo (`/api/me/photo`, shrunk on the phone, served at `/avatar/<h>.jpg?v=`,
-  flagged `pic_unreviewed` since photos aren't machine-checked yet), an emoji avatar (`pic: "emoji:🦊"` via
+  flagged `pic_unreviewed` until photo screening has looked at it), an emoji avatar (`pic: "emoji:🦊"` via
   `/api/profile`) or your initial, on a chosen colour; `av()` draws all three everywhere.
 - **Me / profile**: four tabs (`showMeSec()`, `[data-mepane]`): Profile (preview + interests),
   Personality (quiz + astrology), About you, Privacy (location, delay, data, account). Interests, a 20-question 16-type personality quiz, full astrology (birth date +
@@ -367,6 +367,14 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   by ISO week, +coins +100 XP). Spend: profile frames (`FRAMES`, buy once, wear any: `.av.fr-*`), boosts, live tips
   (`/api/coins/tip` hold → pay / refund; unclaimed back after 2 days). Quests sheet: rewards card + leaderboard tabs
   (`/api/leaderboard?scope=friends|week|all`, Friends first if you have friends; `lb_hidden` opts out of all).
+- **🛡️ Photo screening** (`photocheck.rb`): every public photo (wall posts, stories, group posts, profile pictures; video
+  stories as 3 ffmpeg frames) is queued (`photo_check!`, `PHOTO_Q`, one worker, 200 max) right after it's saved and shown
+  to `SCREEN_MODEL` with `PHOTO_SYSTEM`. Block → taken down (file deleted), owner gets a `mod` notification with the
+  reason, logged in `d['photo_blocks']` (admin "Photos taken down automatically"). Pass → off the review list, unless
+  its text already failed (`text_ok`). Claude unreachable or the queue full → stays `unreviewed` for a person. On with
+  moderation (`SQ_PHOTO_SCREEN=0|1` overrides). Chat photos aren't screened. Admin "Needs a human look" also lists
+  public posts, group posts and profile pictures (kinds `wall`, `gpost`, `pic`). Tests in test_v2.rb ("photos", 2;
+  the fake Claude blocks images containing BADPHOTO).
 - **📍 Place pages** (`openSpot(x)`, `#spotBg`): tap 📍 on a story or a flare card → stories there (24 h, grid),
   flares, live, coming-up events (by name or within ~150 m), Directions, Map, Menu (food & drink), Post / Flare here.
 - **Business info**: Google details now also give phone (📞 Call) and address (same Enterprise call, no extra
@@ -554,5 +562,5 @@ Deployment kit: `deploy/` (systemd units, Caddyfile for `sidequest.cc.middlematt
   hours. Don't scrape restaurant websites.
 - Deployment: needs a GitHub repo for the server session to pull from, an Anthropic API key in the
   server env file, and a lawyer pass on `terms.html` / `privacy.html` (both marked DRAFT).
-- Later: Postgres instead of the JSON file, password reset by email, photo moderation, an RTMP
+- Later: Postgres instead of the JSON file, password reset by email, an RTMP
   ingest (WHIP/RTMP through LiveKit) for action cameras, simulcast to YouTube/TikTok, native app-store wrapper.

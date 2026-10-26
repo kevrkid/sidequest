@@ -223,10 +223,13 @@ with sync_playwright() as pw:
     dots = p1.evaluate("({open: Object.values(PL.cores).filter(l=>l.options.fillColor==='#3ddc97').length, all: Object.keys(PL.cores).length})")
     check("green open-now dots on the map", dots["open"] >= 2 and dots["all"] >= 4, json.dumps(dots))
     check("8 glowing hot-spot zones with labels", p1.locator("path.hotzone").count() == 8 and "6th Street" in p1.locator(".hotlabel").all_inner_texts().__str__())
+    # events off for this check: the day's real events can land on the test bar, and events win the spot
+    p1.evaluate("S.mapL.events=false; refreshMapLayers()"); p1.wait_for_timeout(400)
     clubs15, bars15 = p1.locator(".npin.club").count(), p1.locator(".npin.bar").count()
     p1.evaluate("void map.setView([30.2670,-97.7395],16)"); p1.wait_for_timeout(600)
     check("Nightlife layer: clubs, and bars only at street level (zoom 16)", clubs15 >= 1 and bars15 == 0 and p1.locator(".npin.bar").count() >= 1,
           f"zoom 15: {clubs15} clubs, {bars15} bars; zoom 16: {p1.locator('.npin.bar').count()} bars")
+    p1.evaluate("S.mapL.events=true; refreshMapLayers()")
     p1.evaluate("void map.setView([30.2650,-97.7390],15)"); p1.wait_for_timeout(500)
     p1.evaluate("void map.setView([30.2625,-97.760],13)"); p1.wait_for_timeout(1200)
     od = "[...OD.on.values()].flatMap(l=>l.getLayers?l.getLayers():[l])"   # drawn on a canvas: check the shapes themselves

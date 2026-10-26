@@ -9,7 +9,7 @@ require_relative 'webpush'
 # ---------------------------------------------------------------------------------------------
 # Notifications: per person, newest last, capped. Never across a block; never about yourself.
 NOTIF_MAX = 120
-NOTIF_TYPES = %w[freq friend down going chat dm group join tag like quest joined remind invite tonight].freeze
+NOTIF_TYPES = %w[freq friend down going chat dm group join tag like quest joined remind invite tonight mod].freeze
 
 def notify!(d, to, type, from: nil, ref: nil, text: nil)
   return unless to && d['users'][to] && to != from && NOTIF_TYPES.include?(type)

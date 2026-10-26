@@ -30,6 +30,7 @@ require_relative 'lens' # Live Translate: camera text → any of 13 languages (l
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'photocheck'   # Claude looks at every public photo right after it goes up
 require_relative 'wall'   # public posts: photos and text that stay, likes, comments, boosts
 require_relative 'rewards'   # 🪙 coins, daily streaks, weekly challenge, leaderboards
 require_relative 'stories_plus'   # Instagram parts of stories: viewers, poll sticker, close friends
@@ -1972,7 +1973,8 @@ def mount_app(server)
     File.binwrite(File.join(AVATAR_DIR, "#{h}.jpg"), raw.unpack1('m'))
     store do |d|
       d['users'][h]['pic'] = "photo:#{now_ms}"   # the number changes the URL, so phones don't show the old one
-      d['users'][h]['pic_unreviewed'] = true      # photos aren't machine-checked yet; reports reach the admin
+      d['users'][h]['pic_unreviewed'] = true      # until photocheck.rb has looked at it
+      photo_check!('avatar', [h, d['users'][h]['pic']], File.join(AVATAR_DIR, "#{h}.jpg"))
       { ok: true, pic: d['users'][h]['pic'] }
     end
   end
@@ -2058,8 +2060,9 @@ def mount_app(server)
                 'groups' => Array(st['groups']).map(&:to_s).first(5),
                 'people' => Array(st['people']).map(&:to_s).select { |p| (d['users'][p] || (DEMO && DEMO_HANDLES.include?(p))) && !blocked.include?(p) }.first(10),
                 'vis' => %w[friends close].include?(st['vis']) ? st['vis'] : 'everyone', 'poll' => poll,
-                'unreviewed' => !reviewed || !raw.nil? || !up.nil? }   # photos and videos aren't machine-checked yet
+                'unreviewed' => !reviewed || !raw.nil? || !up.nil? }   # photos and videos: until photocheck.rb has looked
       d['stories'] << story
+      photo_check!('story', id, raw ? File.join(STORY_DIR, "#{id}.jpg") : File.join(STORY_DIR, story['vid'].split('/').last), text_ok: reviewed) if raw || up
       story['people'].each { |x| notify!(d, x, 'tag', from: h, ref: id, text: "📸 @#{h} tagged you in a story") }
       quest_bump!(d, h, 'story')
       { ok: true, story: story.merge('poll' => story_poll_out(story['poll'], h), 'vc' => 0).compact }
@@ -2082,7 +2085,11 @@ def mount_app(server)
                         unreviewed: { posts: d['posts'].select { |p| p['unreviewed'] && !p['removed'] },
                                       stories: d['stories'].select { |x| x['unreviewed'] && !x['removed'] },
                                       groups: d['groups'].values.select { |g| g['unreviewed'] && !g['removed'] },
-                                      evchat: (d['ev_chat'] || {}).flat_map { |ev, l| l.select { |m| m['unreviewed'] && !m['removed'] }.map { |m| m.merge('ev' => ev) } } },
+                                      evchat: (d['ev_chat'] || {}).flat_map { |ev, l| l.select { |m| m['unreviewed'] && !m['removed'] }.map { |m| m.merge('ev' => ev) } },
+                                      wall: (d['wall'] || []).select { |p| p['unreviewed'] && !p['removed'] }.map { |p| p.slice('id', 'u', 't', 'img', 'at', 'vis') },
+                                      gposts: (d['gposts'] || {}).flat_map { |gid, l| l.select { |p| p['unreviewed'] && !p['removed'] }.map { |p| p.slice('id', 'u', 't', 'img', 'at').merge('g' => gid) } },
+                                      pics: d['users'].values.select { |u| u['pic_unreviewed'] && u['pic'].to_s.start_with?('photo:') }.map { |u| { 'h' => u['h'], 'pic' => u['pic'] } } },
+                        photo_blocks: (d['photo_blocks'] || []).last(30).reverse, photo_screen: photo_screen?,
                         stats: { users: d['users'].size, posts: d['posts'].size, stories: d['stories'].size,
                                  groups: d['groups'].size, open_reports: d['reports'].count { |r| r['status'] == 'open' } },
                         scout: { days: (d['scout'] || {}).sort.last(7).reverse.map { |day, x| { day: day, n: x['n'], usd: x['usd'].round(2),
@@ -2098,13 +2105,21 @@ def mount_app(server)
           case b['action']
           when 'remove'
             coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values,
-                     'evchat' => (d['ev_chat'] || {}).values.flatten }[b['kind']] or raise 'bad kind'
-            (coll.find { |x| x['id'] == b['id'] } or raise 'not found')['removed'] = true
+                     'evchat' => (d['ev_chat'] || {}).values.flatten, 'wall' => d['wall'] || [],
+                     'gpost' => (d['gposts'] || {}).values.flatten, 'pic' => [] }[b['kind']] or raise 'bad kind'
+            if b['kind'] == 'pic'
+              u = d['users'][b['id']] or raise 'not found'
+              u.delete('pic'); u.delete('pic_unreviewed'); File.delete(File.join(AVATAR_DIR, "#{b['id']}.jpg")) rescue nil
+            else
+              (coll.find { |x| x['id'] == b['id'] } or raise 'not found')['removed'] = true
+            end
             prune_stories(d)
           when 'approve'
             coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values,
-                     'evchat' => (d['ev_chat'] || {}).values.flatten }[b['kind']] or raise 'bad kind'
-            (coll.find { |x| x['id'] == b['id'] } or raise 'not found').delete('unreviewed')
+                     'evchat' => (d['ev_chat'] || {}).values.flatten, 'wall' => d['wall'] || [],
+                     'gpost' => (d['gposts'] || {}).values.flatten, 'pic' => [] }[b['kind']] or raise 'bad kind'
+            b['kind'] == 'pic' ? (d['users'][b['id']] or raise 'not found').delete('pic_unreviewed')
+                               : (coll.find { |x| x['id'] == b['id'] } or raise 'not found').delete('unreviewed')
           when 'ban', 'unban'
             u = d['users'][b['h']] or raise 'no such user'
             u['banned'] = b['action'] == 'ban'

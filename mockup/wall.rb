@@ -68,7 +68,7 @@ def mount_wall(server)
     place = spot_ref(b['place'])
     place = nil unless place.is_a?(Hash)
     reviewed = moderate([text, place && place['name']].compact.join(' · '))
-    store do |d|
+    out = store do |d|
       p = { 'id' => "w#{SecureRandom.hex(6)}", 'u' => h, 't' => text, 'at' => now_ms, 'vis' => b['vis'] == 'friends' ? 'friends' : 'everyone',
             'likes' => [], 'comments' => [] }
       if raw
@@ -85,6 +85,8 @@ def mount_wall(server)
       track!('wall_post', h)
       { ok: true, post: wall_out(p, h, Set.new), coins: quest_rec(d, h)['coins'].to_i }
     end
+    photo_check!('wall', out[:post]['id'], File.join(WALL_DIR, "#{out[:post]['id']}.jpg"), text_ok: reviewed) if raw
+    out
   end
 
   # like / comment / uncomment / delete (yours) / boost (yours, costs coins)

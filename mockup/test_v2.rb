@@ -27,7 +27,11 @@ FileUtils.cp(Dir[File.join(__dir__, '*.{rb,md,json,html}')], dir)
 log = File.join(dir, 'server.log')
 # a stand-in for Claude Code: keeps the prompt it was given and answers with an empty reply
 FAKE_CLAUDE = File.join(dir, 'fake_claude')
-File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nrequire 'json'\npr = $stdin.read\nFile.write(File.join(#{dir.inspect}, 'last_prompt.txt'), pr)\n" \
+File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nrequire 'json'\npr = $stdin.read\n" \
+  "if pr.include?('Photo to check') then imgs = JSON.parse(pr)['message']['content'].select { |c| c['type'] == 'image' }.map { |c| c['source']['data'].unpack1('m') }\n" \
+  "  bad = imgs.any? { |b| b.include?('BADPHOTO') }; File.open(File.join(#{dir.inspect}, 'photo_checks.txt'), 'a') { |f| f.puts imgs.size }\n" \
+  "  puts JSON.generate(type: 'result', structured_output: { verdict: bad ? 'block' : 'allow', reason: bad ? 'This photo shows something not allowed here.' : 'ok' }, duration_ms: 1, total_cost_usd: 0); exit end\n" \
+  "File.write(File.join(#{dir.inspect}, 'last_prompt.txt'), pr)\n" \
   "if (l = pr[/^Lines: (\\[.*\\])$/, 1]) then puts JSON.generate(structured_output: { translations: JSON.parse(l).map { |x| 'ES ' + x } }, duration_ms: 1, total_cost_usd: 0); exit end\n" \
   "puts '{\"structured_output\":{\"say\":\"ok\",\"expression\":\"happy\",\"actions\":[]},\"duration_ms\":1,\"total_cost_usd\":0}'\n")
 File.chmod(0o755, FAKE_CLAUDE)
@@ -40,7 +44,7 @@ File.chmod(0o755, FAKE_FFMPEG, FAKE_WHISPER)
 pid = spawn({ 'PORT' => PORT.to_s, 'SQ_MODERATE' => '0', 'SQ_DEMO' => '0', 'SQ_PLACES_FILE' => 'test_places.json', 'SQ_OUTDOORS_FILE' => 'test_outdoors.json',
               'SQ_SIGHTS_FILE' => 'test_sights.json', 'SQ_EVENTS_API' => "http://127.0.0.1:#{EV_PORT}", 'SQ_ADMIN_TOKEN' => 'adm',
               'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_PLACES_KEY' => nil, 'SQ_GOOGLE_TTS_KEY' => nil, 'SQ_PUSH_TEST_HOST' => "127.0.0.1:#{EV_PORT}",
-              'SQ_ENGINE' => 'cli', 'CLAUDE_BIN' => FAKE_CLAUDE, 'SQ_USE_API_KEY' => nil,
+              'SQ_ENGINE' => 'cli', 'CLAUDE_BIN' => FAKE_CLAUDE, 'SQ_USE_API_KEY' => nil, 'SQ_PHOTO_SCREEN' => '1',
               'SQ_FFMPEG_BIN' => FAKE_FFMPEG, 'SQ_WHISPER_BIN' => FAKE_WHISPER, 'SQ_WHISPER_MODEL' => File.join(dir, 'fake_model.bin') },
             'ruby', 'server.rb', chdir: dir, out: log, err: log)
 def stop_server(pid)   # TERM, and KILL if it hasn't gone in 3 s (a leftover would answer the next run's requests)
@@ -551,6 +555,38 @@ t('rewards: frames cost coins once, then you can wear them; tips are held, paid 
   _, rf = ca.post('/api/coins/tip', do: 'refund', ref: 'qtest2')
   check(poor == 400 && r['coins'] >= 10 && h1['coins'] == r['coins'] - 5 && rb2['coins'] == rb['coins'] + 5 && again == 400 && rf['coins'] == p1['coins'],
         [poor, r['coins'], h1, rb, rb2, again, rf])
+}
+# ---- photo screening (photocheck.rb): every public photo is shown to Claude (here a stand-in that blocks "BADPHOTO")
+t('photos: a fine photo leaves the review list; a bad one comes down everywhere and its owner is told why') {
+  ok_jpg = 'data:image/jpeg;base64,' + ["\xFF\xD8\xFF\xE0".b + 'fine' * 80].pack('m0')
+  bad_jpg = 'data:image/jpeg;base64,' + ["\xFF\xD8\xFF\xE0".b + 'BADPHOTO' * 40].pack('m0')
+  adm = ->() { cz.req(:get, '/api/admin', nil, 'X-Admin-Token' => 'adm')[1] }
+  _, good = cz.post('/api/wall/post', t: 'Barton Springs', img: ok_jpg)
+  _, bad = cz.post('/api/wall/post', t: 'look at this', img: bad_jpg)
+  _, st = cz.post('/api/story', story: { caption: 'night out', img: bad_jpg, vis: 'everyone' })
+  cz.post('/api/me/photo', img: bad_jpg)
+  _, pg = ca.post('/api/group/create', n: 'Photo walk', d: 'Pictures around town', e: '📷', cat: 'social')
+  _, gp = ca.post('/api/group/post', id: (pg['group'] || pg)['id'], t: 'group pic', img: bad_jpg)
+  a = nil
+  40.times { a = adm.(); break if a['photo_blocks'].size >= 4 && a['unreviewed']['wall'].none? { |x| x['id'] == good['post']['id'] }; sleep 0.25 }
+  gone, = cz.get("/api/wall/one?id=#{bad['post']['id']}")
+  still, = ca.get("/api/wall/one?id=#{good['post']['id']}")
+  img_bad = cz.req(:get, bad['post']['img']).first
+  _, state = cz.get('/api/state')
+  _, n = cz.post('/api/notifs')
+  mods = n['notifs'].select { |x| x['t'] == 'mod' }
+  check(a['photo_screen'] == true && a['photo_blocks'].map { |x| x['kind'] }.sort == %w[avatar gpost story wall] &&
+        a['unreviewed']['gposts'].none? { |x| x['id'] == gp['post']['id'] } && ca.req(:get, gp['post']['img']).first == 404 && gone == 400 && still == 200 && img_bad == 404 &&
+        a['unreviewed']['wall'].none? { |x| [good, bad].map { |y| y['post']['id'] }.include?(x['id']) } && a['unreviewed']['pics'].none? { |x| x['h'] == 'chat_z' } &&
+        (state['stories'] || []).none? { |x| x['id'] == st['story']['id'] } && mods.size == 3 && ca.post('/api/notifs')[1]['notifs'].count { |x| x['t'] == 'mod' } == 1 && mods.all? { |x| x['text'] =~ /taken down: This photo/ },
+        [gp, a['photo_blocks'], gone, still, img_bad, a['unreviewed']['wall'], mods.map { |x| x['text'] }])
+}
+t('photos: the admin can approve or remove a public post by hand') {
+  _, w = cb.post('/api/wall/post', t: 'by hand', vis: 'everyone')
+  c, = cz.req(:post, '/api/admin', { action: 'approve', kind: 'wall', id: w['post']['id'] }, 'X-Admin-Token' => 'adm')
+  c2, = cz.req(:post, '/api/admin', { action: 'remove', kind: 'wall', id: w['post']['id'] }, 'X-Admin-Token' => 'adm')
+  gone, = ca.get("/api/wall/one?id=#{w['post']['id']}")
+  check(c == 200 && c2 == 200 && gone == 400, [c, c2, gone])
 }
 t("a link made up in someone else's name can't make you their friend") {
   mal = Who.new('mallory_v2'); mal.signup(ref: 'amy_v2', ref_friend: true, rk: '000000000000')

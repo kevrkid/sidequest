@@ -107,13 +107,14 @@ def mount_groups(server)
         p['ev'] = ev
         p['going'] = [h]
       end
-      p['unreviewed'] = true unless reviewed
+      p['unreviewed'] = true if !reviewed || raw   # a photo stays on the review list until it's been screened
       list = ((d['gposts'] ||= {})[g['id']] ||= [])
       list << p
       list.shift while list.size > GPOST_MAX
       what = ev ? "📅 #{ev['title']}" : poll ? "📊 #{poll['q']}" : text.empty? ? '📷 a photo' : text
       group_notify_members!(d, g, h, "#{ev ? '📅' : poll ? '📊' : '🏘️'} @#{h} in #{g['n'].to_s[0, 40]}: #{what[0, 80]}", p['id'])
       track!('group_post', h)
+      photo_check!('gpost', [g['id'], p['id']], File.join(GROUP_DIR, File.basename(p['img'])), text_ok: reviewed) if raw
       { ok: true, post: gpost_out(p, h, Set.new) }
     end
   end

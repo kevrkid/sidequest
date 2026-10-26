@@ -70,7 +70,7 @@ async function load(){
         ${act('End stream',{action:'end_stream',h:s.h},'bad')}${act('Suspend @'+esc(s.h),{action:'ban',h:s.h},'bad')}</div>`).join('') || '<p class="meta">Nobody is live.</p>'}
       ${d.live_stopped.length?`<p class="meta">Stopped in the last 30 minutes: ${d.live_stopped.map(x=>`@${esc(x.h)} (${when(x.at)})`).join(', ')}</p>`:''}
       <h2>Needs a human look</h2>
-      <p class="meta">Posts that went up while automatic screening was unavailable, and every photo story (photos aren't machine-checked yet).</p>
+      <p class="meta">${d.photo_screen?'Photos are screened by Claude right after they go up; what is left here went up while screening was unavailable, or is still waiting.':'Photo screening is off (SQ_MODERATE=0 or SQ_PHOTO_SCREEN=0), so every photo waits here.'}</p>
       ${d.unreviewed.stories.map(x=>`<div class="card row"><div class="grow"><b>Story</b> by @${esc(x.u)} · ${when(x.created)}<div>${esc(x.caption)}</div>${x.img?`<img src="${esc(x.img)}" alt="">`:''}</div>
         ${act('Looks fine',{action:'approve',kind:'story',id:x.id},'good')}${act('Remove',{action:'remove',kind:'story',id:x.id},'bad')}${act('Ban @'+esc(x.u),{action:'ban',h:x.u},'bad')}</div>`).join('')}
       ${d.unreviewed.posts.map(x=>`<div class="card row"><div class="grow"><b>Post</b> by @${esc(x.u)}<div>${esc(x.t)}</div></div>
@@ -79,7 +79,14 @@ async function load(){
         ${act('Looks fine',{action:'approve',kind:'group',id:x.id},'good')}${act('Remove',{action:'remove',kind:'group',id:x.id},'bad')}</div>`).join('')}
       ${(d.unreviewed.evchat||[]).map(x=>`<div class="card row"><div class="grow"><b>Event chat</b> by @${esc(x.u)} · <code>${esc(x.ev)}</code><div>${esc(x.t)}</div></div>
         ${act('Looks fine',{action:'approve',kind:'evchat',id:x.id},'good')}${act('Remove',{action:'remove',kind:'evchat',id:x.id},'bad')}</div>`).join('')}
-      ${d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length+(d.unreviewed.evchat||[]).length?'':'<p class="meta">All clear.</p>'}
+      ${(d.unreviewed.wall||[]).map(x=>`<div class="card row"><div class="grow"><b>Public post</b> by @${esc(x.u)} · ${when(x.at)}${x.vis==='friends'?' · friends only':''}<div>${esc(x.t)}</div>${x.img&&x.vis!=='friends'?`<img src="${esc(x.img)}" alt="">`:x.img?'<div class="meta">📷 photo (friends only, not shown here)</div>':''}</div>
+        ${act('Looks fine',{action:'approve',kind:'wall',id:x.id},'good')}${act('Remove',{action:'remove',kind:'wall',id:x.id},'bad')}${act('Ban @'+esc(x.u),{action:'ban',h:x.u},'bad')}</div>`).join('')}
+      ${(d.unreviewed.gposts||[]).map(x=>`<div class="card row"><div class="grow"><b>Group post</b> by @${esc(x.u)} · ${when(x.at)} · <code>${esc(x.g)}</code><div>${esc(x.t)}</div>${x.img?'<div class="meta">📷 photo (open the group to see it)</div>':''}</div>
+        ${act('Looks fine',{action:'approve',kind:'gpost',id:x.id},'good')}${act('Remove',{action:'remove',kind:'gpost',id:x.id},'bad')}${act('Ban @'+esc(x.u),{action:'ban',h:x.u},'bad')}</div>`).join('')}
+      ${(d.unreviewed.pics||[]).map(x=>`<div class="card row"><div class="grow"><b>Profile picture</b> of @${esc(x.h)}<img src="/avatar/${encodeURIComponent(x.h)}.jpg?v=${encodeURIComponent(x.pic)}" alt=""></div>
+        ${act('Looks fine',{action:'approve',kind:'pic',id:x.h},'good')}${act('Remove',{action:'remove',kind:'pic',id:x.h},'bad')}${act('Ban @'+esc(x.h),{action:'ban',h:x.h},'bad')}</div>`).join('')}
+      ${d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length+(d.unreviewed.evchat||[]).length+(d.unreviewed.wall||[]).length+(d.unreviewed.gposts||[]).length+(d.unreviewed.pics||[]).length?'':'<p class="meta">All clear.</p>'}
+      ${(d.photo_blocks||[]).length?`<h2>🛡️ Photos taken down automatically</h2>${d.photo_blocks.map(x=>`<div class="card"><b>${esc(x.kind)}</b> by @${esc(x.u)} · ${when(x.at)}<div class="meta">${esc(x.reason)}</div></div>`).join('')}`:''}
       <h2>🧭 Scout usage</h2>
       ${d.scout?`<div class="card row"><div class="grow"><b>${d.scout.paused?'Paused by you':d.scout.over_budget?"Paused: today's budget is used up":'Running'}</b>
           <div class="meta">Daily budget $${d.scout.budget} for everyone · ${d.scout.daily_limit} questions per person per day</div></div>
