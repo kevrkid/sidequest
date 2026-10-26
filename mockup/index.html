@@ -755,57 +755,218 @@
   .lk-sub{font-size:12px;font-weight:700;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.04em}
   .lk-sw button{width:30px;height:30px;border-radius:50%;border:2px solid #0006;box-shadow:inset 0 -3px 0 #0003}
   .lk-sw button.on{outline:3px solid #fff;outline-offset:1px}
+  /* ================= V3: the map is the app. Everything else lives in one drawer over it, with a dock below. =================
+     --ftop: where the drawer's top sits when it's all the way up; --dockh: the dock; --dvis: how much of the screen
+     the drawer + dock cover right now (set by setDrawer), so things floating on the map stay above it. */
+  #app.v3{display:block;--ftop:calc(env(safe-area-inset-top,0px) + 62px);--dockh:calc(60px + env(safe-area-inset-bottom,0px));--dvis:200px;
+    --glass:#0e1430e6;--glass2:#161e3ff0;--hair:#ffffff14}
+  #app.v3 .ic{width:20px;height:20px;display:block;flex:none}
+  #app.v3 #v-map{position:absolute;inset:0;z-index:0;padding:0;overflow:hidden}
+  #app.v3 #map .leaflet-bottom{bottom:var(--dvis);transition:bottom .34s cubic-bezier(.2,.9,.25,1)}
+  #app.v3 #map .leaflet-control-attribution{font-size:9px;background:#070b18aa;color:#8a93ba;border-radius:6px 0 0 0}
+  #app.v3 #map .leaflet-control-attribution a{color:#a7b0d6}
+  /* top: you (left), the name (middle), notifications (right) — all floating on the map */
+  #app.v3 header{position:absolute;top:0;left:0;right:0;z-index:520;display:flex;align-items:center;gap:10px;
+    padding:calc(8px + env(safe-area-inset-top,0px)) 12px 18px;background:linear-gradient(#070b18d9,#070b1866 60%,#070b1800);pointer-events:none}
+  #app.v3 header>*{pointer-events:auto}
+  #app.v3 .me-chip{width:44px;height:44px;padding:0;border:0;border-radius:50%;background:none;flex:none;position:relative;display:grid;place-items:center}
+  #app.v3 .me-chip .av{width:40px;height:40px;font-size:16px;box-shadow:0 0 0 2px #070b18,0 0 0 4px #ffffff30,0 6px 16px #0008}
+  #app.v3 .me-chip.online .av{box-shadow:0 0 0 2px #070b18,0 0 0 4px var(--good),0 6px 16px #0008}
+  #app.v3 #meHandle{display:none}
+  #app.v3 .logo{margin:0 auto;font-size:15px;font-weight:800;letter-spacing:-.3px;gap:7px;padding:5px 12px 5px 6px;border-radius:99px;
+    background:#0d1226b3;border:1px solid var(--hair);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #app.v3 .logo .gem{width:22px;height:22px;border-radius:6px}
+  #app.v3 .hr{margin:0;display:flex;align-items:center}
+  #app.v3 .bell{width:44px;height:44px;background:#0d1226cc;border:1px solid var(--hair);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9edff}
+  #app.v3 .bell .ic{width:21px;height:21px}
+  #app.v3 .bell[hidden]{display:grid!important;visibility:hidden}   /* keeps the name centred for guests */
+  #app.v3 .mapctl{top:calc(env(safe-area-inset-top,0px) + 66px);right:12px;gap:10px}
+  #app.v3 .mapctl button{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#0d1226d9;border:1px solid var(--hair);
+    color:#e9edff;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #app.v3 .mapctl button.on{color:var(--accent2);border-color:#2ec5ff88;background:#0f2a40e6}
+  #app.v3 .maphint{top:calc(env(safe-area-inset-top,0px) + 66px)}
+  #app.v3 .maplive{bottom:calc(var(--dvis) + 10px);left:82px;transition:bottom .34s cubic-bezier(.2,.9,.25,1)}
+  #app.v3 .maplive.closed{left:auto}
+  #app.v3[data-at=full] .maplive,#app.v3[data-at=full] #scoutBtn{opacity:0;pointer-events:none}
+  #app.v3 #toasts{top:calc(env(safe-area-inset-top,0px) + 62px)}
+
+  /* the drawer */
+  #drawer{position:absolute;left:0;right:0;top:var(--ftop);bottom:var(--dockh);z-index:600;display:flex;flex-direction:column;
+    background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
+    border-radius:26px 26px 0 0;border-top:1px solid #ffffff1c;box-shadow:0 -12px 40px #0009;
+    transform:translateY(var(--doff,0px));transition:transform .34s cubic-bezier(.2,.9,.25,1);will-change:transform}
+  #drawer.dragging{transition:none}
+  #drawer .dgrab{flex:none;height:20px;display:grid;place-items:center;cursor:grab;touch-action:none}
+  #drawer .dgrab i{width:38px;height:5px;border-radius:3px;background:#ffffff38}
+  #drawer .dhead{flex:none;padding:0 12px 2px;touch-action:none}
+  .qbar{display:flex;align-items:center;gap:10px;height:48px;padding:0 5px 0 14px;border-radius:15px;background:#1a2246;border:1px solid #ffffff17;
+    box-shadow:inset 0 1px 0 #ffffff0d}
+  .qbar:focus-within{border-color:#2ec5ff99;box-shadow:0 0 0 3px #2ec5ff22}
+  .qbar>.ic{color:var(--muted)}
+  .qbar input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:16px;outline:none;border-radius:0}
+  .qbar input::-webkit-search-cancel-button{-webkit-appearance:none}
+  .qbar .qmic,.qbar .qback{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:var(--accent2)}
+  .qbar .qmic{background:#2ec5ff1a} .qbar .qback{color:var(--text);margin-left:-10px;width:32px}
+  .qbar .qback+.ic{display:none}
+  #drawer .mapchips{position:static;display:flex;gap:7px;overflow-x:auto;margin:0 -12px;padding:10px 12px 8px;scrollbar-width:none;touch-action:pan-x;
+    -webkit-mask-image:none;mask-image:none}
+  #drawer .mapchips::-webkit-scrollbar{display:none}
+  #drawer .mapchips .chip{padding:8px 13px;font-size:13.5px;font-weight:650;background:#1a2246;border:1px solid #ffffff14;border-radius:99px;color:#dfe4ff}
+  #drawer .mapchips .chip.on{background:#e9edff;color:#0b0f20;border-color:#e9edff}
+  #drawer .mapchips .chip.part{background:#1a2246;border-style:solid}
+  #app.v3[data-tab=search] #mapChips,#app.v3[data-tab=feed] #mapChips,#app.v3[data-tab=meet] #mapChips,#app.v3[data-tab=me] #mapChips,#app.v3[data-tab=live] #mapChips{display:none}
+  #app.v3:not([data-tab=home]):not([data-tab=search]) .dhead{display:none}
+  .glance{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 6px;padding:2px 4px;text-align:left;font-size:13px;font-weight:600;color:#cfd5f5}
+  .glance b{color:#fff} .glance .ic{width:16px;height:16px;color:var(--muted);margin-left:auto}
+  #drawer:not([data-at=peek]) .glance{display:none}
+  #drawer main{flex:1;position:relative;overflow:hidden;min-height:0}
+  #drawer .view{padding:6px 14px calc(28px);overscroll-behavior:contain}
+  #drawer:not([data-at=full]) .view{overflow-y:hidden}
+  #drawer[data-at=peek] main{opacity:0;pointer-events:none;transition:opacity .2s}
+  #drawer main{transition:opacity .2s}
+
+  /* the dock */
+  #dock{position:absolute;left:0;right:0;bottom:0;height:var(--dockh);z-index:640;display:grid;grid-template-columns:repeat(5,1fr);align-items:start;
+    padding:7px 4px env(safe-area-inset-bottom,0px);background:#0a0f22;border-top:1px solid #ffffff12}
+  #dock button{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0;font-size:10.5px;font-weight:650;color:#7d86ad;letter-spacing:.1px}
+  #dock button .ic{width:24px;height:24px}
+  #dock button.on{color:#fff} #dock button.on .ic{color:var(--accent)}
+  #dock button:active{transform:scale(.94)}
+  #dock .plus{justify-content:center}
+  #dock .plus .ic{width:50px;height:40px;padding:9px 13px;border-radius:15px;background:linear-gradient(135deg,#ff8a1f,#ff3b6b);color:#fff;
+    box-shadow:0 8px 20px -8px #ff3b6bcc,inset 0 1px 0 #ffffff55}
+  #dock .dn{position:absolute;top:-3px;left:calc(50% + 5px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#ff3b5c;color:#fff;
+    font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 0 0 2px #0a0f22}
+  #dock .dn:empty{display:none}
+  #dock .dav{display:grid;place-items:center;width:26px;height:24px}
+  #dock .dav .av{width:24px;height:24px;font-size:11px;border:0}
+  #dock button.on .dav .av{box-shadow:0 0 0 2px #0a0f22,0 0 0 3.5px var(--accent)}
+
+  /* Scout rides on the drawer's top edge */
+  #app.v3 #scoutBtn{left:12px;bottom:calc(var(--dvis) + 12px)!important;width:56px;height:56px;transition:bottom .34s cubic-bezier(.2,.9,.25,1),opacity .2s}
+  #app.v3 #scoutBubble,#app.v3 #scoutTour:not(.top){bottom:calc(var(--dvis) + 78px)}
+  #app.v3 #v-home #homeNext{margin-left:0}
+
+  /* Explore: what's around, in the drawer */
+  .exh{display:flex;align-items:baseline;justify-content:space-between;margin:18px 2px 9px}
+  .exh b{font-size:17px;letter-spacing:-.3px} .exh .linkbtn{font-size:13px;font-weight:700}
+  #exMain>.exh:first-child{margin-top:4px}
+  #homeStories .srail{margin-bottom:0;padding-top:2px}
+  #app.v3 #quickBar{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:14px -14px 0;padding:0 14px}
+  #app.v3 #quickBar button{flex:none;display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:13px;background:#1a2246;border:1px solid #ffffff12;font-weight:650;font-size:13px}
+  #app.v3 #quickBar .qn{background:var(--accent);color:#1a0d00;border-radius:99px;font-size:11px;font-weight:800;padding:0 6px}
+  .exgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px}
+  .exgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;font-weight:650;color:#cfd5f5;line-height:1.15;text-align:center}
+  .exgrid i{font-style:normal;width:54px;height:54px;border-radius:17px;display:grid;place-items:center;font-size:25px;background:var(--g,#1a2246);
+    box-shadow:inset 0 1px 0 #ffffff33,0 8px 18px -10px #000}
+  .exgrid button:active i{transform:scale(.93)}
+  .exfoot{display:flex;justify-content:center;gap:14px;margin:22px 0 6px}
+  #app.v3 #homeTonight{margin:0}
+  #app.v3 .tncard{background:#161e40;border-color:#ffffff12}
+  .next.upnext{margin-top:12px}
+  /* a category picked from the chips: its list here, its pins on the map */
+  .exch{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
+  .exch b{font-size:20px;letter-spacing:-.4px}
+  .xbtn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#1a2246;border:1px solid #ffffff14;color:#cfd5f5;flex:none}
+  .xbtn .ic{width:16px;height:16px}
+  .subchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -14px 10px;padding:0 14px}
+  .subchips::-webkit-scrollbar{display:none}
+  .subchips button{flex:none;padding:6px 11px;border-radius:99px;background:#161e40;border:1px solid #ffffff14;font-size:12.5px;font-weight:650;color:#cfd5f5}
+  .subchips button.on{background:var(--accent2);border-color:var(--accent2);color:#03131d}
+  .xrow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 0;text-align:left;border-top:1px solid #ffffff0f}
+  .xrow:first-child{border-top:0}
+  .xrow .thumb,.xrow .xe{flex:none;width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:21px;background:#1a2246 center/cover}
+  .xrow .grow{min-width:0} .xrow b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xrow .meta{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+  .xrow .xd{flex:none;font-size:12px;font-weight:700;color:var(--muted)}
+  .xempty{padding:22px 6px;text-align:center;color:var(--muted)}
+
+  /* Search: one box for everything */
+  .sgrp{margin:14px 2px 4px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .sask{display:flex;align-items:center;gap:12px;width:100%;margin:6px 0 2px;padding:12px;border-radius:16px;text-align:left;
+    background:linear-gradient(135deg,#2ec5ff22,#7b5cff22);border:1px solid #2ec5ff44}
+  .sask .scwrap{width:40px;height:40px;flex:none} .sask b{display:block} .sask .meta{display:block}
+  .srecent{display:flex;flex-wrap:wrap;gap:6px}
+  .srecent button{padding:7px 12px;border-radius:99px;background:#161e40;border:1px solid #ffffff14;font-size:13px;font-weight:600}
+
+  /* You */
+  .youhd{display:flex;align-items:center;gap:14px;margin:6px 0 4px}
+  .youhd #youAv .av{width:64px;height:64px;font-size:26px}
+  .youhd h2{margin:0;font-size:22px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .youhd .pres{flex:none}
+  #youStats{display:flex;gap:8px;margin:12px 0 4px;overflow-x:auto;scrollbar-width:none}
+  #youStats button{flex:1;min-width:84px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:10px 12px;border-radius:14px;background:#161e40;border:1px solid #ffffff12;text-align:left}
+  #youStats b{font-size:18px} #youStats span{font-size:11.5px;color:var(--muted);font-weight:600}
+  .ylist{margin-top:12px;background:#121a38;border:1px solid #ffffff12;border-radius:18px;overflow:hidden}
+  .ylist button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;text-align:left;font-weight:650;font-size:15px;border-top:1px solid #ffffff0d}
+  .ylist button:first-child{border-top:0}
+  .ylist .yi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
+  .ylist .grow{min-width:0} .ylist .meta{font-weight:600}
+  .ylist .ic{width:16px;height:16px;color:#5d6690}
+  #app.v3 #v-me .seg button,#app.v3 #v-meet .seg button,#app.v3 #v-feed .seg button{font-size:12.5px;padding:9px 4px}
+  .ic.up{transform:rotate(-90deg)}
+  #app.v3 .tnhead{padding:20px 2px 9px;font-size:17px;letter-spacing:-.3px}
+  #app.v3 #homeStories{margin-top:2px}
 </style>
 </head>
 <body>
 
 
-<div id="app">
-  <header>
-    <div class="hl"><button class="homebtn" id="homeBtn" title="Back" aria-label="Back" hidden>‹</button>
-      <button class="logo" id="logo" title="Home"><img class="gem" src="/logo.png" alt="" width="30" height="30"><span id="appname">Side Quest</span><small id="betaTag" hidden>beta</small></button></div>
-    <button class="pres" id="presBtn" role="switch" aria-checked="true" title="Show others you're around, or go offline"><span id="presLbl">Online</span><span class="trk"><i></i></span></button>
-    <div class="hr"><button class="bell" id="bellBtn" data-bell aria-label="Notifications" title="Notifications" hidden>🔔<b id="bellN"></b></button><button class="me-chip" id="meChip" title="Your profile" aria-haspopup="menu"><span class="av" id="meAv"></span><span id="meHandle"></span><span class="caret">▾</span></button>
-      <div class="memenu" id="meMenu" role="menu" hidden><div class="mmhead" id="meMenuHead"></div>
-        <button data-menu="profile" role="menuitem">👤 <span data-t="My profile">My profile</span></button>
-        <button data-menu="quiz" role="menuitem">🧬 <span data-t="Personality quiz">Personality quiz</span></button>
-        <button data-menu="chart" role="menuitem">✨ <span data-t="My chart">My chart</span></button>
-        <button data-menu="about" role="menuitem">📝 <span data-t="About me">About me</span></button>
-        <button data-menu="plans" role="menuitem">📅 <span data-t="My plans">My plans</span></button>
-        <button data-menu="quests" role="menuitem">🏆 <span data-t="Quests">Quests</span></button>
-        <button data-menu="invite" role="menuitem">💌 <span data-t="Invite friends">Invite friends</span></button><hr>
-        <button data-menu="lang" role="menuitem">🌐 <span data-t="Español">Español</span></button>
-        <button data-menu="privacy" role="menuitem">🔒 <span data-t="Privacy & settings">Privacy &amp; settings</span></button></div></div>
-  </header>
-
-  <main>
-    <section class="view" id="v-home" hidden>
-      <div id="homeStories" aria-label="Stories"></div>
-      <div id="quickBar" role="toolbar" aria-label="Quick actions"></div>
-      <div id="homeTonight" hidden></div>
-      <div class="quad">
-        <button class="q4 tl" data-home="meet"><span class="ic">👋</span><span><span class="nm" data-t="Meet">Meet</span><div class="st" id="hsGroups"></div></span>
-          <span class="msgbtn" role="button" tabindex="0" aria-label="Messages" data-msgs>💬<b id="msgCount"></b></span></button>
-        <button class="q4 tr" data-home="search"><span class="ic"><span style="font-size:24px;letter-spacing:1px">🍔🌮🍹</span> 🔎</span><span><span class="nm" data-t="Search">Search</span><div class="st" id="hsSearch"></div></span></button>
-        <button class="qm ml" data-home="friends"><span class="ic">🫂</span><span class="nm"><span data-t="Friends">Friends</span><span class="pill" id="frPill"></span></span></button>
-        <button class="qm mr" data-home="food"><span class="ic">🍔</span><span class="nm" data-t="Food">Food</span></button>
-        <button class="q4 bl" data-home="create"><span class="ic">✨</span><span><span class="nm" data-t="Create & share">Create &amp; share</span><div class="st" data-t="Photos & videos · flare · event · group">Photos &amp; videos · flare · event · group</div></span></button>
-        <button class="q4 br" data-home="live"><span class="ic">📺</span><span><span class="nm"><span data-t="Live">Live</span><span class="pill" id="livePill"></span></span><div class="st" id="hsLive"></div></span></button>
-        <button class="go" data-home="go" aria-label="GO! Open the map"><span class="core"><span id="goMap"></span><span class="veil"></span><span class="loc"></span><b>GO!</b></span><span class="pill" id="fyPill"></span></button>
-      </div>
-      <div id="homeNext"></div>
-      <div class="row" style="justify-content:center;gap:14px;margin-top:6px"><button class="meta" data-feedback style="font-size:11px" data-t="💬 Beta feedback">💬 Beta feedback</button>
-        <span class="meta" style="font-size:9px;opacity:.7">Map © OpenStreetMap contributors</span></div>
-    </section>
-
+<div id="app" class="v3">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.1 5.9 9.9 3.8a2 2 0 0 0-1.8 0L3.6 6.1A1 1 0 0 0 3 7v12.4a1 1 0 0 0 1.4.9l3.7-1.9a2 2 0 0 1 1.8 0l4.2 2.1a2 2 0 0 0 1.8 0l4.5-2.3a1 1 0 0 0 .6-.9V4.6a1 1 0 0 0-1.4-.9l-3.7 1.9a2 2 0 0 1-1.8.3Z"/><path d="M15 5.8v15"/><path d="M9 3.2v15"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 15.5A2 2 0 0 0 8.5 14.1l-6.1-1.6a.5.5 0 0 1 0-1l6.1-1.6a2 2 0 0 0 1.4-1.4l1.6-6.1a.5.5 0 0 1 1 0l1.6 6.1a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1l-6.1 1.6a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0Z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8Z"/><path d="m2 12.6 9.2 4.2a2 2 0 0 0 1.6 0l9.2-4.2"/><path d="m2 17.6 9.2 4.2a2 2 0 0 0 1.6 0l9.2-4.2"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 22 2l-9 19-2-8Z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+  <symbol id="i-ghost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8Z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+</defs></svg>
     <section class="view" id="v-map">
       <div id="map"></div>
-      <div class="mapchips" id="mapChips"></div>
-      <div class="mapctl"><button data-mlayers aria-label="Map layers" title="Map layers">🗂</button><button data-mlocate aria-label="My location" title="My location">📍</button><button data-mshare aria-label="Location sharing" title="Location sharing">👻</button>
-        <button data-msearch aria-label="Search the map" title="Search the map">🔍</button></div>
+      <div class="mapctl"><button data-mlayers aria-label="Map layers" title="Map layers"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button><button data-mshare aria-label="Location sharing" title="Location sharing"><svg class="ic" aria-hidden="true"><use href="#i-ghost"/></svg></button><button data-mlocate aria-label="My location" title="My location"><svg class="ic" aria-hidden="true"><use href="#i-locate"/></svg></button></div>
       <div class="maphint" id="mapHint" hidden></div>
       <div class="maplive" id="mapLive"></div>
     </section>
+
+  <header>
+    <button class="me-chip" id="meChip" title="You" aria-label="You"><span class="av" id="meAv"></span><span id="meHandle"></span><span class="caret" hidden>▾</span></button>
+    <button class="logo" id="logo" title="Side Quest"><img class="gem" src="/logo.png" alt="" width="22" height="22"><span id="appname">Side Quest</span><small id="betaTag" hidden>beta</small></button>
+    <button class="homebtn" id="homeBtn" title="Back" aria-label="Back" hidden>‹</button>
+    <div class="hr"><button class="bell" id="bellBtn" data-bell aria-label="Notifications" title="Notifications" hidden><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg><b id="bellN"></b></button>
+      <div class="memenu" id="meMenu" role="menu" hidden><div class="mmhead" id="meMenuHead"></div></div></div>
+  </header>
+
+  <div id="drawer" data-at="peek">
+    <div class="dgrab" aria-hidden="true"><i></i></div>
+    <div class="dhead">
+      <form id="qForm" class="qbar" role="search"><button type="button" class="qback" data-qback aria-label="Back" hidden><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="qIn" type="search" placeholder="Search Austin, or ask Scout" data-tp="Search Austin, or ask Scout" autocomplete="off" enterkeyhint="search" aria-label="Search">
+        <button type="button" class="qmic" data-qmic aria-label="Talk to Scout" title="Talk to Scout"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></button></form>
+      <div class="mapchips" id="mapChips"></div>
+      <button class="glance" id="glance"></button>
+    </div>
+  <main>
+    <section class="view" id="v-home">
+      <div id="exCat" hidden></div>
+      <div id="exMain">
+      <div id="homeStories" aria-label="Stories"></div>
+      <div id="homeNext"></div>
+      <div id="homeTonight" hidden></div>
+      <div id="exMore"></div>
+      <div id="quickBar" role="toolbar" aria-label="Quick actions"></div>
+      <div class="exfoot"><button class="meta" data-feedback data-t="💬 Beta feedback">💬 Beta feedback</button></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-search" hidden><div id="searchOut"></div></section>
 
     <section class="view" id="v-feed" hidden>
       <div class="seg" id="feedMode" style="margin-bottom:10px"><button type="button" data-v="foryou" class="on">✨ For you</button><button type="button" data-v="posts">📝 Posts</button></div>
@@ -819,10 +980,10 @@
     </section>
 
     <section class="view" id="v-meet" hidden>
-      <div class="row"><h2 class="grow">Meet</h2><button class="btn sm" data-meetfilter>⚙️ Sort & filter</button></div>
-      <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="swipe" class="on">👋 Swipe</button>
+      <div class="row"><h2 class="grow" data-t="Chats">Chats</h2><button class="btn sm" data-meetfilter>⚙️ Sort & filter</button></div>
+      <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="msgs">💬 Chats <span class="badge live" id="dmPill" hidden></span></button>
         <button type="button" data-mt="friends">👥 Friends <span class="badge live" id="frPill" hidden></span></button>
-        <button type="button" data-mt="msgs">💬 Chats <span class="badge live" id="dmPill" hidden></span></button><button type="button" data-mt="groups">🏘️ Groups</button></div>
+        <button type="button" data-mt="groups">🏘️ Groups</button><button type="button" data-mt="swipe" class="on">👋 Meet</button></div>
       <input id="meetQ" type="search" autocomplete="off" style="margin:0 0 12px">
       <div id="meetBody"></div>
     </section>
@@ -830,10 +991,11 @@
     <section class="view" id="v-live" hidden><div id="liveRoot"></div></section>
 
     <section class="view" id="v-me" hidden>
-      <h2 id="meTitle"></h2>
-      <p class="sub">Everything is optional. On each answer, tap the tag to choose who sees it:
-        🧠 used for matching but never shown, 👥 friends, 🌐 everyone, or 🔒 only you.</p>
-      <div class="seg" id="meTabs" style="margin:4px 0 14px"><button type="button" data-mesec="profile" class="on">👤 Profile</button><button type="button" data-mesec="personality">🧬 Personality</button>
+      <div class="youhd"><span id="youAv"></span><div class="grow" style="min-width:0"><h2 id="meTitle"></h2><div class="meta" id="youSub"></div></div>
+        <button class="pres" id="presBtn" role="switch" aria-checked="true" title="Show others you're around, or go offline"><span id="presLbl">Online</span><span class="trk"><i></i></span></button></div>
+      <div id="youStats"></div>
+      <div class="ylist" id="youList"></div>
+      <div class="seg" id="meTabs" style="margin:16px 0 14px"><button type="button" data-mesec="profile" class="on">👤 Profile</button><button type="button" data-mesec="personality">🧬 Personality</button>
         <button type="button" data-mesec="about">📝 About you</button><button type="button" data-mesec="settings">🔒 Privacy</button></div>
       <div data-mepane="profile">
       <div class="card" id="picCard"></div>
@@ -875,6 +1037,8 @@
 
       </div>
       <div data-mepane="about" hidden>
+      <p class="sub" style="margin-top:0">Everything is optional. On each answer, tap the tag to choose who sees it:
+        🧠 used for matching but never shown, 👥 friends, 🌐 everyone, or 🔒 only you.</p>
       <h3 style="margin-top:0">About you</h3>
       <p class="sub" style="margin-top:-4px">The more you answer, the better your matches. Each answer has its own who-sees-it tag.</p>
       <div id="lifeCard"></div>
@@ -899,8 +1063,14 @@
       </div>
     </section>
   </main>
-
-  <button id="fab">📣 Flare</button>
+  </div>
+  <nav id="dock" aria-label="Main">
+    <button data-dock="home" class="on"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg><span data-t="Explore">Explore</span></button>
+    <button data-dock="feed"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span data-t="For you">For you</span></button>
+    <button data-dock="create" class="plus" aria-label="Create"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
+    <button data-dock="meet"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span data-t="Chats">Chats</span><b class="dn" id="dockChatN"></b></button>
+    <button data-dock="me"><span class="dav" id="dockAv"></span><span data-t="You">You</span></button>
+  </nav>
 
 
   <div class="sheet-bg" id="sheetBg" hidden>
@@ -2832,7 +3002,8 @@ const SECTIONS = [
 ];
 const TILE_L = {pickup:'Play pickup', sports:'Watch a game'};
 let searchWhen = 'week';
-function openSearch(){
+function openSearch(){ $('#qIn').focus(); openSearchView(); }   // V3: the one search box in the drawer
+function openSearchSheet(){
   const counts={}; EV.list.forEach(e=>{ if(e.te>Date.now()&&(searchWhen==='today'?e.ts<=new Date().setHours(23,59,59,999):e.ts<=Date.now()+(searchWhen==='weekend'?4:7)*864e5)) counts[e.cat]=(counts[e.cat]||0)+1; });
   allPings().forEach(p=>{ counts[catOf(p)]=(counts[catOf(p)]||0)+1; });
   const events = SECTIONS.map((sec,i)=>`<label class="lbl" style="margin-top:${i?14:16}px">${sec.e} ${sec.n}</label><div class="create-grid three">${sec.cats.map(c=>
@@ -2853,7 +3024,7 @@ function openSearch(){
       <button data-sfocus="" style="background:linear-gradient(145deg,#00d2ff,#3a47d5)"><i>✨</i>Everything<span>Your whole feed, ranked for you</span></button>
       <button data-speople style="background:linear-gradient(145deg,#232526,#5b6280)"><i>👋</i>Meet people<span>Swipe through who you'd click with</span></button></div>`;
   $('#searchBg').hidden=false;
-  if(!PL.hot) loadHotspots().then(()=>{ if(!$('#searchBg').hidden) openSearch(); });
+  if(!PL.hot) loadHotspots().then(()=>{ if(!$('#searchBg').hidden) openSearchSheet(); });
 }
 function runSearch(cat, q){   // land on the feed with that view applied
   track('search');
@@ -3533,7 +3704,7 @@ async function deleteAccount(){
 /* ---------- Meet: swipe through people, message friends, groups ---------- */
 S.meet = {sort:'match', types:[], cats:[], when:'week', dist:0, goals:[], interests:[], newbies:false, groupsOnly:false, ...(S.meet||{})};
 S.passed ??= []; S.waved ??= []; S.dms ??= {}; S.dmSeen ??= {};
-let meetTab='swipe';
+let meetTab='msgs';
 const MEET_SORT = {match:'✨ Best match', soon:'⏰ Soonest', near:'📍 Nearest', popular:'🔥 Popular', new:'🆕 Newest'};
 const KIND = {person:{e:'👋',l:'People',one:'Person',like:'WAVE 👋',btn:'👋'}, event:{e:'🎫',l:'Events',one:'Event',like:"GOING ✓",btn:'✓'},
   group:{e:'🏘️',l:'Groups',one:'Group',like:'JOIN ➕',btn:'➕'}, post:{e:'📣',l:'Flares',one:'Flare',like:'DOWN 🙌',btn:'🙌'}};
@@ -4245,7 +4416,7 @@ function renderHeader(){
   $('#meAv').outerHTML = guest ? `<span class="av emo" id="meAv" style="background:${S.me.c}">👤</span>` : av(S.me.h).replace('<span class="av','<span id="meAv" class="av');
   $('#meHandle').textContent=guest?T('Sign up'):'@'+S.me.h;   // sign-in is one tap further, on the same sheet
   $('#meChip .caret').hidden=guest; $('#meChip').classList.toggle('authed',!guest); $('#meMenuHead').textContent='@'+S.me.h;
-  const on=!guest&&S.online; $('#presBtn').classList.toggle('off',!on); $('#presLbl').textContent=on?T('Online'):T('Offline'); $('#presBtn').setAttribute('aria-checked',on);
+  const on=!guest&&S.online; $('#meChip').classList.toggle('online',on); renderDock?.(); $('#presBtn').classList.toggle('off',!on); $('#presLbl').textContent=on?T('Online'):T('Offline'); $('#presBtn').setAttribute('aria-checked',on);
   $('#presBtn').title = guest ? 'Sign up to show friends you\'re around' : on ? 'You show as online. Tap to go offline.' : 'You show as offline. Tap to go online.'; $('#appname').textContent=NAMES[S.nameIx]; document.title=NAMES[S.nameIx]; }
 
 function pingCard(p, compact){
@@ -4264,7 +4435,7 @@ function pingCard(p, compact){
 // Feed sorted "For you": Claude's top picks (or the built-in rules) sit above the ranked list
 function renderPicks(){
   const ns=picks().slice(0,3), ai=!!ns[0]?.ai, max=ai?100:(ns[0]?.s||1), pct=n=>ai?n.s:Math.round(n.s/max*96);
-  $('#fyPill').textContent = ns.filter(n=>pct(n)>=75).length || '';
+  const fy=$('#fyPill'); if(fy) fy.textContent = ns.filter(n=>pct(n)>=75).length || '';
   const el=$('#fyStrip'); if(!el) return;
   if(S.feed.sort!=='foryou'||feedQ||feedFocus||!(ns.length||AI.loading)){ el.innerHTML=''; return; }
   el.innerHTML = `<div class="row" style="margin:0 0 8px"><div class="grow"><div class="kicker" style="margin:0">✨ Tonight's picks for you</div>
@@ -4560,6 +4731,7 @@ function initMap(){
   layer=L.layerGroup().addTo(map); liveLayer=L.layerGroup().addTo(map);
   renderMapChips();
   map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
+  map.on('dragstart',mapWantsRoom);
   map.on('movestart zoomstart',()=>{ MAPMOVING=true; $('#map').classList.add('mapmoving'); });
   map.on('moveend zoomend',()=>{ MAPMOVING=false; $('#map').classList.remove('mapmoving'); });
   renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
@@ -4693,7 +4865,7 @@ function renderFriendLocs(){
         <a class="btn sm" href="${mapsUrl(f.lat,f.lng)}" target="_blank" rel="noopener">🧭 Go</a></div>`);
   });
 }
-function renderShareBtn(){ const b=$('[data-mshare]'); if(!b) return; b.textContent=fmOn()?'🧑‍🤝‍🧑':'👻'; b.title=b.ariaLabel=fmOn()?'Sharing your location with friends':'Ghost mode: friends can’t see you'; b.classList.toggle('on',fmOn()); }
+function renderShareBtn(){ const b=$('[data-mshare]'); if(!b) return; b.innerHTML=svgI(fmOn()?'users':'ghost'); b.title=b.ariaLabel=fmOn()?'Sharing your location with friends':'Ghost mode: friends can’t see you'; b.classList.toggle('on',fmOn()); }
 function openShareSheet(){
   if(needAccount('share your location with friends')) return;
   renderShareSheet(); $('#shareBg').hidden=false; if(!FMAP.loaded) loadFriendLocs().then(renderShareSheet);
@@ -4839,56 +5011,340 @@ function quick(k){
   if(k==='msgs'){ meetTab='msgs'; DM.open=null; tab('meet'); renderMeet(); loadThreads().then(renderMeet); }
   if(k==='plans') openPlans();
   if(k==='favs') openFavs();
-  if(k==='happy') openHappy();
+  if(k==='happy') exploreCat('food','happy');
   if(k==='quests') openQuests();
   if(k==='invite') inviteLink();
-  if(k==='tonight'){ searchWhen='today'; runSearch(null,''); }
+  if(k==='tonight') exploreCat('events','tonight');
   if(k==='swipe'){ meetTab='swipe'; tab('meet'); }
   if(k==='story') openStoryComposer();
   if(k==='flare') openCompose();
   if(k==='live'){ LIVE.mode='studio'; tab('live'); }
   if(k==='feedback') openFeedback();
 }
-function renderHome(){
-  if(!$('#hsGroups')) return;
-  renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail();   // Instagram-style rings; tap one for the full-screen feed
-  const h=new Date().getHours(), mine=allGroups().filter(g=>isMember(g.id)).length, wk=Date.now()+7*864e5;
-  const evs=EV.list.filter(e=>e.te>Date.now()&&e.ts<=wk).length, live=liveStreams().length+(LIVE.on?1:0);
-  const un=dmUnread(), np=meetPeople().length;
-  $('#msgCount').textContent = un || '';
-  $('#frPill').textContent = (SV.friends?.incoming||[]).length || '';
-  const go=$('.go'); if(go?.offsetWidth) $('.quad').style.setProperty('--goR', `${go.offsetWidth/2+6}px`);
-  $('#hsGroups').textContent = un ? T('💬 {n} new messages',{n:un}) : np ? T('{n} people + events to swipe',{n:np}) : T('Swipe events, groups & people');
-  $('#hsSearch').textContent = EV.loaded ? T('{n} events this week',{n:evs}) : T('Events, people, posts');
-  $('#hsLive').textContent = live ? T('{n} streaming now',{n:live}) : T('Nobody live yet');
-  const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
-  const aff=affinity(), tonight=EV.list.filter(e=>e.te>Date.now()&&e.ts<=new Date().setHours(23,59,59,999)&&aff[e.cat]).length;
-  $('#homeNext').innerHTML = `<button class="next" data-home="picks" style="width:100%;text-align:left"><span style="font-size:20px">✨</span>
-      <div class="grow"><b>Picks for you</b><div class="meta">${tonight?`${tonight} thing${tonight===1?'':'s'} you'd like tonight`:'Your feed, ranked by what you\'re into'}</div></div><span class="meta">›</span></button>` + (next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
-      const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
-      return `<div class="next upnext" data-evopen="${next.id}"><span style="font-size:20px">${CATS[next.cat].e}</span><div class="grow"><div class="meta">${T('Up next')} · <b style="color:var(--accent)">${esc(when)}</b></div><b>${esc(next.title)}</b>
-      <div class="meta">${next.venue?esc(next.venue):''}${fr.length?` · 👥 ${esc(fr.slice(0,2).map(x=>'@'+x).join(', '))}${fr.length>2?' +'+(fr.length-2):''}`:''}</div></div>
-      ${next.geo_precise?`<a class="btn sm" href="${mapsUrl(next.lat,next.lng)}" target="_blank" rel="noopener">${T('Go')} ↗</a>`:next.lat?`<button class="btn sm" data-map="${next.id}">Map</button>`:''}</div>`; })() : '');
-}
 let curTab='home', NAVBACK=false, NAVFWDING=false;
 const NAVST=[], NAVFWD=[];   // screens to go back to, and screens you came back from (swipe in from the right = forward)
-function tab(t){
+/* ---------- V3: the map is always there. Explore, search, the feed, chats and you all open in one drawer over it:
+   peek (just the search box and the map's chips), half (what's around), full (a whole screen, with a strip of map
+   still showing above). tab('map') is Explore with the drawer down, so the map has the room. ---------- */
+const DRW={at:'peek'};
+function drawerStops(){
+  const d=$('#drawer'), H=d.offsetHeight, head=d.querySelector('.dgrab').offsetHeight+d.querySelector('.dhead').offsetHeight;
+  return {full:0, half:Math.round(H*.44), peek:Math.max(0,H-head)};
+}
+function setDrawer(at, off){
+  const d=$('#drawer'); if(!d) return; const st=drawerStops();
+  if(at) DRW.at=at; d.dataset.at=DRW.at; $('#app').dataset.at=DRW.at;
+  const y=off??st[DRW.at]; d.style.setProperty('--doff',y+'px');
+  $('#app').style.setProperty('--dvis',(d.offsetHeight-y+$('#dock').offsetHeight)+'px');
+  if(window.L) L.Popup.prototype.options.autoPanPaddingBottomRight=[12,d.offsetHeight-y+$('#dock').offsetHeight+12];
+}
+function tab(t, at){
+  if(t==='map'){ t='home'; at=at||'peek'; }
   if(!NAVBACK && t!==curTab){ NAVST.push(curTab); if(NAVST.length>30) NAVST.shift(); if(!NAVFWDING) NAVFWD.length=0; try{ history.pushState({t},''); }catch(e){} }
-  curTab=t;
-  document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!=='v-'+t);
-  $('#homeBtn').hidden = t==='home'; document.querySelector('header').classList.toggle('away', t!=='home');
-  $('#fab').style.bottom = t==='map' ? 'calc(80px + env(safe-area-inset-bottom,0px))' : '';   // sit above the live strip
-  $('#fab').hidden = t==='me'||t==='live'||t==='home'||t==='meet';
-  $('#scoutBtn').hidden = t==='live'; scoutUnpoint?.();
-  if(t==='home'){ renderHome(); setTimeout(initGoMap,0); }
-  if(t==='map'){ if(!map) initMap(); setTimeout(()=>map.invalidateSize(),0); }
-  if(!NAVBACK&&(t==='map'||t==='feed')) try{ track(t+'_open'); }catch(e){}
+  const was=curTab; curTab=t;
+  document.querySelectorAll('#drawer .view').forEach(v=>v.hidden=v.id!=='v-'+t);
+  $('#app').dataset.tab=t;
+  document.querySelectorAll('#dock [data-dock]').forEach(b=>b.classList.toggle('on',b.dataset.dock===(t==='search'||t==='live'?'home':t)));
+  if(t!=='search'){ $('[data-qback]').hidden=true; if(document.activeElement===$('#qIn')) $('#qIn').blur(); }
+  setDrawer(at || (t==='home' ? (was==='home'||was==='search'&&DRW.at!=='full' ? DRW.at : 'half') : 'full'));
+  $('#scoutBtn').hidden = t!=='home'; scoutUnpoint?.();
+  if(!map) initMap(); else setTimeout(()=>map.invalidateSize(),0);
+  if(t==='home') renderHome();
+  if(!NAVBACK&&(t==='feed'||t==='search')) try{ track(t+'_open'); }catch(e){}
   if(LAZY[t]){ const f=LAZY[t]; delete LAZY[t]; f(); }
+  if(LAZY.map){ const f=LAZY.map; delete LAZY.map; f(); }
   if(t==='live') renderLive();
   if(t==='feed') schedule(0);
   if(t==='meet') renderMeet();
-  scoutDock();
+  if(t==='me') renderYou();
 }
+// Drag the drawer by its top (or anywhere in it while it isn't all the way up; once it is, pulling down from the
+// top of the list brings it back down). A flick goes on to the next stop.
+(()=>{
+  const d=$('#drawer'); let y0=null, x0=0, off0=0, t0=0, drag=false, top=false, sc=null, last=0, lastT=0, v=0;
+  const cur=()=>parseFloat(d.style.getPropertyValue('--doff'))||0;
+  const start=(y,x,target)=>{ y0=y; x0=x; off0=cur(); t0=Date.now(); drag=false; last=y; lastT=t0; v=0;
+    top=!!target.closest('.dgrab,.dhead'); sc=target.closest('.view'); };
+  const move=(y,x,ev)=>{
+    if(y0==null) return; const dy=y-y0, dx=x-x0;
+    if(!drag){
+      if(Math.abs(dy)<7&&Math.abs(dx)<7) return;
+      if(Math.abs(dx)>Math.abs(dy)){ y0=null; return; }   // sideways: a rail or the chips scroll
+      if(!(top||DRW.at!=='full'||dy>0&&(!sc||sc.scrollTop<=0))){ y0=null; return; }
+      if(ev.target.closest?.('input,textarea')&&!top){ y0=null; return; }
+      drag=true; d.classList.add('dragging'); document.activeElement?.blur?.();
+    }
+    const st=drawerStops(), now=Date.now(); v=(y-last)/Math.max(1,now-lastT); last=y; lastT=now;
+    setDrawer(null, Math.max(0,Math.min(st.peek,off0+dy))); if(ev.cancelable) ev.preventDefault();
+  };
+  const end=()=>{
+    if(y0==null) return; y0=null; if(!drag) return; drag=false; d.classList.remove('dragging');
+    const st=drawerStops(), y=cur(), order=['full','half','peek'];
+    let best=order.reduce((a,k)=>Math.abs(st[k]-y)<Math.abs(st[a]-y)?k:a,'full');
+    if(Math.abs(v)>.45){ const i=order.indexOf(best), ny=st[best]; best = v>0 ? (ny<y?order[Math.min(2,i+1)]:best) : (ny>y?order[Math.max(0,i-1)]:best); }
+    if(best!=='full'&&curTab!=='home'&&curTab!=='search'){ if(best==='peek'||v>.45) return tab('home','peek'); }
+    if(curTab==='search'&&best!=='full'){ $('#qIn').value=''; return tab('home',best); }
+    setDrawer(best);
+  };
+  d.addEventListener('touchstart',e=>{ if(e.touches.length===1) start(e.touches[0].clientY,e.touches[0].clientX,e.target); },{passive:true});
+  d.addEventListener('touchmove',e=>move(e.touches[0].clientY,e.touches[0].clientX,e),{passive:false});
+  d.addEventListener('touchend',end,{passive:true}); d.addEventListener('touchcancel',end,{passive:true});
+  // a mouse: drag the handle or the search area; the wheel opens it up / brings it down
+  d.addEventListener('mousedown',e=>{ if(e.target.closest('.dgrab')||e.target.closest('.dhead')&&!e.target.closest('input,button')) { start(e.clientY,e.clientX,e.target); e.preventDefault(); } });
+  addEventListener('mousemove',e=>{ if(y0!=null) move(e.clientY,e.clientX,e); });
+  addEventListener('mouseup',()=>{ if(y0!=null&&!drag){ y0=null; return; } end(); });
+  d.addEventListener('wheel',e=>{ const sc=e.target.closest('.view');
+    if(DRW.at!=='full'&&e.deltaY>0){ e.preventDefault(); setDrawer(DRW.at==='peek'?'half':'full'); }
+    else if(DRW.at==='full'&&e.deltaY<-30&&(!sc||sc.scrollTop<=0)&&(curTab==='home'||curTab==='search')) setDrawer('half');
+    else if(DRW.at==='half'&&e.deltaY<-30) setDrawer('peek'); },{passive:false});
+  d.querySelector('.dgrab').addEventListener('click',()=>setDrawer(DRW.at==='peek'?'half':DRW.at==='half'?'full':'half'));
+  addEventListener('resize',()=>setDrawer());
+  document.fonts?.ready.then(()=>setDrawer());
+})();
+/* ---------- Explore: the drawer's first page. What's around right now; a chip turns the map and this list to one thing. ---------- */
+const svgI = (n, cls='') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const fmtMi = k => k==null ? '' : k<0.16 ? T('here') : `${(k*0.621).toFixed(k<16?1:0)} mi`;
+function renderHome(){
+  renderGlance(); renderDock();
+  if(!$('#exMain')) return;
+  if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
+  $('#exMain').hidden=false; $('#exCat').hidden=true;
+  renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail(); $('#exMore').innerHTML=hotRail()+happyRail();
+  const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
+  $('#homeNext').innerHTML = next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
+      const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
+      return `<div class="next upnext" data-evopen="${next.id}"><span style="font-size:20px">${CATS[next.cat].e}</span><div class="grow"><div class="meta">${T('Up next')} · <b style="color:var(--accent)">${esc(when)}</b></div><b>${esc(next.title)}</b>
+      <div class="meta">${next.venue?esc(next.venue):''}${fr.length?` · 👥 ${esc(fr.slice(0,2).map(x=>'@'+x).join(', '))}${fr.length>2?' +'+(fr.length-2):''}`:''}</div></div>
+      ${next.geo_precise?`<a class="btn sm" href="${mapsUrl(next.lat,next.lng)}" target="_blank" rel="noopener">${T('Go')} ↗</a>`:next.lat?`<button class="btn sm" data-map="${next.id}">Map</button>`:''}</div>`; })() : '';
+}
+// One line under the chips, so the map alone still says what's going on.
+function renderGlance(){
+  const el=$('#glance'); if(!el) return;
+  const now=Date.now(), end=new Date().setHours(28,0,0,0);
+  const evs=EV.list.filter(e=>e.te>now&&e.ts<end&&e.lat).length, out=((AUTHED&&SV.v2?.out)||[]).length, live=liveStreams().length+(LIVE.on?1:0);
+  const bits=[evs?T('<b>{n}</b> things on tonight',{n:evs}):'', out?T('<b>{n}</b> friends out',{n:out}):'', live?T('<b>{n}</b> live',{n:live}):'', HH.now?T('<b>{n}</b> happy hours',{n:HH.now}):''].filter(Boolean);
+  el.innerHTML = `<span>${bits.length?bits.slice(0,3).join(' · '):T('See what\'s around you')}</span>${svgI('chev','up')}`;
+  if(DRW.at==='peek') setDrawer();   // its height is part of the peek
+}
+function renderDock(){
+  const n=dmUnread()+(SV.friends?.incoming||[]).length, el=$('#dockChatN'); if(el) el.textContent=n||'';
+  const guest=!AUTHED&&location.protocol.startsWith('http'), a=$('#dockAv');
+  if(a) a.innerHTML = guest ? `<span class="av emo" style="background:${S.me.c}">👤</span>` : av(S.me.h);
+}
+// Hot spots, Friends out and Tonight sit in rails; this adds the busiest neighborhoods right now.
+function hotRail(){
+  const z=(PL.hot||[]).filter(x=>x.open>0).sort((a,b)=>b.open-a.open).slice(0,8);
+  return z.length ? `<div class="tnhead"><b>🔥 ${T('Busy right now')}</b><button class="linkbtn" data-excat="zones">${T('Map')} ›</button></div><div class="tnrail">${z.map(x=>
+    `<button class="tncard" data-pzone="${esc(x.id)}" style="width:170px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">🔥</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${T('{n} open now',{n:x.open})}</span></span></button>`).join('')}</div>` : '';
+}
+
+function happyRail(){
+  const L=(HH.list||[]).filter(p=>p.happy?.now).slice(0,10);
+  return L.length ? `<div class="tnhead"><b>🍻 ${T('Happy hour now')}</b><button class="linkbtn" data-excat="food" data-exsubgo="happy">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
+    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>🍻</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.happy.label||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>` : '';
+}
+/* the chips: one category at a time, on the map and in the list together */
+const EXC = {k:null, sub:null, list:null, seq:0};
+const EX_CHIPS = [
+  ['food','🍔','Food'], ['events','🎫','Tonight'], ['night','🍸','Nightlife'], ['outdoors','🌳','Outdoors'],
+  ['sights','🏛️','Sights'], ['friends','👥','Friends'], ['zones','🔥','Hot spots'],
+];
+const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1},
+  sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}};
+const EX_SUBS = {
+  food: [['all','Everything'],['happy','🍻 Happy hour'],['coffee','☕ Coffee'],['tacos','🌮 Tacos'],['bbq','🍖 BBQ'],['pizza','🍕 Pizza'],['burgers','🍔 Burgers'],['asian','🍜 Asian'],['trucks','🚚 Trucks'],['sweets','🍦 Sweets'],['late','🌙 Late night'],['early','🌅 Breakfast']],
+  night: [['bars','🍸 Bars'],['clubs','🪩 Clubs'],['late','🌙 Late eats']],
+  events: [['tonight','Tonight'],['weekend','This weekend'],['week','This week']],
+  outdoors: [['all','Everything'],['green','🌳 Parks'],['water','💧 Lakes & rivers'],['trail','🚲 Trails']],
+  sights: [['all','Everything'],['landmark','🏛️ Landmarks'],['museum','🖼️ Museums'],['marker','🪧 Markers'],['art','🎨 Art & views']],
+};
+function exploreCat(k, sub){
+  if(k===EXC.k&&sub==null){ return exploreClear(); }
+  if(!EXC.k){ S.exPrev={...S.mapL}; }
+  EXC.k=k; EXC.sub=sub ?? EX_SUBS[k]?.[0]?.[0] ?? null;
+  if(k==='events'&&sub==null) EXC.sub=S.mapWhen||'tonight';
+  MAP_CATS.forEach(c=>c.subs.forEach(([x,,setting])=>{ if(!setting) S.mapL[x]=!!EX_LAYERS[k][x]; }));
+  if(k==='events'){ S.mapWhen=EXC.sub; mapFilter='all'; }
+  if(k==='food') S.mapL.openonly=!!S.foodOpen;
+  refreshMapLayers(); renderMapChips();
+  if(curTab!=='home') tab('home','half'); else if(DRW.at==='peek') setDrawer('half');
+  $('#exMain').hidden=true; $('#exCat').hidden=false; renderExCat(true); try{ track('chip_'+k); }catch(e){}
+}
+function exploreClear(){
+  if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }
+  EXC.k=null; EXC.list=null; refreshMapLayers(); renderMapChips(); renderHome();
+}
+const exHead = (title, extra='') => `<div class="exch"><b class="grow">${title}</b>${extra}<button class="xbtn" data-exclose aria-label="${T('Close')}">${svgI('x')}</button></div>`;
+const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
+const xrow = ({go, e, th='', title, sub, d, attr=''}) => `<button class="xrow" ${go?`data-xgo="${esc(go)}"`:''} ${attr}><span class="xe thumb"${th}>${e}</span>
+  <span class="grow"><b>${esc(title)}</b><span class="meta">${sub||''}</span></span>${d!=null?`<span class="xd">${esc(d)}</span>`:''}</button>`;
+const mapC = () => map ? [map.getCenter().lat, map.getCenter().lng] : ME_POS;
+async function renderExCat(fresh){
+  const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq, [,e,l]=EX_CHIPS.find(c=>c[0]===k);
+  const head = exHead(`${e} ${T(l)}`) + exSubs(k);
+  const busy = () => { el.innerHTML = head + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`; };
+  if(k==='food'||k==='night'){
+    if(fresh||!EXC.list) busy();
+    if(EXC.sub==='happy'){ await loadHappy(); }
+    else {
+      const cats = k==='night'&&EXC.sub==='bars' ? ['bars'] : [EXC.sub];
+      try{ const lists=await Promise.all(cats.map(c=>fetch(`/api/places?${new URLSearchParams({cat:c,open:S.foodOpen?'1':''})}&${nearParam()}&limit=40`).then(r=>r.json())));
+        EXC.list=lists.flatMap(j=>j.places||[]); PL.lastList=EXC.list; }
+      catch(err){ if(seq===EXC.seq) el.innerHTML=head+`<p class="meta">${T('Couldn\'t load places.')} ${esc(err.message)}</p>`; return; }
+    }
+    if(seq!==EXC.seq) return;
+    const openT = `<div class="row" style="margin:-2px 0 6px"><span class="meta grow">${EXC.sub==='happy'?T('Happy hours from menus, on now first'):S.foodOpen?T('Open now · nearest first'):T('Nearest first')}</span>${EXC.sub==='happy'?'':`<span class="meta">${T('Open now')}</span><button class="toggle ${S.foodOpen?'on':''}" data-exopen aria-label="${T('Only places open now')}"></button>`}</div>`;
+    if(EXC.sub==='happy') PL.lastList=HH.list||[];
+    const rows = EXC.sub==='happy' ? (HH.list||[]).slice(0,40).map(p=>xrow({go:`pl|${p.id}`, e:'🍻', th:thumbAttr({id:p.id}), title:p.name, sub:`<span class="hhtag ${p.happy?.now?'now':''}">${esc(p.happy?.label||'')}</span> ${esc(p.happy?.deals||'')}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}))
+      : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
+          sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc([p.kind,(p.cuisine||[]).slice(0,2).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}));
+    el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
+    watchThumbs(); return;
+  }
+  if(k==='events'){
+    const aff=affinity(), now=Date.now(), until={tonight:new Date().setHours(28,0,0,0), weekend:now+4*864e5, week:now+7*864e5}[EXC.sub]||now+864e5;
+    const list=EV.list.filter(x=>x.te>now&&x.ts<until&&x.lat).map(x=>({x, s:scoreEvent(x,aff,{})?.s ?? 0, d:km(ME_POS,[x.lat,x.lng])})).filter(x=>x.d<60)
+      .sort((a,b)=>a.x.ts-b.x.ts||b.s-a.s).slice(0,60);
+    el.innerHTML = head + (list.map(({x,d})=>{ const fr=goingList(x).filter(isFriend).length;
+      return xrow({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
+        sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}${fr?` · 👥 ${fr}`:''}`, d:fmtMi(d)}); }).join('') || `<p class="xempty">${T('Nothing listed for then yet.')}</p>`);
+    return;
+  }
+  if(k==='outdoors'||k==='sights'){
+    if(k==='outdoors'&&!OD.data){ busy(); try{ OD.data=await (await fetch('/api/outdoors')).json(); }catch(err){} }
+    if(k==='sights'&&!SG.data){ busy(); await loadSights(); }
+    if(seq!==EXC.seq) return; const c=mapC();
+    const items = k==='outdoors'
+      ? (OD.data?.areas||[]).filter(a=>a.name&&(EXC.sub==='all'||a.kind===EXC.sub||EXC.sub==='water'&&a.kind==='river')).map(a=>({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name,
+          sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:km(c,a.c)}))
+      : (SG.data||[]).filter(([,kind])=>EXC.sub==='all'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
+          sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:km(c,[lat,lng])}));
+    el.innerHTML = head + `<p class="meta" style="margin:-2px 0 4px">${T('Closest to the middle of the map')}</p>` +
+      (items.sort((a,b)=>a.k-b.k).slice(0,40).map(x=>xrow({...x, d:fmtMi(x.k)})).join('') || `<p class="xempty">${T('Nothing here yet.')}</p>`);
+    return;
+  }
+  if(k==='zones'){
+    if(!PL.hot){ busy(); await loadHotspots(); } if(seq!==EXC.seq) return;
+    const z=(PL.hot||Object.values(HOT_FALLBACK)).slice().sort((a,b)=>(b.open||0)-(a.open||0));
+    el.innerHTML = head + `<p class="meta" style="margin:-2px 0 4px">${T('Neighborhoods glow brighter the more is open and happening.')}</p>` +
+      z.map(x=>xrow({attr:`data-pzone="${esc(x.id)}"`, e:'🔥', title:x.name, sub:esc(x.open!=null?T('{n} open now',{n:x.open}):x.vibe||'')})).join('');
+    return;
+  }
+  if(k==='friends'){
+    const out=(AUTHED&&SV.v2?.out)||[], locs=(FMAP.friends||[]), flares=allPings().filter(p=>p.u!==S.me.h).slice(0,20), live=liveStreams();
+    const sec=(t,h)=>h?`<div class="sgrp">${t}</div>${h}`:'';
+    const body = sec(T('Out now'), out.map(o=>xrow({attr:`data-outgo="${o.k}|${esc(o.id)}"`, e:av(o.h), title:'@'+o.h, sub:`📍 ${esc(o.name)} · ${agoT(o.at)}`})).join(''))
+      + sec(T('Sharing where they are'), locs.map(f=>xrow({attr:`data-fmgo="${esc(f.h)}"`, e:av(f.h), title:'@'+f.h, sub:esc(f.area||f.place||T('On the map')), d:f.lat?fmtMi(km(ME_POS,[f.lat,f.lng])):null})).join(''))
+      + sec(T('Flares'), flares.map(p=>xrow({attr:`data-map="${esc(p.id)}"`, e:KINDS[p.k]?.e||'📣', title:p.t, sub:`@${esc(p.u)}${p.v&&venue(p.v)?' · '+esc(venue(p.v).name):''}`})).join(''))
+      + sec(T('Live now'), live.map(s=>xrow({attr:`data-watch="${esc(s.id)}"`, e:'📺', title:s.title, sub:`@${esc(s.u)} · 👁 ${s.viewers||0}`})).join(''));
+    el.innerHTML = head + (body || `<div class="xempty"><p>${T('No friends out on the map right now.')}</p><div class="btns" style="justify-content:center;margin-top:10px"><button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button><button class="btn sm" data-yfriends>👥 ${T('Find people')}</button></div></div>`);
+  }
+}
+
+/* ---------- Search: one box for places, events, people, groups and dishes; a question goes to Scout ---------- */
+const SQ = {t:0};
+const isQuestion = q => /\?\s*$/.test(q) || /^(what|where|when|who|how|which|why|is|are|can|should|any|find me|recommend|suggest|plan|i want|i'm|im|we)\b/i.test(q.trim());
+function openSearchView(){
+  if(curTab!=='search') tab('search','full'); $('[data-qback]').hidden=false;
+  loadPlacesMap(); loadSights(); if(!OD.data) fetch('/api/outdoors').then(r=>r.json()).then(j=>{ OD.data=j; renderSearch(); }).catch(()=>{});
+  renderSearch();
+}
+function renderSearch(){
+  const el=$('#searchOut'); if(!el) return; const q=$('#qIn').value.trim(), ql=q.toLowerCase();
+  const ask = (text, sub) => `<button class="sask" data-xgo="scout|${esc(text)}"><span class="scwrap" data-scface></span><span class="grow"><b>${esc(sub)}</b><span class="meta">${esc(text)}</span></span>${svgI('chev')}</button>`;
+  if(!q){
+    const rec=(S.recentQ||[]).slice(0,8), tries=['tacos','live music tonight','happy hour','coffee','trivia','brunch','pickup basketball','swimming'];
+    el.innerHTML = ask(T('“Where’s good tacos open late?” “Plan my Saturday”'), T('Ask Scout anything'))
+      + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
+      + `<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`;
+    scoutFaces(); return;
+  }
+  const words=fold(ql).split(/\s+/).filter(Boolean), hit=(...xs)=>{ const h=fold(xs.join(' ').toLowerCase()); return words.every(w=>h.includes(w)); };
+  const near=p=>km(ME_POS,p), grp=(t,rows,max=5)=>rows.length?`<div class="sgrp">${t}</div>${rows.slice(0,max).map(xrow).join('')}${rows.length>max?`<p class="meta" style="margin:4px 2px">${T('+{n} more: keep typing to narrow it down',{n:rows.length-max})}</p>`:''}`:'';
+  const places=[], evs=[], ppl=[], grps=[];
+  (PL.all||[]).forEach(([id,name,kind,lat,lng])=>{ if(hit(name,kind||'')) places.push({go:`pl|${id}`, e:PLACE_E[kind]||'🍽️', th:thumbAttr({id}), title:name, sub:esc(kind||''), k:near([lat,lng])}); });
+  (OD.data?.areas||[]).forEach(a=>{ if(a.name&&hit(a.name)) places.push({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name, sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:near(a.c)}); });
+  (SG.data||[]).forEach(([id,kind,name,lat,lng,year])=>{ if(hit(name)) places.push({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name, sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:near([lat,lng])}); });
+  places.sort((a,b)=>a.k-b.k).forEach(x=>x.d=fmtMi(x.k));
+  EV.list.forEach(x=>{ if(x.te>Date.now()&&hit(x.title,x.venue||'',CATS[x.cat]?.l||'',x.genre||'')) evs.push({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', title:x.title, sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}`, ts:x.ts}); });
+  evs.sort((a,b)=>a.ts-b.ts);
+  people().forEach(u=>{ if(u.h!==S.me.h&&hit(u.h,(u.i||[]).join(' '))) ppl.push({go:`u|${u.h}`, e:av(u.h), title:'@'+u.h, sub:esc((u.i||[]).slice(0,3).join(' · '))}); });
+  allGroups().forEach(g=>{ if(hit(g.n,g.d||'',CATS[g.cat]?.l||'')) grps.push({go:`g|${g.id}`, e:esc(g.e||'🏘️'), title:g.n, sub:`${gCount(g)} ${T('members')}`}); });
+  const dish = `<button class="xrow" data-xgo="dish|${esc(q)}"><span class="xe">🍴</span><span class="grow"><b>${T('Find “{q}” on menus',{q:esc(q)})}</b><span class="meta">${T('Every menu we’ve read, with prices')}</span></span>${svgI('chev')}</button>`;
+  const feed = `<button class="xrow" data-xgo="feed|${esc(q)}"><span class="xe">📝</span><span class="grow"><b>${T('Search posts and the feed')}</b><span class="meta">${esc(q)}</span></span>${svgI('chev')}</button>`;
+  const qs = isQuestion(q);
+  el.innerHTML = (qs?ask(q,T('Ask Scout')):'') + grp(T('Places'),places) + grp(T('Events'),evs) + grp(T('People'),ppl,4) + grp(T('Groups'),grps,3)
+    + `<div class="sgrp">${T('More')}</div>` + dish + feed + (qs?'':ask(q,T('Ask Scout')));
+  scoutFaces(); watchThumbs();
+}
+function searchGo(v){
+  const [t,...r]=v.split('|'), id=r.join('|'), q=$('#qIn').value.trim();
+  if(t==='pl'&&!PL.byId[id]&&!(PL.lastList||[]).some(p=>p.id===id)){ const h=(HH.list||[]).find(p=>p.id===id); if(h) PL.lastList=[...(PL.lastList||[]),h]; }
+  if(q){ S.recentQ=[q,...(S.recentQ||[]).filter(x=>x!==q)].slice(0,10); save(); }
+  if(t==='scout'){ $('#qIn').value=''; $('#qIn').blur(); if(!q&&!r.length) return openScoutVoice(); $('#scoutBg').hidden=false; renderScoutLog(); scoutFaces(); return scoutAsk(q||id); }
+  if(t==='dish') return openDishes(id);
+  if(t==='feed') return runSearch(null,id);
+  if(t==='ev') return openEvent(id);
+  if(t==='u') return openProfile(id);
+  if(t==='g') return openGroup(id);
+  $('#qIn').value=''; $('#qIn').blur();
+  if(t==='pl') return focusPlace(id);
+  if(t==='sg') return focusSight(id);
+  if(t==='od') return mapGo('od',id);
+}
+$('#qIn').addEventListener('focus',openSearchView);
+$('#qIn').addEventListener('input',()=>{ clearTimeout(SQ.t); SQ.t=setTimeout(renderSearch,110); });
+$('#qForm').addEventListener('submit',e=>{ e.preventDefault(); const q=$('#qIn').value.trim(); if(!q) return;
+  if(isQuestion(q)) return searchGo('scout|'+q); const first=$('#searchOut [data-xgo]:not([data-xgo^="scout"])'); if(first) first.click(); });
+
+/* ---------- You: your profile, with everything that used to hide in the name menu ---------- */
+function renderYou(){
+  if(!$('#youList')) return; const guest=!AUTHED&&location.protocol.startsWith('http'), v=SV.v2||{};
+  $('#youAv').innerHTML = guest?`<span class="av emo" style="background:${S.me.c}">👤</span>`:av(S.me.h);
+  $('#meTitle').textContent = guest?T('Welcome'):'@'+S.me.h;
+  $('#youSub').innerHTML = guest ? `<button class="btn sm primary" data-yjoin style="margin-top:6px">${T('Create account / Sign in')}</button>`
+    : esc([S.me.t&&TYPES[S.me.t]?`${S.me.t} · ${TYPES[S.me.t][0]}`:'', S.me.astro&&S.me.z?`${SIGN_E[S.me.z]||''} ${S.me.z}`:''].filter(Boolean).join(' · ') || T('Austin'));
+  $('#presBtn').hidden = guest;
+  const nFr=(SV.friends?.list||[]).length||S.friends.length, plans=EV.list.filter(e=>myRsvp(e.id)&&e.te>Date.now()).length+(SV.plans||[]).length;
+  $('#youStats').innerHTML = guest ? '' : [['quests',T('Lv {n}',{n:v.level||1}),T('Level')],['quests',`🪙 ${v.coins||0}`,T('Coins')],['quests',`🔥 ${v.day_streak||0}`,T('Day streak')],['friends',nFr,T('Friends')]]
+    .map(([k,b,l])=>`<button data-ystat="${k}"><b>${esc(String(b))}</b><span>${esc(l)}</span></button>`).join('');
+  const row=(attr,e,bg,l,meta='')=>`<button ${attr}><span class="yi" style="background:${bg}">${e}</span><span class="grow">${esc(l)}</span>${meta?`<span class="meta">${esc(String(meta))}</span>`:''}${svgI('chev')}</button>`;
+  $('#youList').innerHTML = [
+    row('data-menu="plans"','📅','#ff9a3c26',T('My plans'),plans||''),
+    row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
+    row('data-yfriends','👥','#2ec5ff26',T('Friends'),(SV.friends?.incoming||[]).length?T('{n} new',{n:SV.friends.incoming.length}):''),
+    guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
+    row('data-menu="invite"','💌','#b57bff26',T('Invite friends')),
+    row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
+  ].join('');
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-excat],[data-exsub],[data-exclose],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-fmgo],#glance');
+  if(!t) return; const d=t.dataset;
+  if(d.dock){ const k=d.dock;
+    if(k==='create') return $('#createBg').hidden=false;
+    if(k==='home') return curTab==='home' ? setDrawer(DRW.at==='peek'?'half':'peek') : tab('home', 'half');
+    if(k==='me'&&!AUTHED&&location.protocol.startsWith('http')){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
+    if(k==='meet'&&curTab!=='meet'){ meetTab='msgs'; DM.open=null; loadThreads().then(()=>{ if(curTab==='meet') renderMeet(); }); }
+    if(k===curTab){ $('#v-'+k)?.scrollTo({top:0,behavior:'smooth'}); return; }
+    return tab(k);
+  }
+  if(t.id==='glance') return setDrawer('half');
+  if(d.qback!==undefined){ $('#qIn').value=''; return tab('home', NAVST.at(-1)==='home'?undefined:'half'); }
+  if(d.qmic!==undefined) return openScoutVoice();
+  if(d.excat) return exploreCat(d.excat, d.exsubgo);
+  if(d.exsub){ EXC.sub=d.exsub; if(EXC.k==='events'){ S.mapWhen=d.exsub; save(); renderMapChips(); renderMap(); } if(EXC.k==='food'||EXC.k==='night') EXC.list=null; return renderExCat(true); }
+  if(d.exclose!==undefined) return exploreClear();
+  if(d.exopen!==undefined){ S.foodOpen=!S.foodOpen; S.mapL.openonly=S.foodOpen; save(); refreshMapLayers(); return renderExCat(true); }
+  if(d.xgo) return searchGo(d.xgo);
+  if(d.sq!==undefined){ $('#qIn').value=d.sq; return renderSearch(); }
+  if(d.ystat) return d.ystat==='friends' ? (meetTab='friends', tab('meet')) : openQuests();
+  if(d.yfriends!==undefined){ meetTab='friends'; return tab('meet'); }
+  if(d.yjoin!==undefined){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
+  if(d.fmgo){ const f=(FMAP.friends||[]).find(x=>x.h===d.fmgo); if(f?.lat){ tab('map'); setTimeout(()=>map.setView([f.lat,f.lng],16),80); } }
+});
+// Panning the map is a sign you want the map: the drawer gets out of the way.
+function mapWantsRoom(){ if(curTab==='home'&&DRW.at==='half') setDrawer('peek'); }
 function toast(html, cls='', actions=[], ms=5000){
   const el=document.createElement('div'); el.className='toast '+cls;
   el.innerHTML=html+(actions.length?`<div class="btns" style="margin-top:10px">${actions.map((a,i)=>`<button class="btn sm ${a.cls||''}" data-i="${i}">${a.l}</button>`).join('')}</div>`:'');
@@ -4971,7 +5427,7 @@ document.addEventListener('click',e=>{
   else if(d.dishmenu){ const [pid,...dn]=d.dishmenu.split('|'); const p=(PL.lastList||[]).find(x=>x.id===pid); openMenu(pid,p?.name||'',false,dn.join('|')); }
   else if(d.pcat!==undefined) openPlaces({cat:d.pcat});
   else if(d.pzone) openPlaces({zone:d.pzone});
-  else if(d.popen!==undefined){ S.foodOpen=!S.foodOpen; save(); if(!$('#placesBg').hidden) openPlaces(PLQ); else openSearch(); }
+  else if(d.popen!==undefined){ S.foodOpen=!S.foodOpen; save(); if(!$('#placesBg').hidden) openPlaces(PLQ); else openSearchSheet(); }
   else if(d.pmap){ $('#placesBg').hidden=true; $('#searchBg').hidden=true; focusPlace(d.pmap); }
   else if(d.pmapall!==undefined){ $('#placesBg').hidden=true; $('#searchBg').hidden=true; showPlacesOnMap(); }
   else if(d.pclose!==undefined) $('#placesBg').hidden=true;
@@ -4994,12 +5450,12 @@ document.addEventListener('click',e=>{
   else if(d.facing){ LIVE.facing=d.facing; useDevice(); }
   else if(d.flip!==undefined) flipCamera();
   else if(b.id==='astroT'){ S.me.astro=!S.me.astro; save(); renderAll(); }
-  else if(b.id==='logo'||b.closest('#logo')) tab('home');
+  else if(b.id==='logo'||b.closest('#logo')){ if(EXC.k) exploreClear(); tab('home','peek'); }
   else if(b.id==='refreshPicks'){ fetchPicks(true); }
   else if(b.id==='reset'){ if(!confirm('Forget everything saved in this browser? Your account on the server is not affected.')) return;
     try{localStorage.removeItem(KEY);}catch(e){} location.reload(); }
   else if(b.id==='signOut'){ if(!AUTHED){ ONB.mode='signup'; ONB.step=1; renderOnb(); } else signOut(); }
-  else if(b.id==='meChip'){ if(!AUTHED&&location.protocol.startsWith('http')){ ONB.mode='signup'; ONB.step=1; renderOnb(); } else $('#meMenu').hidden=!$('#meMenu').hidden; }
+  else if(b.id==='meChip'){ if(!AUTHED&&location.protocol.startsWith('http')){ ONB.mode='signup'; ONB.step=1; renderOnb(); } else tab('me'); }
   else if(d.picphoto!==undefined) $('#picFile').click();
   else if(d.piccam!==undefined) openCam();
   else if(d.camclose!==undefined) closeCam();
@@ -5044,7 +5500,7 @@ document.addEventListener('click',e=>{
   else if(d.sclose!==undefined) $('#searchBg').hidden=true;
   else if(d.sfocus!==undefined) runSearch(d.sfocus, '');
   else if(d.speople!==undefined){ $('#searchBg').hidden=true; meetTab='swipe'; tab('meet'); }
-  else if(b.parentElement.id==='sWhen'){ searchWhen=d.v; openSearch(); }
+  else if(b.parentElement.id==='sWhen'){ searchWhen=d.v; openSearchSheet(); }
   else if(d.gmclose!==undefined) $('#groupsBg').hidden=true;
   else if(d.gsec!==undefined){ groupsSec=d.gsec===''?null:+d.gsec; renderMeet(); }
   /* meet */
@@ -5191,7 +5647,6 @@ const segVal = id => document.querySelector(`#${id} .on`).dataset.v;
 function composeHint(){ const v=segVal('cVis'), d=S.me.delay;
   $('#cHint').innerHTML = (v==='broadcast'?'🌐 Everyone nearby will see this. Broadcasting is how you meet people.':'👥 Only your friends list.')
     + (d&&v==='broadcast'?` Your ${d}-min broadcast delay applies.`:''); }
-$('#fab').onclick=()=>openCompose();
 $('#closeSheet').onclick=()=>$('#sheetBg').hidden=true;
 $('#sheetBg').onclick=e=>{ if(e.target.id==='sheetBg') $('#sheetBg').hidden=true; };
 function openCompose(group){
@@ -5388,7 +5843,7 @@ function upsertRemote(s, peer){
   s.reqs.filter(r=>r.by===meH()&&prev[r.id]&&prev[r.id]!==r.status).forEach(r=>reqStatusToast(cur,r));
   if(!old){ toast(`🔴 <b>${esc(s.u)}</b> just went live: ${esc(s.title)}`,'',[{l:'Watch',cls:'primary',f:()=>openWatch(s.id)}],6000); renderMap(); }
   if(!old && LIVE.mode==='list') renderLive(); else if(LIVE.watch===s.id){ renderQueue(); liveTick(); }
-  $('#livePill').textContent = LIVE.on ? 'ON' : liveStreams().length || '';
+  $('#livePill')&&($('#livePill').textContent = LIVE.on ? 'ON' : liveStreams().length || '');
 }
 
 /* camera sources */
@@ -5585,7 +6040,7 @@ const thumb = s => `<div class="lv">${s.remote?'<div class="fakefeed" style="fon
   <div class="tag"><span class="onair">● LIVE</span><span class="badge">👁 ${s.viewers}</span></div><div class="ov">📷 ${esc(s.cam)}</div></div>`;
 function renderLive(){
   const root=$('#liveRoot'); if(!root) return;
-  $('#livePill').textContent = LIVE.on ? 'ON' : liveStreams().length || '';
+  $('#livePill')&&($('#livePill').textContent = LIVE.on ? 'ON' : liveStreams().length || '');
   if(LIVE.mode==='watch') return renderWatch(root);
   if(LIVE.mode==='studio') return renderStudio(root);
   root.innerHTML = `<div class="row"><h2 class="grow">Live now</h2><button class="btn sm primary" data-golive>${LIVE.on?'🔴 Your stream':'🔴 Go live'}</button></div>
@@ -5781,11 +6236,10 @@ function toggleMapCat(k){ const c=MAP_CATS.find(x=>x.k===k), on=!!catState(c); l
 function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
   MAP_CATS.forEach(c=>c.subs.forEach(([x])=>S.mapL[x]=!!on[x])); if(when) S.mapWhen=when;
   refreshMapLayers(); openMapLayers(); mapHint(true); }
-function renderMapChips(){
+function renderMapChips(){   // V3: the chips under the search box pick one thing for the map and the list at once (exploreCat)
   const el=$('#mapChips'); if(!el) return;
-  el.innerHTML = (mapFilter==='feed'?'<button class="chip on" data-mfeedoff>📋 My feed ✕</button>':'')
-    + MAP_CATS.map(c=>{ const st=catState(c), l=T(c.k==='events'?{tonight:'Tonight',weekend:'Weekend',week:'This week'}[S.mapWhen]:c.l);
-      return `<button class="chip cat-${c.k} ${st}" data-mlcat="${c.k}" aria-pressed="${st?'true':'false'}">${c.e} ${esc(l)}</button>`; }).join('');
+  el.innerHTML = (mapFilter==='feed'?`<button class="chip on" data-mfeedoff>📋 ${T('My feed')} ✕</button>`:'')
+    + EX_CHIPS.map(([k,e,l])=>`<button class="chip ${EXC.k===k?'on':''}" data-excat="${k}" aria-pressed="${EXC.k===k}">${e} ${esc(T(l))}</button>`).join('');
 }
 function openMapLayers(){
   const sh=$('#placesSheet'), keep=$('#placesBg').hidden?0:sh.scrollTop;
@@ -6440,7 +6894,8 @@ function scoutPoint(id,label,hold){
   },320);
 }
 function scoutUnpoint(){ cancelAnimationFrame(SCT.ringRaf); clearTimeout(SCT.ringT); $('#scoutRing').hidden=$('#scoutTag').hidden=true; }
-function scoutDock(){   // nudge the Scout button up until it isn't sitting on a button, link or text box
+function scoutDock(){   // V3: Scout rides on the drawer's top edge (CSS), so there's nothing to dodge
+  return;
   const b=$('#scoutBtn'); if(!b||b.hidden) return;
   const base=curTab==='map'?130:14, at=px=>b.style.bottom=`calc(${px}px + env(safe-area-inset-bottom,0px))`;   // map: above the legend and live strip
   at(base);
@@ -6871,7 +7326,7 @@ function renderTonight(){
   el.hidden=!evs.length&&!out.length;
   const outHtml=out.length?`<div class="tnrail" style="margin-bottom:8px">${out.map(o=>`<button class="tncard out" data-outgo="${o.k}|${esc(o.id)}">${av(o.h,'sm')}
       <span class="tnt"><b>@${esc(o.h)}</b><span class="meta">📍 ${esc(o.name)} · ${agoT(o.at)}</span></span></button>`).join('')}</div>`:'';
-  el.innerHTML=(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>${T('Tonight near you')}</b><button class="linkbtn" data-tab="feed">${T('See all')} ›</button></div>
+  el.innerHTML=(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>${T('Tonight near you')}</b><button class="linkbtn" data-excat="events">${T('See all')} ›</button></div>
     <div class="tnrail">${evs.map(e=>{ const fr=goingList(e).filter(isFriend).length;
       return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span>
         <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'');
@@ -6915,8 +7370,10 @@ if(!navigator.onLine) setTimeout(()=>toast(`📶 ${T("You're offline. Showing wh
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!navigator.webdriver)
   addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 $('#betaTag').hidden=!CFG.beta;
-renderAll(); tab('home'); if(S.online) startLocating(false);
-addEventListener('resize',()=>{ goMap?.invalidateSize(); centerGoMap(); renderHome(); scoutDock(); });
+if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }   // a category chip left on last time
+if(!S.v3map){ S.v3map=true; Object.assign(S.mapL,{food:false,clubs:false,bars:false,trails:false,spots:false,landmarks:false,markers:false,art:false,stories:false}); syncMapL(); }   // V3 starts calm: what's happening; the chips add the rest
+renderAll(); tab('home','peek'); if(S.online) startLocating(false);
+addEventListener('resize',()=>{ map?.invalidateSize(); });
 document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches?.('[data-msgs]')){ e.preventDefault(); e.target.click(); } });
 (async()=>{
   AUTHED = await checkSession();
