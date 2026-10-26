@@ -107,6 +107,8 @@ def new_user(browser, label):
 
 def onboard(page, handle, interests):
     """Explore as a guest first, hit a gated action, then create the account from there."""
+    if page.locator("[data-onbmore]").count():      # the welcome shows a dozen first
+        page.click("[data-onbmore]")
     for i in interests:
         page.click(f"[data-onbi='{i}']")
     page.click("[data-onbguest]")

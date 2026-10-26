@@ -792,7 +792,7 @@
 
   /* the drawer */
   #drawer{position:absolute;left:0;right:0;top:var(--ftop);bottom:var(--dockh);z-index:600;display:flex;flex-direction:column;
-    background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);
+    background:linear-gradient(#141b3a,#0e1430 120px);   /* solid: a blur over a map that keeps animating costs phones battery */
     border-radius:26px 26px 0 0;border-top:1px solid #ffffff1c;box-shadow:0 -12px 40px #0009;
     transform:translateY(var(--doff,0px));transition:transform .34s cubic-bezier(.2,.9,.25,1);will-change:transform}
   #drawer.dragging{transition:none}
@@ -818,7 +818,6 @@
   #app.v3:not([data-tab=home]):not([data-tab=search]) .dhead{display:none}
   .glance{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 6px;padding:2px 4px;text-align:left;font-size:13px;font-weight:600;color:#cfd5f5}
   .glance b{color:#fff} .glance .ic{width:16px;height:16px;color:var(--muted);margin-left:auto}
-  #drawer:not([data-at=peek]) .glance{display:none}
   #drawer main{flex:1;position:relative;overflow:hidden;min-height:0}
   #drawer .view{padding:6px 14px calc(28px);overscroll-behavior:contain}
   #drawer:not([data-at=full]) .view{overflow-y:hidden}
@@ -951,6 +950,11 @@
   .popring{position:absolute;left:-26px;top:-26px;width:52px;height:52px;border-radius:50%;border:3px solid #2ec5ff;box-shadow:0 0 0 6px #2ec5ff33,0 0 24px #2ec5ffaa;
     pointer-events:none;animation:popring 1.6s ease-out infinite}
   @keyframes popring{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.35);opacity:.15}}
+  @media (max-width:899px){ #app.v3[data-at=full] #map *{animation-play-state:paused!important} }   /* covered: no need to animate */
+  .popimg{height:150px;margin:0 0 10px;border-radius:16px;background:#1a2246 center/cover no-repeat}
+  .leaflet-popup .popimg{height:90px;border-radius:10px}
+  #exPop .poptitle,#exPop .leaflet-popup-content>b:first-child{display:block;font-size:18px;line-height:1.25;letter-spacing:-.2px;margin-bottom:2px}
+  #exPop .popimg+.poptitle{margin-top:2px}
 </style>
 </head>
 <body>
@@ -1385,7 +1389,10 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver',
+  'Explore':'Explorar','Watch':'Ver','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
+  'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
+  'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
+  'Wave at people in Meet: when they wave back you can chat. Or bring your friends.':'Saluda a gente en Conocer: cuando te devuelvan el saludo podrán chatear. O trae a tus amigos.',
   'For you':'Para ti',
   'Chats':'Chats',
   'You':'Tú',
@@ -2614,7 +2621,7 @@ function renderPlacesLayer(){
   });
   setLabels('food',keep.map(k=>({id:k.id,ll:k.ll,r:7})),names);
   let k=0;   // a slow breathing glow on the popular open spots in view (its own canvas: the dots aren't repainted)
-  if(halos.length&&halos.length<300) PL.pulseT=setInterval(()=>{ if($('#v-map').hidden||document.hidden||MAPMOVING) return; k=(k+1)%16; const r=12+Math.sin(k/16*Math.PI*2)*4; halos.forEach(h=>h.setRadius(r)); },250);
+  if(halos.length&&halos.length<300) PL.pulseT=setInterval(()=>{ if($('#v-map').hidden||document.hidden||MAPMOVING||DRW.at==='full'&&!WIDE()) return; k=(k+1)%16; const r=12+Math.sin(k/16*Math.PI*2)*4; halos.forEach(h=>h.setRadius(r)); },250);
 }
 // Farmers markets (data/markets.json): the ones happening today or this weekend stand out from all the way zoomed
 // out, with their hours on the label; the rest of the week they're ordinary pins up close.
@@ -3720,6 +3727,7 @@ function notifyTags(){   // someone tagged you in a story since you last looked
 /* ---------- sign-up ---------- */
 const COLORS = ['#2ec5ff','#ff7a18','#b57bff','#3ddc97','#ff6b9a','#ffd166','#48dbfb','#a29bfe'];
 const ONB = {step:1, mode:'signup', h:'', c:COLORS[0], i:[], err:'', busy:false};
+const ONB_TOP = ['live shows','food','comedy','outdoors','sports','pickup games','dancing','trivia','coffee','art','dogs','festivals'];   // the welcome shows these first
 function renderOnb(){
   const o=ONB, signup=o.mode==='signup'; let html='';
   if(o.step===1) html=`<b style="font-size:22px">Welcome to Side Quest ⚔︎</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
@@ -3744,7 +3752,7 @@ function renderOnb(){
   if(o.step==='welcome') html=`<button class="btn sm" data-langtoggle style="float:right">🌐 ${T('Español')}</button><b style="font-size:22px">Welcome to Side Quest ⚔︎</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
     <p class="meta" style="font-size:13px">Find things to do around Austin, and people to do them with. Look around first. No account needed.</p>
     <label class="lbl">What are you into? <span class="meta">(optional, shapes your feed)</span></label>
-    <div class="chips">${INTERESTS.map(x=>`<button class="ichip ${o.i.includes(x)?'on':''}" data-onbi="${x}">${esc(x)}</button>`).join('')}</div>
+    <div class="chips">${(o.allI?INTERESTS:ONB_TOP.concat(o.i.filter(x=>!ONB_TOP.includes(x)))).map(x=>`<button class="ichip ${o.i.includes(x)?'on':''}" data-onbi="${x}">${esc(x)}</button>`).join('')}${o.allI?'':`<button class="ichip" data-onbmore>${T('+ more')}</button>`}</div>
     <button class="btn primary" data-onbguest style="width:100%;margin-top:18px;padding:13px">Start exploring →</button>
     <div class="row" style="justify-content:center;gap:16px;margin-top:12px"><button class="meta" data-onbmode="signup" style="font-size:13px">Create account</button>
       <button class="meta" data-onbmode="login" style="font-size:13px">I have an account · Sign in</button></div>`;
@@ -4040,7 +4048,8 @@ function threadsHtml(){
       return `<button class="card row dmrow ${n?'unread':''}" data-thread="${esc(t.with)}" style="width:100%;text-align:left">${threadAv(t)}<div class="grow" style="min-width:0"><b>${esc(threadName(t))}</b>
         <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.last.f===S.me.h?'You: ':t.group&&t.last.f?'@'+esc(t.last.f)+': ':''}${esc(t.last.t)}</div></div>
         <span class="meta">${agoShort(t.last.at)}</span>${n?`<span class="dmn">${n>9?'9+':n}</span>`:''}</button>`; }).join('')
-    || (q?`<p class="meta">No chats match “${esc(q)}”.</p>`:'<p class="meta">No messages yet. Wave at people in Meet: when they wave back you can chat.</p>'))
+    || (q?`<p class="meta">No chats match “${esc(q)}”.</p>`:`<div class="xempty"><div style="font-size:34px">💬</div><b style="color:var(--text)">${T('No chats yet')}</b><p class="meta">${T('Wave at people in Meet: when they wave back you can chat. Or bring your friends.')}</p>
+      <div class="btns" style="justify-content:center;margin-top:10px"><button class="btn sm primary" data-mt="swipe">👋 ${T('Meet people')}</button><button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button></div></div>`))
     + (others.length?`<label class="lbl">Start a chat</label><div class="tagchips">${others.map(h=>`<button class="ichip" data-thread="${esc(h)}">${esc(h)}</button>`).join('')}</div>`:'');
 }
 function dmCardHtml(c, i){
@@ -4870,7 +4879,7 @@ function initMap(){
   layer=L.layerGroup().addTo(map); liveLayer=L.layerGroup().addTo(map);
   renderMapChips();
   map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
-  map.on('dragstart',mapWantsRoom); map.on('click',mapWantsRoom);
+  map.on('dragstart',()=>{ mapHint.armed=true; mapWantsRoom(); }); map.on('click',mapWantsRoom);
   map.on('popupopen',popToDrawer); map.on('popupclose',popClosed); L.Popup.prototype.options.autoPan=false;   // touching the map = you want the map
   map.on('movestart zoomstart',()=>{ MAPMOVING=true; $('#map').classList.add('mapmoving'); });
   map.on('moveend zoomend',()=>{ MAPMOVING=false; $('#map').classList.remove('mapmoving'); });
@@ -4905,7 +4914,7 @@ function renderEventPins(){
     const going=myRsvp(e.id)==='going';
     const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ev ${going?'going':''}"><i>${CATS[e.cat].e}</i>${more>1?`<b class="more">+${more}</b>`:''}</div>`,
       iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]})}).addTo(evLayer);
-    m.bindPopup(()=>`<b>${esc(e.title)}</b><div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.price?' · '+esc(e.price):''}</div>
+    m.bindPopup(()=>`${/^https:\/\//.test(e.image||'')?`<div class="popimg" style="background-image:url('${esc(evImg(e.image))}')"></div>`:''}<b class="poptitle">${esc(e.title)}</b><div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.price?' · '+esc(e.price):''}</div>
       ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
       <div class="btns" style="margin-top:8px"><button class="btn sm ${going?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${going?'✓ Going':"I'm going"}</button>
       <button class="btn sm blue" data-evopen="${e.id}">${T('Details')}</button>
@@ -5263,7 +5272,7 @@ function renderHome(){
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail(); $('#exMore').innerHTML=hotRail()+happyRail();
+  renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail(); $('#exMore').innerHTML=hotRail()+happyRail()+askRail();
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
   $('#homeNext').innerHTML = next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
       const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
@@ -5292,6 +5301,12 @@ function hotRail(){
     `<button class="tncard" data-pzone="${esc(x.id)}" style="width:170px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">🔥</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${T('{n} open now',{n:x.open})}</span></span></button>`).join('')}</div>` : '';
 }
 
+// Things to ask Scout, one tap each (they go to Scout's chat; guests get the built-in answers).
+function askRail(){
+  const h=new Date().getHours(), we=[0,5,6].includes(new Date().getDay());
+  const qs=[h<11?'Where should I get breakfast?':h<16?'Lunch spot near me?':'Plan my night', 'Something free to do tonight', HH.now?'Best happy hour near me?':'Where\'s good tacos open late?', we?'Plan my Saturday outdoors':'Live music this week?'];
+  return `<div class="tnhead"><b>✨ ${T('Ask Scout')}</b></div><div class="srecent">${qs.map(q=>`<button data-xgo="scout|${esc(T(q))}">${esc(T(q))}</button>`).join('')}</div>`;
+}
 function happyRail(){
   const L=(HH.list||[]).filter(p=>p.happy?.now).slice(0,10);
   return L.length ? `<div class="tnhead"><b>🍻 ${T('Happy hour now')}</b><button class="linkbtn" data-excat="food" data-exsubgo="happy">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
@@ -5360,7 +5375,7 @@ async function renderExCat(fresh){
     const list=EV.list.filter(x=>x.te>now&&x.ts<until&&x.lat).map(x=>({x, s:scoreEvent(x,aff,{})?.s ?? 0, d:km(ME_POS,[x.lat,x.lng])})).filter(x=>x.d<60)
       .sort((a,b)=>a.x.ts-b.x.ts||b.s-a.s).slice(0,60);
     el.innerHTML = head + (list.map(({x,d})=>{ const fr=goingList(x).filter(isFriend).length;
-      return xrow({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
+      return xrow({go:`evmap|${x.id}`, e:CATS[x.cat]?.e||'🎫', th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
         sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}${fr?` · 👥 ${fr}`:''}`, d:fmtMi(d)}); }).join('') || `<p class="xempty">${T('Nothing listed for then yet.')}</p>`);
     return;
   }
@@ -5405,10 +5420,10 @@ function openSearchView(){
 }
 function renderSearch(){
   const el=$('#searchOut'); if(!el) return; const q=$('#qIn').value.trim(), ql=q.toLowerCase();
-  const ask = (text, sub) => `<button class="sask" data-xgo="scout|${esc(text)}"><span class="scwrap" data-scface></span><span class="grow"><b>${esc(sub)}</b><span class="meta">${esc(text)}</span></span>${svgI('chev')}</button>`;
+  const ask = (text, sub, go=text) => `<button class="sask" data-xgo="scout|${esc(go)}"><span class="scwrap" data-scface></span><span class="grow"><b>${esc(sub)}</b><span class="meta">${esc(text)}</span></span>${svgI('chev')}</button>`;
   if(!q){
     const rec=(S.recentQ||[]).slice(0,8), tries=['tacos','live music tonight','happy hour','coffee','trivia','brunch','pickup basketball','swimming'];
-    el.innerHTML = ask(T('“Where’s good tacos open late?” “Plan my Saturday”'), T('Ask Scout anything'))
+    el.innerHTML = ask(T('“Where’s good tacos open late?” “Plan my Saturday”'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
       + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
       + `<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`;
     scoutFaces(); return;
@@ -5435,10 +5450,11 @@ function searchGo(v){
   const [t,...r]=v.split('|'), id=r.join('|'), q=$('#qIn').value.trim();
   if(t==='pl'&&!PL.byId[id]&&!(PL.lastList||[]).some(p=>p.id===id)){ const h=(HH.list||[]).find(p=>p.id===id); if(h) PL.lastList=[...(PL.lastList||[]),h]; }
   if(q){ S.recentQ=[q,...(S.recentQ||[]).filter(x=>x!==q)].slice(0,10); save(); }
-  if(t==='scout'){ $('#qIn').value=''; $('#qIn').blur(); if(!q&&!r.length) return openScoutVoice(); $('#scoutBg').hidden=false; renderScoutLog(); scoutFaces(); return scoutAsk(q||id); }
+  if(t==='scout'){ $('#qIn').value=''; $('#qIn').blur(); if(!q&&!id) return openScoutVoice(); $('#scoutBg').hidden=false; renderScoutLog(); scoutFaces(); return scoutAsk(q||id); }
   if(t==='dish') return openDishes(id);
   if(t==='feed') return runSearch(null,id);
   if(t==='ev') return openEvent(id);
+  if(t==='evmap') return focusOnMap(id);
   if(t==='u') return openProfile(id);
   if(t==='g') return openGroup(id);
   $('#qIn').value=''; $('#qIn').blur();
@@ -5662,6 +5678,7 @@ document.addEventListener('click',e=>{
   else if(b.id==='delAcct') deleteAccount();
   else if(d.onbmode){ if(d.onbmode!==ONB.mode) ONB.google=null; ONB.mode=d.onbmode; ONB.err=''; ONB.h=$('#onbH')?.value||ONB.h; ONB.step=1; renderOnb(); }
   else if(d.onbguest!==undefined){ S.welcomed=true; if(ONB.i.length) S.me.i=[...ONB.i]; save(); $('#onbBg').hidden=true; renderAll(); setTimeout(scoutOfferTour,1200); }
+  else if(d.onbmore!==undefined){ ONB.allI=true; renderOnb(); }
   else if(d.onbclose!==undefined){ $('#onbBg').hidden=true; ONB.why=null; }
   else if(d.more){ const [k,id,au]=d.more.split('|'); openActions(k,id,au); }
   else if(d.stmore){ const [id,au]=d.stmore.split('|'); openActions('story',id,au); }
@@ -6326,7 +6343,7 @@ document.addEventListener('change',e=>{ if(e.target.id==='lvDev') useDevice(e.ta
 LOCF.lv = {title:'Where are you streaming from?', empty:'Somewhere nearby (no place shown) · tap to pick', get:()=>LIVE.draft.v, set:x=>{ LIVE.draft.v=x; refreshLoc('lv'); }};
 LOCF.rq = {title:'Where should they go?', empty:'Pick a place to send them', get:()=>LIVE.reqFor===LIVE.watch?LIVE.reqPlace:null, set:x=>{ LIVE.reqPlace=x; LIVE.reqFor=LIVE.watch; refreshLoc('rq'); }};
 document.addEventListener('submit',e=>{ if(e.target.id==='reqForm'){ e.preventDefault(); sendRequest(); } });
-setInterval(()=>{ if(map&&!$('#v-map').hidden){ renderLiveMarkers(); renderMapLive(); } },4000);
+setInterval(()=>{ if(map&&!$('#v-map').hidden&&!(DRW.at==='full'&&!WIDE())){ renderLiveMarkers(); renderMapLive(); } },4000);
 setInterval(()=>{ LIVE.streams.forEach(s=>s.viewers=Math.max(3,s.viewers+(hash(s.id+Date.now())%5)-2));
   const now=Date.now(); Object.values(LIVE.remote).forEach(s=>{ if(now-s.seen>10000){ if(LIVE.watch===s.id){ leaveWatch(); LIVE.mode='list'; } delete LIVE.remote[s.id]; renderLive(); renderMap(); } });
   liveTick(); },4000);
@@ -6415,7 +6432,7 @@ const MAP_PRESETS={
 const layerKeys = c => c.subs.filter(s=>!s[2]).map(s=>s[0]);
 const catState = c => { const on=layerKeys(c).filter(k=>S.mapL[k]).length; return on===0?'':on===layerKeys(c).length?'on':'part'; };
 function syncMapL(){ S.mapL.night=S.mapL.clubs||S.mapL.bars; S.mapL.outdoors=S.mapL.parks||S.mapL.water||S.mapL.trails||S.mapL.spots; }   // the old summary flags
-function refreshMapLayers(){ syncMapL(); save(); renderMapChips(); if(!map) return; renderMarkets(); renderMap(); renderPlacesLayer(); renderHotZones(); renderSights(); }
+function refreshMapLayers(){ mapHint.armed=true; syncMapL(); save(); renderMapChips(); if(!map) return; renderMarkets(); renderMap(); renderPlacesLayer(); renderHotZones(); renderSights(); }
 function toggleMapCat(k){ const c=MAP_CATS.find(x=>x.k===k), on=!!catState(c); layerKeys(c).forEach(x=>S.mapL[x]=!on); refreshMapLayers(); mapHint(true); }
 function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
   MAP_CATS.forEach(c=>c.subs.forEach(([x])=>S.mapL[x]=!!on[x])); if(when) S.mapWhen=when;
@@ -6450,7 +6467,8 @@ function openMapLayers(){
 const openMapFilter = openMapLayers;
 // A short hint right after a change, when a layer is on but has nothing to show where you're looking.
 function mapHint(now){
-  const el=$('#mapHint'); if(!el||!map) return; clearTimeout(el.t); const z=map.getZoom(), b=map.getBounds(); let msg='', act='';
+  const el=$('#mapHint'); if(!el||!map) return;
+  if(now&&!mapHint.armed) return;   // V3: the map is up from the first second; hints wait until you've changed something clearTimeout(el.t); const z=map.getZoom(), b=map.getBounds(); let msg='', act='';
   const evIn=Object.keys(markers).filter(id=>EV.byId[id]&&b.contains(markers[id].getLatLng())).length;
   const fmOn=S.mapL.markets&&(FM.list||[]).filter(m=>fmSoon(m)).length;
   if(fmOn&&now&&!mapHint.fmShown){ mapHint.fmShown=1; msg=T(placeStateAny()?'🧺 A farmers market is open now: look for the glowing baskets':fmOn>1?'🧺 {n} farmers markets coming up: tap a basket':'🧺 A farmers market is coming up: tap the basket',{n:fmOn}); }

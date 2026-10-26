@@ -42,6 +42,8 @@ def new_page(browser, label, url="/", geo=None):
 
 
 def sign_up(page, handle):
+    if page.locator("[data-onbmore]").count():   # the welcome shows a dozen first
+        page.click("[data-onbmore]")
     for i in ("music", "comedy", "outdoors"):
         page.click(f"[data-onbi='{i}']")
     page.click("[data-onbguest]")
@@ -83,6 +85,8 @@ with sync_playwright() as pw:
     check("invite link page has a link preview", f"@{AMY} invited you" in share and 'og:title' in share)
     bctx, b = new_page(browser, "bo", url=f"/i/{AMY}/{code}")
     check("invite link opens the app and remembers who invited", b.evaluate("S.ref") == AMY, b.evaluate("S.ref"))
+    if b.locator("[data-onbmore]").count():      # the welcome shows a dozen first
+        b.click("[data-onbmore]")
     for i in ("music", "food", "art"):
         b.click(f"[data-onbi='{i}']")
     b.click("[data-onbguest]")
