@@ -78,6 +78,19 @@ def nav(page, where):
         page.click("#logo")
 
 
+def feed_search(page, q):
+    """V3: searching starts in the drawer's box; "Search posts and the feed" narrows the feed (its box then shows it)."""
+    if not page.locator("#qIn").is_visible():
+        page.click("[data-dock='home']")
+    page.click("#qIn"); page.fill("#qIn", q); page.wait_for_timeout(300)
+    page.click("#searchOut [data-xgo^='feed|']")
+
+
+def feed_clear(page):
+    if page.locator("#feedQ").is_visible():
+        page.fill("#feedQ", ""); page.dispatch_event("#feedQ", "input")
+
+
 def new_user(browser, label):
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2,
                               geolocation={"latitude": 30.2671, "longitude": -97.7395}, permissions=["geolocation"])
@@ -158,7 +171,7 @@ with sync_playwright() as pw:
     p1.screenshot(path=f"{OUT}/00-search.png")
     p1.click("#searchOut [data-xgo^='feed|']")
     check("…and it can narrow the feed to it", p1.locator("#v-feed").is_visible() and p1.evaluate("feedQ") == "comedy" and p1.input_value("#feedQ") == "comedy")
-    p1.fill("#feedQ", ""); p1.dispatch_event("#feedQ", "input")
+    feed_clear(p1)
     p1.click("[data-dock='meet']"); p1.click("[data-mt='swipe']")
     kinds = p1.evaluate("[...new Set(deckItems().slice(0,12).map(x=>x.k))]")
     check("Meet deck mixes people, events, groups and flares", {"person", "event", "group", "post"} <= set(kinds), ",".join(kinds))
@@ -210,13 +223,15 @@ with sync_playwright() as pw:
     p1.click("#exCat [data-exopen]"); p1.wait_for_timeout(500)          # back on for later
     p1.click("#exCat [data-exsub='tacos']"); p1.wait_for_selector("#exCat .xrow", timeout=10000)
     p1.click("#exCat .xrow >> nth=0"); p1.wait_for_selector(".leaflet-popup-content [data-pmenu]", timeout=10000)
-    check("tapping a row flies to it on the map, with its Menu", p1.evaluate("DRW.at") == "peek" and "Taco Test Trailer" in p1.locator(".leaflet-popup-content").last.inner_text())
-    p1.evaluate("map.closePopup()"); p1.click("#exCat [data-exclose]")
+    check("tapping a row flies to it on the map; its card (with Menu) opens in the drawer", p1.evaluate("DRW.at") == "half" and "Taco Test Trailer" in p1.locator("#exPop").inner_text())
+    p1.click("#exPop [data-popclose]"); p1.wait_for_timeout(400)
+    check("closing the card goes back to the list", p1.locator("#exCat .xrow").first.is_visible() and p1.evaluate("DRW.at") == "half")
+    p1.click("#exCat [data-exclose]")
     check("✕ puts the map back the way it was", p1.evaluate("!EXC.k && S.mapL.events"))
     check("✕ leaves the map calm: no food dots or hot spot zones until you ask", p1.evaluate("!S.mapL.food && !S.mapL.zones"))
     # map: dots + hot spot zones (the Layers switches)
     nav(p1, "map"); p1.wait_for_function("PL.all && PL.hot", timeout=15000)
-    p1.evaluate("S.mapL.food=S.mapL.zones=true; refreshMapLayers()")
+    p1.evaluate("S.mapL.food=S.mapL.zones=S.mapL.clubs=S.mapL.bars=S.mapL.trails=S.mapL.spots=true; refreshMapLayers()")   # the Layers switches
     p1.evaluate("map.setView([30.2650,-97.7390],15)"); p1.wait_for_timeout(800)
     dots = p1.evaluate("({open: Object.values(PL.cores).filter(l=>l.options.fillColor==='#3ddc97').length, all: Object.keys(PL.cores).length})")
     check("green open-now dots on the map", dots["open"] >= 2 and dots["all"] >= 4, json.dumps(dots))
@@ -384,18 +399,18 @@ with sync_playwright() as pw:
     # Feed
     nav(p1, "feed")
     p1.wait_for_function("document.querySelectorAll('#feedList [data-rsvp]').length>0", timeout=20000)
-    meta = p1.locator("#feedMeta").inner_text()
+    meta = p1.evaluate("document.querySelector('#feedMeta').textContent")   # (shown only once something narrows the feed)
     check("feed loads real events", "event" in meta, meta)
     first = p1.locator("#feedList .card").first.inner_text()
     p1.screenshot(path=f"{OUT}/03-feed.png")
     reasons = p1.locator("#feedList").inner_text()
     check("feed explains picks from interests/profile", "You're into" in reasons or "You love" in reasons or "here for" in reasons)
 
-    p1.fill("#feedQ", "comedy")
+    feed_search(p1, "comedy")
     p1.wait_for_timeout(300)
     n_comedy = p1.locator("#feedList [data-rsvp][data-st='going']").count()
     check("search filters the feed", n_comedy > 0, f"{n_comedy} matches for 'comedy'")
-    p1.fill("#feedQ", "")
+    feed_clear(p1)
     p1.click("[data-ffocus='pickup']")
     pick_meta = p1.locator("#feedMeta").inner_text()
     check("category chip narrows the feed", "event" in pick_meta, pick_meta)
@@ -491,18 +506,17 @@ with sync_playwright() as pw:
     onboard(p2, AMY, ["soccer", "pickup games", "running"])
     nav(p2, "feed")
     p2.wait_for_function("document.querySelectorAll('#feedList [data-rsvp]').length>0", timeout=20000)
-    p2.fill("#feedQ", "Zilker Saturday")
+    feed_search(p2, "Zilker Saturday")
     p2.wait_for_timeout(300)
     check("2nd user sees the group post", "need 4 more" in p2.locator("#feedList").inner_text())
-    p2.fill("#feedQ", "")
+    feed_clear(p2)
     going = p2.evaluate("id=>goingList(EV.byId[id])", ev_id)
     check("2nd user sees 1st user's RSVP", TEX in going, ",".join(going))
     nav(p2, "friends")
     sug = p2.locator("#suggestList").inner_text()
     check("1st user is suggested to the 2nd", TEX in sug)
     p2.screenshot(path=f"{OUT}/07-amy-people.png")
-    nav(p2, "feed")
-    p2.fill("#feedQ", "Zilker Saturday")
+    feed_search(p2, "Zilker Saturday")
     p2.locator(f"#feedList [data-down='{posts[0]['id']}']").click()
     p2.wait_for_timeout(400)
     check("2nd user said 'I'm down' to the post", AMY in next(x for x in state()["posts"] if x["id"] == posts[0]["id"])["downs"])
@@ -520,7 +534,7 @@ with sync_playwright() as pw:
     check("live streamers show preview thumbnails on the map", n_live >= 3, f"{n_live} thumbnails")
     p2.screenshot(path=f"{OUT}/09-map-stories.png")
     nav(p2, "feed")
-    p2.fill("#feedQ", "")
+    feed_clear(p2)
     p2.click(f"#feedList [data-stuser='{TEX}']")
     p2.wait_for_selector("#storyView:not([hidden]) .media")
     sv = p2.locator("#storyView").inner_text()
@@ -590,8 +604,8 @@ with sync_playwright() as pw:
     check("driving mode turns off", not g.locator("#driveView").is_visible())
     g.click("#scoutBtn"); g.click(".sc-top [data-sc='tourgo']")
     g.wait_for_selector("#scoutRing", state="visible", timeout=5000)
-    check("Scout tour starts from the panel and points at Meet",
-          "1/7" in g.locator("#scoutTour").inner_text() and "Meet" in g.locator("#scoutTag").inner_text())
+    check("Scout tour starts from the panel and points at the search box",
+          "1/7" in g.locator("#scoutTour").inner_text() and "Search" in g.locator("#scoutTag").inner_text())
     g.screenshot(path=f"{OUT}/15-scout-tour.png")
     for _ in range(6):
         g.click("#scoutTour [data-sc='tournext']"); g.wait_for_timeout(450)

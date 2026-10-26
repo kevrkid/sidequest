@@ -772,7 +772,7 @@
   #app.v3 .me-chip{width:44px;height:44px;padding:0;border:0;border-radius:50%;background:none;flex:none;position:relative;display:grid;place-items:center}
   #app.v3 .me-chip .av{width:40px;height:40px;font-size:16px;box-shadow:0 0 0 2px #070b18,0 0 0 4px #ffffff30,0 6px 16px #0008}
   #app.v3 .me-chip.online .av{box-shadow:0 0 0 2px #070b18,0 0 0 4px var(--good),0 6px 16px #0008}
-  #app.v3 #meHandle{display:none}
+  #app.v3 #meHandle,#app.v3 .me-chip .caret{display:none}
   #app.v3 .logo{margin:0 auto;font-size:15px;font-weight:800;letter-spacing:-.3px;gap:7px;padding:5px 12px 5px 6px;border-radius:99px;
     background:#0d1226b3;border:1px solid var(--hair);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
   #app.v3 .logo .gem{width:22px;height:22px;border-radius:6px}
@@ -937,6 +937,20 @@
   .xrow:active{background:#ffffff0a} #drawer .mapchips .chip:active,.subchips button:active,.srecent button:active,#youStats button:active{transform:scale(.95)}
   .ylist button:active{background:#ffffff08} .tncard:active{transform:scale(.97)}
   .xrow,.ylist button{-webkit-tap-highlight-color:transparent} #app.v3 button{-webkit-tap-highlight-color:transparent}
+  /* drawer all the way up: Scout's cards and bubbles sit just above the dock instead of above the drawer */
+  #app.v3[data-at=full] #scoutTour:not(.top),#app.v3[data-at=full] #scoutBubble{bottom:calc(var(--dockh) + 12px)}
+  #app.v3 #scoutTour{max-height:calc(100% - var(--ftop) - 20px);overflow-y:auto}
+  /* a pin's card, in the drawer */
+  .leaflet-popup.indrawer{display:none}
+  #exPop .leaflet-popup-content{margin:0;width:auto!important;min-width:0;font-size:14px;line-height:1.45}
+  #exPop .leaflet-popup-content .btn{padding:9px 13px;font-size:13px}
+  #exPop .popbar{display:flex;align-items:center;margin:0 0 -34px;position:relative;z-index:2;pointer-events:none}
+  #exPop .popbar .xbtn{pointer-events:auto}
+  #exPop .leaflet-popup-content>*:first-child{padding-right:40px}
+  #app.v3[data-pop] #mapChips,#app.v3[data-pop] .glance{display:none}
+  .popring{position:absolute;left:-26px;top:-26px;width:52px;height:52px;border-radius:50%;border:3px solid #2ec5ff;box-shadow:0 0 0 6px #2ec5ff33,0 0 24px #2ec5ffaa;
+    pointer-events:none;animation:popring 1.6s ease-out infinite}
+  @keyframes popring{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.35);opacity:.15}}
 </style>
 </head>
 <body>
@@ -986,6 +1000,7 @@
     </div>
   <main>
     <section class="view" id="v-home">
+      <div id="exPop" hidden></div>
       <div id="exCat" hidden></div>
       <div id="exMain">
       <div id="homeStories" aria-label="Stories"></div>
@@ -1001,7 +1016,7 @@
 
     <section class="view" id="v-feed" hidden>
       <div class="fhd"><h2 class="grow" data-t="For you">For you</h2><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
-      <div class="seg" id="feedMode" style="margin:10px 0 10px"><button type="button" data-v="foryou" class="on">🎫 Happening</button><button type="button" data-v="posts">📝 Posts</button></div>
+      <div class="seg" id="feedMode" style="margin:10px 0 10px"><button type="button" data-v="foryou" class="on" data-t="🎫 Happening">🎫 Happening</button><button type="button" data-v="posts" data-t="📝 Posts">📝 Posts</button></div>
       <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:0 0 10px" hidden>
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
@@ -1126,7 +1141,8 @@
   <div class="sheet-bg" id="createBg" hidden><div class="sheet">
     <div class="row"><b class="grow" style="font-size:20px">✨ Create</b><button class="btn sm" data-cclose>Close</button></div>
     <div class="create-grid">
-      <button data-create="story" style="grid-column:1/-1;background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i>Photo or video<span>Share what you're up to at places you've been · tag the event, groups, people</span></button>
+      <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i>Story<span>A photo or video for 24 hours · tag the place, event, people</span></button>
+      <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i>Post<span>A photo or thought that stays on your profile</span></button>
       <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i>Flare<span>"Who's down?" right now</span></button>
       <button data-create="event" style="background:linear-gradient(145deg,#8e2de2,#e9408a)"><i>📅</i>Event<span>Plan something later</span></button>
       <button data-create="group" style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>🏘️</i>Group<span>Start a community</span></button>
@@ -1369,6 +1385,94 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
+  'Explore':'Explorar','Watch':'Ver',
+  'For you':'Para ti',
+  'Chats':'Chats',
+  'You':'Tú',
+  'Search Austin, or ask Scout':'Busca o pregúntale a Scout',
+  'Tonight':'Esta noche',
+  'Nightlife':'Vida nocturna',
+  'Outdoors':'Aire libre',
+  'Sights':'Lugares de interés',
+  'Hot spots':'Zonas de moda',
+  'Happy hour now':'Happy hour ahora',
+  'Busy right now':'Con ambiente ahora',
+  '{n} open now':'{n} abiertos ahora',
+  'Map':'Mapa',
+  '<b>{n}</b> things on tonight':'<b>{n}</b> planes esta noche',
+  '<b>{n}</b> friends out':'<b>{n}</b> amigos fuera',
+  '<b>{n}</b> live':'<b>{n}</b> en vivo',
+  '<b>{n}</b> happy hours':'<b>{n}</b> happy hours',
+  "See what's around you":'Mira qué hay cerca',
+  'Everything':'Todo',
+  '🍻 Happy hour':'🍻 Happy hour',
+  '☕ Coffee':'☕ Café',
+  '🌮 Tacos':'🌮 Tacos',
+  '🍖 BBQ':'🍖 BBQ',
+  '🍕 Pizza':'🍕 Pizza',
+  '🍔 Burgers':'🍔 Hamburguesas',
+  '🍜 Asian':'🍜 Asiática',
+  '🚚 Trucks':'🚚 Food trucks',
+  '🍦 Sweets':'🍦 Postres',
+  '🌙 Late night':'🌙 Trasnoche',
+  '🌅 Breakfast':'🌅 Desayuno',
+  '🍸 Bars':'🍸 Bares',
+  '\U0001faa9 Clubs':'\U0001faa9 Antros',
+  '🌙 Late eats':'🌙 Comer tarde',
+  'This weekend':'Este fin de semana',
+  'This week':'Esta semana',
+  '🌳 Parks':'🌳 Parques',
+  '💧 Lakes & rivers':'💧 Lagos y ríos',
+  '🚲 Trails':'🚲 Senderos',
+  '🏛️ Landmarks':'🏛️ Monumentos',
+  '🖼️ Museums':'🖼️ Museos',
+  '🪧 Markers':'🪧 Placas históricas',
+  '🎨 Art & views':'🎨 Arte y miradores',
+  'Open now':'Abierto ahora',
+  'Open now · nearest first':'Abierto ahora · lo más cerca primero',
+  'Nearest first':'Lo más cerca primero',
+  'Happy hours from menus, on now first':'Happy hours de los menús, los de ahora primero',
+  'Closest to the middle of the map':'Lo más cerca del centro del mapa',
+  'Finding spots…':'Buscando lugares…',
+  'Nothing listed for then yet.':'Todavía no hay nada para entonces.',
+  'Nothing here yet.':'Todavía no hay nada aquí.',
+  'Neighborhoods glow brighter the more is open and happening.':'Los barrios brillan más cuanto más hay abierto y pasando.',
+  'Out now':'Fuera ahora',
+  'Sharing where they are':'Compartiendo dónde están',
+  'Flares':'Bengalas',
+  'Live now':'En vivo ahora',
+  'On the map':'En el mapa',
+  'No friends out on the map right now.':'Ningún amigo en el mapa ahora.',
+  'Find people':'Buscar gente',
+  'Invite friends':'Invitar amigos',
+  'Ask Scout anything':'Pregúntale lo que sea a Scout',
+  'Ask Scout':'Pregúntale a Scout',
+  'Recent':'Recientes',
+  'Try':'Prueba',
+  'Places':'Lugares',
+  'Events':'Eventos',
+  'People':'Personas',
+  'Groups':'Grupos',
+  'More':'Más',
+  'members':'miembros',
+  'Find “{q}” on menus':'Buscar “{q}” en los menús',
+  'Every menu we’ve read, with prices':'Todos los menús que hemos leído, con precios',
+  'Search posts and the feed':'Buscar en publicaciones y el feed',
+  '+{n} more: keep typing to narrow it down':'+{n} más: sigue escribiendo para afinar',
+  'Welcome':'Bienvenido',
+  'Browsing as a guest':'Navegando como invitado',
+  'Create account / Sign in':'Crear cuenta / Entrar',
+  'Lv {n}':'Nv {n}',
+  'Level':'Nivel',
+  'Coins':'Monedas',
+  'Day streak':'Racha de días',
+  'Saved':'Guardado',
+  'Quests & rewards':'Misiones y premios',
+  '{n} new':'{n} nuevas',
+  'Austin':'Austin',
+  'Close':'Cerrar',
+  '🎫 Happening':'🎫 Pasando',
+  '📝 Posts':'📝 Publicaciones',
   'Online':'En línea', 'Offline':'Desconectado', 'Sign up':'Regístrate',
   'My profile':'Mi perfil', 'Personality quiz':'Test de personalidad', 'My chart':'Mi carta astral', 'About me':'Sobre mí', 'My plans':'Mis planes',
   'Privacy & settings':'Privacidad y ajustes', 'Language: English':'Idioma: Español', 'Español':'English',
@@ -2281,6 +2385,7 @@ function renderFeed(){
   const ne=items.filter(x=>x.type==='event').length, np=items.filter(x=>x.type==='post').length;
   $('#feedMeta').innerHTML = (EV.err?`<span style="color:var(--accent)">⚠️ Live events are offline: ${esc(EV.err)}</span><br>`:'')
     + (!EV.loaded&&!EV.err?'Loading events…':`${ne} event${ne===1?'':'s'} · ${np} post${np===1?'':'s'} · ${SORT_L[f.sort]}${f.dist?` · within ${f.dist} km`:''}${feedQ?` · “${esc(feedQ)}”`:''}`);
+  $('#feedMeta').hidden = FEED_MODE.m!=='foryou' || !(EV.err||!EV.loaded||feedQ||feedFocus||f.dist||f.sort!=='foryou');   // V3: only when something narrows or sorts it
   const plans=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts);
   const card = x => x.type==='event'?eventCard(x.it,x.r):x.type==='post'?pingCard(x.it):x.type==='person'?personCard(x.it):x.type==='group'
     ?`<div class="kicker" style="margin-top:4px">🏘️ A group you might like</div>${groupCard(x.it,false)}`:liveCard(x.it);
@@ -2801,10 +2906,11 @@ const SG={data:null, byId:{}, layer:null, loading:false, full:{}};
 const SG_KIND={marker:['🪧','Historical marker'], landmark:['🏛️','Landmark'], museum:['🖼️','Museum'], art:['🎨','Public art'], view:['🔭','Viewpoint'],
   nature:['🌳','Park & nature'], venue:['🎸','Famous venue'], sight:['📍','Sight']};
 const sgLayer = k => k==='marker'?'markers':k==='art'||k==='view'?'art':'landmarks';
-async function loadSights(){
-  if(SG.data||SG.loading) return; SG.loading=true;
-  try{ SG.data=((await (await fetch('/api/sights')).json()).sights||[]).map(x=>(x[7]||=40,x)).sort((a,b)=>b[7]-a[7]); SG.data.forEach(x=>SG.byId[x[0]]=x); }catch(e){ SG.data=null; }
-  SG.loading=false; renderSights();
+function loadSights(){   // one request at a time; everyone who asks waits for the same one
+  if(SG.data||Date.now()-(SG.failAt||0)<60000) return Promise.resolve(); if(SG.loading) return SG.p; SG.loading=true;
+  return SG.p=(async()=>{
+    try{ SG.data=((await (await fetch('/api/sights')).json()).sights||[]).map(x=>(x[7]||=40,x)).sort((a,b)=>b[7]-a[7]); SG.data.forEach(x=>SG.byId[x[0]]=x); }catch(e){ SG.data=null; SG.failAt=Date.now(); }
+    SG.loading=false; renderSights(); })();
 }
 function renderSights(){
   if(!map) return;
@@ -3116,7 +3222,7 @@ function storyRail(gid){   // one circle per person, unseen first; gid limits it
   const by={}; allStories().filter(x=>!gid||(x.groups||[]).includes(gid)).forEach(x=>(by[x.u] ||= []).push(x));
   const unseen=h=>by[h].some(x=>!seenStory(x.id)), users=Object.keys(by).sort((a,b)=>unseen(b)-unseen(a)||by[b].at(-1).created-by[a].at(-1).created);
   if(gid&&!users.length) return '';
-  return `<div class="srail">${gid?'':`<button data-newstory><div class="sbub add"><span>+</span></div>${T('Your story')}</button>`}${!gid&&allStories().some(x=>x.u!==S.me.h)?`<button data-foryou><div class="sbub foryou"><span>▶</span></div>${T('For you')}</button>`:''}${users.map(h=>{ const last=by[h].at(-1);
+  return `<div class="srail">${gid?'':`<button data-newstory><div class="sbub add"><span>+</span></div>${T('Your story')}</button>`}${!gid&&allStories().some(x=>x.u!==S.me.h)?`<button data-foryou><div class="sbub foryou"><span>▶</span></div>${T('Watch')}</button>`:''}${users.map(h=>{ const last=by[h].at(-1);
     return `<button data-stuser="${esc(h)}" data-stctx="${gid||''}"><div class="sbub ${unseen(h)?'':'seen'} ${by[h].some(x=>x.vis==='close')?'close':''}"><span style="${bubbleBg(last)}">${safeImg(last.img)?'':esc(last.emoji||'✨')}</span></div>${esc(h===S.me.h?'You':h)}</button>`; }).join('')}</div>`;
 }
 function storiesFrom(h, gid){   // tap a circle: that person's stories, then everyone else's after them
@@ -4764,7 +4870,8 @@ function initMap(){
   layer=L.layerGroup().addTo(map); liveLayer=L.layerGroup().addTo(map);
   renderMapChips();
   map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
-  map.on('dragstart',mapWantsRoom);
+  map.on('dragstart',mapWantsRoom); map.on('click',mapWantsRoom);
+  map.on('popupopen',popToDrawer); map.on('popupclose',popClosed); L.Popup.prototype.options.autoPan=false;   // touching the map = you want the map
   map.on('movestart zoomstart',()=>{ MAPMOVING=true; $('#map').classList.add('mapmoving'); });
   map.on('moveend zoomend',()=>{ MAPMOVING=false; $('#map').classList.remove('mapmoving'); });
   renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
@@ -5067,17 +5174,21 @@ const NAVST=[], NAVFWD=[];   // screens to go back to, and screens you came back
 const DRW={at:'peek'};
 function drawerStops(){
   const d=$('#drawer'), H=d.offsetHeight, head=d.querySelector('.dgrab').offsetHeight+d.querySelector('.dhead').offsetHeight;
-  return {full:0, half:Math.round(H*.44), peek:Math.max(0,H-head)};
+  let half=Math.round(H*.44);
+  if(POP.p){ const ph=$('#exPop').offsetHeight+28; half=Math.max(Math.round(H*.22),Math.min(H-head-ph,Math.round(H*.6))); }   // a pin's card: just its height
+  return {full:0, half, peek:Math.max(0,H-head)};
 }
 const WIDE = () => innerWidth>=900;   // a computer: the drawer is a panel down the left, always open
 function setDrawer(at, off){
   const d=$('#drawer'); if(!d) return; const st=drawerStops();
   if(at) DRW.at=at;
-  if(WIDE()){ DRW.at='full'; d.dataset.at=$('#app').dataset.at='full'; d.style.setProperty('--doff','0px'); $('#app').style.setProperty('--dvis','0px'); return; }
+  if(WIDE()){ DRW.at='full'; d.dataset.at=$('#app').dataset.at='full'; d.style.setProperty('--doff','0px'); $('#app').style.setProperty('--dvis','0px');
+    if(window.L){ L.Popup.prototype.options.autoPanPaddingTopLeft=[452,70]; L.Popup.prototype.options.autoPanPaddingBottomRight=[64,12]; } return; }
   d.dataset.at=DRW.at; $('#app').dataset.at=DRW.at;
+  if(DRW.at!=='peek'&&$('#scoutBubble')?.classList.contains('nudge')) scoutNudgeHide();   // "Need help?" is only for the open map
   const y=off??st[DRW.at]; d.style.setProperty('--doff',y+'px');
   $('#app').style.setProperty('--dvis',(d.offsetHeight-y+$('#dock').offsetHeight)+'px');
-  if(window.L) L.Popup.prototype.options.autoPanPaddingBottomRight=[12,d.offsetHeight-y+$('#dock').offsetHeight+12];
+  if(window.L){ L.Popup.prototype.options.autoPanPaddingBottomRight=[64,d.offsetHeight-y+$('#dock').offsetHeight+12]; L.Popup.prototype.options.autoPanPaddingTopLeft=[12,70]; }
 }
 function tab(t, at){
   if(t==='map'){ t='home'; at=at||'peek'; }
@@ -5119,11 +5230,11 @@ function tab(t, at){
     setDrawer(null, Math.max(0,Math.min(st.peek,off0+dy))); if(ev.cancelable) ev.preventDefault();
   };
   const end=()=>{
-    if(y0==null) return; y0=null; if(!drag) return; drag=false; d.classList.remove('dragging');
+    if(y0==null) return; y0=null; if(!drag) return; drag=false; d.classList.remove('dragging'); DRW.dragged=Date.now();
     const st=drawerStops(), y=cur(), order=['full','half','peek'];
     let best=order.reduce((a,k)=>Math.abs(st[k]-y)<Math.abs(st[a]-y)?k:a,'full');
-    if(Math.abs(v)>.45){ const i=order.indexOf(best), ny=st[best]; best = v>0 ? (ny<y?order[Math.min(2,i+1)]:best) : (ny>y?order[Math.max(0,i-1)]:best); }
-    if(best!=='full'&&curTab!=='home'&&curTab!=='search'){ if(best==='peek'||v>.45) return tab('home','peek'); }
+    if(Math.abs(v)>.45&&Math.abs(y-off0)>28){   /* a flick (not a nudge) goes on to the next stop */ const i=order.indexOf(best), ny=st[best]; best = v>0 ? (ny<y?order[Math.min(2,i+1)]:best) : (ny>y?order[Math.max(0,i-1)]:best); }
+    if(best!=='full'&&curTab!=='home'&&curTab!=='search') return tab('home', best);   // pulling a screen down shows the map
     if(curTab==='search'&&best!=='full'){ $('#qIn').value=''; return tab('home',best); }
     setDrawer(best);
   };
@@ -5138,7 +5249,7 @@ function tab(t, at){
     if(DRW.at!=='full'&&e.deltaY>0){ e.preventDefault(); setDrawer(DRW.at==='peek'?'half':'full'); }
     else if(DRW.at==='full'&&e.deltaY<-30&&(!sc||sc.scrollTop<=0)&&(curTab==='home'||curTab==='search')) setDrawer('half');
     else if(DRW.at==='half'&&e.deltaY<-30) setDrawer('peek'); },{passive:false});
-  d.querySelector('.dgrab').addEventListener('click',()=>setDrawer(DRW.at==='peek'?'half':DRW.at==='half'?'full':'half'));
+  d.querySelector('.dgrab').addEventListener('click',()=>Date.now()-(DRW.dragged||0)<400||setDrawer(DRW.at==='peek'?'half':DRW.at==='half'?'full':'half'));
   addEventListener('resize',()=>setDrawer());
   document.fonts?.ready.then(()=>setDrawer());
   $('#app').addEventListener('scroll',e=>{ if(e.target.id==='app') e.target.scrollTop=e.target.scrollLeft=0; });   // nothing may scroll the whole screen (a scrollIntoView, a keyboard)
@@ -5149,6 +5260,7 @@ const fmtMi = k => k==null ? '' : k<0.16 ? T('here') : `${(k*0.621).toFixed(k<16
 function renderHome(){
   renderGlance(); renderDock();
   if(!$('#exMain')) return;
+  if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
   renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail(); $('#exMore').innerHTML=hotRail()+happyRail();
@@ -5253,13 +5365,13 @@ async function renderExCat(fresh){
     return;
   }
   if(k==='outdoors'||k==='sights'){
-    if(k==='outdoors'&&!OD.data){ busy(); try{ OD.data=await (await fetch('/api/outdoors')).json(); }catch(err){} }
+    if(k==='outdoors'&&!OD.data){ busy(); try{ OD.data=await (OD.p ||= fetch('/api/outdoors').then(r=>r.json())); }catch(err){ OD.p=null; } }
     if(k==='sights'&&!SG.data){ busy(); await loadSights(); }
     if(seq!==EXC.seq) return; const c=mapC();
     const items = k==='outdoors'
       ? (OD.data?.areas||[]).filter(a=>a.name&&(EXC.sub==='all'||a.kind===EXC.sub||EXC.sub==='water'&&a.kind==='river')).map(a=>({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name,
           sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:km(c,a.c)}))
-      : (SG.data||[]).filter(([,kind])=>EXC.sub==='all'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
+      : (SG.data||[]).filter(([,kind,name])=>!/, Texas\b|\(.*Texas\)|^Greater /.test(name)).filter(([,kind])=>EXC.sub==='all'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
           sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:km(c,[lat,lng])}));
     el.innerHTML = head + `<p class="meta" style="margin:-2px 0 4px">${T('Closest to the middle of the map')}</p>` +
       (items.sort((a,b)=>a.k-b.k).slice(0,40).map(x=>xrow({...x, d:fmtMi(x.k)})).join('') || `<p class="xempty">${T('Nothing here yet.')}</p>`);
@@ -5276,7 +5388,7 @@ async function renderExCat(fresh){
     const out=(AUTHED&&SV.v2?.out)||[], locs=(FMAP.friends||[]), flares=allPings().filter(p=>p.u!==S.me.h).slice(0,20), live=liveStreams();
     const sec=(t,h)=>h?`<div class="sgrp">${t}</div>${h}`:'';
     const body = sec(T('Out now'), out.map(o=>xrow({attr:`data-outgo="${o.k}|${esc(o.id)}"`, e:av(o.h), title:'@'+o.h, sub:`📍 ${esc(o.name)} · ${agoT(o.at)}`})).join(''))
-      + sec(T('Sharing where they are'), locs.map(f=>xrow({attr:`data-fmgo="${esc(f.h)}"`, e:av(f.h), title:'@'+f.h, sub:esc(f.area||f.place||T('On the map')), d:f.lat?fmtMi(km(ME_POS,[f.lat,f.lng])):null})).join(''))
+      + sec(T('Sharing where they are'), locs.map(f=>xrow({attr:`data-fmgo="${esc(f.h)}"`, e:av(f.h), title:'@'+f.h, sub:esc(`${f.precise?T('Exact spot'):T('Around here')} · ${agoShort(f.at)}`), d:f.lat?fmtMi(km(ME_POS,[f.lat,f.lng])):null})).join(''))
       + sec(T('Flares'), flares.map(p=>xrow({attr:`data-map="${esc(p.id)}"`, e:KINDS[p.k]?.e||'📣', title:p.t, sub:`@${esc(p.u)}${p.v&&venue(p.v)?' · '+esc(venue(p.v).name):''}`})).join(''))
       + sec(T('Live now'), live.map(s=>xrow({attr:`data-watch="${esc(s.id)}"`, e:'📺', title:s.title, sub:`@${esc(s.u)} · 👁 ${s.viewers||0}`})).join(''));
     el.innerHTML = head + (body || `<div class="xempty"><p>${T('No friends out on the map right now.')}</p><div class="btns" style="justify-content:center;margin-top:10px"><button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button><button class="btn sm" data-yfriends>👥 ${T('Find people')}</button></div></div>`);
@@ -5288,7 +5400,7 @@ const SQ = {t:0};
 const isQuestion = q => /\?\s*$/.test(q) || /^(what|where|when|who|how|which|why|is|are|can|should|any|find me|recommend|suggest|plan|i want|i'm|im|we)\b/i.test(q.trim());
 function openSearchView(){
   if(curTab!=='search') tab('search','full'); $('[data-qback]').hidden=false;
-  loadPlacesMap(); loadSights(); if(!OD.data) fetch('/api/outdoors').then(r=>r.json()).then(j=>{ OD.data=j; renderSearch(); }).catch(()=>{});
+  loadPlacesMap(); loadSights()?.then(()=>curTab==='search'&&renderSearch()); if(!OD.data) (OD.p ||= fetch('/api/outdoors').then(r=>r.json())).then(j=>{ OD.data=j; renderSearch(); }).catch(()=>{ OD.p=null; });
   renderSearch();
 }
 function renderSearch(){
@@ -5371,7 +5483,7 @@ document.addEventListener('click',e=>{
     if(k===curTab){ $('#v-'+k)?.scrollTo({top:0,behavior:'smooth'}); return; }
     return tab(k);
   }
-  if(t.id==='glance') return setDrawer('half');
+  if(t.id==='glance') return EV.list.some(e=>e.te>Date.now()&&e.ts<new Date().setHours(28,0,0,0)) ? exploreCat('events','tonight') : setDrawer('half');   // "37 things on tonight" → that list
   if(d.qback!==undefined){ $('#qIn').value=''; return tab('home', NAVST.at(-1)==='home'?undefined:'half'); }
   if(d.qmic!==undefined) return openScoutVoice();
   if(d.excat) return exploreCat(d.excat, d.exsubgo);
@@ -5385,8 +5497,37 @@ document.addEventListener('click',e=>{
   if(d.yjoin!==undefined){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
   if(d.fmgo){ const f=(FMAP.friends||[]).find(x=>x.h===d.fmgo); if(f?.lat){ tab('map'); setTimeout(()=>map.setView([f.lat,f.lng],16),80); } }
 });
-// Panning the map is a sign you want the map: the drawer gets out of the way.
-function mapWantsRoom(){ if(curTab==='home'&&DRW.at==='half') setDrawer('peek'); }
+// Panning the map is a sign you want the map: the drawer gets out of the way (not while a pin's card is open).
+function mapWantsRoom(){ if(curTab==='home'&&DRW.at==='half'&&!POP.p) setDrawer('peek'); }
+
+/* A tapped pin's card opens in the drawer, like Google Maps: in thumb's reach, as big as it needs, never under the map
+   buttons. Leaflet still owns the popup (its content node is moved into #exPop, so content that arrives later, like
+   Google's hours or photos, lands here too); the bubble on the map is hidden. Closing it (✕, back, another pin, the
+   map's own close) puts Explore back as it was. */
+const POP = {p:null, at:null};
+function popToDrawer(e){
+  const p=e.popup, node=p._contentNode; if(!node||!map) return;
+  const first=!POP.p; POP.p=p; p._container?.classList.add('indrawer');
+  const box=$('#exPop'); box.replaceChildren(); box.insertAdjacentHTML('beforeend',`<div class="popbar"><span class="grow"></span><button class="xbtn" data-popclose aria-label="${T('Close')}">${svgI('x')}</button></div>`);
+  box.appendChild(node); box.hidden=false; $('#exMain').hidden=$('#exCat').hidden=true; $('#app').dataset.pop='1';
+  if(curTab!=='home') tab('home','half');
+  if(first) POP.at=DRW.at;
+  $('#v-home').scrollTop=0; setDrawer('half');
+  POP.ring?.remove(); const at=p.getLatLng?.();   // which pin this card is about
+  if(at) POP.ring=L.marker(at,{interactive:false,zIndexOffset:-10,icon:L.divIcon({className:'',html:'<div class="popring"></div>',iconSize:[0,0]})}).addTo(map);
+  setTimeout(()=>{ const ll=p.getLatLng?.(); if(!ll||!map) return; setDrawer('half');
+    const v=parseFloat(getComputedStyle($('#app')).getPropertyValue('--dvis'))||0;
+    map.panInside(ll,{paddingTopLeft:[WIDE()?470:24,90],paddingBottomRight:[70,v+36]}); },60);
+}
+function popClosed(e){
+  if(e.popup!==POP.p) return; e.popup._container?.classList.remove('indrawer'); POP.p=null;
+  setTimeout(()=>{ if(POP.p) return;   // another pin opened right away (a redraw re-opens the same event)
+    POP.ring?.remove(); POP.ring=null;
+    $('#exPop').hidden=true; $('#exPop').replaceChildren(); delete $('#app').dataset.pop; renderHome();
+    if(curTab==='home') setDrawer(EXC.k?'half':POP.at==='peek'||!POP.at?'peek':POP.at==='full'?'half':POP.at); POP.at=null; },60);   // back to the list it came from
+}
+document.addEventListener('click',e=>{ if(e.target.closest('[data-popclose]')) map?.closePopup(); });
+new ResizeObserver(()=>{ if(POP.p&&DRW.at==='half') setDrawer('half'); }).observe($('#exPop'));
 function toast(html, cls='', actions=[], ms=5000){
   const el=document.createElement('div'); el.className='toast '+cls;
   el.innerHTML=html+(actions.length?`<div class="btns" style="margin-top:10px">${actions.map((a,i)=>`<button class="btn sm ${a.cls||''}" data-i="${i}">${a.l}</button>`).join('')}</div>`:'');
@@ -5599,6 +5740,7 @@ document.addEventListener('click',e=>{
   else if(d.cclose!==undefined) $('#createBg').hidden=true;
   else if(d.create){ $('#createBg').hidden=true; const c=d.create;
     if(c==='story') openStoryComposer();
+    if(c==='post'){ if(needAccount('post')) return; tab('feed'); setFeedMode('posts'); setTimeout(()=>$('#wText')?.focus(),350); }
     if(c==='flare') openCompose();
     if(c==='event'){ openCompose(); $('#cWhen [data-v="later"]').click();
       $('#cText').placeholder='e.g. Trivia at Vigilante Thursday 8pm, need a team of 4'; }
@@ -6700,7 +6842,7 @@ const SC_FAQ = [
   [/direction|how do i get|take me (to|there)|navigate|route/i, "Tap any event or spot on the map and hit Directions; it opens your Maps app. Make a free account and I can work out when to leave, too.", 'happy', [['point','search','Find it here']]],
   [/joke|funny|laugh/i, "Why did the map join Side Quest? It was tired of everyone saying it had no social life… just a lot of legends. 😄", 'laughing', []],
   [/flare|who'?s down/i, "A flare is a quick “who's down?” post for right now. Tap the plus at the bottom, then Flare, and send one up!", 'excited', [['point','dock_create','Flare is in here']]],
-  [/story|stories|photo/i, "Stories are photos or videos that last 24 hours, and you can tag a place, an event, groups or people. Tap the plus at the bottom, then Photo or video.", 'happy', [['point','dock_create','Stories start here']]],
+  [/story|stories|photo/i, "Stories are photos or videos that last 24 hours, and you can tag a place, an event, groups or people. Tap the plus at the bottom, then Story.", 'happy', [['point','dock_create','Stories start here']]],
   [/live|stream|gopro|insta360|camera/i, "You can go live from your phone camera or a GoPro, Insta360 or DJI (the plus, then Go live). The LIVE pill on the map shows who's streaming now.", 'excited', [['point','map_live','Live streams']]],
   [/message|dm|chat|text (someone|people)/i, "Messages are for friends, in Chats at the bottom. You become friends when you both wave at each other in Meet.", 'happy', [['point','dock_chats','Your chats']]],
   [/swipe|meet|friend|people|wave/i, "Chats → Meet is one swipe deck: swipe right to wave at people, say you're going to events, join groups or say you're down for flares.", 'happy', [['point','dock_chats','Chats and Meet']]],
@@ -6907,7 +7049,7 @@ function scoutNudgeDismiss(){ scoutNudgeHide(); const d=new Date().toDateString(
 function scoutNudge(){
   const now=Date.now(), view=curTab, quiet=S.nudgeDay===new Date().toDateString()&&(S.nudgeX||0)>=2;
   const sheetOpen=[...document.querySelectorAll('.sheet-bg')].some(x=>!x.hidden)||!$('#storyView').hidden||!$('#onbBg').hidden;
-  if(quiet||SCT.driving||SCT.busy||SCT.listening||sheetOpen||SCT.tour!=null||!$('#scoutTour').hidden||view!=='home'||DRW.at==='full'||SCT.nudges>=3) return;
+  if(quiet||SCT.driving||SCT.busy||SCT.listening||sheetOpen||SCT.tour!=null||!$('#scoutTour').hidden||view!=='home'||DRW.at!=='peek'||EXC.k||SCT.nudges>=3) return;   // only over the open map
   if(now-SCT.idleAt<(SCT.nudges?25000:9000)||now-SCT.nudgeAt<180000) return;
   const b=$('#scoutBubble'), msg=T(SC_NUDGES[SCT.nudges%SC_NUDGES.length]);
   b.className='nudge'; b.innerHTML=`<b>${esc(scS().name)}:</b> ${esc(msg)} <button data-scnudgex aria-label="Not now">✕</button>`; b.hidden=false;

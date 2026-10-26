@@ -158,13 +158,13 @@ with sync_playwright() as pw:
 
     # ---- check in at a historical marker → XP → quest progress
     a.evaluate("tab('map'); startLocating(true)"); a.wait_for_function("ME_FIX>0", timeout=10000)
-    a.evaluate("sightPopup('m9001')"); a.wait_for_selector(".leaflet-popup [data-checkin2]", timeout=10000)
-    a.click(".leaflet-popup [data-checkin2]"); a.wait_for_timeout(900)
+    a.evaluate("sightPopup('m9001')"); a.wait_for_selector("#exPop [data-checkin2]", timeout=10000)
+    a.click("#exPop [data-checkin2]"); a.wait_for_timeout(900)
     check("check in at a marker you're standing at: +XP", "XP" in a.inner_text("#toasts"), a.inner_text("#toasts")[:80])
-    a.evaluate("map.closePopup(); sightPopup('m9002')"); a.wait_for_selector(".leaflet-popup [data-checkin2]")
+    a.evaluate("map.closePopup(); sightPopup('m9002')"); a.wait_for_selector("#exPop [data-checkin2]")
     bctx2 = None
     actx.set_geolocation({"latitude": 30.20, "longitude": -97.80, "accuracy": 15}); a.wait_for_timeout(1500)
-    a.click(".leaflet-popup [data-checkin2]"); a.wait_for_timeout(700)
+    a.click("#exPop [data-checkin2]"); a.wait_for_timeout(700)
     check("too far away: no check-in, says how far", "away" in a.inner_text("#toasts"))
     a.evaluate("map.closePopup(); openQuests()"); a.wait_for_selector("#questSheet .qcard"); a.wait_for_selector("#lbRows .lbrow")   # the board loads on its own
     qs = a.inner_text("#questSheet")

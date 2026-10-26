@@ -49,7 +49,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   the app only gets counts + your own like; demo stories' likes stay on the phone), right rail: like, reply (DM,
   friends only), share (native share / copy), 📍 map, ⋯ report. Keep `#storyView`, `.media` and the tag buttons:
   e2e relies on them.
-- **Plans** (`openPlans()`; Home "📅 My plans", name menu): saved itineraries (`/api/plans`, `d['plans'][h]`, only
+- **Plans** (`openPlans()`; You → My plans, Explore's "📅 My plans"): saved itineraries (`/api/plans`, `d['plans'][h]`, only
   yours, max 20) as timelines with walking times, per-stop Directions, Map (dashed route), Calendar (.ics with one
   event per stop), Share; plus the events you're going to. "Plan my night / Saturday / outdoors / dinner and drinks"
   asks Scout: questions matching `PLAN_RE` use the smart model, get a spread of nearby food / bars / clubs, and may
@@ -57,7 +57,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   Scout was sent. The plan shows as a card in Scout's chat with 💾 Save. The ‹ back button Back closes the top sheet first, then returns to the previous screen; it's wired to
   browser history (Android back works) and a swipe in from the left edge (left to Safari itself in
   non-installed iPhone Safari, which already does that).
-- **Search**: "What are you looking to do?", tiles by section (Sports, Entertainment, Going out,
+- **Search sheet** (V2; in V3 only `openSearchSheet()`, the drawer's search box replaced it): "What are you looking to do?", tiles by section (Sports, Entertainment, Going out,
   Outdoors & more) with live counts, a Tonight/Weekend/Week switch, free-text search, plus
   **Food & drink** (late-night eats, early morning, bars, clubs, coffee, tacos, BBQ, pizza, burgers,
   Asian, sweets, food trucks) with an **Open now** switch, and **Hot spots** tiles with live "open now" counts.
@@ -69,12 +69,12 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
-- **Map layers**: five category chips (`MAP_CATS`: 🎫 Events (label = time window), 🌙 Night, 🌲 Outdoors, 👥 Friends,
-  🍔 Food; tap = whole category on/off, dashed = partly on). 🗂 (right side) opens the Layers sheet: quick picks
+- **Map layers**: `MAP_CATS` (events, night, zones, outdoors, friends, food, sights) are the Layers sheet's groups; in V3
+  the chips under the search box are `EX_CHIPS` (one category at a time, see V3 layout). The layers button (right side) opens the Layers sheet: quick picks
   (`MAP_PRESETS`: Night out, Outdoors day, Friends, Everything, Clear), each category with its own switches
   (`S.mapL`: events · clubs, bars, zones · parks, water, trails, spots · posts, live, stories · food, openonly), event
-  time window (`S.mapWhen`) and types (folded), and the color key. 📍 recenters on you, 🔍 searches places, parks,
-  lakes, trails and events (`mapSearch()`). `mapHint()` shows a short pill after a change when a layer has nothing in
+  time window (`S.mapWhen`) and types (folded), and the color key. The arrow recenters on you (V2's 🔍 map search,
+  `openMapSearch()`, is replaced by the drawer's search box). `mapHint()` shows a short pill after a change when a layer has nothing in
   view ("Zoom in to see bars", "No events in view tonight · This week →"). Live streams sit in a "LIVE 3 streaming"
   pill that opens into the strip (`S.liveOpen`). Map attributes use `data-mlcat` / `data-ml` (Meet's filter already
   uses `data-mcat`). `mapFilter` is now only 'feed' (after Map it, with a ✕ chip) or 'all'. **Nightlife**:
@@ -145,7 +145,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
 - **Safety**: report/block on everything, Claude moderation of posts/captions/group names/public
   profile text, phone/email filter, admin page (`/admin`), 18+ and Terms acceptance at sign-up,
   rate limits, invite codes in beta.
-- **Scout** (bottom-left button): an animated guide that answers how-to and "what's the move" questions,
+- **Scout** (round button riding on the drawer's top edge, left; also the 🎤 in the search box): an animated guide that answers how-to and "what's the move" questions,
   points at buttons (ring + label) and pulses spots on the map, talks via the browser's own speech
   (🎤 in, 🔊 out), and has a voice-only 🚗 driving mode (auto-on at ~16 mph). Each user can design its
   look and name (🎨 builder, a description Claude maps to parts, or their photo, kept on-device only).
@@ -177,7 +177,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   browser's robot voice while Google's voice exists; 10 Chirp 3 HD voices (`SCOUT_VOICES`) in the 🎨 builder. When you're idle on
   Home or the map it waves 👋 with a bubble ("Need help? Talk to me!"); at most 3 a visit, 3 min apart, never while
   driving or with a sheet open; two ✕ in a day silences it till tomorrow (`scoutNudge()`).
-- **Español**: name menu (or the welcome sheet) → 🌐 Español. `T('English', {n})` + the `ES` table translate the
+- **Español**: You → 🌐 Español (or the welcome sheet). `T('English', {n})` + the `ES` table translate the
   visible app (header, name menu, Home, map chips / Layers / hints / search, stories viewer, plans, Scout panel);
   static labels use `data-t` / `data-tp` and `applyLang()`. Scout listens (`es-US`), answers in Spanish (server
   prompt) and speaks with the es-US Chirp 3 HD voices. Still English: Search, Meet, Me/profile questions,
@@ -365,7 +365,7 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   JPEG, `SC.imgOrig` + `SC.layers` kept for re-editing). 📊 poll sticker (`st.poll`, 2 choices, `/api/story/vote`,
   counts + your vote in state; who voted only to the author). 👁 viewers: phones batch `/api/story/seen`; author's
   👁 N on the rail → `/api/story/viewers` (likes, votes). 💚 Close friends: `vis: 'close'`, list `/api/close`
-  (`SV.me.close`), green ring. ▶ For you in the story rail: everyone's stories ranked (`forYouStories`). Photos show
+  (`SV.me.close`), green ring. ▶ Watch (V2: "For you") in the story rail: everyone's stories ranked (`forYouStories`). Photos show
   whole over a blurred copy (`.media.photo`). 💬 Reply opens the chat with the story attached (`DM.stCard`, shown in
   `#dmReBar`); the first message carries it as a `story` card with the photo. Tests in test_v2.rb (2).
 - **🗳️ Plans with friends** (`mount_plans` in chats.rb; client "plans with friends"): 📅 Make plans (Chats), 🗳️ Plan it

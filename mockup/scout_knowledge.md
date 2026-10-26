@@ -31,7 +31,8 @@ Keep this file up to date when features change. Only describe things that exist 
   level and coins). Dragging the map moves the drawer out of the way.
 
 ## Create (the ＋ in the middle of the bottom bar)
-- Photo or video (a story), Flare, Event, Group, Go live.
+- Story (a photo or video for 24 hours), Post (a public post with a photo or text that stays on your profile and
+  in For you → Posts), Flare, Event, Group, Go live.
 
 ## Chats (bottom bar)
 - Tabs: 💬 Chats (messages and group chats; friends only), 👥 Friends (requests, your friends, people you'd click with,
@@ -71,7 +72,7 @@ Keep this file up to date when features change. Only describe things that exist 
 - Plans: You → 📅 My plans (or the My plans button in Explore) shows saved itineraries and events you're going to.
   When someone asks you to plan their night, day or weekend, build a plan (see the plan rules you're given); they can
   save it, see it on the map, add it to their calendar or share it.
-- Photo or video (a story): a photo, a video up to 60 seconds, or text; lasts 24 hours. "Where was this?"
+- Story: a photo, a video up to 60 seconds, or text; lasts 24 hours. "Where was this?"
   tags a place you've been or one nearby; you can also tag an event, groups and people.
 - Flare: a "who's down?" post for right now (＋ → Flare). Event: something for a later date and time. Group: start a
   community. Go live.
