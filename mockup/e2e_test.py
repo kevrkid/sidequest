@@ -64,22 +64,18 @@ def state():
 
 
 def nav(page, where):
-    """Move around the way a person would: Home quadrants, the header, and GO!."""
-    if where == "me":                        # your name (top right) opens a menu; guests get the sign-up sheet
-        page.click("#meChip")
-        if page.locator("#meMenu").is_visible():
-            page.click("[data-menu='profile']")
+    """Move around the way a person would (V3): the bar at the bottom, and the name at the top for the map."""
+    if where == "me":                        # You, in the bottom bar; guests get the sign-up sheet
+        page.click("[data-dock='me']")
         return
-    if not page.locator("#v-home").is_visible():
-        page.click("#logo")                   # the logo goes Home; the ‹ button goes back
-    if where == "feed":                       # Search menu → Everything
-        page.click("[data-home='search']"); page.click("[data-sfocus='']")
-    elif where == "friends":                  # Meet → Friends
-        page.click("[data-home='meet']"); page.click("[data-mt='friends']")
-    elif where == "groups":                   # Meet → Groups
-        page.click("[data-home='meet']"); page.click("[data-mt='groups']")
-    elif where == "map":
-        page.click("[data-home='go']")
+    if where == "feed":
+        page.click("[data-dock='feed']")
+    elif where == "friends":                  # Chats → Friends
+        page.click("[data-dock='meet']"); page.click("[data-mt='friends']")
+    elif where == "groups":                   # Chats → Groups
+        page.click("[data-dock='meet']"); page.click("[data-mt='groups']")
+    else:                                     # home / map: the name at the top goes back to the map
+        page.click("#logo")
 
 
 def new_user(browser, label):
@@ -107,7 +103,7 @@ def onboard(page, handle, interests):
     page.wait_for_function("EV.loaded", timeout=20000)
     rid = page.evaluate("EV.list.filter(e=>e.te>Date.now()).at(-1).id")   # something far off, not tonight's top pick
     page.evaluate("id=>rsvp(id,'going')", rid)          # guests can RSVP; it's kept on the device
-    page.click("[data-home='create']"); page.click("[data-create='flare']")
+    page.click("[data-dock='create']"); page.click("[data-create='flare']")
     page.fill("#cText", "test flare as a guest")
     page.click("#compose button.primary")
     gate = page.locator("#onb").inner_text()
@@ -146,24 +142,24 @@ with sync_playwright() as pw:
     onboard(p1, TEX, ["comedy", "live shows", "pickup games", "soccer"])
     p1.screenshot(path=f"{OUT}/01-signup-done.png")
 
-    # Home: four quadrants + GO!
-    p1.wait_for_selector("#v-home:not([hidden]) .go")
-    p1.wait_for_function("document.querySelector('#hsSearch').textContent.includes('events')", timeout=20000)
+    # V3: the map is the app; a drawer (search box + chips) and the bottom bar sit over it
+    p1.wait_for_selector("#v-home:not([hidden])")
+    p1.wait_for_function("EV.loaded", timeout=20000)
     p1.screenshot(path=f"{OUT}/00-home.png")
-    labels = p1.eval_on_selector_all(".q4 .nm", "ns=>ns.map(n=>n.firstChild.textContent)")
-    check("home has Meet/Search/Create & share/Live + GO!", labels == ["Meet", "Search", "Create & share", "Live"] and p1.locator(".go b").inner_text() == "GO!", str(labels))
-    p1.wait_for_function("document.querySelectorAll('#goMap .leaflet-tile-loaded').length>0", timeout=15000)
-    check("GO! shows a live map with your blue dot", p1.locator(".go .loc").is_visible())
+    chips = p1.eval_on_selector_all("#mapChips [data-excat]", "ns=>ns.map(n=>n.dataset.excat)")
+    dock = p1.eval_on_selector_all("#dock [data-dock]", "ns=>ns.map(n=>n.dataset.dock)")
+    check("map first: the map, a search box, the chips and the five-button bar", p1.locator("#map .leaflet-tile-loaded").count() > 0 and p1.locator("#qIn").is_visible()
+          and chips == ["food", "events", "night", "outdoors", "sights", "friends", "zones"] and dock == ["home", "feed", "create", "meet", "me"], f"{chips} {dock}")
     pos = p1.evaluate("ME_POS")
     check("uses the device's real location", abs(pos[0] - 30.2671) < 0.001 and abs(pos[1] + 97.7395) < 0.001, str(pos))
-    p1.click("[data-home='search']")
-    menu = p1.locator("#searchSheet").inner_text()
-    check("Search asks what you want to do, by section", "What are you looking to do" in menu and all(x in menu for x in ["Sports", "Entertainment", "Going out", "Outdoors"]))
-    p1.screenshot(path=f"{OUT}/00-search-menu.png")
-    p1.click("[data-sfocus='comedy']")
-    check("a Search tile opens the feed on that activity", p1.locator("#v-feed").is_visible() and "Comedy" in p1.locator("#feedCats .chip.on").inner_text())
-    nav(p1, "home")
-    p1.click("[data-home='meet']")
+    p1.click("#qIn"); p1.fill("#qIn", "comedy"); p1.wait_for_timeout(400)
+    sr = p1.locator("#searchOut").inner_text()
+    check("one search box: events, places, people and groups as you type", "EVENTS" in sr.upper() and "Find" in sr and "Ask Scout" in sr, sr[:200].replace("\n", " | "))
+    p1.screenshot(path=f"{OUT}/00-search.png")
+    p1.click("#searchOut [data-xgo^='feed|']")
+    check("…and it can narrow the feed to it", p1.locator("#v-feed").is_visible() and p1.evaluate("feedQ") == "comedy" and p1.input_value("#feedQ") == "comedy")
+    p1.fill("#feedQ", ""); p1.dispatch_event("#feedQ", "input")
+    p1.click("[data-dock='meet']"); p1.click("[data-mt='swipe']")
     kinds = p1.evaluate("[...new Set(deckItems().slice(0,12).map(x=>x.k))]")
     check("Meet deck mixes people, events, groups and flares", {"person", "event", "group", "post"} <= set(kinds), ",".join(kinds))
     p1.screenshot(path=f"{OUT}/00-meet.png")
@@ -188,37 +184,39 @@ with sync_playwright() as pw:
     find = gm.split("Find a group", 1)[-1]           # "Your groups" above may list anything already joined
     check("Find a group filters by section", ("ATX Pickup Soccer" in find or "ATX Pickup Soccer" in gm) and "Comedy Night Owls" not in find)
     p1.click("[data-mt='swipe']")
-    nav(p1, "home")
-    nav(p1, "home")
-    p1.click("[data-home='go']")
-    p1.wait_for_timeout(400)
-    check("GO! pulls up the map", p1.locator("#v-map").is_visible() and p1.locator(".leaflet-tile-loaded").count() > 0)
-    nav(p1, "home")
-    p1.click("[data-home='create']")
+    p1.click("[data-dock='home']"); p1.wait_for_timeout(400)
+    check("Explore brings the map back, drawer half way", p1.evaluate("curTab") == "home" and p1.evaluate("DRW.at") == "half" and p1.locator(".leaflet-tile-loaded").count() > 0)
+    p1.click("[data-dock='create']")
     p1.screenshot(path=f"{OUT}/00-create.png")
     p1.click("[data-create='event']")
     check("Create → Event offers a date/time", p1.locator("#cAt").is_visible())
     p1.click("#closeSheet")
 
     # ---- food & drink (test places file: 24/7 tacos on Rainey, a 24h bar on 6th, a morning cafe, ...)
-    nav(p1, "home"); p1.click("[data-home='search']")
-    sm = p1.locator("#searchSheet").inner_text()
-    check("Search has a Food & drink section with an Open now switch", "Food & drink" in sm and "Late-night eats" in sm
-          and p1.locator("#searchSheet [data-popen]").count() == 1 and "Hot spots" in sm and "Rainey Street" in sm)
+    nav(p1, "home"); p1.click("#mapChips [data-excat='zones']"); p1.wait_for_selector("#exCat .xrow", timeout=10000)
+    check("🔥 Hot spots chip lists the hot spots", "Rainey Street" in p1.locator("#exCat").inner_text())
+    p1.click("#mapChips [data-excat='food']"); p1.wait_for_selector("#exCat [data-exsub='tacos']", timeout=10000)
+    check("🍔 Food chip: smaller chips and an Open now switch", all(p1.locator(f"#exCat [data-exsub='{k}']").count() == 1 for k in ["happy", "late", "coffee", "tacos", "bbq"])
+          and p1.locator("#exCat [data-exopen]").count() == 1 and p1.evaluate("S.mapL.food && !S.mapL.events"))
     p1.screenshot(path=f"{OUT}/70-food-search.png")
-    p1.click("[data-pcat='tacos']"); p1.wait_for_selector("#placesSheet .prow", timeout=10000)
-    pl = p1.locator("#placesSheet").inner_text()
+    p1.click("#exCat [data-exsub='tacos']"); p1.wait_for_selector("#exCat .xrow", timeout=10000)
+    pl = p1.locator("#exCat").inner_text()
     check("tacos open now: the 24/7 taco truck, with hours and distance", "Taco Test Trailer" in pl and "Open 24 hours" in pl and " mi" in pl, pl[:120].replace("\n", " | "))
-    check("a Menu button on every place and the OpenStreetMap hours note", p1.locator("#placesSheet .prow").count() == p1.locator("#placesSheet [data-pmenu]").count() > 0 and "may be out of date" in pl)
-    p1.click("#placesSheet [data-pclose]"); p1.click("[data-pcat='bbq']"); p1.wait_for_timeout(800)
-    open_bbq = p1.locator("#placesSheet").inner_text()
-    p1.click("#placesSheet [data-popen]"); p1.wait_for_selector("#placesSheet .prow", timeout=10000)
-    check("Open now switch: off shows closed spots with when they open", "Brisket Barn" in p1.locator("#placesSheet").inner_text()
+    p1.click("#exCat [data-exsub='bbq']"); p1.wait_for_timeout(800)
+    open_bbq = p1.locator("#exCat").inner_text()
+    p1.click("#exCat [data-exopen]"); p1.wait_for_selector("#exCat .xrow", timeout=10000); p1.wait_for_timeout(500)
+    check("Open now switch: off shows closed spots with when they open", "Brisket Barn" in p1.locator("#exCat").inner_text()
           and ("Brisket Barn" not in open_bbq or "Open till" in open_bbq))
-    p1.click("#placesSheet [data-popen]"); p1.wait_for_timeout(500)          # back on for later
-    p1.click("#placesSheet [data-pclose]"); p1.click("[data-sclose]")
-    # map: dots + hot spot zones
+    p1.click("#exCat [data-exopen]"); p1.wait_for_timeout(500)          # back on for later
+    p1.click("#exCat [data-exsub='tacos']"); p1.wait_for_selector("#exCat .xrow", timeout=10000)
+    p1.click("#exCat .xrow >> nth=0"); p1.wait_for_selector(".leaflet-popup-content [data-pmenu]", timeout=10000)
+    check("tapping a row flies to it on the map, with its Menu", p1.evaluate("DRW.at") == "peek" and "Taco Test Trailer" in p1.locator(".leaflet-popup-content").last.inner_text())
+    p1.evaluate("map.closePopup()"); p1.click("#exCat [data-exclose]")
+    check("✕ puts the map back the way it was", p1.evaluate("!EXC.k && S.mapL.events"))
+    check("✕ leaves the map calm: no food dots or hot spot zones until you ask", p1.evaluate("!S.mapL.food && !S.mapL.zones"))
+    # map: dots + hot spot zones (the Layers switches)
     nav(p1, "map"); p1.wait_for_function("PL.all && PL.hot", timeout=15000)
+    p1.evaluate("S.mapL.food=S.mapL.zones=true; refreshMapLayers()")
     p1.evaluate("map.setView([30.2650,-97.7390],15)"); p1.wait_for_timeout(800)
     dots = p1.evaluate("({open: Object.values(PL.cores).filter(l=>l.options.fillColor==='#3ddc97').length, all: Object.keys(PL.cores).length})")
     check("green open-now dots on the map", dots["open"] >= 2 and dots["all"] >= 4, json.dumps(dots))
@@ -239,15 +237,17 @@ with sync_playwright() as pw:
     p1.evaluate("areaPopup(OD.data.areas.find(a=>a.kind==='water'), L.latLng(30.2625,-97.744))"); p1.wait_for_timeout(300)
     pop = p1.locator(".leaflet-popup-content").last.inner_text()
     check("tapping water lists what you can do there", all(x in pop for x in ["Test Lake", "Fishing", "Paddleboard", "Kayak", "Test Paddle Rentals"]), pop[:80].replace("\n", " | "))
-    p1.evaluate("map.closePopup()"); p1.click("[data-mlcat='outdoors']"); p1.wait_for_timeout(300)
-    check("the Outdoors chip hides all its sub-layers", p1.evaluate("OD.on.size===0&&OD.layer.getLayers().length===0"))
-    p1.click("[data-mlcat='outdoors']"); p1.evaluate("void map.setView([30.2650,-97.7390],15)"); p1.wait_for_timeout(500)
+    p1.evaluate("map.closePopup()"); p1.click("#mapChips [data-excat='outdoors']"); p1.wait_for_timeout(500)
+    check("the Outdoors chip: only outdoors on the map, and a list of them", p1.evaluate("S.mapL.parks&&S.mapL.water&&!S.mapL.events&&!S.mapL.zones") and "Test Lake" in p1.locator("#exCat").inner_text())
+    p1.click("#mapChips [data-excat='outdoors']"); p1.wait_for_timeout(300)
+    check("tapping it again puts the other layers back", p1.evaluate("!EXC.k&&S.mapL.events&&S.mapL.friendlocs&&S.mapL.parks"))
+    p1.evaluate("void map.setView([30.2650,-97.7390],15)"); p1.wait_for_timeout(500)
     p1.click("[data-mlayers]"); p1.click("#mfWhen [data-v='week']"); p1.wait_for_timeout(300)
-    check("Layers sheet: events this week, the Events chip says so", "This week" in p1.inner_text("[data-mlcat='events']"))
+    check("Layers sheet: events this week", p1.evaluate("S.mapWhen") == "week")
     p1.click("#mfWhen [data-v='tonight']")
     p1.click("#placesSheet [data-mpreset='outdoors']"); p1.wait_for_timeout(500)
     check("quick pick 'Outdoors day' sets several layers at once",
-          p1.evaluate("S.mapL.parks && S.mapL.trails && !S.mapL.clubs && !S.mapL.events") and p1.get_attribute("[data-mlcat='outdoors']", "aria-pressed") == "true")
+          p1.evaluate("S.mapL.parks && S.mapL.trails && !S.mapL.clubs && !S.mapL.events"))
     check("Sights are off until you turn them on (too busy by default)", p1.evaluate("!S.mapL.landmarks && !S.mapL.markers && !S.mapL.art") and p1.locator(".sgpin").count() == 0)
     p1.click("#placesSheet [data-mpreset='all']"); p1.wait_for_timeout(300); p1.evaluate("S.mapL.stories=false; refreshMapLayers()")
     p1.click("#placesSheet [data-pclose]")
@@ -258,8 +258,8 @@ with sync_playwright() as pw:
     # back: closes the sheet first, then goes to the previous screen
     p1.go_back(); p1.wait_for_timeout(300)            # the phone's back (Android button / swipe) while a sheet is open
     check("back closes the open sheet first", p1.locator("#placesBg").is_hidden() and p1.locator("#v-map").is_visible())
-    p1.click("#homeBtn"); p1.wait_for_timeout(300)
-    check("back again returns to the previous screen", p1.evaluate("curTab") != "map", p1.evaluate("curTab"))
+    p1.evaluate("setDrawer('half')"); p1.evaluate("goBack()"); p1.wait_for_timeout(300)
+    check("back again lowers the drawer onto the map", p1.evaluate("DRW.at") == "peek", p1.evaluate("DRW.at"))
     nav(p1, "feed"); p1.wait_for_timeout(200)
     p1.evaluate("""()=>{ const app=document.querySelector('#app'), r=app.getBoundingClientRect();
       const mk=(type,x)=>{ const t=new Touch({identifier:1,target:app,clientX:r.left+x,clientY:400}); app.dispatchEvent(new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true})); };
@@ -285,9 +285,9 @@ with sync_playwright() as pw:
     pop = p1.locator(".leaflet-popup-content").last.inner_text()
     check("tapping a marker shows its plaque text, year and credit", "moonlight towers" in pop and "1970" in pop and "Texas Historical Commission" in pop, pop[:90].replace("\n", " | "))
     p1.screenshot(path=f"{OUT}/72-map-sight.png")
-    p1.evaluate("map.closePopup()"); p1.click("[data-mlcat='sights']"); p1.wait_for_timeout(300)
-    check("the Sights chip hides them", p1.locator(".sgpin").count() == 0)
-    p1.click("[data-mlcat='sights']"); p1.wait_for_timeout(200)
+    p1.evaluate("map.closePopup()"); p1.click("#mapChips [data-excat='sights']"); p1.wait_for_timeout(500)
+    check("the Sights chip lists sights nearest the middle of the map", "Ferry Landing" in p1.locator("#exCat").inner_text() or "moonlight" in p1.locator("#exCat").inner_text().lower(), p1.locator("#exCat").inner_text()[:150])
+    p1.click("#exCat [data-exclose]"); p1.wait_for_timeout(200)
     p1.click("[data-mlayers]"); p1.wait_for_timeout(300)
     p1.evaluate("""()=>{ const s=document.querySelector('#placesSheet'), r=s.getBoundingClientRect();
       const mk=(type,y)=>{ const t=new Touch({identifier:2,target:s,clientX:r.left+150,clientY:r.top+y}); s.dispatchEvent(new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true,cancelable:true})); };
@@ -460,7 +460,7 @@ with sync_playwright() as pw:
 
     # Story: photo + event + group + person tags
     nav(p1, "home")
-    p1.click("[data-home='create']")
+    p1.click("[data-dock='create']")
     p1.click("[data-create='story']")
     p1.set_input_files("#storyFile", f"{OUT}/00-home.png")
     p1.wait_for_selector(".shot img")
@@ -508,7 +508,7 @@ with sync_playwright() as pw:
     check("2nd user said 'I'm down' to the post", AMY in next(x for x in state()["posts"] if x["id"] == posts[0]["id"])["downs"])
 
     nav(p2, "map")
-    check("map layers start with stories off (less clutter)", p2.locator("#map .sbub").count() == 0 and p2.get_attribute("[data-mlcat='friends']", "aria-pressed") == "true")
+    check("map layers start with stories off (less clutter)", p2.locator("#map .sbub").count() == 0 and p2.evaluate("S.mapL.friendlocs && S.mapL.posts"))
     p2.click("[data-mlayers]")
     p2.click("#placesSheet [data-ml='stories']")      # one switch under Friends turns on just stories
     p2.wait_for_timeout(400)
@@ -531,7 +531,7 @@ with sync_playwright() as pw:
     check("tapping the event tag opens it on the map", p2.locator("#v-map").is_visible())
     # tag user 1 back in a text story
     nav(p2, "home")
-    p2.click("[data-home='create']")
+    p2.click("[data-dock='create']")
     p2.click("[data-create='story']")
     p2.fill("#scCap", "Who's coming to pickup Saturday?")
     p2.fill("#scQ", TEX[:8])
@@ -543,12 +543,12 @@ with sync_playwright() as pw:
     check("tagged person gets notified", "tagged you" in p1.locator("#toasts").inner_text())
 
     # Meet: wave both ways → friends → message
-    nav(p2, "home"); p2.click("[data-home='meet']"); p2.click("[data-mt='swipe']"); p2.click("[data-mtype='person']")
+    nav(p2, "home"); p2.click("[data-dock='meet']"); p2.click("[data-mt='swipe']"); p2.click("[data-mtype='person']")
     p2.evaluate("h=>wave(h)", TEX)
     p2.wait_for_timeout(500)
     st = state()
     p1.evaluate("loadState().then(()=>{ meetTab='swipe'; renderMeet(); })"); p1.wait_for_timeout(400)
-    nav(p1, "home"); p1.click("[data-home='meet']"); p1.click("[data-mtype='person']")
+    nav(p1, "home"); p1.click("[data-dock='meet']"); p1.click("[data-mt='swipe']"); p1.click("[data-mtype='person']")
     top = p1.locator(".mcard.top").get_attribute("data-id")
     check("someone who waved at you comes first", top == "u:" + AMY, top or "")
     box = wait_until(lambda: p1.locator(".mcard.top").bounding_box(), 5)   # the deck can re-render mid-step
@@ -561,7 +561,7 @@ with sync_playwright() as pw:
     p1.fill("#dmIn", "Hey! Pickup Saturday?"); p1.press("#dmIn", "Enter")
     p1.wait_for_timeout(500)
     p2.evaluate("loadState().then(loadThreads).then(()=>{ meetTab='msgs'; DM.open=null; renderMeet(); })"); p2.wait_for_timeout(500)
-    nav(p2, "home"); p2.click("[data-home='meet']"); p2.click("[data-mt='msgs']")
+    nav(p2, "home"); p2.click("[data-dock='meet']"); p2.click("[data-mt='msgs']")
     check("message arrives with an unread count", "Pickup Saturday" in p2.locator("#meetBody").inner_text() and p2.locator(".dmn").inner_text() == "1")
     p2.click(f"[data-thread='{TEX}']")
     p2.fill("#dmIn", "yes!! count me in"); p2.press("#dmIn", "Enter"); p2.wait_for_timeout(500)

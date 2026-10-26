@@ -758,7 +758,7 @@
   /* ================= V3: the map is the app. Everything else lives in one drawer over it, with a dock below. =================
      --ftop: where the drawer's top sits when it's all the way up; --dockh: the dock; --dvis: how much of the screen
      the drawer + dock cover right now (set by setDrawer), so things floating on the map stay above it. */
-  #app.v3{display:block;--ftop:calc(env(safe-area-inset-top,0px) + 62px);--dockh:calc(60px + env(safe-area-inset-bottom,0px));--dvis:200px;
+  #app.v3{display:block;overflow:clip;--ftop:calc(env(safe-area-inset-top,0px) + 62px);--dockh:calc(60px + env(safe-area-inset-bottom,0px));--dvis:200px;
     --glass:#0e1430e6;--glass2:#161e3ff0;--hair:#ffffff14}
   #app.v3 .ic{width:20px;height:20px;display:block;flex:none}
   #app.v3 #v-map{position:absolute;inset:0;z-index:0;padding:0;overflow:hidden}
@@ -907,6 +907,36 @@
   .ic.up{transform:rotate(-90deg)}
   #app.v3 .tnhead{padding:20px 2px 9px;font-size:17px;letter-spacing:-.3px}
   #app.v3 #homeStories{margin-top:2px}
+  /* an open chat: the whole drawer, the box at the bottom */
+  #v-meet.inthread{display:flex;flex-direction:column;overflow:hidden;padding-bottom:10px}
+  #v-meet.inthread>.row:first-child,#v-meet.inthread #meetTabs,#v-meet.inthread #meetQ{display:none}
+  #v-meet.inthread #meetBody{flex:1;display:flex;flex-direction:column;min-height:0}
+  #v-meet.inthread .thread{flex:1;max-height:none;min-height:0}
+  #v-meet.inthread #meetBody>p.meta:last-of-type{display:none}
+  #app.v3 .maphint{left:12px;right:68px;transform:none;max-width:none;justify-content:space-between}
+  .fhd{display:flex;align-items:center;gap:8px;margin-top:4px} .fhd h2{margin:0;font-size:24px}
+  .iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#1a2246;border:1px solid #ffffff14;color:#dfe4ff;flex:none}
+  #app.v3 .me-chip:not(.authed){width:auto;height:38px;padding:0 15px;border-radius:99px;background:var(--accent);color:#1a0d00;font-weight:800;font-size:14px;box-shadow:0 6px 16px #0007}
+  #app.v3 .me-chip:not(.authed) .av{display:none} #app.v3 .me-chip:not(.authed) #meHandle{display:inline}
+  /* a computer: map across the whole window, the drawer a panel on the left with the bar under it */
+  @media (min-width:900px){
+    #app.v3{max-width:none;border:0}
+    #app.v3 #drawer{left:16px;right:auto;width:420px;top:74px;bottom:calc(var(--dockh) + 24px);border-radius:22px;border:1px solid #ffffff1c;transform:none}
+    #app.v3 #drawer .dgrab{visibility:hidden;height:10px}
+    #app.v3 #dock{left:16px;right:auto;width:420px;bottom:16px;border-radius:20px;border:1px solid #ffffff14;padding-bottom:4px;height:62px}
+    #app.v3 #scoutBtn{left:452px;bottom:24px!important;opacity:1!important;pointer-events:auto!important}
+    #app.v3 .maplive{left:524px;bottom:24px;opacity:1!important;pointer-events:auto!important}
+    #app.v3 #scoutBubble,#app.v3 #scoutTour:not(.top){left:452px;bottom:96px}
+    #app.v3 header{padding-left:16px;padding-right:16px}
+    #app.v3 .logo{margin:0 auto 0 0}
+    #app.v3 #toasts{left:452px;right:auto;width:380px}
+    #app.v3 .maphint{left:452px;right:auto}
+    #app.v3 .sheet-bg{justify-content:center} #app.v3 .sheet-bg>.sheet{max-width:560px;border-radius:22px 22px 0 0}
+  }
+  /* touch feedback */
+  .xrow:active{background:#ffffff0a} #drawer .mapchips .chip:active,.subchips button:active,.srecent button:active,#youStats button:active{transform:scale(.95)}
+  .ylist button:active{background:#ffffff08} .tncard:active{transform:scale(.97)}
+  .xrow,.ylist button{-webkit-tap-highlight-color:transparent} #app.v3 button{-webkit-tap-highlight-color:transparent}
 </style>
 </head>
 <body>
@@ -927,6 +957,7 @@
   <symbol id="i-ghost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8Z"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+ <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
 </defs></svg>
     <section class="view" id="v-map">
@@ -969,9 +1000,9 @@
     <section class="view" id="v-search" hidden><div id="searchOut"></div></section>
 
     <section class="view" id="v-feed" hidden>
-      <div class="seg" id="feedMode" style="margin-bottom:10px"><button type="button" data-v="foryou" class="on">✨ For you</button><button type="button" data-v="posts">📝 Posts</button></div>
-      <div class="row"><h2 class="grow">Your feed</h2><button class="btn sm" id="feedMapBtn">🗺 Map it</button><button class="btn sm" data-fcustom>⚙️ Customize</button></div>
-      <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:8px 0 10px">
+      <div class="fhd"><h2 class="grow" data-t="For you">For you</h2><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
+      <div class="seg" id="feedMode" style="margin:10px 0 10px"><button type="button" data-v="foryou" class="on">🎫 Happening</button><button type="button" data-v="posts">📝 Posts</button></div>
+      <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:0 0 10px" hidden>
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
       <p class="meta" id="feedMeta" style="margin:0 0 10px"></p>
@@ -2243,6 +2274,7 @@ function renderFeed(){
   if(!$('#feedList')) return;
   if(FEED_MODE.m==='posts') return renderWallView();
   const items=FEED_LAST=feedItems(), f=S.feed;
+  $('#feedQ').hidden=!feedQ;   // V3: searching starts in the drawer's search box; this only shows what the feed is narrowed to
   $('#feedCats').innerHTML = `<button class="chip ${!feedFocus?'on':''}" data-ffocus="">All</button>`+Object.entries(CATS)
     .filter(([k])=>k!=='other'&&!f.off.includes(k)).map(([k,v])=>`<button class="chip ${feedFocus===k?'on':''}" data-ffocus="${k}">${v.e} ${v.l}</button>`).join('');
   $('#feedWhen').innerHTML = Object.entries(WHEN).map(([k,l])=>`<button type="button" data-v="${k}" class="${f.when===k?'on':''}">${l}</button>`).join('');
@@ -3790,6 +3822,7 @@ function deckHit(x, q){
 const MEET_PH = {swipe:'🔎 Search people, events, groups, flares…', friends:'🔎 Find people by name or interest…', msgs:'🔎 Search chats…', groups:'🔎 Search groups…'};
 function renderMeet(){
   const body=$('#meetBody'); if(!body) return;
+  $('#v-meet').classList.toggle('inthread', meetTab==='msgs'&&!!DM.open);   // an open chat gets the whole drawer
   const qEl=$('#meetQ'); qEl.hidden=meetTab==='msgs'&&!!DM.open; qEl.placeholder=T(MEET_PH[meetTab]); if(qEl.value!==meetQ) qEl.value=meetQ;
   setTimeout(scoutDock,0);   // the swipe buttons and message box sit at the bottom: keep Scout off them
   document.querySelectorAll('#meetTabs button').forEach(b=>b.classList.toggle('on',b.dataset.mt===meetTab));
@@ -3901,7 +3934,7 @@ function threadsHtml(){
       return `<button class="card row dmrow ${n?'unread':''}" data-thread="${esc(t.with)}" style="width:100%;text-align:left">${threadAv(t)}<div class="grow" style="min-width:0"><b>${esc(threadName(t))}</b>
         <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.last.f===S.me.h?'You: ':t.group&&t.last.f?'@'+esc(t.last.f)+': ':''}${esc(t.last.t)}</div></div>
         <span class="meta">${agoShort(t.last.at)}</span>${n?`<span class="dmn">${n>9?'9+':n}</span>`:''}</button>`; }).join('')
-    || (q?`<p class="meta">No chats match “${esc(q)}”.</p>`:'<p class="meta">No messages yet. Wave at people on Swipe: when they wave back you can chat.</p>'))
+    || (q?`<p class="meta">No chats match “${esc(q)}”.</p>`:'<p class="meta">No messages yet. Wave at people in Meet: when they wave back you can chat.</p>'))
     + (others.length?`<label class="lbl">Start a chat</label><div class="tagchips">${others.map(h=>`<button class="ichip" data-thread="${esc(h)}">${esc(h)}</button>`).join('')}</div>`:'');
 }
 function dmCardHtml(c, i){
@@ -4464,7 +4497,7 @@ function friendsHtml(){
       <div class="grow"><div class="handle">${esc(h)}</div><div class="meta">${p?KINDS[p.k].e+' '+esc(p.t.slice(0,46))+'…':(u.on?'Online, nothing posted':'Offline')}</div></div>
       ${msgBtn(h)}</div>`;}).join('')
     || (q?`<p class="meta">None of your friends match “${esc(q)}”.</p>`:'')
-    || '<p class="meta">No friends yet. Wave at someone in Swipe (when you both wave, you\'re friends), tap <b>+ Add</b> below, or say "I\'m down" to someone\'s flare.</p>';
+    || '<p class="meta">No friends yet. Wave at someone in Meet (when you both wave, you\'re friends), tap <b>+ Add</b> below, or say "I\'m down" to someone\'s flare.</p>';
   const ai=MATCH.list&&!MATCH.loading, ranked=ai
     ? MATCH.list.map(m=>({u:user(m.handle),pct:m.match,r:m.reasons,opener:m.opener}))
     : (()=>{ const ms=people().filter(u=>u.h!==S.me.h).map(matchPerson).sort((a,b)=>b.s-a.s), top=ms[0]?.s||1;
@@ -4921,12 +4954,17 @@ async function setOnline(on){
     toast('⚫ <b>You\'re offline.</b> Nobody sees you as active, and the app stopped using your location. You can still browse.','',[],4500); }
 }
 // Back: close whatever is on top first (a sheet or story), otherwise go to the previous screen.
-const OVERLAYS = ['menuBg','notifBg','questBg','evBg','plansBg','actBg','placesBg','groupBg','storyBg','searchBg','feedSheetBg','createBg','sheetBg','groupsBg','onbBg'];
+const OVERLAYS = ['spotBg','chatBg','menuBg','notifBg','questBg','evBg','plansBg','actBg','placesBg','groupBg','storyBg','searchBg','feedSheetBg','createBg','sheetBg','groupsBg','onbBg'];
 function closeTopOverlay(){
   if(!$('#camBg').hidden){ closeCam(); return true; }   // back also turns the camera off
   if(!$('#storyView').hidden){ closeStories(); return true; }
+  if(!$('#scoutBg').hidden){ closeSheetBg($('#scoutBg')); return true; }
   const open=OVERLAYS.map(id=>$('#'+id)).filter(el=>el&&!el.hidden);
-  if(!open.length) return false;
+  if(!open.length){   // V3: then the map's popup, the chip's list, and a raised drawer, in that order
+    if(curTab==='home'&&map?._popup&&map.hasLayer(map._popup)){ map.closePopup(); return true; }
+    if(curTab==='home'&&EXC.k){ exploreClear(); return true; }
+    if(curTab==='home'&&DRW.at!=='peek'){ setDrawer('peek'); return true; }
+    return false; }
   open.sort((a,b)=>(+getComputedStyle(b).zIndex||0)-(+getComputedStyle(a).zIndex||0))[0].hidden=true; return true;
 }
 function goBack(){
@@ -4994,13 +5032,13 @@ function renderQuick(){
   const el=$('#quickBar'); if(!el) return;
   const un=dmUnread(), plans=EV.list.filter(e=>myRsvp(e.id)&&e.te>Date.now()).length;
   const btn=(k,label,cls='',n='')=>`<button data-quick="${k}" class="${cls}">${label}${n?`<span class="qn">${n}</span>`:''}</button>`;
-  // Only what's useful right now; swipe, story, flare and go live already have their own quadrants.
+  // Only what's useful right now; everything else has its own place (chips, ＋, Chats, You).
   el.innerHTML = [
     btn('plans',T('📅 My plans'),'',plans+(SV.plans||[]).length||''),   // always here: your schedule + itineraries
     AUTHED&&SV.v2 ? btn('quests',`🏆 ${T('Lv {n}',{n:SV.v2.level||1})} · 🪙 ${SV.v2.coins||0}${SV.v2.day_streak>1?` · 🔥${SV.v2.day_streak}`:''}`) : '',
     un ? btn('msgs',T('💬 New messages'),'',un) : '',
     HH.now ? btn('happy',T('🍻 Happy hour'),'',HH.now) : '',   // only while some are on
-  ].join('');   // quiz, chart and about me live in the name menu, top right
+  ].join('');
   el.hidden = !el.innerHTML;
 }
 const scrollToEl = sel => setTimeout(()=>$(sel)?.scrollIntoView({behavior:'smooth',block:'start'}),80);
@@ -5031,9 +5069,12 @@ function drawerStops(){
   const d=$('#drawer'), H=d.offsetHeight, head=d.querySelector('.dgrab').offsetHeight+d.querySelector('.dhead').offsetHeight;
   return {full:0, half:Math.round(H*.44), peek:Math.max(0,H-head)};
 }
+const WIDE = () => innerWidth>=900;   // a computer: the drawer is a panel down the left, always open
 function setDrawer(at, off){
   const d=$('#drawer'); if(!d) return; const st=drawerStops();
-  if(at) DRW.at=at; d.dataset.at=DRW.at; $('#app').dataset.at=DRW.at;
+  if(at) DRW.at=at;
+  if(WIDE()){ DRW.at='full'; d.dataset.at=$('#app').dataset.at='full'; d.style.setProperty('--doff','0px'); $('#app').style.setProperty('--dvis','0px'); return; }
+  d.dataset.at=DRW.at; $('#app').dataset.at=DRW.at;
   const y=off??st[DRW.at]; d.style.setProperty('--doff',y+'px');
   $('#app').style.setProperty('--dvis',(d.offsetHeight-y+$('#dock').offsetHeight)+'px');
   if(window.L) L.Popup.prototype.options.autoPanPaddingBottomRight=[12,d.offsetHeight-y+$('#dock').offsetHeight+12];
@@ -5066,7 +5107,7 @@ function tab(t, at){
   const start=(y,x,target)=>{ y0=y; x0=x; off0=cur(); t0=Date.now(); drag=false; last=y; lastT=t0; v=0;
     top=!!target.closest('.dgrab,.dhead'); sc=target.closest('.view'); };
   const move=(y,x,ev)=>{
-    if(y0==null) return; const dy=y-y0, dx=x-x0;
+    if(y0==null||WIDE()) return; const dy=y-y0, dx=x-x0;
     if(!drag){
       if(Math.abs(dy)<7&&Math.abs(dx)<7) return;
       if(Math.abs(dx)>Math.abs(dy)){ y0=null; return; }   // sideways: a rail or the chips scroll
@@ -5100,6 +5141,7 @@ function tab(t, at){
   d.querySelector('.dgrab').addEventListener('click',()=>setDrawer(DRW.at==='peek'?'half':DRW.at==='half'?'full':'half'));
   addEventListener('resize',()=>setDrawer());
   document.fonts?.ready.then(()=>setDrawer());
+  $('#app').addEventListener('scroll',e=>{ if(e.target.id==='app') e.target.scrollTop=e.target.scrollLeft=0; });   // nothing may scroll the whole screen (a scrollIntoView, a keyboard)
 })();
 /* ---------- Explore: the drawer's first page. What's around right now; a chip turns the map and this list to one thing. ---------- */
 const svgI = (n, cls='') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
@@ -5160,7 +5202,7 @@ const EX_SUBS = {
 };
 function exploreCat(k, sub){
   if(k===EXC.k&&sub==null){ return exploreClear(); }
-  if(!EXC.k){ S.exPrev={...S.mapL}; }
+  if(!EXC.k){ S.exPrev={...S.mapL}; try{ history.pushState({t:curTab},''); }catch(e){} }   // back closes the list
   EXC.k=k; EXC.sub=sub ?? EX_SUBS[k]?.[0]?.[0] ?? null;
   if(k==='events'&&sub==null) EXC.sub=S.mapWhen||'tonight';
   MAP_CATS.forEach(c=>c.subs.forEach(([x,,setting])=>{ if(!setting) S.mapL[x]=!!EX_LAYERS[k][x]; }));
@@ -6330,27 +6372,36 @@ const SCT = {ex:'happy', busy:false, talkT:null, stopT:null, rec:null, listening
   passengerUntil:0, saved:[], left:null, bubbleT:null, ringRaf:0, ringT:null, n:0, byVoice:false};
 
 // Things Scout can point at: id -> [selector, screen it lives on (null = header, any screen), what it is]
-const SC_T = {
-  scout:['#scoutBtn',null,'the Scout button, bottom left (that is you)'], profile:['#meChip',null,'your name, top right: opens a menu with My profile, Personality quiz, My chart, About me, Privacy'], online:['#presBtn',null,'Online/Offline switch, top center'],
-  home_meet:['[data-home="meet"]','home','Meet quadrant (swipe people, events, groups, flares)'],
-  home_msgs:['[data-msgs]','home','messages shortcut on the Meet quadrant'],
-  home_search:['[data-home="search"]','home','Search quadrant'], home_create:['[data-home="create"]','home','Create quadrant (story, flare, event, group, go live)'],
-  home_live:['[data-home="live"]','home','Live quadrant'], home_go:['[data-home="go"]','home','GO! mini-map circle (opens the full map)'],
-  home_friends:['[data-home="friends"]','home','Friends button left of GO! (friends list and friend requests)'], home_food:['[data-home="food"]','home','Food button right of GO! (food & drink near you, open now)'],
-  picks:['[data-home="picks"]','home','Picks for you button'],
-  q_quiz:['#meChip',null,'your name menu, top right → Personality quiz'], q_chart:['#meChip',null,'your name menu, top right → My chart'],
-  q_about:['#meChip',null,'your name menu, top right → About me'], q_plans:['[data-quick="plans"]','home','my plans quick button'],
-  q_tonight:['[data-quick="tonight"]','home','tonight quick button'], q_msgs:['[data-quick="msgs"]','home','new messages quick button'],
-  feedback:['[data-feedback]','home','beta feedback link under the Home quadrants'],
-  feed_search:['#feedQ','feed','feed search box'], feed_customize:['[data-fcustom]','feed','feed Customize button'], feed_mapit:['#feedMapBtn','feed','Map it button'],
-  map_chips:['#mapChips','map','map filter chips'], map_live:['#mapLive','map','live strip along the bottom of the map'],
-  meet_filter:['[data-meetfilter]','meet','Meet sort & filter button'], meet_search:['#meetQ','meet','Meet search box (find people by name or interest, or search the open tab)'], meet_deck:['#meetBody','meet','the swipe deck'],
-  meet_friends:['[data-mt="friends"]','meet','Friends tab in Meet (requests, friends, people you would click with)'],
-  meet_msgs:['[data-mt="msgs"]','meet','Chats tab in Meet (messages)'], meet_groups:['[data-mt="groups"]','meet','Groups tab in Meet'],
+const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bottom bar, You
+  scout:['#scoutBtn',null,'the Scout button, on the map just above the drawer on the left (that is you)'],
+  profile:['[data-dock="me"]',null,'You, at the right of the bottom bar: profile, plans, saved, quests, invite, Español, privacy'],
+  avatar:['#meChip',null,'your picture, top left (opens You)'], bell:['#bellBtn',null,'notifications bell, top right'],
+  online:['#presBtn','me','Online/Offline switch at the top of You'],
+  search:['#qIn','home','the search box at the top of the drawer (places, events, people, groups, dishes, or ask Scout)'],
+  search_mic:['[data-qmic]','home','the 🎤 in the search box (talk to Scout)'],
+  chips:['#mapChips','home','the chips under the search box (Food, Tonight, Nightlife, Outdoors, Sights, Friends, Hot spots)'],
+  chip_food:['[data-excat="food"]','home','🍔 Food chip (food & drink near you, happy hour, coffee, tacos…)'],
+  chip_tonight:['[data-excat="events"]','home','🎫 Tonight chip (events tonight, this weekend, this week)'],
+  chip_night:['[data-excat="night"]','home','🍸 Nightlife chip (bars, clubs)'], chip_outdoors:['[data-excat="outdoors"]','home','🌳 Outdoors chip'],
+  chip_sights:['[data-excat="sights"]','home','🏛️ Sights chip (landmarks, museums, historical markers, art)'],
+  chip_friends:['[data-excat="friends"]','home','👥 Friends chip (friends out, sharing location, flares, live)'], chip_hot:['[data-excat="zones"]','home','🔥 Hot spots chip'],
+  dock_explore:['[data-dock="home"]',null,'Explore, at the left of the bottom bar (the map and what\'s around)'],
+  dock_feed:['[data-dock="feed"]',null,'For you in the bottom bar (the feed)'],
+  dock_create:['[data-dock="create"]',null,'the ＋ in the middle of the bottom bar (story, flare, event, group, go live)'],
+  dock_chats:['[data-dock="meet"]',null,'Chats in the bottom bar (messages, friends, groups, the Meet swipe deck)'],
+  map_layers:['[data-mlayers]',null,'map layers button on the right of the map'], map_live:['#mapLive',null,'LIVE pill just above the drawer'],
+  q_plans:['[data-quick="plans"]','home','My plans button in Explore'], q_msgs:['[data-quick="msgs"]','home','new messages button in Explore'],
+  y_plans:['#youList [data-menu="plans"]','me','My plans on You'], y_saved:['#youList [data-quick="favs"]','me','Saved on You'],
+  y_quests:['#youList [data-menu="quests"]','me','Quests & rewards on You'], y_invite:['#youList [data-menu="invite"]','me','Invite friends on You'],
+  feedback:['[data-feedback]','home','beta feedback link at the bottom of Explore'],
+  feed_customize:['[data-fcustom]','feed','feed Customize button'], feed_mapit:['#feedMapBtn','feed','map button at the top of For you (shows the feed on the map)'],
+  meet_filter:['[data-meetfilter]','meet','Meet sort & filter button'], meet_search:['#meetQ','meet','search box in Chats (narrows the open tab; on Friends it finds anyone by name or interest)'], meet_deck:['#meetBody','meet','the Meet swipe deck'],
+  meet_friends:['[data-mt="friends"]','meet','Friends tab in Chats (requests, friends, people you would click with)'],
+  meet_msgs:['[data-mt="msgs"]','meet','Chats tab (messages)'], meet_groups:['[data-mt="groups"]','meet','Groups tab in Chats'], meet_swipe:['[data-mt="swipe"]','meet','Meet tab in Chats (swipe people, events, groups, flares)'],
   me_interests:['#interestChips','me','interest chips on your profile'], me_quiz:['#quizCard','me','personality quiz card'],
   me_astro:['#astroT','me','astrology on/off switch'], me_life:['#lifeCard','me','about-you questions'],
-  me_tab_personality:['[data-mesec="personality"]','me','Personality tab on the profile (quiz + astrology)'],
-  me_tab_about:['[data-mesec="about"]','me','About you tab on the profile'], me_tab_privacy:['[data-mesec="settings"]','me','Privacy tab on the profile'],
+  me_tab_personality:['[data-mesec="personality"]','me','Personality tab on You (quiz + astrology)'],
+  me_tab_about:['[data-mesec="about"]','me','About you tab on You'], me_tab_privacy:['[data-mesec="settings"]','me','Privacy tab on You'],
   me_signout:['#signOut','me','Sign out button'], me_delete:['#delAcct','me','Delete my account button'],
 };
 
@@ -6642,28 +6693,28 @@ const scoutTargets = () => Object.entries(SC_T).filter(([,[sel]])=>document.quer
 
 /* guests (and file:// previews) get a small built-in FAQ instead of Claude */
 const SC_FAQ = [
-  [/open now|still open|what'?s open|open late/i, "Search has Food & drink with an Open now switch, and open spots glow green on the map. Hours come from OpenStreetMap, so they can be a little out of date.", 'happy', [['point','home_search','Food & drink is in Search']]],
-  [/coffee|cafe|espresso|latte/i, "Coffee's under Search, Food & drink. Early birds can tap Early morning to see who's open by 7.", 'happy', [['point','home_search','Coffee is in Search']]],
-  [/\bbars?\b|\bpub\b|drinks?|beer|cocktail|club/i, "Bars and clubs are under Search, Food & drink, and the map shows Austin hot spots like 6th Street and Rainey as glowing zones.", 'excited', [['point','home_search','Bars & clubs']]],
-  [/food|eat|hungry|taco|bbq|pizza|burger|dinner|lunch|breakfast|late[- ]night/i, "Hungry? Search has Food & drink: late-night eats, tacos, BBQ and more, with what's open now. Make a free account and I can pick spots for you.", 'excited', [['point','home_search','Food & drink']]],
-  [/direction|how do i get|take me (to|there)|navigate|route/i, "Tap any event or spot on the map and hit Directions; it opens your Maps app. Make a free account and I can work out when to leave, too.", 'happy', [['point','home_go','Open the map']]],
+  [/open now|still open|what'?s open|open late/i, "Tap the Food chip: it lists what's open now, nearest first, and lights it up on the map. Hours come from OpenStreetMap, so they can be a little out of date.", 'happy', [['point','chip_food','Food']]],
+  [/coffee|cafe|espresso|latte/i, "Tap the Food chip, then Coffee. Breakfast shows who's open early.", 'happy', [['point','chip_food','Coffee is in Food']]],
+  [/\bbars?\b|\bpub\b|drinks?|beer|cocktail|club/i, "Tap Nightlife for bars and clubs, and Hot spots for the busy streets like 6th and Rainey.", 'excited', [['point','chip_night','Nightlife']]],
+  [/food|eat|hungry|taco|bbq|pizza|burger|dinner|lunch|breakfast|late[- ]night/i, "Hungry? The Food chip has tacos, BBQ, late-night eats and more, open now and nearest first. You can also type a dish in the search box. Make a free account and I can pick spots for you.", 'excited', [['point','chip_food','Food']]],
+  [/direction|how do i get|take me (to|there)|navigate|route/i, "Tap any event or spot on the map and hit Directions; it opens your Maps app. Make a free account and I can work out when to leave, too.", 'happy', [['point','search','Find it here']]],
   [/joke|funny|laugh/i, "Why did the map join Side Quest? It was tired of everyone saying it had no social life… just a lot of legends. 😄", 'laughing', []],
-  [/flare|who'?s down/i, "A flare is a quick “who's down?” post for right now. Tap Create, then Flare, and send one up!", 'excited', [['point','home_create','Flare is in here']]],
-  [/story|stories|photo/i, "Stories are photos or text that last 24 hours, and you can tag an event, groups or people. Tap Create, then Story.", 'happy', [['point','home_create','Story is in here']]],
-  [/live|stream|gopro|insta360|camera/i, "You can go live from your phone camera or a GoPro, Insta360 or DJI. The Live corner has everyone streaming now.", 'excited', [['point','home_live','Live streams']]],
-  [/message|dm|chat|text (someone|people)/i, "Messages are for friends. You become friends when you both wave at each other in Meet.", 'happy', [['point','home_msgs','Your messages']]],
-  [/swipe|meet|friend|people|wave/i, "Meet is one swipe deck: swipe right to wave at people, say you're going to events, join groups or say you're down for flares.", 'happy', [['point','home_meet','Start swiping']]],
-  [/group/i, "Groups live in Meet under the Groups tab, and you can start your own from Create.", 'happy', [['point','home_create','Start a group']]],
-  [/tonight|what'?s the move|whats the move|weekend|event|bored|to do/i, "Tonight's discoveries are one tap away! Make a free account and I can pick the best ones for you.", 'excited', [['point','q_tonight',"Tonight's events"]]],
-  [/map|near|around|where/i, "Tap the GO! circle for the full map: events, flares, stories and live streams around you.", 'happy', [['point','home_go','Open the map']]],
-  [/search|find|look for/i, "Search shows everything by section, like sports, shows or going out, for tonight, the weekend or the week.", 'happy', [['point','home_search','Search']]],
+  [/flare|who'?s down/i, "A flare is a quick “who's down?” post for right now. Tap the plus at the bottom, then Flare, and send one up!", 'excited', [['point','dock_create','Flare is in here']]],
+  [/story|stories|photo/i, "Stories are photos or videos that last 24 hours, and you can tag a place, an event, groups or people. Tap the plus at the bottom, then Photo or video.", 'happy', [['point','dock_create','Stories start here']]],
+  [/live|stream|gopro|insta360|camera/i, "You can go live from your phone camera or a GoPro, Insta360 or DJI (the plus, then Go live). The LIVE pill on the map shows who's streaming now.", 'excited', [['point','map_live','Live streams']]],
+  [/message|dm|chat|text (someone|people)/i, "Messages are for friends, in Chats at the bottom. You become friends when you both wave at each other in Meet.", 'happy', [['point','dock_chats','Your chats']]],
+  [/swipe|meet|friend|people|wave/i, "Chats → Meet is one swipe deck: swipe right to wave at people, say you're going to events, join groups or say you're down for flares.", 'happy', [['point','dock_chats','Chats and Meet']]],
+  [/group/i, "Groups are in Chats under the Groups tab, and you can start your own from the plus.", 'happy', [['point','dock_chats','Groups are in here']]],
+  [/tonight|what'?s the move|whats the move|weekend|event|bored|to do/i, "Tap Tonight for everything on tonight, nearest first. Make a free account and I can pick the best ones for you.", 'excited', [['point','chip_tonight',"Tonight's events"]]],
+  [/map|near|around|where/i, "The map is always right here. Tap a chip to see one thing at a time, or search for anything up top.", 'happy', [['point','chips','Pick one']]],
+  [/search|find|look for/i, "Type anything in the search box: a place, an event, a person, a group or a dish. Or just ask me.", 'happy', [['point','search','Search']]],
   [/quiz|personality|type/i, "The 20-question personality quiz sharpens your matches. It takes about two minutes!", 'happy', [['point','me_quiz','The quiz']]],
   [/astro|zodiac|chart|sign|horoscope/i, "Add your birthday for your Sun, Moon and Rising signs. It's worked out on your phone and never shown unless you choose.", 'happy', [['point','me_astro','Turn on astrology']]],
   [/privacy|who (can )?sees?|visib|private/i, "Every profile answer has its own tag: matching only (the default, never shown), friends, everyone, or only you.", 'calm', [['point','profile','Your profile']]],
   [/block|report|safe|creep|harass|scared|unsafe/i, "Tap ⋯ on any post, story or profile to report or block. And always meet in public and tell a friend where you're going.", 'calm', []],
   [/online|offline|location|gps/i, "This switch shows people you're around. Offline hides you and stops the app using your location.", 'calm', [['point','online','Online / Offline']]],
   [/account|sign ?up|log ?in|join|register/i, "Tap here to make a free account. Everything you did as a guest comes with you.", 'excited', [['point','profile','Free account']]],
-  [/create|post|event/i, "Create is where you start a story, flare, event or group, or go live.", 'happy', [['point','home_create','Create']]],
+  [/create|post|event/i, "The plus at the bottom is where you post a photo or video, a flare, an event or a group, or go live.", 'happy', [['point','dock_create','Create']]],
   [/drive|driving|car/i, "Tap the car button and I'll switch to voice only. Eyes on the road, I'll do the talking!", 'calm', []],
   [/look|avatar|design|custom|photo of me/i, "Tap the paint palette to design how I look. Pick parts, describe me, or use your own photo!", 'excited', []],
   [/^(hi|hey|hello|yo|sup)\b/i, "Hey hey! I'm your Side Quest guide. Ask me how anything works. Let's go explore!", 'excited', []],
@@ -6792,13 +6843,13 @@ const SC_VIEWS=['home','map','feed','meet','live','me'];
 /* first-run tour: Scout points at each part of Home, one step at a time (no Claude call, works for guests) */
 const SC_TOUR_RE = /\b(tour|show me around)\b|how does (this|the) app work|what can i do here/i;
 const SC_TOUR = [
-  ['home_meet','Meet',"Meet is one swipe deck: people, events, groups and flares. Swipe right on what you like."],
-  ['home_search','Search',"Search finds events, food and drinks that are open now, and Austin's hot spots."],
-  ['home_create','Create',"Create is where you send up a flare (“who's down?”), post a story, plan an event, start a group or go live."],
-  ['home_live','Live',"Live shows people out streaming around town. You can send them requests to visit places."],
-  ['home_go','The map',"GO! opens the map with everything happening around you."],
-  ['profile','You',()=>AUTHED?"Your profile lives here: interests, the personality quiz, and who sees what.":"Make a free account here whenever you're ready. Everything you did as a guest comes with you."],
-  ['scout','Me!',"And I'm always right here. Ask me anything, or tap the mic and just talk. Let's go explore!"],
+  ['search','Search',"Search anything up here: a place, an event, a person, even a dish. Or just ask me a question."],
+  ['chips','Chips',"Tap a chip to see one thing at a time, on the map and in a list: food, tonight's events, nightlife, parks, sights, friends."],
+  ['dock_feed','For you',"For you is your feed: events, flares and posts picked for what you're into."],
+  ['dock_create','Create',"The plus is where you post a photo or video, send up a flare (“who's down?”), plan an event, start a group or go live."],
+  ['dock_chats','Chats',"Chats has your messages, friends and groups, plus Meet, where you swipe to find people and plans."],
+  ['profile','You',()=>AUTHED?"You is your profile, plans, saved spots, quests and settings.":"Make a free account here whenever you're ready. Everything you did as a guest comes with you."],
+  ['scout','Me!',"And I'm always right here on the map. Ask me anything, or tap the mic and just talk. Let's go explore!"],
 ];
 function scoutTourCard(html, btns, top){
   const c=$('#scoutTour'); c.innerHTML=`<div>${html}</div><div class="btns" style="margin-top:10px">${btns}</div>`; c.classList.toggle('top',!!top); c.hidden=false;
@@ -6814,7 +6865,7 @@ function scoutOfferTour(){   // once, right after someone first lands (guest or 
 function scoutTour(i){
   S.toured=true; save();
   if(i>=SC_TOUR.length) return scoutTourEnd();
-  if(i===0){ $('#scoutBg').hidden=true; $('#scoutBubble').hidden=true; if(curTab!=='home') tab('home'); }
+  if(i===0){ $('#scoutBg').hidden=true; $('#scoutBubble').hidden=true; if(EXC.k) exploreClear(); tab('home','peek'); }
   SCT.tour=i; const [id,label,txt]=SC_TOUR[i], text=typeof txt==='function'?txt():txt;
   scoutPoint(id,label,true);
   const r=$(SC_T[id][0])?.getBoundingClientRect(), a=$('#app').getBoundingClientRect();
@@ -6856,7 +6907,7 @@ function scoutNudgeDismiss(){ scoutNudgeHide(); const d=new Date().toDateString(
 function scoutNudge(){
   const now=Date.now(), view=curTab, quiet=S.nudgeDay===new Date().toDateString()&&(S.nudgeX||0)>=2;
   const sheetOpen=[...document.querySelectorAll('.sheet-bg')].some(x=>!x.hidden)||!$('#storyView').hidden||!$('#onbBg').hidden;
-  if(quiet||SCT.driving||SCT.busy||SCT.listening||sheetOpen||!['home','map'].includes(view)||SCT.nudges>=3) return;
+  if(quiet||SCT.driving||SCT.busy||SCT.listening||sheetOpen||SCT.tour!=null||!$('#scoutTour').hidden||view!=='home'||DRW.at==='full'||SCT.nudges>=3) return;
   if(now-SCT.idleAt<(SCT.nudges?25000:9000)||now-SCT.nudgeAt<180000) return;
   const b=$('#scoutBubble'), msg=T(SC_NUDGES[SCT.nudges%SC_NUDGES.length]);
   b.className='nudge'; b.innerHTML=`<b>${esc(scS().name)}:</b> ${esc(msg)} <button data-scnudgex aria-label="Not now">✕</button>`; b.hidden=false;
@@ -6876,11 +6927,13 @@ function scoutBeep(){
 }
 function scoutPoint(id,label,hold){
   const t=SC_T[id]; if(!t) return; const [sel,view]=t;
-  if(view&&$('#v-'+view)?.hidden){ if(view==='meet'&&/data-mt/.test(sel)===false) meetTab='swipe'; tab(view); }
+  if(view&&$('#v-'+view)?.hidden){ if(view==='meet'&&/data-mt/.test(sel)===false) meetTab=id==='meet_deck'||id==='meet_filter'?'swipe':meetTab; tab(view); if(view==='meet') renderMeet(); }
+  if(view==='home'&&$('#drawer main').contains($(sel))){ if(EXC.k) exploreClear(); if(DRW.at==='peek') setDrawer('half'); }
   setTimeout(()=>{
     const el=$(sel), pane=el?.closest('[data-mepane]'); if(pane?.hidden) showMeSec(pane.dataset.mepane);
     if(!el||!el.offsetParent) return;
-    el.scrollIntoView({block:'center',inline:'center',behavior:'smooth'}); scoutBeep();
+    if(el.closest('.view,.sheet,.tnrail,.mapchips,#youList')&&!el.closest('.dhead')) el.scrollIntoView({block:'center',inline:'center',behavior:'smooth'});
+    else { const mc=el.closest('.mapchips'); mc?.scrollTo({left:mc===el?0:Math.max(0,el.offsetLeft-mc.clientWidth/2+el.offsetWidth/2),behavior:'smooth'}); } scoutBeep();
     const ring=$('#scoutRing'), tag=$('#scoutTag'), app=$('#app');
     tag.textContent='👉 '+(label||'Here!').slice(0,40);
     cancelAnimationFrame(SCT.ringRaf); clearTimeout(SCT.ringT);
@@ -7371,7 +7424,7 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostnam
   addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 $('#betaTag').hidden=!CFG.beta;
 if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }   // a category chip left on last time
-if(!S.v3map){ S.v3map=true; Object.assign(S.mapL,{food:false,clubs:false,bars:false,trails:false,spots:false,landmarks:false,markers:false,art:false,stories:false}); syncMapL(); }   // V3 starts calm: what's happening; the chips add the rest
+if(!S.v3map){ S.v3map=true; Object.assign(S.mapL,{zones:false,food:false,clubs:false,bars:false,trails:false,spots:false,landmarks:false,markers:false,art:false,stories:false}); syncMapL(); }   // V3 starts calm: what's happening; the chips add the rest
 renderAll(); tab('home','peek'); if(S.online) startLocating(false);
 addEventListener('resize',()=>{ map?.invalidateSize(); });
 document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches?.('[data-msgs]')){ e.preventDefault(); e.target.click(); } });

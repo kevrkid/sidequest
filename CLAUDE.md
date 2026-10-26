@@ -12,19 +12,38 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
 - **Try it without an account.** Guests browse everything and RSVP; anything that reaches other
   people (post, wave, message, join, go live, report) opens a "create a free account" gate, then
   returns them to what they were doing. Guest data carries into the account.
-- **Home**: 4 colored quadrants + a center circle. Meet (purple, with a 💬 messages shortcut),
-  Search (blue), Create (green), Live (orange); a middle row with **Friends** (left, badge = pending
-  requests → Meet's friends tab) and **Food** (right → Food & drink list) beside the circle; and **GO!** (a see-through live mini-map with an
-  Apple-style blue location dot; tap opens the full map). A short quick-button row on top that only
-  shows what's useful now (Tonight; My plans / New messages when there are some; quiz, chart, about me
-  until done; the rest lives in the quadrants) and a "Picks for you" bar. Search puts events first,
-  Food & drink + Hot spots first from 10 PM to 10 AM. The Scout button nudges itself up off any
-  button or text box under it (`scoutDock()`).
-  No bottom bar: Home is the hub; header = ‹ back + Side Quest logo (→ Home) on the left, the Online/Offline
-  toggle switch (tap or swipe; `role=switch`) in the centre, your picture + @handle ▾ on the right opening a
-  menu (My profile, Personality quiz, My chart, About me, Privacy); ≤400px shows just the picture.
-  No greeting on Home. Under the header: a **stories row** (Instagram-style rings, `storyRail()`), then the quick row
-  (📅 My plans always; New messages when unread).
+- **V3 layout: the map is the app** (branch `v3`, folder `~/claude/sidequest-v3`). The Leaflet map (`#v-map`) fills the
+  screen and is never hidden. Over it: a **drawer** (`#drawer`) and under that a 5-button **dock** (`#dock`: Explore ·
+  For you · ＋ · Chats · You; `data-dock`). The drawer has three stops, `peek` (search box + chips + one "glance" line),
+  `half`, `full` (`setDrawer(at)`, `drawerStops()`, `DRW.at`); drag it by its top, flick, or drag anywhere in it until
+  it's full; a mouse drags the handle and the wheel opens/closes it; dragging the map drops a half drawer to peek
+  (`mapWantsRoom`). Every screen is a `.view` inside the drawer: `tab(t, at)` shows `#v-<t>` and sets the stop
+  (`home` = Explore, default half; `map` = Explore at peek; feed/meet/me/live/search = full). `--dvis` on `#app` is how
+  much of the screen the drawer + dock cover, so map overlays (Scout button, LIVE pill, Leaflet attribution, popup
+  autopan) sit above it. ≥900px wide (`WIDE()`): the drawer is a fixed panel on the left, always open.
+  - Top, floating: your picture (`#meChip`, opens You; guests see an orange "Sign up" pill; green ring = online),
+    the name (`#logo`, back to the map at peek), the bell. Right side: layers, ghost/sharing, locate (SVG icons from
+    the `<symbol id="i-…">` sprite at the top of `#app`; `svgI(name)`).
+  - **Search** (`#qIn`, `openSearchView`, `renderSearch`, `searchGo`): one box for places (PL.all + parks/lakes/trails
+    + sights, nearest first), events, people, groups; "Find it on menus" (`openDishes`), "Search posts and the feed"
+    (`runSearch`), and "Ask Scout" (questions go straight to Scout, `isQuestion`). Recent searches in `S.recentQ`.
+    The old Search sheet still exists as `openSearchSheet()`; `openSearch()` now focuses the box.
+  - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Food, Tonight, Nightlife, Outdoors, Sights,
+    Friends, Hot spots. A chip turns the map to just that (`EX_LAYERS`; the previous layers are kept in `S.exPrev` and
+    put back by ✕ / tapping it again / back, `exploreClear`) and lists it in the drawer (`#exCat`, `renderExCat`) with
+    sub-chips (`EX_SUBS`, `data-exsub`) and, for food, the Open now switch (`data-exopen`). Rows are `.xrow`
+    `data-xgo="pl|id"` etc. → `searchGo` → focusPlace / focusSight / mapGo / openEvent.
+  - **Explore** (`#v-home`, `renderHome`): stories, Up next, Friends out, Tonight near you, Busy right now
+    (`hotRail`), Happy hour now (`happyRail`), quick buttons. `renderGlance` writes the peek line.
+  - The map starts calm (`S.v3map` once): events, flares, friends, live, parks/water, markets; food, nightlife, hot
+    spot zones, trails and sights come with their chip or the layers sheet.
+  - **Chats** = the old Meet screen (`#v-meet`), tabs Chats · Friends · Groups · Meet (swipe), Chats first
+    (`meetTab='msgs'`); an open chat takes the whole drawer (`.inthread`). Dock badge = unread + friend requests.
+  - **You** (`#v-me`, `renderYou`): picture, Online switch (`#presBtn` moved here), level/coins/streak/friends, a list
+    (My plans, Saved, Friends, Quests & rewards, Invite, Español; `data-menu` / `data-quick` as before), then the old
+    four profile tabs. The name menu (`#meMenu`) is gone; `data-menu` still works anywhere.
+  - Back (`closeTopOverlay`): sheet → map popup → chip list → lower the drawer. Scout's tour, targets (`SC_T`) and
+    offline answers (`SC_FAQ`) point at the V3 places; `scout_knowledge.md` describes the V3 screen.
 - **Story viewer** (`#storyView`, `renderReel()`): TikTok-style vertical scroll-snap feed of every story; the one ≥60%
   in view plays (IntersectionObserver), 🔇/🔊 for all, single tap pauses a video, double-tap = ❤️ (`/api/story/like`;
   the app only gets counts + your own like; demo stories' likes stay on the phone), right rail: like, reply (DM,
