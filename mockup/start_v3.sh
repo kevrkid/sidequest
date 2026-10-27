@@ -1,5 +1,5 @@
 #!/bin/sh
-# Side Quest V3 (map first) next to V2: http://localhost:8800 (and https://<this Mac's Wi-Fi address>:8445 for phones).
+# Side Quest V3 (map first) next to V2: http://localhost:8802 (and https://<this Mac's Wi-Fi address>:8446 for phones).
 # V2 keeps 8797 / 8444. V3 has its own data (this folder's mockup/data), so nothing you do here touches V2 or the live site.
 #
 #   ./start_v3.sh           # no paid Google / LiveKit calls: OpenStreetMap tiles, no Google photos, phone-to-phone video
@@ -16,4 +16,4 @@ if [ "$1" = "--voice" ] && [ -f "$HOME/.sidequest-google.env" ]; then
   [ -n "$TTS_CAP" ] && export SQ_TTS_DAILY_CHARS="$TTS_CAP"
   export SQ_GOOGLE_TTS_KEY
 fi
-PORT=8800 SQ_LAN=1 SQ_LAN_PORT=8445 SQ_ADMIN_TOKEN="${SQ_ADMIN_TOKEN:-v3admin}" exec ruby server.rb
+PORT=8802 SQ_LAN=1 SQ_LAN_PORT=8446 SQ_ADMIN_TOKEN="${SQ_ADMIN_TOKEN:-v3admin}" exec ruby server.rb
