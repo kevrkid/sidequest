@@ -995,7 +995,7 @@
   #app.v3 .maplive.closed{left:12px;right:auto;justify-content:flex-start}
   #app.v3 .maplive .livepill{padding:6px 10px;font-size:12px}
   #app.v3:has(.me-chip:not(.authed)) .maplive{top:calc(env(safe-area-inset-top,0px) + 66px)}
-  #app.v3[data-at=full] .maplive{visibility:hidden}
+  @media (max-width:899px){ #app.v3[data-at=full] .maplive{visibility:hidden} }
   .subchips button.tog{order:99} .subchips{display:flex}
   .subchips button.tog.on{background:#1a2246;border-color:var(--good);color:#bff5dc}
   .subchips button.tog.on::before{content:"✓ "}
@@ -1009,6 +1009,14 @@
   #app.v3 #v-feed .fhd{margin-bottom:10px}
   .pmain{margin-top:10px} .pmain .btn{font-size:14px}
   .leaflet-popup .pmain{display:flex;gap:6px} .leaflet-popup .pmain .btn{padding:7px 8px;font-size:12px}
+  @media (min-width:900px){ #app.v3 .maplive,#app.v3 .maplive.closed{left:452px;right:auto;top:76px;bottom:auto!important} }
+  .qbar .qclear{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#ffffff14;color:#cfd5f5}
+  .qbar .qclear .ic{width:14px;height:14px}
+  #app.v3 button:focus-visible,#app.v3 a:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+  #app.v3 .sc-lens{background:#1a2246;border:1px solid #ffffff14;color:var(--text);box-shadow:none}
+  #app.v3 .sc-lens small{color:var(--muted);opacity:1}
+  #app.v3 .sc-lens i{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;font-size:24px;background:linear-gradient(135deg,#2ec5ff,#7b5cff)}
+  #app.v3 .sc-lens.look i{background:linear-gradient(135deg,#ff7a18,#e9408a)}
 </style>
 </head>
 <body>
@@ -1052,6 +1060,7 @@
     <div class="dhead">
       <form id="qForm" class="qbar" role="search"><button type="button" class="qback" data-qback aria-label="Back" hidden><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
         <input id="qIn" type="search" placeholder="Search Austin, or ask Scout" data-tp="Search Austin, or ask Scout" autocomplete="off" enterkeyhint="search" aria-label="Search">
+        <button type="button" class="qclear" data-qclear aria-label="Clear" hidden><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
         <button type="button" class="qmic" data-qmic aria-label="Talk to Scout" title="Talk to Scout"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></button></form>
       <div class="mapchips" id="mapChips"></div>
       <button class="glance" id="glance"></button>
@@ -5269,7 +5278,7 @@ function tab(t, at){
   document.querySelectorAll('#drawer .view').forEach(v=>v.hidden=v.id!=='v-'+t);
   $('#app').dataset.tab=t;
   document.querySelectorAll('#dock [data-dock]').forEach(b=>b.classList.toggle('on',b.dataset.dock===(t==='search'||t==='live'?'home':t)));
-  if(t!=='search'){ $('[data-qback]').hidden=true; if(document.activeElement===$('#qIn')) $('#qIn').blur(); }
+  if(t!=='search'){ $('[data-qback]').hidden=true; if(document.activeElement===$('#qIn')) $('#qIn').blur(); $('[data-qclear]').hidden=!$('#qIn').value; }
   setDrawer(at || (t==='home' ? (was==='home'||was==='search'&&DRW.at!=='full' ? DRW.at : 'half') : 'full'));
   $('#scoutBtn').hidden = t!=='home'; scoutUnpoint?.();
   if(!map){ if(DRW.booted) initMap(); else setTimeout(()=>{ if(!map){ initMap(); setDrawer(); } },0); }   // first time: paint first, then build the map
@@ -5570,7 +5579,7 @@ function searchGo(v){
   if(t==='od') return mapGo('od',id);
 }
 $('#qIn').addEventListener('focus',openSearchView);
-$('#qIn').addEventListener('input',()=>{ clearTimeout(SQ.t); SQ.t=setTimeout(renderSearch,110); });
+$('#qIn').addEventListener('input',()=>{ $('[data-qclear]').hidden=!$('#qIn').value; clearTimeout(SQ.t); SQ.t=setTimeout(renderSearch,110); });
 $('#qForm').addEventListener('submit',e=>{ e.preventDefault(); const q=$('#qIn').value.trim(); if(!q) return;
   if(isQuestion(q)) return searchGo('scout|'+q); const first=$('#searchOut [data-xgo]:not([data-xgo^="scout"])'); if(first) first.click(); });
 
@@ -5597,7 +5606,7 @@ function renderYou(){
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
@@ -5611,6 +5620,7 @@ document.addEventListener('click',e=>{
   if(t.id==='glance') return EV.list.some(e=>e.te>Date.now()&&e.ts<new Date().setHours(28,0,0,0)) ? exploreCat('events','tonight') : setDrawer('half');   // "37 things on tonight" → that list
   if(d.qback!==undefined){ $('#qIn').value=''; return tab('home', NAVST.at(-1)==='home'?undefined:'half'); }
   if(d.qmic!==undefined) return openScoutVoice();
+  if(d.qclear!==undefined){ $('#qIn').value=''; t.hidden=true; $('#qIn').focus(); return renderSearch(); }
   if(d.excat) return exploreCat(d.excat, d.exsubgo);
   if(d.exsub){ if(EXC.sub===d.exsub&&EXC.k==='zones'){ EXC.sub=null; return renderExCat(true); }   // tap the picked neighborhood again: all of them
     EXC.sub=d.exsub; if(EXC.k==='events'){ S.mapWhen=d.exsub; save(); renderMapChips(); renderMap(); } if(EXC.k==='food'||EXC.k==='night') EXC.list=null; return renderExCat(true); }
