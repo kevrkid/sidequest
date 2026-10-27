@@ -507,6 +507,12 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   storytimes, toddler / homeschool / kids' classes, trunk-or-treats and the like are dropped (kids words in the title
   or the first 160 characters of the description; "family" category only with "Family" in the title). Grown-up
   events that only sound like it stay ("Cry Baby Tour", "Faith & Family Night", "teen slasher script").
+- **Ice rinks** (events service `~/claude/live/sources.yaml`: `chaparral-ice`, `ice-and-field`, `pond-hockey-club`): adult
+  drop-in hockey and stick & puck as `pickup` events with times, price and a sign-up link. Chaparral and Ice & Field come from
+  DaySmart's public schedule API (`fetch_daysmart` in extractors/apis.py; type names / `match` / `skip`, price from the
+  session's product); Pond's from its public Google Calendars (`recurring: true` expands repeat rules, `match` / `retitle`:
+  Pond / Barn Time = stick & puck, Shinny = drop-in). `sessions: true`: same-day sessions stay separate (uid includes the
+  time) and sessions the rink stops listing are removed (`drop_missing`). atxhockey.com shows the same schedules.
 - **Event spots** (`geofix.rb`): events the scraper couldn't place (all dropped on downtown) get their spot from the
   venue / a park named in the title (our parks, sights, places; chains by exact name only), then OpenStreetMap's
   geocoder (1/s, answers must match house number + street or share a real word; cached in `data/geofix.json`).
