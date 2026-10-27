@@ -108,7 +108,8 @@ def place_of(e, brands)
     'hours' => t['opening_hours'], 'addr' => addr.empty? ? nil : addr,
     'lat' => lat.round(5), 'lng' => lng.round(5),
     'web' => t['website'] || t['contact:website'], 'menu' => t['website:menu'] || t['menu:url'] || t['menu'] =~ %r{\Ahttps?://} && t['menu'],
-    'phone' => t['phone'] || t['contact:phone'], 'chain' => chain
+    'phone' => t['phone'] || t['contact:phone'], 'chain' => chain,
+    'food' => (t['food'] if %w[yes no].include?(t['food'])), 'kitchen' => t['opening_hours:kitchen']   # bars: serves food? kitchen hours
   }.reject { |_, v| v.nil? || v == [] }
 end
 

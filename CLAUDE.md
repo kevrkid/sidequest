@@ -14,7 +14,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   returns them to what they were doing. Guest data carries into the account.
 - **V3 layout: the map is the app** (branch `v3`, folder `~/claude/sidequest-v3`). The Leaflet map (`#v-map`) fills the
   screen and is never hidden. Over it: a **drawer** (`#drawer`) and under that a 5-button **dock** (`#dock`: Explore ·
-  For you · ＋ · Chats · You; `data-dock`). The drawer has three stops, `peek` (search box + chips + one "glance" line),
+  Feed · ＋ · Social · You; `data-dock`; Feed was "For you" (view `#v-feed`), Social was "Chats" (view `#v-meet`)). The drawer has three stops, `peek` (search box + chips + one "glance" line),
   `half`, `full` (`setDrawer(at)`, `drawerStops()`, `DRW.at`); drag it by its top, flick, or drag anywhere in it until
   it's full; a mouse drags the handle and the wheel opens/closes it; dragging the map drops a half drawer to peek
   (`mapWantsRoom`). Every screen is a `.view` inside the drawer: `tab(t, at)` shows `#v-<t>` and sets the stop
@@ -30,6 +30,21 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
     + sights, nearest first), events, people, groups; "Find it on menus" (`openDishes`), "Search posts and the feed"
     (`runSearch`), and "Ask Scout" (questions go straight to Scout, `isQuestion`). Recent searches in `S.recentQ`.
     The old Search sheet still exists as `openSearchSheet()`; `openSearch()` now focuses the box.
+  - **Find a spot** (`SF`, `S.sf` = {area, has, music, theme, when}, `sfHead`, `renderFind`, `sfResults`): the search
+    page's top (empty box) and a chip-less `exploreCat('find')` list over the map (`EX_LAYERS.find = {}`: only its own
+    `.sfpin` markers in `SF.layer`). Where = Near me / This map area / `/api/areas` (Places::HOTSPOTS districts + data/areas.json
+    neighborhoods and towns, `km` radius). What (`SF_HAS`: place kinds via `PL_HAS` on `PL.all`, events via `EV_HAS`, Happy
+    hour via `HH.list`, Open now/late from hours), Music (`MUSIC_RE` on the event title + description, then `VENUE_SOUND`
+    for well-known rooms), Vibe (`THEME_RE` on place names/kinds). Event picks list events (at a venue that fits any place
+    picks, `venuePlace`); otherwise places, each with what's on there tonight. Over the map the picks fold into one row
+    (`sfCompact`, ✕ drops one, "＋ Filters" = `data-sfexp`). Only real listings; nothing is made up.
+  - **Shared around town** (`#exMedia`, `mediaRail`, `MEDIA`): stories with a photo/video and public posts with a photo
+    (`WL.posts`), ranked friend / at a place or event / close / fresh / liked; a story opens the viewer, a post
+    `openWallPost`. With none yet it shows one "Share one" nudge (`data-mshare` → the Create sheet).
+  - **Hangout** is what people see for a flare (Create tile, "Hangout here", Scout's answers, Spanish "Quedada"); the
+    code, data and Scout actions still say `flare`.
+  - **No made-up content by default:** `DEMO = ENV['SQ_DEMO'] == '1'` (the demo people, groups, flares, stories and
+    streams); the scratch test servers pass `SQ_DEMO=1` for the suites written around them, `start_v3.sh` doesn't.
   - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Events, Food, Friends, Nightlife, Hot spots, Outdoors,
     Sights. A chip turns the map to just that (`EX_LAYERS`; the previous layers are kept in `S.exPrev` and
     put back by tapping it again (it shows a ✕) / back, `exploreClear`), always at half, and lists it in the drawer
@@ -76,6 +91,39 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   - **Search page** before typing: Ask Scout (opens voice), Scout ideas by time of day (`askIdeas()`), recent, try.
   - Back (`closeTopOverlay`): sheet → map popup → chip list → lower the drawer. Scout's tour, targets (`SC_T`) and
     offline answers (`SC_FAQ`) point at the V3 places; `scout_knowledge.md` describes the V3 screen.
+- **Liquid Glass look** (V3, `mockup/glass.css`, linked right after index.html's `<style>`; overrides only, all under
+  `#app.v3`): iOS-style frosted glass (`--g-*` tokens: tint, `backdrop-filter` blur + saturate, bright rim, top highlight
+  `--g-spec`, diagonal reflection `--g-sheen`) on the drawer, floating map buttons, name pill, sheets, toasts, popups;
+  the dock is a floating glass capsule (`#dock::before`) with a brighter lens under the picked tab; chips are glass
+  capsules (picked = white); iOS system colours (`--accent #ff9f0a`, `--accent2 #64d2ff`, `--good #30d158`, `--party
+  #bf5af2`) and SF font. Siri palette (`--siri` linear, `--siri-c` conic, same hues as Scout's orb): the
+  ＋ button, mic, Sign up, primary buttons, focused search box, the drawer's top light line, a turning ring around Scout.
+  At `full` the drawer is nearly solid (the map's hidden anyway). `prefers-reduced-transparency` / no blur support →
+  solid; reduced motion → no animation. To go back to the old look, drop the `<link>`.
+- **🏆 Best of Austin** (V3; `rankings.rb` + `rankings.js` + `fetch_rankings.rb`): ranked lists in 5 groups (Food, Drinks,
+  Music & DJs, Sports, Things to do; 47 lists in `RANK_CATS`: pizza, sushi, Indian, Italian…, best drink menus, cocktails,
+  margaritas…, live music, DJs & dance nights, karaoke…, sports bars, soccer pubs, game day…, trivia, comedy). **Research**
+  (`ruby fetch_rankings.rb [list…|--all|--relink|--rematch]`, weekly; sonnet + WebSearch through the CLI, 4 at a time, ~2-4 min and
+  ~$0.30 a list): Claude reads local best-of lists, awards (Chronicle readers' poll, Michelin, Beard), r/Austin, YouTube
+  and TikTok and returns spots with every source, what to order, vibe, price, best time, a hype line and (music lists)
+  weekly nights with DJs / Instagram. Then, without Claude, every link is opened (YouTube / TikTok via oEmbed, Reddit via
+  .json; Instagram / Facebook can't be checked so they're dropped) and a spot with no working source is dropped; spots
+  are matched to our places by name (+ within 1.5 mi of the geocoded address, or near the neighborhood the sources name, `area_of`) or geocoded (Nominatim, `data/rank_geo.json`).
+  People's "missing a spot?" ideas (`d['rank_suggest']`) go to the next run as candidates. → `data/rankings.json`.
+  **Score** (`Rankings.list`, live): web = sources weighted by kind (`KIND_W`: award 1.3 … video 0.6), recency, list
+  position, same outlet ×1.5 not ×2, all videos (or all Reddit) together count as one outlet; scaled to 100 for the
+  list's best. People = ⭐ 1-5 Bayesian (5 make-believe 3.6s), "would go back", favorites, check-ins; weight 6% per
+  rating up to 40%. Drink lists: menu drink count + happy hour (MenuIndex) 10%. Every spot shows its reasons and its
+  sources. **API**: `/api/rankings` (index), `/api/rankings/cat?k=&lat=&lng=` (guests ok), `/api/rankings/vote`
+  (`d['rank_votes'][k][id][h]` = {s, b}; stars 0 = take it back; deleted / banned accounts stop counting),
+  `/api/rankings/suggest` (10/day), share page `/r/<list>` (OG preview, → `/?rank=<list>`). **App**: Explore's
+  "🏆 Best of Austin" row (`#exBest`, `bestRail()`, lists that fit the hour first), the 🏆 Best of chip
+  (`exploreCat('best')` → `openRankings(k)`; not a map layer), sheet `#rankBg` (in `OVERLAYS`): group + list chips,
+  Top / Near me / Open now, ✨ New to me (hides places you've checked in), cards (#, score, open now, distance, reasons,
+  get/try, hype, Why it ranks here + source links, weekly nights with Tonight, Map / Menu / Directions / ⭐ Rate (stars +
+  would go back) / ❤️ / Instagram or website / 🔗 share: in a chat as a place card or the /r/ link), How we rank,
+  Missing a spot. **Scout**: "best X", "where should we watch the game", "a good DJ night" (`RANK_ASK` + `RANK_WORDS`)
+  get that list first in `scout_places` (`rank_for_scout`). Test: `e2e_rank.py` (24 checks; needs rankings.json).
 - **Story viewer** (`#storyView`, `renderReel()`): TikTok-style vertical scroll-snap feed of every story; the one ≥60%
   in view plays (IntersectionObserver), 🔇/🔊 for all, single tap pauses a video, double-tap = ❤️ (`/api/story/like`;
   the app only gets counts + your own like; demo stories' likes stay on the phone), right rail: like, reply (DM,

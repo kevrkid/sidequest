@@ -4,7 +4,7 @@
 # Needs from menus.rb: MENU_DIR, menu_cached, menu_keep, menu_slot, MENU_LINES, menu_lines, MENU_SYSTEM, MENU_MODEL.
 module MenuIndex
   @lock = Mutex.new
-  @files = {}   # path => [mtime, dishes, happy]
+  @files = {}   # path => [mtime, dishes, happy, bar: {food:, kitchen: week}]
   @at = 0
 
   module_function
@@ -36,7 +36,10 @@ module MenuIndex
         end
         h = m && m['happy']
         week = h && Hours.parse(h['hours'])
-        @files[f] = [mt, dishes, week ? h.merge('week' => week, 'id' => id) : nil]
+        drinks = /drink|cocktail|beer|wine|spirit|whisk|bourbon|tequila|mezcal|vodka|\bgin\b|\brum\b|shot|beverage|bottle|draft|draught|on tap|sake|cider|seltzer|alcohol|mocktail|coffee|\btea\b|happy hour|bubbles|champagne|margarita|frozen|liquor|wells?\b/i
+        food = Array(m && m['sections']).any? { |s| s['name'].to_s !~ drinks && Array(s['items']).size >= 2 && !s['name'].to_s.strip.empty? }
+        kw = m && Hours.parse(m['kitchen'].to_s)
+        @files[f] = [mt, dishes, week ? h.merge('week' => week, 'id' => id) : nil, { food: food || !kw.nil?, kitchen: kw }]
       end
       @files.select! { |f, _| seen[f] }
       @at = Time.now.to_f
@@ -48,9 +51,15 @@ module MenuIndex
     @lock.synchronize { @files.values.flat_map { |x| x[1] } }
   end
 
+  # A bar's menu: food on it (a section that isn't drinks), and the kitchen's hours when it says
+  def bar(id)
+    load
+    @lock.synchronize { @files[File.join(MENU_DIR, "#{id}.json")]&.dig(3) }
+  end
+
   def all_happy
     load
-    @lock.synchronize { @files.values.map(&:last).compact }
+    @lock.synchronize { @files.values.map { |x| x[2] }.compact }
   end
 
   STOP = %w[where can i get find the a an any some best good great near me nearby around here in at for with and or of to who has have

@@ -26,10 +26,12 @@ require_relative 'places'
 require_relative 'areas'
 require_relative 'sights'
 require 'date'
+require_relative 'rankings'   # 🏆 Best of Austin: lists by category from the web + people's ratings (fetch_rankings.rb researches)
 require_relative 'lens' # Live Translate: camera text → any of 13 languages (lens.js + /api/translate)
 require_relative 'identify' # the camera's "what is this?" (lens.js Identify + /api/lens/identify)
 require_relative 'menus'    # full menus with prices for food & drink places (/api/place/menu)
 require_relative 'menu_finds'   # a dish anywhere, happy hours: both from the menus we've read
+require_relative 'barfood'   # bars: serves food? kitchen till when? (menus, people who've been, OpenStreetMap)
 require_relative 'photocheck'   # Claude looks at every public photo right after it goes up
 require_relative 'wall'   # public posts: photos and text that stay, likes, comments, boosts
 require_relative 'rewards'   # 🪙 coins, daily streaks, weekly challenge, leaderboards
@@ -51,7 +53,7 @@ ROOT    = __dir__
 
 # Public test mode: invite codes, no demo people/streams/stories, everything behind sign-in.
 BETA = ENV['SQ_BETA'] == '1'
-DEMO = ENV.key?('SQ_DEMO') ? ENV['SQ_DEMO'] == '1' : !BETA
+DEMO = ENV['SQ_DEMO'] == '1'   # made-up people, groups, flares and streams: only for tests that ask for them (SQ_DEMO=1)
 INVITES = ENV['SQ_INVITES'].to_s.split(',').map(&:strip).reject(&:empty?)   # empty = anyone can sign up
 ADMIN_TOKEN = ENV['SQ_ADMIN_TOKEN'].to_s                                    # empty = admin page off
 MODERATE = ENV['SQ_MODERATE'] != '0'                                        # screen posts with Claude
@@ -96,7 +98,7 @@ PUBLIC_FILES = { 'index.html' => 'text/html; charset=utf-8', 'terms.html' => 'te
                  # livekit-client 2.22.0 (UMD), loaded only when someone streams or watches
                  'vendor/livekit-client.js' => 'application/javascript',
                  # Live Translate (also works on its own at /lens): tesseract.js 6.0.1 reads text on the phone
-                 'lens.html' => 'text/html; charset=utf-8', 'lens.js' => 'application/javascript',
+                 'lens.html' => 'text/html; charset=utf-8', 'lens.js' => 'application/javascript', 'rankings.js' => 'application/javascript', 'glass.css' => 'text/css; charset=utf-8',
                  'vendor/tesseract/tesseract.min.js' => 'application/javascript', 'vendor/tesseract/worker.min.js' => 'application/javascript',
                  'vendor/tesseract/tesseract-core-lstm.wasm.js' => 'application/javascript',
                  'vendor/tesseract/tesseract-core-simd-lstm.wasm.js' => 'application/javascript' }
@@ -478,6 +480,8 @@ BIZ_Q = /business(es)?|\bplaces?\b|\bspots?\b|\bshops?\b|\bstores?\b|somewhere|r
 HAPPY_Q = /happy\s*hours?/i
 DISH_Q = /\bwhere\b.{0,30}\b(get|find|eat|buy|have|has|serves?|order)\b|\bwho (has|serves|makes|sells)\b|\b(best|good|cheap(est)?)\b.{0,40}\b(in town|near( me)?|around( here)?|nearby)\b/i
 def scout_places(q, near)
+  # "best X" / "where should I…": the Best of Austin list for it (rankings.rb)
+  if (r = store(write: false) { |d| rank_for_scout(d, q, near) }) then return r end
   # happy hours and dishes come from the menus we've read (menu_finds.rb)
   if q =~ HAPPY_Q
     h = MenuIndex.happy(near: near, limit: 12)
@@ -1431,9 +1435,18 @@ def mount_app(server)
     qy = req.query
     near = qy['lat'] && qy['lng'] ? [qy['lat'].to_f.round(2), qy['lng'].to_f.round(2)] : nil   # ~1 km: never exact GPS
     cat = qy['cat'].to_s[/\A[a-z]{2,10}\z/]
-    { places: Places.search(cat: cat, q: qy['q'].to_s[0, 60], near: near, zone: qy['zone'].to_s[0, 20],
-                            open_only: qy['open'] == '1', limit: qy['limit'] ? qy['limit'].to_i.clamp(1, 80) : 40),
+    rows = Places.search(cat: cat, q: qy['q'].to_s[0, 60], near: near, zone: qy['zone'].to_s[0, 20],
+                         open_only: qy['open'] == '1', limit: qy['limit'] ? qy['limit'].to_i.clamp(1, 80) : 40)
+    if rows.any? { |r| BAR_KINDS.include?(r[:kind]) }   # bars say whether they serve food, and till when
+      store(write: false) { |d| rows = rows.map { |r| BAR_KINDS.include?(r[:kind]) ? r.merge(barfood_info(d, Places.find(r[:id]))) : r } }
+    end
+    { places: rows,
       fetched: Places.data[:fetched], label: Places::CATS[cat]&.dig(:label) }
+  end
+  # Where you're going, for search's "Find a spot": the going-out districts first, then neighborhoods and nearby towns
+  route(server, '/api/areas', auth: false, get: true) do |_b, _h, _req|
+    { areas: Places::HOTSPOTS.map { |z| { id: z[:id], name: z[:name], lat: z[:lat], lng: z[:lng], km: (z[:r] / 1000.0).round(2), hot: true } } +
+             Areas.list.map { |a| { name: a['name'], lat: a['lat'], lng: a['lng'], km: a['r'] } } }
   end
   # Outdoors layer: park / greenbelt / preserve and lake / river outlines + rentals, ramps, fishing spots,
   # trailheads (data/outdoors.json from fetch_outdoors.rb), sent as-is; phones keep it for an hour.
@@ -1476,7 +1489,7 @@ def mount_app(server)
     p = Places.find(req.query['id'].to_s[0, 30]) or raise 'No such place.'
     lat, lng = req.query['lat'], req.query['lng']
     mi = lat && lng ? Places.miles(lat.to_f.round(2), lng.to_f.round(2), p['lat'], p['lng']) : nil
-    { place: Places.row(p, Hours.status(p['week'], Places.now_mow), mi) }
+    { place: Places.row(p, Hours.status(p['week'], Places.now_mow), mi).merge(store(write: false) { |d| barfood_info(d, p) }) }
   end
   # Google's rating, price level and hours for the place someone tapped (anyone can browse, so per-IP limits)
   route(server, '/api/place/google', auth: false, get: true) do |_b, _h, req|
@@ -2434,7 +2447,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

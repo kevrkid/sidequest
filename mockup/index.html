@@ -656,6 +656,31 @@
 
   /* Scout, the in-app guide */
   .scwrap{display:block} .scwrap svg{width:100%;height:100%;display:block;overflow:visible}
+  /* Scout: a compass in a Siri-style orb */
+  .sc-orb{position:relative;display:block;width:100%;height:auto;aspect-ratio:1;border-radius:50%;overflow:hidden;isolation:isolate;background:#0a103455;
+    clip-path:circle(50% at 50% 50%);-webkit-mask-image:radial-gradient(circle,#000 70%,#000 70.5%);   /* round in every browser (Safari ignores the corner clip on blurred, spinning layers) */
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);transition:transform .18s}
+  .sc-orb::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px #ffffff4d,inset 0 0 14px #ffffff26;pointer-events:none}
+  .sc-orb i{position:absolute;border-radius:50%;pointer-events:none}
+  .sc-orb .orb-sw{inset:-30%;filter:blur(7px);opacity:.72;background:conic-gradient(from 0deg,#ff2d95,#b04bff,#3d7bff,#00d4ff,#3ddc97,#ffb020,#ff2d95);animation:orbspin 7s linear infinite}
+  .sc-orb .orb-sw.b{inset:-12%;opacity:.55;mix-blend-mode:screen;background:conic-gradient(from 90deg,transparent,#00e0ff 12%,transparent 30%,#ff2d95 48%,transparent 66%,#b04bff 82%,transparent);animation:orbspin 4.5s linear infinite reverse}
+  .sc-orb .orb-core{inset:17%;background:radial-gradient(circle at 50% 46%,#0a1034b3 50%,#0a103400 74%)}
+  .sc-orb .orb-glass{inset:0;background:radial-gradient(circle at 33% 24%,#ffffffb8,#ffffff1c 20%,transparent 40%),radial-gradient(circle at 50% 125%,#ffffff40,transparent 52%)}
+  .sc-orb svg{position:absolute;inset:0;width:100%;height:100%}
+  .sc-orb .orb-ticks{opacity:.55}
+  .sc-orb .orb-needle{transform-origin:50px 50px;animation:needle 5s ease-in-out infinite;filter:drop-shadow(0 1px 2px #000a)}
+  @keyframes orbspin{to{transform:rotate(360deg)}}
+  @keyframes needle{0%,100%{transform:rotate(-14deg)}45%{transform:rotate(16deg)}70%{transform:rotate(4deg)}}
+  @keyframes needlespin{to{transform:rotate(360deg)}}
+  @keyframes needlewob{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+  @keyframes orbpulse{to{transform:scale(1.06);filter:brightness(1.25) saturate(1.2)}}
+  .sc-orb[data-ex=thinking] .orb-needle{animation:needlespin .8s linear infinite} .sc-orb[data-ex=thinking] .orb-sw{animation-duration:2.2s}
+  .sc-orb[data-ex=excited] .orb-needle,.sc-orb[data-ex=laughing] .orb-needle{animation:needlespin .55s cubic-bezier(.3,1.4,.5,1) 2}
+  .sc-orb[data-ex=confused] .orb-needle{animation:needlewob .35s ease-in-out 4 alternate}
+  .sc-orb[data-ex=surprised]{transform:scale(1.08)} .sc-orb[data-ex=calm] .orb-sw{animation-duration:12s}
+  .sc-orb.talk{animation:orbpulse .45s ease-in-out infinite alternate} .sc-orb.talk .orb-sw{animation-duration:1.8s} .sc-orb.open{transform:scale(1.07)}
+  #scoutBtn.listening .sc-orb .orb-sw{animation-duration:1.3s} #scoutBtn.listening .sc-orb{animation:orbpulse .7s ease-in-out infinite alternate}
+  @media (prefers-reduced-motion:reduce){ .sc-orb .orb-sw,.sc-orb .orb-needle{animation:none!important} }
   #scoutBtn{position:absolute;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:612;width:60px;height:60px;border-radius:50%;padding:3px;
     background:radial-gradient(circle at 50% 40%,#1d2a55,#0d1330);border:2px solid #2ec5ff88;box-shadow:0 8px 24px #000a,0 0 0 4px #2ec5ff18}
   #v-home #homeNext{margin-left:68px}   /* leave room for the Scout button */
@@ -663,6 +688,8 @@
   .bigmic{width:84px;height:84px;border-radius:50%;font-size:36px;background:linear-gradient(145deg,#ff7a18,#ff3b5c);box-shadow:0 10px 30px -8px #ff3b5ccc;
     display:grid;place-items:center;transition:transform .15s} .bigmic i{font-style:normal} .bigmic:active{transform:scale(.94)}
   .bigmic.on{background:linear-gradient(145deg,#ff3b5c,#c2185b);animation:micpulse 1.2s ease-in-out infinite}
+  #scMic{width:104px;height:104px;padding:0;border-radius:50%;background:none;box-shadow:0 0 34px -6px #a35cffcc} #scMic .scwrap{width:100%}   /* the orb is the talk button, like Siri */
+  #scMic.on{background:none;animation:none} #scMic.on .sc-orb{animation:orbpulse .6s ease-in-out infinite alternate} #scMic.on .sc-orb .orb-sw{animation-duration:1.2s}
   @keyframes micpulse{50%{box-shadow:0 0 0 16px #ff3b5c33,0 10px 30px -8px #ff3b5ccc}}
   .scmicl{font-weight:700;font-size:14px;text-align:center;max-width:90%;min-height:20px}
   #scoutBtn .scwave{position:absolute;right:-8px;top:-10px;font-size:22px;opacity:0;transform-origin:70% 80%;pointer-events:none}
@@ -696,10 +723,9 @@
   .sc-lens:active{transform:scale(.97)}
   .sc-lens.look{margin-top:8px;background:linear-gradient(135deg,#ff7a18,#e9408a);box-shadow:0 10px 28px -12px #ff7a18cc}
   #scoutForm{gap:6px} #scoutForm input{flex:1;min-width:0}
-  #scMic.on{background:#ff5a5f;color:#fff;border-color:#ff5a5f;animation:micpulse 1.2s ease-in-out infinite}
-  #scMic.on i{font-size:0} #scMic.on i::after{content:'';display:inline-block;width:26px;height:26px;border-radius:6px;background:#fff}   /* a stop square while on */
+  #scMic.on{background:none;border-color:transparent}   /* listening: the orb swirls faster and its glow follows your voice */
   @keyframes micpulse{50%{box-shadow:0 0 0 12px #ff5a5f33}}
-  #scMic.on.lvl{animation:none;box-shadow:0 0 0 calc(4px + var(--lvl,0) * 22px) #ff5a5f44;transition:box-shadow .08s}   /* recording: the ring follows your voice */
+  #scMic.on.lvl{animation:none;box-shadow:0 0 calc(10px + var(--lvl,0) * 40px) calc(2px + var(--lvl,0) * 14px) #b04bffaa;transition:box-shadow .08s}   /* recording: the glow follows your voice */
   #scoutRing{position:absolute;z-index:905;border:3px solid var(--accent2);border-radius:14px;pointer-events:none;
     box-shadow:0 0 0 4px #2ec5ff44,0 0 24px #2ec5ff;animation:scring 1.1s ease-in-out infinite}
   @keyframes scring{50%{box-shadow:0 0 0 11px #2ec5ff18,0 0 34px #2ec5ff}}
@@ -842,8 +868,8 @@
   #dock button.on .dav .av{box-shadow:0 0 0 2px #0a0f22,0 0 0 3.5px var(--accent)}
 
   /* Scout rides on the drawer's top edge */
-  #app.v3 #scoutBtn{left:12px;bottom:calc(var(--dvis) + 12px)!important;width:56px;height:56px;transition:bottom .34s cubic-bezier(.2,.9,.25,1),opacity .2s}
-  #app.v3 #scoutBubble,#app.v3 #scoutTour:not(.top){bottom:calc(var(--dvis) + 78px)}
+  #app.v3 #scoutBtn{left:calc(50% - 29px);bottom:calc(var(--dvis) + 12px)!important;width:58px;height:58px;padding:0;border:0;border-radius:50%;background:none;box-shadow:0 0 22px -4px #a35cffb3,0 8px 20px -8px #000a;transition:bottom .34s cubic-bezier(.2,.9,.25,1),opacity .2s}   /* where Siri appears: bottom middle */
+  #app.v3 #scoutBubble,#app.v3 #scoutTour:not(.top){bottom:calc(var(--dvis) + 80px)} #app.v3 #scoutBubble{left:16px;right:16px;margin:0 auto}
   #app.v3 #v-home #homeNext{margin-left:0}
 
   /* Explore: what's around, in the drawer */
@@ -923,9 +949,9 @@
     #app.v3 #drawer{left:16px;right:auto;width:420px;top:74px;bottom:calc(var(--dockh) + 24px);border-radius:22px;border:1px solid #ffffff1c;transform:none}
     #app.v3 #drawer .dgrab{visibility:hidden;height:10px}
     #app.v3 #dock{left:16px;right:auto;width:420px;bottom:16px;border-radius:20px;border:1px solid #ffffff14;padding-bottom:4px;height:62px}
-    #app.v3 #scoutBtn{left:452px;bottom:24px!important;opacity:1!important;pointer-events:auto!important}
+    #app.v3 #scoutBtn{left:calc(226px + 50% - 29px);bottom:24px!important;opacity:1!important;pointer-events:auto!important}
     #app.v3 .maplive{left:524px;bottom:24px;opacity:1!important;pointer-events:auto!important}
-    #app.v3 #scoutBubble,#app.v3 #scoutTour:not(.top){left:452px;bottom:96px}
+    #app.v3 #scoutBubble,#app.v3 #scoutTour:not(.top){left:calc(226px + 50% - 160px);right:auto;width:320px;bottom:96px}
     #app.v3 header{padding-left:16px;padding-right:16px}
     #app.v3 .logo{margin:0 auto 0 0}
     #app.v3 #toasts{left:452px;right:auto;width:380px}
@@ -969,6 +995,20 @@
   #drawer .mapchips .chip.on::after{content:"✕";margin-left:7px;font-size:11px;opacity:.6}
   #app.v3[data-cat] .glance,#app.v3[data-tab=search] .glance{display:none}
   .subchips button.tog{border-color:#3ddc9766;color:#bff5dc} .subchips button.tog.on{background:var(--good);border-color:var(--good);color:#04210f}
+  .sfhead{margin:0 0 6px} .sfrow{display:flex;align-items:center;gap:0;margin:0 0 2px}
+  .sfrow .sfl{flex:none;width:46px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .sfrow .subchips{flex:1;min-width:0;margin:0 -14px 6px 0;padding:0 14px 0 0}
+  .sfareas{margin:0 0 10px 46px} .sfareas input{width:100%;margin:0 0 8px;padding:8px 12px;border-radius:12px;font-size:14px}
+  .sfalist{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow-y:auto}
+  .sfalist button{padding:6px 11px;border-radius:99px;background:#161e40;border:1px solid #ffffff14;font-size:12.5px;font-weight:650;color:#cfd5f5} .sfalist button.on{background:var(--accent2);color:#03131d}
+  .sfsound{color:var(--accent2);font-weight:650} .barfood{margin:2px 0 8px;font-size:13.5px} .barfood .kclosed{color:#ff9a8a} .sfcompact{margin-bottom:6px} .exlh .linkbtn{margin-left:10px}
+  .mrail .mcard{flex:none;position:relative;width:118px;height:158px;border-radius:14px;overflow:hidden;background:#161e40 center/cover no-repeat;border:1px solid #ffffff14;scroll-snap-align:start;padding:0;text-align:left}
+  .mcard video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .mcard .mplay{position:absolute;top:7px;right:7px;width:24px;height:24px;border-radius:50%;background:#0009;display:grid;place-items:center;font-size:10px;font-style:normal;color:#fff}
+  .mcard .mcap{position:absolute;left:0;right:0;bottom:0;padding:22px 8px 7px;background:linear-gradient(transparent,#000c);display:flex;flex-direction:column;gap:1px}
+  .mcard .mcap b{font-size:12px;line-height:1.2;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden} .mcard .mcap small{font-size:10.5px;color:#ffffffb0}
+  .mnudge{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:#161e40;border:1px dashed #ffffff22;font-size:13px;color:var(--muted)} .mnudge span{flex:1}
+  .sfpin span{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#0d1330;border:2px solid var(--accent2);font-size:15px;box-shadow:0 3px 10px #0008}
   .exnote{margin:-2px 2px 6px;font-size:12px}
   /* a card open: it gets the drawer to itself */
   #app.v3[data-pop] .qbar{display:none}
@@ -1038,6 +1078,7 @@
   #app.v3 .deck{height:calc(100vh - 480px);height:calc(100dvh - 480px);min-height:300px;max-height:520px}   /* the swipe buttons stay above the dock */
   #createBg .create-grid button{display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start}
 </style>
+<link rel="stylesheet" href="/glass.css">   <!-- V3 Liquid Glass look: glass.css overrides the styles above -->
 </head>
 <body>
 
@@ -1092,6 +1133,8 @@
       <div id="exMain">
       <div id="homeStories" aria-label="Stories"></div>
       <div id="homeNext"></div>
+      <div id="exMedia"></div>
+      <div id="exBest"></div>
       <div id="homeTonight" hidden></div>
       <div id="exMore"></div>
       <div id="quickBar" role="toolbar" aria-label="Quick actions"></div>
@@ -1102,7 +1145,7 @@
     <section class="view" id="v-search" hidden><div id="searchOut"></div></section>
 
     <section class="view" id="v-feed" hidden>
-      <div class="fhd"><h2 class="grow" data-t="For you">For you</h2><div class="seg mini" id="feedMode"><button type="button" data-v="foryou" class="on" data-t="Happening">Happening</button><button type="button" data-v="posts" data-t="Posts">Posts</button></div><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
+      <div class="fhd"><h2 class="grow" data-t="Feed">Feed</h2><div class="seg mini" id="feedMode"><button type="button" data-v="foryou" class="on" data-t="Happening">Happening</button><button type="button" data-v="posts" data-t="Posts">Posts</button></div><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
       <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:0 0 10px" hidden>
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
@@ -1113,7 +1156,7 @@
     </section>
 
     <section class="view" id="v-meet" hidden>
-      <div class="row"><h2 class="grow" data-t="Chats">Chats</h2><button class="btn sm" data-meetfilter>⚙️ Sort & filter</button></div>
+      <div class="row"><h2 class="grow" data-t="Social">Social</h2><button class="btn sm" data-meetfilter>⚙️ Sort & filter</button></div>
       <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="msgs">💬 <span data-t="Messages">Messages</span> <span class="badge live" id="dmPill" hidden></span></button>
         <button type="button" data-mt="friends">👥 <span data-t="Friends">Friends</span> <span class="badge live" id="frPill" hidden></span></button>
         <button type="button" data-mt="groups">🏘️ <span data-t="Groups">Groups</span></button><button type="button" data-mt="swipe" class="on">👋 <span data-t="Meet">Meet</span></button></div>
@@ -1201,16 +1244,16 @@
   </div>
   <nav id="dock" aria-label="Main">
     <button data-dock="home" class="on"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg><span data-t="Explore">Explore</span></button>
-    <button data-dock="feed"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span data-t="For you">For you</span></button>
+    <button data-dock="feed"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span data-t="Feed">Feed</span></button>
     <button data-dock="create" class="plus" aria-label="Create"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
-    <button data-dock="meet"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span data-t="Chats">Chats</span><b class="dn" id="dockChatN"></b></button>
+    <button data-dock="meet"><svg class="ic" aria-hidden="true"><use href="#i-chat"/></svg><span data-t="Social">Social</span><b class="dn" id="dockChatN"></b></button>
     <button data-dock="me"><span class="dav" id="dockAv"></span><span data-t="You">You</span></button>
   </nav>
 
 
   <div class="sheet-bg" id="sheetBg" hidden>
     <form class="sheet" id="compose">
-      <div class="row"><b class="grow" style="font-size:18px">📣 Send up a flare</b><button type="button" class="btn sm" id="closeSheet">Cancel</button></div>
+      <div class="row"><b class="grow" style="font-size:18px" data-t="📣 Start a hangout">📣 Start a hangout</b><button type="button" class="btn sm" id="closeSheet">Cancel</button></div>
       <label>What's the move?</label>
       <textarea id="cText" rows="3" maxlength="200" placeholder="heading to play pool at Buffalo Billiards if anyone's down…" required></textarea>
       <div class="chips" id="cIdeas" style="margin-top:8px"></div>
@@ -1223,7 +1266,7 @@
       <label>Who sees it</label>
       <div class="seg" id="cVis"><button type="button" data-v="broadcast" class="on">🌐 Everyone</button><button type="button" data-v="friends">👥 Friends</button></div>
       <p class="meta" id="cHint"></p>
-      <button class="btn primary" style="width:100%;margin-top:14px;padding:13px">Send flare</button>
+      <button class="btn primary" style="width:100%;margin-top:14px;padding:13px" data-t="Post hangout">Post hangout</button>
     </form>
   </div>
 
@@ -1232,7 +1275,7 @@
     <div class="create-grid">
       <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Story">Story</b><span data-t="A photo or video for 24 hours · tag the place, event, people">A photo or video for 24 hours · tag the place, event, people</span></button>
       <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i><b data-t="Post">Post</b><span data-t="A photo or thought that stays on your profile">A photo or thought that stays on your profile</span></button>
-      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Flare">Flare</b><span data-t="Ask who's free right now">Ask who's free right now</span></button>
+      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Hangout">Hangout</b><span data-t="Ask who's free right now">Ask who's free right now</span></button>
       <button data-create="event" style="background:linear-gradient(145deg,#8e2de2,#e9408a)"><i>📅</i><b data-t="Event">Event</b><span data-t="Plan something later">Plan something later</span></button>
       <button data-create="group" style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>🏘️</i><b data-t="Group">Group</b><span data-t="Start a community">Start a community</span></button>
       <button data-create="live" style="background:linear-gradient(145deg,#ff416c,#ff9a3c)"><i>📺</i><b data-t="Go live">Go live</b><span data-t="Stream from your phone">Stream from your phone</span></button>
@@ -1262,11 +1305,11 @@
   <div class="sheet-bg" id="scoutBg" hidden style="z-index:740"><div class="sheet scout-sheet">
     <div class="row sc-top"><span id="scoutHead" class="scwrap"></span>
       <div class="grow" style="min-width:0"><b id="scoutName">Scout</b><div class="meta" id="scoutLeft" data-t="Your guide to Side Quest">Your guide to Side Quest</div>
-        <div class="sc-mine"><button data-sc="look">🎨 <span data-t="Customize Scout">Customize Scout</span></button><button data-sc="tourgo">🧭 <span data-t="Tour">Tour</span></button></div></div>
+        <div class="sc-mine"><button data-sc="look">⚙️ <span data-t="Customize Scout">Customize Scout</span></button><button data-sc="tourgo">🧭 <span data-t="Tour">Tour</span></button></div></div>
       <button class="btn sm" data-sc="voice" id="scVoice" title="Also read typed answers out loud">🔇</button><button class="btn sm" data-sc="drive" title="Driving mode">🚗</button>
       <button class="btn sm" data-sc="close" aria-label="Close">✕</button></div>
     <div id="scoutLog"></div>
-    <div class="scvoice"><button class="bigmic" data-sc="mic" id="scMic" aria-label="Talk to Scout"><i>🎤</i></button>
+    <div class="scvoice"><button class="bigmic" data-sc="mic" id="scMic" aria-label="Talk to Scout"><span class="scwrap" data-scface></span></button>
       <div id="scMicL" class="scmicl">Tap to talk</div><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button>
       <button class="sc-lens" data-sc="lens"><i>📷</i><span><b data-t="Live Translate">Live Translate</b><small data-t="Point your camera at a sign or menu">Point your camera at a sign or menu</small></span></button>
       <button class="sc-lens look" data-sc="identify"><i>🔍</i><span><b data-t="What is this?">What is this?</b><small data-t="Point at a building, landmark, storefront or dish">Point at a building, landmark, storefront or dish</small></span></button></div>
@@ -1295,7 +1338,7 @@
 
 <script src="config.js"></script>
 <script>
-const CFG = window.SQ_CONFIG || {demo:true, beta:false, invite:false};
+const CFG = window.SQ_CONFIG || {demo:false, beta:false, invite:false};
 const M = 60000, NOW = Date.now();
 const KINDS = {
   pool:{e:'🎱',l:'Pool'}, hockey:{e:'🏒',l:'Hockey'}, music:{e:'🎸',l:'Live music'}, outdoors:{e:'🌳',l:'Outdoors'},
@@ -1381,7 +1424,7 @@ const SEED_PINGS = [
   {id:'p7',u:'lowkey_lu',k:'chill',v:'cb',t:"Reading at Cherrywood, happy to chat. Open mic starts at 8",s:0,d:150,vis:'broadcast',downs:[]},
   {id:'p8',u:'riff_raff_rae',k:'music',v:'mh',t:"Got an extra ticket to the show at the Mohawk, free to a good home 🎟️",s:90,d:180,vis:'broadcast',downs:[]},
 ];
-if(!CFG.demo){ USERS.splice(0); SEED_PINGS.splice(0); GROUPS.forEach(g=>g.m=[]); }
+if(!CFG.demo){ USERS.splice(0); SEED_PINGS.splice(0); GROUPS.splice(0); }   // no made-up people or groups: only what real people make
 const ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const ELEM = {Aries:'fire',Leo:'fire',Sagittarius:'fire',Taurus:'earth',Virgo:'earth',Capricorn:'earth',
   Gemini:'air',Libra:'air',Aquarius:'air',Cancer:'water',Scorpio:'water',Pisces:'water'};
@@ -1474,13 +1517,13 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','Groups':'Grupos','✨ Everyone':'✨ Todos','👥 Friends':'👥 Amigos','📍 Near me':'📍 Cerca de mí','On till':'Hasta las','In a chat':'En un chat','1 member':'1 miembro',"On friends' maps":'En el mapa de amigos','Sharing':'Compartiendo',"Ask who's free right now":'Pregunta quién está libre ahora','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Flare':'Bengala','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Explore':'Explorar','Watch':'Ver','Groups':'Grupos','✨ Everyone':'✨ Todos','👥 Friends':'👥 Amigos','📍 Near me':'📍 Cerca de mí','On till':'Hasta las','In a chat':'En un chat','1 member':'1 miembro',"On friends' maps":'En el mapa de amigos','Sharing':'Compartiendo',"Ask who's free right now":'Pregunta quién está libre ahora','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Hangout':'Quedada','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Hangout here':'Quedada aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
   'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
   'Wave at people in Meet: when they wave back you can chat. Or bring your friends.':'Saluda a gente en Conocer: cuando te devuelvan el saludo podrán chatear. O trae a tus amigos.',
-  'For you':'Para ti',
-  'Chats':'Chats',
+  'Feed':'Novedades',
+  'Chats':'Chats', 'Social':'Social',
   'You':'Tú',
   'Search Austin, or ask Scout':'Busca o pregúntale a Scout',
   'Tonight':'Esta noche',
@@ -1532,7 +1575,7 @@ const ES = {
   'Neighborhoods glow brighter the more is open and happening.':'Los barrios brillan más cuanto más hay abierto y pasando.',
   'Out now':'Fuera ahora',
   'Sharing where they are':'Compartiendo dónde están',
-  'Flares':'Bengalas',
+  'Hangouts':'Quedadas',
   'Live now':'En vivo ahora',
   'On the map':'En el mapa',
   'No friends out on the map right now.':'Ningún amigo en el mapa ahora.',
@@ -1569,9 +1612,9 @@ const ES = {
   'Online':'En línea', 'Offline':'Desconectado', 'Sign up':'Regístrate',
   'My profile':'Mi perfil', 'Personality quiz':'Test de personalidad', 'My chart':'Mi carta astral', 'About me':'Sobre mí', 'My plans':'Mis planes',
   'Privacy & settings':'Privacidad y ajustes', 'Language: English':'Idioma: Español', 'Español':'English',
-  'Meet':'Conocer', 'Search':'Buscar', '🔎 Search people, events, groups, flares…':'🔎 Busca personas, eventos, grupos, bengalas…',
+  'Meet':'Conocer', 'Search':'Buscar', '🔎 Search people, events, groups, hangouts…':'🔎 Busca personas, eventos, grupos, quedadas…',
   '🔎 Find people by name or interest…':'🔎 Busca personas por nombre o interés…', '🔎 Search chats…':'🔎 Busca en chats…', '🔎 Search groups…':'🔎 Busca grupos…', 'Friends':'Amigos', 'Food':'Comida', 'Create & share':'Crear y compartir', 'Live':'En vivo',
-  'Photos & videos · flare · event · group':'Fotos y videos · bengala · evento · grupo', 'Your story':'Tu historia',
+  'Photos & videos · hangout · event · group':'Fotos y videos · quedada · evento · grupo', 'Your story':'Tu historia',
   '💬 {n} new messages':'💬 {n} mensajes nuevos', '{n} people + events to swipe':'{n} personas + eventos para deslizar',
   'Swipe events, groups & people':'Desliza eventos, grupos y personas', '{n} events this week':'{n} eventos esta semana',
   'Events, people, posts':'Eventos, personas, publicaciones', '{n} streaming now':'{n} transmitiendo ahora', 'Nobody live yet':'Nadie en vivo todavía',
@@ -1580,7 +1623,7 @@ const ES = {
   'Events':'Eventos', 'Night':'Noche', 'Outdoors':'Aire libre',
   '🎫 Events on the map':'🎫 Eventos en el mapa', '🪩 Clubs':'🪩 Antros', '🍸 Bars (street level)':'🍸 Bares (de cerca)', '🔥 Hot spots':'🔥 Zonas populares',
   '🌳 Parks & nature':'🌳 Parques y naturaleza', '💧 Lakes & rivers':'💧 Lagos y ríos', '🚲 Hike & bike trails':'🚲 Senderos para caminar y bici',
-  '🛶 Rentals, ramps & trailheads':'🛶 Rentas, rampas y entradas de sendero', '📍 Flares':'📍 Bengalas', '📺 Live streams':'📺 Transmisiones en vivo',
+  '🛶 Rentals, ramps & trailheads':'🛶 Rentas, rampas y entradas de sendero', '📍 Hangouts':'📍 Quedadas', '📺 Live streams':'📺 Transmisiones en vivo',
   '📸 Stories':'📸 Historias', '🍔 Food & drink spots':'🍔 Lugares para comer y beber', '🟢 Open now only':'🟢 Solo abiertos ahora',
   '🌙 Night out':'🌙 Salir de noche', '🌲 Outdoors day':'🌲 Día al aire libre', '👥 Friends':'👥 Amigos', '✨ Everything':'✨ Todo', '○ Clear':'○ Nada',
   '🗂 Map layers':'🗂 Capas del mapa', 'Done':'Listo', 'Types':'Tipos', 'all':'todos', '{n} chosen':'{n} elegidos', 'All':'Todos', 'Key':'Clave',
@@ -1622,7 +1665,7 @@ const ES = {
   'Your guide to Side Quest':'Tu guía de Side Quest', 'Need help? Talk to me! 🎤':'¿Necesitas ayuda? ¡Háblame! 🎤',
   'Ask me what\'s the move tonight 🌙':'Pregúntame qué hacer esta noche 🌙', 'Want me to plan your night? Just say it ✨':'¿Planeo tu noche? Solo dímelo ✨',
   'Looking for tacos open late? Ask me 🌮':'¿Buscas tacos abiertos tarde? Pregúntame 🌮', 'Hiking or paddleboarding? I know spots 🌲':'¿Caminar o paddleboard? Conozco lugares 🌲',
-  'Plan my night ✨':'Planea mi noche ✨', "What's the move tonight? 🌙":'¿Qué hay para hacer esta noche? 🌙', 'How do I send a flare?':'¿Cómo mando una bengala?',
+  'Plan my night ✨':'Planea mi noche ✨', "What's the move tonight? 🌙":'¿Qué hay para hacer esta noche? 🌙', 'How do I start a hangout?':'¿Cómo armo una quedada?',
   'Find me something to do near me':'Encuéntrame algo que hacer cerca', 'Tell me a joke':'Cuéntame un chiste', "What's on the map?":'¿Qué hay en el mapa?',
   'How does Meet work?':'¿Cómo funciona Conocer?', 'Who can see my answers?':'¿Quién ve mis respuestas?',
   "Voice isn't available in this browser, so type below.":'La voz no funciona en este navegador; escribe abajo.',
@@ -1632,7 +1675,7 @@ const ES = {
   "You're offline. Showing what this phone already has; live stuff comes back with signal.":'Estás sin conexión. Ves lo que ya tiene este teléfono; lo en vivo vuelve con señal.', 'Back online.':'Conectado de nuevo.',
   'More like this':'Más como esto', '{n} quests done · friends see your badges':'{n} misiones hechas · tus amigos ven tus insignias', 'Check in around town to earn badges':'Registra visitas por la ciudad para ganar insignias',
   'Show friends where I check in (the place, for 3 hours)':'Mostrar a mis amigos dónde registro visitas (el lugar, por 3 horas)', 'Friends out now':'Amigos que andan fuera', 'What to tell me about':'De qué avisarme', 'Waves and friend requests':'Saludos y solicitudes', 'New friends':'Amigos nuevos',
-  'Friends going to your events':'Amigos que van a tus eventos', 'Invites':'Invitaciones', 'Chat replies':'Respuestas en chats', 'People down for your flares':'Quien se apunta a tus bengalas',
+  'Friends going to your events':'Amigos que van a tus eventos', 'Invites':'Invitaciones', 'Chat replies':'Respuestas en chats', 'People down for your hangouts':'Quien se apunta a tus quedadas',
   'Group joins':'Nuevos en tus grupos', 'Story tags':'Etiquetas en historias', 'Story likes':'Me gusta en historias', 'Event reminders':'Recordatorios de eventos',
   'Quests and weekly recap':'Misiones y resumen semanal', 'Friends who join from your invite':'Amigos que se unen con tu invitación', 'Quest of the week · 1.5× XP':'Misión de la semana · 1.5× XP',
   'Report or block':'Reportar o bloquear', 'Group chat':'Chat del grupo', 'Say something to the group…':'Dile algo al grupo…', 'Notifications':'Notificaciones', '{n} new notifications':'{n} notificaciones nuevas', 'Nothing yet':'Nada todavía', 'Loading…':'Cargando…',
@@ -1653,7 +1696,7 @@ const ES = {
   'See all':'Ver todo', 'Up next':'Lo que sigue', 'in {n} min':'en {n} min', 'in {n} h':'en {n} h', 'Go':'Ir', 'Details':'Detalles',
   "Show me on friends' leaderboards":'Mostrarme en la tabla de mis amigos', 'History buff':'Fan de la historia', 'Taco crawl':'Ruta de tacos',
   'Touch grass':'Sal al aire libre', 'Live and loud':'En vivo', 'Night owl':'Ave nocturna', 'Explorer':'Explorador', 'Squad up':'Arma tu grupo',
-  'Light a flare':'Lanza una bengala', 'Storyteller':'Cuentahistorias', 'Bring a friend':'Trae a un amigo', 'Regular':'De siempre', 'Culture hound':'Amante de la cultura',
+  'Start a hangout':'Arma una quedada', '📣 Start a hangout':'📣 Arma una quedada', 'Post hangout':'Publicar quedada', 'Storyteller':'Cuentahistorias', 'Bring a friend':'Trae a un amigo', 'Regular':'De siempre', 'Culture hound':'Amante de la cultura',
   'Sights':'Lugares', '🏛️ Landmarks & museums':'🏛️ Monumentos y museos', '🪧 Historical markers':'🪧 Placas históricas', '🎨 Statues, murals & views':'🎨 Estatuas, murales y miradores',
   '🏛️ Sightseeing':'🏛️ Turismo', 'Zoom in to see historical markers 🪧':'Acércate para ver las placas históricas 🪧', 'Loading the story…':'Cargando la historia…',
   "Couldn't load this one.":'No se pudo cargar.', 'More':'Más', 'Tell me the story':'Cuéntame la historia', 'Read more':'Leer más', 'Directions':'Cómo llegar',
@@ -1662,6 +1705,8 @@ const ES = {
   '📷 Photos':'📷 Fotos', 'Hot spots':'Zonas populares', '🔥 Hot spots: glow brighter the more is open and happening':'🔥 Zonas: brillan más entre más abierto y más ambiente haya',
   '{n} open':'{n} abiertos', '{n} events':'{n} eventos', 'quiet now':'tranquilo ahora', 'busy now':'animado ahora',
   '🔥 Bright zones are busy right now: tap one':'🔥 Las zonas brillantes están animadas: toca una', 'From Side Quest stories':'De historias de Side Quest', 'Photos: Google':'Fotos: Google',
+  // V3: find a spot, shared around town
+  'Find a spot':'Encuentra un lugar', 'Where':'Dónde', 'What':'Qué', 'Music':'Música', 'Vibe':'Ambiente', 'When':'Cuándo', 'Near me':'Cerca de mí', 'This map area':'Esta zona del mapa', 'More areas':'Más zonas', 'Neighborhood or town':'Barrio o pueblo', 'Drinks':'Bebidas', 'Live music':'Música en vivo', 'DJ':'DJ', 'Karaoke':'Karaoke', 'Trivia':'Trivia', 'Comedy':'Comedia', 'Free':'Gratis', 'Open late':'Abierto tarde', 'Jazz':'Jazz', 'Blues':'Blues', 'Country':'Country', 'Rock':'Rock', 'Hip-hop & R&B':'Hip-hop y R&B', 'Latin':'Latina', 'Electronic & dance':'Electrónica y baile', 'Indie & songwriter':'Indie y cantautores', 'Punk & metal':'Punk y metal', 'Soul & funk':'Soul y funk', 'Pop & covers':'Pop y covers', 'Classical':'Clásica', 'Brewery':'Cervecería', 'Wine bar':'Bar de vinos', 'Cocktail lounge':'Coctelería', 'Sports bar':'Bar deportivo', 'Games & arcade':'Juegos y arcade', 'Beer garden':'Jardín cervecero', 'Rooftop':'Azotea', 'Dive & honky-tonk':'Cantina y honky-tonk', 'Irish pub':'Pub irlandés', 'Tiki':'Tiki', 'Pick what you want there':'Elige qué quieres ahí', 'Clear':'Borrar', 'Pick where you\'re going and what you want there.':'Elige a dónde vas y qué quieres ahí.', 'Nothing listed that fits all of that. Try fewer picks or another area.':'No hay nada que cumpla todo eso. Prueba con menos opciones u otra zona.', 'Music comes from the listing, or what the room is known for.':'La música viene del anuncio o de lo que suele tocar el lugar.', 'Open':'Abierto', 'Opens soon':'Abre pronto', 'Closed':'Cerrado', 'Hours unknown':'Horario desconocido', 'restaurant':'restaurante', 'fast food':'comida rápida', 'cafe':'café', 'bakery':'panadería', 'ice cream':'helados', 'food truck':'food truck', 'club':'club', 'food hall':'food hall', 'truck park':'parque de food trucks', 'beer garden':'jardín cervecero', 'Shared around town':'Compartido en la ciudad', 'Photos and videos people share at places and events show up here.':'Aquí salen las fotos y videos que la gente comparte en lugares y eventos.', 'Share one':'Comparte uno', 'Appearance':'Apariencia', 'Light':'Claro', 'Dark':'Oscuro', 'Auto':'Automático', 'Tap it to see how it moves.':'Tócalo para ver cómo se mueve.', 'Pick its name and voice.':'Elige su nombre y su voz.', 'Customize':'Personalizar', 'Later':'Luego', 'Kitchen open till {t}':'Cocina abierta hasta las {t}', 'Kitchen open 24 hours':'Cocina abierta 24 horas', 'Kitchen closed · opens {t}':'Cocina cerrada · abre a las {t}', 'Kitchen closed':'Cocina cerrada', 'Kitchen closes around {t}':'La cocina cierra como a las {t}', 'food till {t}':'comida hasta las {t}', 'kitchen closed':'cocina cerrada', 'food till ~{t}':'comida hasta ~{t}', 'food':'comida', 'drinks only':'solo bebidas', "from people who've been":'según gente que ha ido', 'from its menu':'según su menú', 'from OpenStreetMap':'según OpenStreetMap', 'Serves food':'Sirve comida', 'Drinks only':'Solo bebidas', 'Serves food? Not known yet':'¿Sirve comida? Aún no se sabe', 'Been there? Tell us':'¿Has ido? Cuéntanos', 'Not right? Tell us':'¿No es así? Cuéntanos', 'Does it serve food?':'¿Sirve comida?', 'Yes':'Sí', 'When does the kitchen close?':'¿A qué hora cierra la cocina?', 'Not sure':'No sé', 'Thanks! That helps everyone.':'¡Gracias! Eso ayuda a todos.', 'midnight':'medianoche', '🍔 Bars with food':'🍔 Bares con comida', 'No bars here are known to serve food yet. Open a bar and tell us if it does.':'Aún no sabemos de bares con comida aquí. Abre un bar y cuéntanos si sirve.', 'Filters':'Filtros', 'Done':'Listo', '{n} found':'{n} encontrados'
 };
 const T = (s, p) => { let t=S.lang==='es'&&ES[s]!=null?ES[s]:s; if(p) t=t.replace(/\{(\w+)\}/g,(m,k)=>p[k]??m); return t; };
 function applyLang(){
@@ -1677,6 +1722,14 @@ S.online ??= true;
 S.rsvps ??= {}; S.joined ??= []; S.seenStories ??= []; S.tagSeen ??= [];
 S.feed ??= {show:{events:true,posts:true,people:true,groups:true,live:true}, off:[], sort:'foryou', when:'week', dist:0};
 const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} try{ syncProfile(); }catch(e){} };
+// Appearance: Auto follows the phone's light / dark setting; Light or Dark sticks (glass.css draws both).
+const DARKQ = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme(){
+  const t = S.theme==='light'||S.theme==='dark' ? S.theme : DARKQ.matches ? 'dark' : 'light', app=document.getElementById('app');
+  if(app) app.dataset.theme=t; document.documentElement.style.colorScheme=t;
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', t==='light'?'#eef0f7':'#04050b');
+}
+DARKQ.addEventListener?.('change',applyTheme); applyTheme();
 // Downtown Austin until the browser shares a real position. Your exact spot is only ever used on your own screen.
 let ME_POS = [30.2747,-97.7404], ME_ACC = 0, ME_FIX = 0, locWatch = null;   // ME_FIX: when we last got a real position
 
@@ -1930,7 +1983,7 @@ function profileFor(as){
 }
 
 /* ---------- activity + place history (opt-in, venue-level only) ---------- */
-const ACT = {down:"Said I'm down", post:'Posted a flare', live:'Went live', watch:'Watched a stream', request:'Sent a stream request',
+const ACT = {down:"Said I'm down", post:'Posted a hangout', live:'Went live', watch:'Watched a stream', request:'Sent a stream request',
   checkin:'Checked in', party:'Joined a party', rsvp:'Going to an event', group:'Joined a group', story:'Shared a story'};
 function logAct(a, {k, v, c, vn}={}){
   if(!S.collect.activity && a!=='checkin') return;
@@ -2397,7 +2450,7 @@ function inWhen(ts, te, when=S.feed.when){
 }
 const SORTS = {foryou:(a,b)=>b.s-a.s||a.ts-b.ts, soon:(a,b)=>a.ts-b.ts, near:(a,b)=>a.km-b.km||a.ts-b.ts,
   popular:(a,b)=>b.pop-a.pop||b.s-a.s, new:(a,b)=>b.created-a.created};
-const SORT_L = {foryou:'✨ For you', soon:'⏰ Soonest', near:'📍 Nearest', popular:'🔥 Popular', new:'🆕 Newest'};
+const SORT_L = {foryou:'✨ Best match', soon:'⏰ Soonest', near:'📍 Nearest', popular:'🔥 Popular', new:'🆕 Newest'};
 let feedQ='', feedN=30, feedFocus=null, FEED_LAST=[];
 function feedItems(){
   const f=S.feed, q=feedQ.trim().toLowerCase(), aff=affinity(), hs=historySummary(), hc=Object.fromEntries(hs.cats);
@@ -2496,12 +2549,12 @@ const segHtml = (id,opts,cur) => `<div class="seg" id="${id}">${opts.map(([v,l])
 function renderFeedSheet(){
   const f=S.feed, tg=(k,l)=>`<div class="row" style="margin:8px 0"><span class="grow">${l}</span><button class="toggle ${f.show[k]?'on':''}" data-fshow="${k}"></button></div>`;
   $('#feedSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">⚙️ Make it your feed</b><button class="btn sm primary" data-fclose>Done</button></div>
-    <label class="lbl">Show me</label>${tg('events','🎫 Events around town')}${tg('posts','📣 Flares & group posts')}${tg('people','👋 People I might click with')}${tg('groups','🏘️ Groups to join')}${tg('live','📺 Live streams')}
+    <label class="lbl">Show me</label>${tg('events','🎫 Events around town')}${tg('posts','📣 Hangouts & group posts')}${tg('people','👋 People I might click with')}${tg('groups','🏘️ Groups to join')}${tg('live','📺 Live streams')}
     <label class="lbl">Categories</label><div class="chips">${Object.entries(CATS).map(([k,v])=>`<button class="ichip ${f.off.includes(k)?'':'on'}" data-fcat="${k}">${v.e} ${v.l}</button>`).join('')}</div>
     <div class="btns" style="margin-top:8px"><button class="btn sm" data-fcatall="all">All</button><button class="btn sm" data-fcatall="none">None</button><button class="btn sm" data-fcatall="mine">Just my interests</button></div>
     <label class="lbl">Sort by</label>${segHtml('fSort',Object.entries(SORT_L),f.sort)}
     <label class="lbl">How far</label>${segHtml('fDist',[[0,'Anywhere'],[5,'5 km'],[15,'15 km'],[50,'50 km']],f.dist)}
-    <p class="meta" style="margin:12px 0 0">✨ For you ranks by your interests, the about-you and quiz answers you allowed for matching, what you've RSVP'd to or done before, friends going, and distance.</p>`;
+    <p class="meta" style="margin:12px 0 0">✨ Best match ranks by your interests, the about-you and quiz answers you allowed for matching, what you've RSVP'd to or done before, friends going, and distance.</p>`;
   $('#feedSheetBg').hidden=false;
 }
 function focusOnMap(id){
@@ -2758,12 +2811,39 @@ function marketPopup(m){
       ${checkBtn('place',m.id,m.lat,m.lng)}${favBtn('place',m.id,m.name)}</div>
     <div class="meta" style="font-size:10px;margin-top:6px">${T('Markets change with the seasons: check their site before you go.')}</div>`).openOn(map);
 }
+// Bars: does it serve food, and till when (from people who've been, its menu, or OpenStreetMap); anyone signed in
+// can say. Nothing shown is guessed: with no source it asks.
+const BAR_K = ['bar','pub','club','beer garden'];
+const kitchenTxt = p => p.kitchen==='open' ? T('Kitchen open till {t}',{t:p.kitchen_at}) : p.kitchen==='always' ? T('Kitchen open 24 hours')
+  : p.kitchen==='closed' ? (p.kitchen_at?T('Kitchen closed · opens {t}',{t:p.kitchen_at}):T('Kitchen closed')) : p.kitchen==='around' ? T('Kitchen closes around {t}',{t:p.kitchen_at}) : '';
+const barTag = p => !BAR_K.includes(p.kind) ? '' : p.food===true ? ` · 🍔 ${esc(p.kitchen==='open'?T('food till {t}',{t:p.kitchen_at}):p.kitchen==='closed'?T('kitchen closed'):p.kitchen==='around'?T('food till ~{t}',{t:p.kitchen_at}):T('food'))}`
+  : p.food===false ? ` · ${T('drinks only')}` : '';
+function barFood(p){
+  if(!BAR_K.includes(p.kind)) return '';
+  const from={people:T("from people who've been"),menu:T('from its menu'),map:T('from OpenStreetMap')}[p.food_from]||'', k=kitchenTxt(p);
+  const line = p.food===true ? `🍔 <b>${T('Serves food')}</b>${k?` · <span class="${p.kitchen==='closed'?'kclosed':''}">${esc(k)}</span>`:''}`
+    : p.food===false ? `🍸 <b>${T('Drinks only')}</b>` : `🍔 ${T('Serves food? Not known yet')}`;
+  return `<div class="barfood" id="bf_${esc(p.id)}"><div>${line}</div><div class="meta" style="font-size:11px;margin-top:2px">${from?esc(from)+' · ':''}<button class="linkish" data-bfask="${esc(p.id)}" data-bfkind="${esc(p.kind)}">${T(p.food==null?'Been there? Tell us':'Not right? Tell us')}</button></div></div>`;
+}
+const BF_TIMES = ['20:00','21:00','22:00','23:00','00:00','01:00','02:00'];
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-bfask],[data-bfans],[data-bfsend]'); if(!t) return; const d=t.dataset;
+  if(d.bfask){ if(needAccount('tell us about this bar')) return; const box=document.getElementById('bf_'+d.bfask); if(!box) return;
+    box.innerHTML=`<b>${T('Does it serve food?')}</b><div class="btns" style="margin:6px 0"><button class="btn sm" data-bfans="yes" data-id="${esc(d.bfask)}">🍔 ${T('Yes')}</button><button class="btn sm" data-bfans="no" data-id="${esc(d.bfask)}">🍸 ${T('Drinks only')}</button></div>`; return; }
+  if(d.bfans==='yes'){ const box=document.getElementById('bf_'+d.id);
+    box.innerHTML=`<b>${T('When does the kitchen close?')}</b><div class="btns" style="margin:6px 0;flex-wrap:wrap">${BF_TIMES.map(c=>`<button class="btn sm" data-bfsend="yes" data-c="${c}" data-id="${esc(d.id)}">${esc(fmtClock(c))}</button>`).join('')}<button class="btn sm" data-bfsend="yes" data-c="" data-id="${esc(d.id)}">${T('Not sure')}</button></div>`; return; }
+  const id=d.id, food=d.bfans||d.bfsend;
+  try{ const j=await api('/api/place/barfood',{id, food, close:d.c||''}); const box=document.getElementById('bf_'+id); if(box) box.outerHTML=barFood(j.place); toast(T('Thanks! That helps everyone.'),'green'); }
+  catch(err){ toast(esc(err.message),'orange'); }
+});
+const fmtClock = hm => { const [h,m]=hm.split(':').map(Number); return h===0&&!m ? T('midnight') : `${h%12||12}${m?':'+String(m).padStart(2,'0'):''} ${h<12?'AM':'PM'}`; };
 async function placePopup(id, ll){
   const pop=L.popup({offset:[0,-4]}).setLatLng(ll).setContent('<p class="skel">…</p>').openOn(map);
   try{ const j=await (await fetch(`/api/place?id=${encodeURIComponent(id)}&${nearParam()}`)).json(); const p=j.place; if(!p) throw 0;
     if(FOOD_KINDS.test(p.kind||'restaurant')) menuWarm(p.id);
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}</div>
+      ${barFood(p)}
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
@@ -3570,13 +3650,13 @@ function openSpot(x, looked){
       <button class="btn sm" data-spmap>🗺️ Map</button>
       ${pid?`<button class="btn sm" data-spmenu="${esc(pid)}">🍽️ Menu</button>`:''}
       <button class="btn sm primary" data-spstorynew>📸 Post here</button>
-      <button class="btn sm" data-spflare>📣 Flare here</button>
+      <button class="btn sm" data-spflare>📣 Hangout here</button>
       <button class="btn sm" data-spsend>💬 Send</button>
       <button class="btn sm" data-spplan>🗳️ Plan with friends</button></div>
     ${lv.length?`<h3>📺 Live here now</h3>${lv.map(s=>`<button class="pprow" data-spwatch="${esc(s.id)}"><span class="ppe">🔴</span><span class="grow"><b>${esc(s.title)}</b><small>@${esc(s.u)}</small></span></button>`).join('')}`:''}
     <h3>📸 Stories here <span class="meta">· last 24 hours</span></h3>
     ${st.length?`<div class="spgrid">${st.map(tile).join('')}</div>`:'<p class="meta">No stories here yet today. Be the first.</p>'}
-    ${fl.length?`<h3>📣 Flares here</h3>${fl.map(p=>`<button class="pprow" data-spping="${esc(p.id)}"><span class="ppe">${KINDS[p.k]?.e||'📣'}</span><span class="grow"><b>${esc(p.t)}</b><small>@${esc(p.u)} · ${p.start<=now?'happening now':'at '+clock(p.start)} · ${p.downs.length} down</small></span></button>`).join('')}`:''}
+    ${fl.length?`<h3>📣 Hangouts here</h3>${fl.map(p=>`<button class="pprow" data-spping="${esc(p.id)}"><span class="ppe">${KINDS[p.k]?.e||'📣'}</span><span class="grow"><b>${esc(p.t)}</b><small>@${esc(p.u)} · ${p.start<=now?'happening now':'at '+clock(p.start)} · ${p.downs.length} down</small></span></button>`).join('')}`:''}
     ${ev.length?`<h3>🎟️ Coming up here</h3>${ev.map(e=>`<button class="pprow" data-spev="${esc(e.id)}"><span class="ppe">${CATS[e.cat]?.e||'🎉'}</span><span class="grow"><b>${esc(e.title)}</b><small>${esc(fmtWhen(e.ts))}</small></span></button>`).join('')}`:''}`;
   if(!looked){ $('#spotBg').hidden=false; $('#spotSheet').scrollTop=0; track('spot_open'); }
 }
@@ -3943,7 +4023,7 @@ S.passed ??= []; S.waved ??= []; S.dms ??= {}; S.dmSeen ??= {};
 let meetTab='msgs';
 const MEET_SORT = {match:'✨ Best match', soon:'⏰ Soonest', near:'📍 Nearest', popular:'🔥 Popular', new:'🆕 Newest'};
 const KIND = {person:{e:'👋',l:'People',one:'Person',like:'WAVE 👋',btn:'👋'}, event:{e:'🎫',l:'Events',one:'Event',like:"GOING ✓",btn:'✓'},
-  group:{e:'🏘️',l:'Groups',one:'Group',like:'JOIN ➕',btn:'➕'}, post:{e:'📣',l:'Flares',one:'Flare',like:'DOWN 🙌',btn:'🙌'}};
+  group:{e:'🏘️',l:'Groups',one:'Group',like:'JOIN ➕',btn:'➕'}, post:{e:'📣',l:'Hangouts',one:'Hangout',like:'DOWN 🙌',btn:'🙌'}};
 const secBg = c => (SECTIONS.find(x=>x.cats.includes(c))||{bg:'linear-gradient(145deg,#232526,#5b6280)'}).bg;
 function meetPeople(){   // people you could wave at, with the people filters applied
   const f=S.meet, myG=allGroups().filter(g=>isMember(g.id)).map(g=>g.id), out=SV.friends?.outgoing||[];
@@ -4023,7 +4103,7 @@ function deckHit(x, q){
   if(x.k==='group') return qHit(q, it.n, it.d, CATS[it.cat]?.l);
   return qHit(q, it.t, it.u, where(it));
 }
-const MEET_PH = {swipe:'🔎 Search people, events, groups, flares…', friends:'🔎 Find people by name or interest…', msgs:'🔎 Search chats…', groups:'🔎 Search groups…'};
+const MEET_PH = {swipe:'🔎 Search people, events, groups, hangouts…', friends:'🔎 Find people by name or interest…', msgs:'🔎 Search chats…', groups:'🔎 Search groups…'};
 function renderMeet(){
   const body=$('#meetBody'); if(!body) return;
   $('#v-meet').classList.toggle('inthread', meetTab==='msgs'&&!!DM.open);   // an open chat gets the whole drawer
@@ -4584,7 +4664,7 @@ function rewardsHtml(rw){
       <div class="row"><span class="qe">${w.e}</span><div class="grow"><b>${esc(T(w.name))}</b><div class="meta">${esc(T(w.desc))}</div></div><span class="qxp">+${w.coins} 🪙</span></div>
       <div class="bar"><b style="width:${Math.round(w.have*100/w.goal)}%"></b></div><div class="meta" style="margin-top:6px">${w.done?'✓ '+T('Done! Coins added.'):`${w.have}/${w.goal}`}</div></div>
     <details class="lcat" style="margin-top:10px"><summary><b>🪙 ${T('How to earn coins')}</b></summary><div class="meta" style="line-height:1.9;margin-top:6px">
-      📍 ${T('Check in somewhere')}: +${rw.earn.checkin} · 📝 ${T('Public post')}: +${rw.earn.post} · 📸 ${T('Story')}: +${rw.earn.story} · 🔥 ${T('Flare')}: +${rw.earn.flare}<br>
+      📍 ${T('Check in somewhere')}: +${rw.earn.checkin} · 📝 ${T('Public post')}: +${rw.earn.post} · 📸 ${T('Story')}: +${rw.earn.story} · 🔥 ${T('Hangout')}: +${rw.earn.flare}<br>
       🗳️ ${T('Lock in a plan')}: +${rw.earn.plan} · 💌 ${T('A friend joins from your invite')}: +${rw.earn.recruit} · 🏆 ${T('Quests pay half their XP in coins')}<br>
       🔥 ${T('Streak: do something every day for +2 a day per day in a row (up to +20)')}</div></details>
     <label class="lbl">🖼️ ${T('Profile frames')} <span class="meta">· ${T('spend your coins')}</span></label>
@@ -4704,7 +4784,7 @@ function friendsHtml(){
       <div class="grow"><div class="handle">${esc(h)}</div><div class="meta">${p?KINDS[p.k].e+' '+esc(p.t.slice(0,46))+'…':(u.on?'Online, nothing posted':'Offline')}</div></div>
       ${msgBtn(h)}</div>`;}).join('')
     || (q?`<p class="meta">None of your friends match “${esc(q)}”.</p>`:'')
-    || '<p class="meta">No friends yet. Wave at someone in Meet (when you both wave, you\'re friends), tap <b>+ Add</b> below, or say "I\'m down" to someone\'s flare.</p>';
+    || '<p class="meta">No friends yet. Wave at someone in Meet (when you both wave, you\'re friends), tap <b>+ Add</b> below, or say "I\'m down" to someone\'s hangout.</p>';
   const ai=MATCH.list&&!MATCH.loading, ranked=ai
     ? MATCH.list.map(m=>({u:user(m.handle),pct:m.match,r:m.reasons,opener:m.opener}))
     : (()=>{ const ms=people().filter(u=>u.h!==S.me.h).map(matchPerson).sort((a,b)=>b.s-a.s), top=ms[0]?.s||1;
@@ -4870,14 +4950,14 @@ function renderProf(){
 function renderData(){
   const tg=(k,l,d)=>`<div class="row" style="margin:10px 0"><div class="grow"><b>${l}</b><div class="meta">${d}</div></div><button class="toggle ${S.collect[k]?'on':''}" data-collect="${k}"></button></div>`;
   const h=historySummary();
-  $('#dataCard').innerHTML = `${tg('activity','Save my activity','Flares, "I\'m down"s, streams you watch or run, requests.')}
+  $('#dataCard').innerHTML = `${tg('activity','Save my activity','Hangouts, "I\'m down"s, streams you watch or run, requests.')}
     ${tg('places','Save places I go','Venue names only, never GPS. Check-ins and the spots on your activity.')}
-    ${tg('useForMatching','Use my history for matching','Lets For You and matches learn from what you actually do.')}
+    ${tg('useForMatching','Use my history for matching','Lets your feed and matches learn from what you actually do.')}
     <div class="row" style="margin:14px 0 8px"><b class="grow">History · ${S.log.length} item${S.log.length===1?'':'s'}</b><button class="btn sm" data-checkin>📍 Check in here</button></div>
     ${h.activities.length?`<p class="meta" style="margin:0 0 8px">Mostly: ${esc(h.activities.slice(0,3).map(([l,c])=>`${l} ×${c}`).join(', '))}${h.places.length?` · at ${esc(h.places.slice(0,2).map(([l])=>l).join(', '))}`:''}</p>`:''}
     <div>${S.log.slice(-8).reverse().map(e=>`<div class="log"><span style="min-width:62px">${new Date(e.at).toLocaleDateString([],{month:'short',day:'numeric'})}</span>
       <span class="grow">${ACT[e.a]||e.a}${CATS[e.c]?` · ${CATS[e.c].e} ${CATS[e.c].l}`:''}${e.vn||e.v?` · ${esc(e.vn||venue(e.v)?.name||'')}`:''}</span></div>`).join('')
-      ||'<p class="meta" style="margin:0">Nothing saved yet. Say "I\'m down" to something, post a flare or check in.</p>'}</div>
+      ||'<p class="meta" style="margin:0">Nothing saved yet. Say "I\'m down" to something, post a hangout or check in.</p>'}</div>
     <div class="btns" style="margin-top:12px"><button class="btn sm" data-export>⬇ Download my data</button><button class="btn sm" data-wipe>🗑 Delete history</button></div>
     <p class="meta" style="margin:10px 0 0">In this mockup everything stays in this browser. In the real app it would live on your server, and you could download or delete it any time.</p>`;
 }
@@ -5238,7 +5318,7 @@ function renderQuick(){
   const el=$('#quickBar'); if(!el) return;
   const un=dmUnread(), plans=EV.list.filter(e=>myRsvp(e.id)&&e.te>Date.now()).length;
   const btn=(k,label,cls='',n='')=>`<button data-quick="${k}" class="${cls}">${label}${n?`<span class="qn">${n}</span>`:''}</button>`;
-  // Only what's useful right now; everything else has its own place (chips, ＋, Chats, You).
+  // Only what's useful right now; everything else has its own place (chips, ＋, Social, You).
   el.innerHTML = [
     btn('plans',T('📅 My plans'),'',plans+(SV.plans||[]).length||''),   // always here: your schedule + itineraries
     AUTHED&&SV.v2 ? btn('quests',`🏆 ${T('Lv {n}',{n:SV.v2.level||1})} · 🪙 ${SV.v2.coins||0}${SV.v2.day_streak>1?` · 🔥${SV.v2.day_streak}`:''}`) : '',
@@ -5371,7 +5451,7 @@ function renderHome(){
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail();   // stories live in For you; plans and level in You
+  renderQuick(); renderTonight(); $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail(); $('#exMedia').innerHTML=mediaRail(); bestRail();   // stories live in Feed; plans and level in You
   const day=new Date().getHours()<15, tn=$('#homeTonight'), mo=$('#exMore');   // daytime: what's open now first; evening: tonight first
   if(day!==(mo.nextElementSibling===tn)) day ? tn.before(mo) : mo.before(tn);
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
@@ -5431,25 +5511,55 @@ function happyRail(){
   return L.length ? `<div class="tnhead"><b>🍻 ${T('Happy hour now')}</b><button class="linkbtn" data-excat="food" data-exsubgo="happy">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
     `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>🍻</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.happy.label||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>` : '';
 }
+/* Shared around town: the photos and videos people post (stories and public posts), best first: a friend's, taken at
+   a place or event, close by, fresh, liked. Only real posts; with none yet, one nudge to share the first. */
+function mediaItems(){
+  const now=Date.now(), items=[];
+  allStories().filter(st=>safeImg(st.img)||safeVid(st.vid)).forEach(st=>{ const pos=storyPos(st), ev=st.event&&EV.byId[st.event];
+    items.push({k:'st', id:st.id, img:safeImg(st.img), vid:safeVid(st.vid), u:st.u, label:ev?.title||storyPlace(st)||'', at:st.created, d:pos?km(ME_POS,pos):null, likes:st.likes||0}); });
+  (WL.scope==='all'?WL.posts||[]:WL.top||[]).filter(p=>p.img).forEach(p=>items.push({k:'wp', id:p.id, img:p.img, u:p.u, label:p.place?.name||'', at:p.at,
+    d:p.place?.lat!=null?km(ME_POS,[p.place.lat,p.place.lng]):null, likes:p.likes||0}));
+  const score=x=>(isFriend(x.u)?30:0)+(x.label?15:0)+(x.d==null?0:x.d<3?15:x.d<10?8:0)+Math.min(20,x.likes*2)-Math.min(40,(now-x.at)/36e5*1.5)+(x.vid?4:0);
+  return items.filter(x=>x.u!==S.me.h||items.length<4).sort((a,b)=>score(b)-score(a)).slice(0,14);
+}
+function mediaRail(){
+  const L=mediaItems(); MEDIA.list=L;
+  const head=`<div class="tnhead"><b>📸 ${T('Shared around town')}</b>${L.length?`<button class="linkbtn" data-mediaall>${T('See all')} ›</button>`:''}</div>`;
+  if(!L.length) return head+`<div class="mnudge"><span>${T('Photos and videos people share at places and events show up here.')}</span><button class="btn sm" data-mshare>📸 ${T('Share one')}</button></div>`;
+  return head+`<div class="tnrail mrail">${L.map((x,i)=>`<button class="mcard" data-media="${i}" aria-label="${esc(x.label||'@'+x.u)}"${x.img?` style="background-image:url('${esc(x.img)}')"`:''}>
+    ${!x.img&&x.vid?`<video src="${esc(x.vid)}#t=0.5" muted playsinline preload="metadata"></video>`:''}${x.vid?'<i class="mplay">▶</i>':''}
+    <span class="mcap"><b>${esc(x.label||'@'+x.u)}</b>${x.label?`<small>@${esc(x.u)}</small>`:''}</span></button>`).join('')}</div>`;
+}
+const MEDIA={list:[]};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-media],[data-mediaall],[data-mshare]'); if(!t) return;
+  if(t.dataset.mshare!=null) return $('#createBg').hidden=false;
+  if(t.dataset.mediaall!=null){ tab('feed'); return setFeedMode('posts'); }
+  const x=MEDIA.list[+t.dataset.media]; if(!x) return; try{ track('media_open'); }catch(err){}
+  if(x.k==='wp') return openWallPost(x.id);
+  const sts=MEDIA.list.filter(y=>y.k==='st').map(y=>allStories().find(s=>s.id===y.id)).filter(Boolean), i=sts.findIndex(s=>s.id===x.id);
+  if(i>=0) openStories(sts, i);
+});
 /* the chips: one category at a time, on the map and in the list together */
 const EXC = {k:null, sub:null, list:null, seq:0};
 const EX_CHIPS = [
-  ['events','🎫','Events'], ['food','🍔','Food'], ['friends','👥','Friends'], ['night','🍸','Nightlife'],
+  ['events','🎫','Events'], ['food','🍔','Food'], ['best','🏆','Best of'], ['friends','👥','Friends'], ['night','🍸','Nightlife'],
   ['zones','🔥','Hot spots'], ['outdoors','🌳','Outdoors'], ['sights','🏛️','Sights'],
 ];
 const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1},
-  sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}};
+  sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}, find:{}};   // find: only its own pins
 const EX_SUBS = {
   food: [['all','Everything'],['happy','🍻 Happy hour'],['coffee','☕ Coffee'],['tacos','🌮 Tacos'],['bbq','🍖 BBQ'],['pizza','🍕 Pizza'],['burgers','🍔 Burgers'],['asian','🍜 Asian'],['trucks','🚚 Trucks'],['sweets','🍦 Sweets'],['late','🌙 Late night'],['early','🌅 Breakfast']],
-  night: [['bars','🍸 Bars'],['clubs','🪩 Clubs'],['late','🌙 Late eats']],
+  night: [['bars','🍸 Bars'],['barfood','🍔 Bars with food'],['clubs','🪩 Clubs'],['late','🌙 Late eats']],
   events: [['tonight','Tonight'],['weekend','This weekend'],['week','This week']],
   outdoors: [['all','Everything'],['green','🌳 Parks'],['water','💧 Lakes & rivers'],['trail','🚲 Trails']],
   sights: [['all','Everything'],['landmark','🏛️ Landmarks'],['museum','🖼️ Museums'],['marker','🪧 Markers'],['art','🎨 Art & views']],
 };
 function exploreCat(k, sub){
+  if(k==='best') return openRankings();   // its own sheet, not a map layer
   if(k===EXC.k&&sub==null){ return exploreClear(); }
   if(!EXC.k){ S.exPrev={...S.mapL}; try{ history.pushState({t:curTab},''); }catch(e){} }   // back closes the list
-  EXC.k=k; EXC.sub=sub ?? EX_SUBS[k]?.[0]?.[0] ?? null;
+  EXC.k=k; EXC.sub=sub ?? EX_SUBS[k]?.[0]?.[0] ?? null; if(k!=='find') SF.layer?.clearLayers();
   if(k==='events'&&sub==null) EXC.sub=S.mapWhen||'tonight';
   MAP_CATS.forEach(c=>c.subs.forEach(([x,,setting])=>{ if(!setting) S.mapL[x]=!!EX_LAYERS[k][x]; }));
   if(k==='events'){ S.mapWhen=EXC.sub; mapFilter='all'; }
@@ -5461,7 +5571,7 @@ function exploreCat(k, sub){
 }
 function exploreClear(){
   if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }
-  EXC.k=null; EXC.list=null; delete $('#app').dataset.cat; refreshMapLayers(); renderMapChips(); renderHome();
+  EXC.k=null; EXC.list=null; SF.layer?.clearLayers(); delete $('#app').dataset.cat; refreshMapLayers(); renderMapChips(); renderHome();
 }
 const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${k==='food'||k==='night'?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>${esc(T('Open now'))}</button>`:''}${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
 const xrow = ({go, e, th='', title, sub, d, attr=''}) => `<button class="xrow" ${go?`data-xgo="${esc(go)}"`:''} ${attr}><span class="xe thumb"${th}>${e}</span>
@@ -5470,7 +5580,7 @@ const mapC = () => map ? [map.getCenter().lat, map.getCenter().lng] : ME_POS;
 // After a chip's list is drawn: the picked sub-chip in view, and (when it was just picked) the map framing the results
 // in the part of the screen above the drawer.
 function exAfter(el, pts, fresh){
-  const sc=el.querySelector('.subchips'), on=sc?.querySelector('.on:not(.tog)'); if(on) sc.scrollLeft=Math.max(0,on.offsetLeft-sc.clientWidth/2+on.offsetWidth/2);
+  const sc=el.querySelector('.subchips:not(.sfcompact)'), on=sc?.querySelector('.on:not(.tog)'); if(on) sc.scrollLeft=Math.max(0,on.offsetLeft-sc.clientWidth/2+on.offsetWidth/2);
   pts=(pts||[]).filter(p=>p&&isFinite(p[0])&&isFinite(p[1])).slice(0,15);
   if(!fresh||!map||!pts.length) return;
   const v=parseFloat(getComputedStyle($('#app')).getPropertyValue('--dvis'))||0;
@@ -5480,13 +5590,14 @@ async function renderExCat(fresh){
   const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq;
   const head = exSubs(k);
   const busy = () => { el.innerHTML = head + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`; };
+  if(k==='find') return renderFind(el, seq, fresh);
   if(k==='food'||k==='night'){
     if(fresh||!EXC.list) busy();
     if(EXC.sub==='happy'){ await loadHappy(); }
     else {
-      const cats = k==='night'&&EXC.sub==='bars' ? ['bars'] : [EXC.sub];
+      const cats = k==='night'&&(EXC.sub==='bars'||EXC.sub==='barfood') ? ['bars'] : [EXC.sub];
       try{ const lists=await Promise.all(cats.map(c=>fetch(`/api/places?${new URLSearchParams({cat:c,open:S.foodOpen?'1':''})}&${nearParam()}&limit=40`).then(r=>r.json())));
-        EXC.list=lists.flatMap(j=>j.places||[]); if(k==='food'&&EXC.sub==='all') EXC.list=EXC.list.filter(p=>!['bar','pub','club','beer garden','nightclub'].includes(p.kind)); PL.lastList=EXC.list; }
+        EXC.list=lists.flatMap(j=>j.places||[]); if(EXC.sub==='barfood') EXC.list=EXC.list.filter(p=>p.food===true); if(k==='food'&&EXC.sub==='all') EXC.list=EXC.list.filter(p=>!['bar','pub','club','beer garden','nightclub'].includes(p.kind)); PL.lastList=EXC.list; }
       catch(err){ if(seq===EXC.seq) el.innerHTML=head+`<p class="meta">${T('Couldn\'t load places.')} ${esc(err.message)}</p>`; return; }
     }
     if(seq!==EXC.seq) return;
@@ -5494,8 +5605,8 @@ async function renderExCat(fresh){
     if(EXC.sub==='happy') PL.lastList=HH.list||[];
     const rows = EXC.sub==='happy' ? (HH.list||[]).slice(0,40).map(p=>xrow({go:`pl|${p.id}`, e:'🍻', th:thumbAttr({id:p.id}), title:p.name, sub:`<span class="hhtag ${p.happy?.now?'now':''}">${esc(p.happy?.label||'')}</span> ${esc(p.happy?.deals||'')}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}))
       : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:placeE(p.kind,p.name,p.cuisine), th:thumbAttr({id:p.id}), title:p.name,
-          sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc([p.kind,(p.cuisine||[]).slice(0,2).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}));
-    el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
+          sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc([p.kind,(p.cuisine||[]).slice(0,2).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${barTag(p)}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}));
+    el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${EXC.sub==='barfood'?T('No bars here are known to serve food yet. Open a bar and tell us if it does.'):S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
     exAfter(el, (EXC.sub==='happy'?HH.list||[]:EXC.list).map(p=>[p.lat,p.lng]), fresh); watchThumbs(); return;
   }
   if(k==='events'){
@@ -5544,7 +5655,7 @@ async function renderExCat(fresh){
     const sec=(t,h)=>h?`<div class="sgrp">${t}</div>${h}`:'';
     const body = sec(T('Out now'), out.map(o=>xrow({attr:`data-outgo="${o.k}|${esc(o.id)}"`, e:av(o.h), title:'@'+o.h, sub:`📍 ${esc(o.name)} · ${agoT(o.at)}`})).join(''))
       + sec(T('Sharing where they are'), locs.map(f=>xrow({attr:`data-fmgo="${esc(f.h)}"`, e:av(f.h), title:'@'+f.h, sub:esc(`${f.precise?T('Exact spot'):T('Around here')} · ${agoShort(f.at)}`), d:f.lat?fmtMi(km(ME_POS,[f.lat,f.lng])):null})).join(''))
-      + sec(T('Flares'), flares.map(p=>xrow({attr:`data-map="${esc(p.id)}"`, e:KINDS[p.k]?.e||'📣', title:p.t, sub:`@${esc(p.u)}${p.v&&venue(p.v)?' · '+esc(venue(p.v).name):''}`})).join(''))
+      + sec(T('Hangouts'), flares.map(p=>xrow({attr:`data-map="${esc(p.id)}"`, e:KINDS[p.k]?.e||'📣', title:p.t, sub:`@${esc(p.u)}${p.v&&venue(p.v)?' · '+esc(venue(p.v).name):''}`})).join(''))
       + sec(T('Live now'), live.map(s=>xrow({attr:`data-watch="${esc(s.id)}"`, e:'📺', title:s.title, sub:`@${esc(s.u)} · 👁 ${s.viewers||0}`})).join(''));
     el.innerHTML = head + (body || `<div class="xempty"><p>${T('No friends out on the map right now.')}</p><div class="btns" style="justify-content:center;margin-top:10px"><button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button><button class="btn sm" data-yfriends>👥 ${T('Find people')}</button></div></div>`);
   }
@@ -5563,14 +5674,16 @@ function renderSearch(){
   const ask = (text, sub, go=text) => `<button class="sask" data-xgo="scout|${esc(go)}"><span class="scwrap" data-scface></span><span class="grow"><b>${esc(sub)}</b><span class="meta">${esc(text)}</span></span>${svgI('chev')}</button>`;
   if(!q){
     const rec=(S.recentQ||[]).slice(0,8), tries=['tacos','live music tonight','happy hour','coffee','trivia','brunch','pickup basketball','swimming'];
-    el.innerHTML = ask(T('Or tap the mic and just talk'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
+    if(!SF.areas) loadAreas().then(()=>curTab==='search'&&!$('#qIn').value.trim()&&renderSearch());
+    el.innerHTML = `<div class="sgrp" style="margin-top:4px">${T('Find a spot')}</div>` + sfHead()
+      + ask(T('Or tap the mic and just talk'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
       + `<div class="srecent" style="margin-top:10px">${askIdeas().slice(0,3).map(q=>`<button data-xgo="scout|${esc(q)}">✨ ${esc(q)}</button>`).join('')}</div>`
       + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
       + (rec.length?'':`<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`);
     scoutFaces(); return;
   }
   const words=fold(ql).split(/\s+/).filter(Boolean), hit=(...xs)=>{ const h=fold(xs.join(' ').toLowerCase()); return words.every(w=>h.includes(w)); };
-  const near=p=>km(ME_POS,p), grp=(t,rows,max=5)=>{ if(SQ.all===t) max=60;
+  const ctr=S.sf&&S.sf.area!=='near'?sfArea().c:ME_POS, near=p=>km(ctr,p), grp=(t,rows,max=5)=>{ if(SQ.all===t) max=60;
     return rows.length?`<div class="sgrp">${t}</div>${rows.slice(0,max).map(xrow).join('')}${rows.length>max?`<button class="linkbtn" data-sall="${esc(t)}" style="margin:6px 2px;font-weight:700">${T('Show all {n}',{n:Math.min(rows.length,60)})} ›</button>`:''}`:''; };
   const places=[], evs=[], ppl=[], grps=[];
   (PL.all||[]).forEach(([id,name,kind,lat,lng])=>{ if(hit(name,kind||'')) places.push({go:`pl|${id}`, e:placeE(kind,name), th:thumbAttr({id}), title:name, sub:esc(kind||''), k:near([lat,lng])}); });
@@ -5611,6 +5724,151 @@ $('#qIn').addEventListener('input',()=>{ SQ.all=null; $('[data-qclear]').hidden=
 $('#qForm').addEventListener('submit',e=>{ e.preventDefault(); const q=$('#qIn').value.trim(); if(!q) return;
   if(isQuestion(q)) return searchGo('scout|'+q); const first=$('#searchOut [data-xgo]:not([data-xgo^="scout"])'); if(first) first.click(); });
 
+/* ---------- Find a spot: where you're going and what you want there (food, a DJ, jazz, a rooftop…) ----------
+   Only real listings: places from OpenStreetMap (kind, name, hours), what's on from the events feed (its title and
+   description), happy hours from menus, and the sound a few well-known music rooms are known for. */
+const SF_HAS = [['food','🍽️','Food'],['drinks','🍸','Drinks'],['coffee','☕','Coffee'],['live','🎸','Live music'],['dj','🎧','DJ'],['karaoke','🎤','Karaoke'],
+  ['trivia','🧠','Trivia'],['comedy','😂','Comedy'],['happy','🍻','Happy hour'],['free','🆓','Free'],['open','🟢','Open now'],['late','🌙','Open late']];
+const SF_MUSIC = [['jazz','🎷','Jazz'],['blues','🎸','Blues'],['country','🤠','Country'],['rock','🤘','Rock'],['hiphop','🎤','Hip-hop & R&B'],['latin','💃','Latin'],
+  ['electronic','🎧','Electronic & dance'],['indie','🎙️','Indie & songwriter'],['punk','⚡','Punk & metal'],['soul','🕺','Soul & funk'],['pop','🎶','Pop & covers'],['classical','🎻','Classical']];
+const SF_THEME = [['brewery','🍺','Brewery'],['wine','🍷','Wine bar'],['cocktail','🍸','Cocktail lounge'],['sports','🏈','Sports bar'],['games','🎮','Games & arcade'],
+  ['garden','🌳','Beer garden'],['rooftop','🌇','Rooftop'],['dive','🤠','Dive & honky-tonk'],['irish','🍀','Irish pub'],['tiki','🌴','Tiki'],['trucks','🚚','Food trucks']];
+const MUSIC_RE = {jazz:/\bjazz|bebop|big band/i, blues:/\bblues\b/i, country:/country|honky|americana|western swing|two[- ]step|bluegrass|outlaw/i,
+  rock:/\brock\b|rock ?n.? ?roll|garage rock|psych/i, hiphop:/hip[- ]?hop|\brap\b|r&b|\brnb\b/i, latin:/latin|salsa|bachata|cumbia|tejano|reggaet|mariachi|norte[nñ]o|\bbanda\b/i,
+  electronic:/\bdjs?\b|\bedm\b|house music|techno|electronic|\brave\b|drum (and|&|n) bass|dance party/i, indie:/indie|singer[- ]songwriter|acoustic/i,
+  punk:/\bmetal\b|punk|hardcore|thrash/i, soul:/\bsoul\b|\bfunk|motown|disco/i, pop:/\bpop\b|tribute|cover band|\b[89]0s\b/i, classical:/symphony|orchestra|classical|\bopera\b|chamber music|string quartet/i};
+// what a well-known room usually plays, for the many listings that don't say
+const VENUE_SOUND = [[/elephant room|monks jazz|parker jazz|the townsend/i,['jazz']],[/antone/i,['blues']],[/c-?boy'?s/i,['soul','blues']],[/skylark|victory grill/i,['blues','jazz']],
+  [/broken spoke|white horse|donn'?s depot|giddy ?up|little longhorn|gruene hall|coupland/i,['country']],[/continental club/i,['rock','country']],[/saxon pub/i,['rock','indie']],
+  [/cactus cafe/i,['indie']],[/mohawk|hotel vegas|chess club|far out lounge/i,['indie','rock']],[/valhalla|come and take it live/i,['punk']],[/kingdom|barbarella|elysium/i,['electronic']]];
+const THEME_RE = {brewery:/brew|tap ?room/i, wine:/\bwine|\bvino\b|winery|enoteca/i, cocktail:/cocktail|lounge|speakeasy/i, sports:/sports|scoreboard|touchdown|halftime|tailgate/i,
+  games:/arcade|barcade|billiard|pool hall|bowl|board game|darts|pinball|vigilante|punch bowl|cidercade/i, garden:/beer garden|biergarten/i, rooftop:/rooftop|\broof\b/i,
+  dive:/\bdive\b|ice ?house|honky|saloon/i, irish:/irish|shamrock|celtic|dubliner|\bo'[a-z]/i, tiki:/\btiki\b|luau/i};
+const SF_FOODK=['restaurant','fast food','bakery','ice cream','food truck','food hall','truck park'], SF_DRINKK=['bar','pub','club','beer garden'];
+const evText = e => `${e.title} ${e.description||''}`;
+const EV_HAS = {live:e=>e.cat==='live_music', dj:e=>/\bdjs?\b|dj set|turntabl|vinyl night/i.test(evText(e)), karaoke:e=>/karaoke/i.test(evText(e)),
+  trivia:e=>/trivia|quiz night/i.test(evText(e)), comedy:e=>e.cat==='comedy'||/stand-?up|comedy|improv/i.test(e.title)};
+const PL_HAS = {food:p=>SF_FOODK.includes(p[2]), drinks:p=>SF_DRINKK.includes(p[2])||THEME_RE.brewery.test(p[1])||THEME_RE.wine.test(p[1]), coffee:p=>p[2]==='cafe'||/coffee|espresso/i.test(p[1])};
+const plTheme = (p,k) => k==='trucks' ? ['food truck','truck park'].includes(p[2]) : k==='garden' ? p[2]==='beer garden'||THEME_RE.garden.test(p[1]) : THEME_RE[k].test(p[1]);
+const isFree = e => /^\s*free\b/i.test(e.price||'') || /\bfree (show|admission|entry)\b|\bno cover\b/i.test(evText(e));
+function evSound(e){   // genres from the listing, then the room's usual sound
+  const t=evText(e), out=Object.keys(MUSIC_RE).filter(k=>MUSIC_RE[k].test(t));
+  if(e.venue&&(e.cat==='live_music'||out.length)) VENUE_SOUND.forEach(([re,g])=>{ if(re.test(e.venue)) g.forEach(x=>out.includes(x)||out.push(x)); });
+  return out;
+}
+function openLateW(w){ if(!w) return false; const now=austinMow(), day=now-now%1440, at=(now%1440<300?day-1440:day)+1410, W=10080, m=(at+W)%W;   // still open at 11:30 tonight
+  return w.some(([a,b])=>(a<=m&&m<b)||(a<=m+W&&m+W<b)); }
+const SF = {areas:null, p:null, layer:null, aq:''};
+const sfState = () => (S.sf ||= {area:'near', has:[], music:[], theme:[], when:'tonight'});
+const sfOn = () => { const f=sfState(); return f.has.length+f.music.length+f.theme.length>0 || f.area!=='near'; };
+function loadAreas(){ return SF.areas ? Promise.resolve(SF.areas) : (SF.p ||= fetch('/api/areas').then(r=>r.json()).then(j=>SF.areas=j.areas||[]).catch(()=>{ SF.p=null; return []; })); }
+function sfArea(){
+  const f=sfState(), a=(SF.areas||[]).find(x=>x.name===f.area);
+  if(f.area==='map'&&map){ const b=map.getBounds(), c=map.getCenter(); return {name:T('This map area'), c:[c.lat,c.lng], in:ll=>b.contains(ll)}; }
+  if(a){ const r=Math.max(a.km||1,.5)*1.3; return {name:a.name, c:[a.lat,a.lng], in:ll=>km([a.lat,a.lng],ll)<=r, a}; }
+  return {name:T('Near me'), c:ME_POS, in:ll=>km(ME_POS,ll)<=8, near:true};
+}
+function sfResults(){
+  const f=sfState(), ar=sfArea(), now=Date.now(), until={tonight:new Date().setHours(28,0,0,0), weekend:now+4*864e5, week:now+7*864e5}[f.when]||now+864e5;
+  const evk=f.has.filter(k=>EV_HAS[k]), plk=f.has.filter(k=>PL_HAS[k]), open=f.has.includes('open'), late=f.has.includes('late'), happy=f.has.includes('happy'), free=f.has.includes('free');
+  const hh=new Set((HH.list||[]).map(p=>p.id));
+  const plOk = p => (!plk.length||plk.some(k=>PL_HAS[k](p))) && (!f.theme.length||f.theme.some(k=>plTheme(p,k))) && (!open||placeState(p[5])==='open') && (!late||openLateW(p[5])) && (!happy||hh.has(p[0]));
+  if(evk.length||f.music.length||free){   // something on: events, at a place that fits the rest
+    const placeTerms=plk.length||f.theme.length||open||late||happy;
+    const L=EV.list.filter(e=>e.te>now&&e.ts<until&&e.lat&&ar.in([e.lat,e.lng]) && (!evk.length||evk.some(k=>EV_HAS[k](e)))
+      && (!f.music.length||(s=>f.music.some(g=>s.includes(g)))(evSound(e))) && (!free||isFree(e))
+      && (!placeTerms||(vp=>vp?plOk(vp):!plk.length&&!open&&!late&&!happy&&f.theme.every(k=>THEME_RE[k]?.test(e.venue||'')))(venuePlace(e))));
+    return {ev:true, list:L.sort((a,b)=>a.ts-b.ts).slice(0,60), ar};
+  }
+  if(!PL.all) return {list:null, ar};
+  const L=PL.all.filter(p=>ar.in([p[3],p[4]])&&plOk(p)).map(p=>({p,d:km(ar.near?ME_POS:ar.c,[p[3],p[4]])}));
+  L.sort((a,b)=>ar.near?a.d-b.d:(b.p[6]||0)-(a.p[6]||0)||a.d-b.d);   // near me: nearest; an area: its best-known first
+  return {list:L.slice(0,60), ar};
+}
+function sfHead(){
+  const f=sfState(), hot=(SF.areas||[]).filter(a=>a.hot), on=(arr,v)=>arr.includes(v)?'on':'';
+  const chip=(attr,on,txt)=>`<button ${attr} class="${on}">${esc(txt)}</button>`;
+  const cur=(SF.areas||[]).some(a=>a.name===f.area)&&!hot.some(a=>a.name===f.area) ? chip(`data-sfa="${esc(f.area)}"`,'on','📍 '+f.area) : '';
+  const areaRow = chip('data-sfa="near"',f.area==='near'?'on':'','📍 '+T('Near me')) + chip('data-sfa="map"',f.area==='map'?'on':'','🗺️ '+T('This map area')) + cur
+    + hot.map(a=>chip(`data-sfa="${esc(a.name)}"`,f.area===a.name?'on':'',a.name)).join('') + chip('data-sfmore',f.areaOpen?'on':'',T('More areas')+' ›');
+  const q=SF.aq.toLowerCase(), more = f.areaOpen ? `<div class="sfareas"><input id="sfAreaQ" type="search" placeholder="${esc(T('Neighborhood or town'))}" value="${esc(SF.aq)}" autocomplete="off">
+    <div class="sfalist">${(SF.areas||[]).filter(a=>!a.hot&&(!q||a.name.toLowerCase().includes(q))).sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).map(a=>chip(`data-sfa="${esc(a.name)}"`,f.area===a.name?'on':'',a.name)).join('')}</div></div>` : '';
+  const row=(lab,html)=>`<div class="sfrow"><span class="sfl">${esc(T(lab))}</span><div class="subchips">${html}</div></div>`;
+  const wantEv=f.has.some(k=>EV_HAS[k])||f.music.length||f.has.includes('free');
+  return `<div class="sfhead">${row('Where',areaRow)}${more}
+    ${row('What',SF_HAS.map(([k,e,l])=>chip(`data-sfh="${k}"`,on(f.has,k),`${e} ${T(l)}`)).join(''))}
+    ${row('Music',SF_MUSIC.map(([k,e,l])=>chip(`data-sfm="${k}"`,on(f.music,k),`${e} ${T(l)}`)).join(''))}
+    ${row('Vibe',SF_THEME.map(([k,e,l])=>chip(`data-sft="${k}"`,on(f.theme,k),`${e} ${T(l)}`)).join(''))}
+    ${wantEv?row('When',[['tonight','Tonight'],['weekend','This weekend'],['week','This week']].map(([k,l])=>chip(`data-sfw="${k}"`,f.when===k?'on':'',T(l))).join('')):''}</div>`;
+}
+// Over the map the picks fold into one row (tap one to drop it); Filters opens all the rows again.
+function sfCompact(){
+  const f=sfState(), on=(a,e,l)=>`<button ${a} class="on">${e} ${esc(T(l))} ✕</button>`, W={tonight:'Tonight',weekend:'This weekend',week:'This week'};
+  const wantEv=f.has.some(k=>EV_HAS[k])||f.music.length||f.has.includes('free');
+  return `<div class="subchips sfcompact"><button data-sfexp>📍 ${esc(sfArea().name)} ▾</button>${wantEv?`<button data-sfexp>🕘 ${esc(T(W[f.when]||'Tonight'))} ▾</button>`:''}`
+    + f.has.map(k=>SF_HAS.find(x=>x[0]===k)).filter(Boolean).map(([k,e,l])=>on(`data-sfh="${k}"`,e,l)).join('')
+    + f.music.map(k=>SF_MUSIC.find(x=>x[0]===k)).filter(Boolean).map(([k,e,l])=>on(`data-sfm="${k}"`,e,l)).join('')
+    + f.theme.map(k=>SF_THEME.find(x=>x[0]===k)).filter(Boolean).map(([k,e,l])=>on(`data-sft="${k}"`,e,l)).join('')
+    + `<button data-sfexp>＋ ${esc(T('Filters'))}</button></div>`;
+}
+async function renderFind(el, seq, fresh){
+  const f=sfState(), busy=()=>{ el.innerHTML=sfHead()+`<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`; };
+  if(!SF.areas){ busy(); await loadAreas(); }
+  if(!PL.all){ busy(); loadPlacesMap(); for(let i=0;i<40&&!PL.all;i++) await new Promise(r=>setTimeout(r,250)); }
+  if(f.has.includes('happy')&&!HH.list) await loadHappy();
+  if(seq!==EXC.seq) return;
+  const r=sfResults(), tags=[...f.has.map(k=>SF_HAS.find(x=>x[0]===k)), ...f.music.map(k=>SF_MUSIC.find(x=>x[0]===k)), ...f.theme.map(k=>SF_THEME.find(x=>x[0]===k))].filter(Boolean);
+  const open=SF.expand||!sfOn(), n=r.list?.length||0;
+  const summary = `<div class="exlh"><b>${esc(r.ar.name)}</b><span class="meta grow">${!sfOn()?T('Pick what you want there'):open?esc(tags.map(([,e,l])=>`${e} ${T(l)}`).join(' · ')):r.list?T('{n} found',{n}):''}</span>${open&&sfOn()?`<button class="linkbtn" data-sfexp>${T('Done')}</button>`:''}${sfOn()?`<button class="linkbtn" data-sfreset>${T('Clear')}</button>`:''}</div>`;
+  let rows='', pins=[];
+  if(r.ev){
+    rows=r.list.map(e=>{ const s=evSound(e).map(g=>SF_MUSIC.find(x=>x[0]===g)).filter(Boolean).slice(0,2).map(([,em,l])=>`${em} ${T(l)}`).join(' · ');
+      pins.push({ll:[e.lat,e.lng], e:CATS[e.cat]?.e||'🎫', go:`evmap|${e.id}`});
+      return xrow({go:`evmap|${e.id}`, e:CATS[e.cat]?.e||'🎫', th:/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:'', title:e.title,
+        sub:`${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}${s?` · <span class="sfsound">${esc(s)}</span>`:''}${isFree(e)?` · <b style="color:var(--good)">${T('Free')}</b>`:''}`, d:fmtMi(km(ME_POS,[e.lat,e.lng]))}); }).join('');
+  } else if(r.list){
+    const tonight=new Date().setHours(28,0,0,0), on={};   // what's on at each place tonight: what's playing, the night's theme
+    EV.list.forEach(e=>{ if(e.te>Date.now()&&e.ts<tonight&&e.lat&&r.ar.in([e.lat,e.lng])){ const vp=venuePlace(e); if(vp&&!on[vp[0]]) on[vp[0]]=e; } });
+    PL.lastList=r.list.map(({p})=>({id:p[0],name:p[1],kind:p[2],lat:p[3],lng:p[4]}));
+    rows=r.list.map(({p,d})=>{ const st=placeState(p[5]), e=on[p[0]], s=e?evSound(e).map(g=>SF_MUSIC.find(x=>x[0]===g)?.[1]).filter(Boolean)[0]:'';
+      const th=SF_THEME.filter(([k,,l])=>k!=='trucks'&&plTheme(p,k)&&l.toLowerCase()!==p[2]).map(([,em,l])=>`${em} ${T(l)}`)[0];
+      pins.push({ll:[p[3],p[4]], e:placeE(p[2],p[1]), go:`pl|${p[0]}`});
+      return xrow({go:`pl|${p[0]}`, e:placeE(p[2],p[1]), th:thumbAttr({id:p[0]}), title:p[1],
+        sub:`<span class="pst ${st}" style="font-size:11px;padding:1px 7px">${esc(T({open:'Open',soon:'Opens soon',closed:'Closed',unknown:'Hours unknown'}[st]))}</span> ${esc([T(p[2]||''),th].filter(Boolean).join(' · '))}${e?`<br><span class="sfsound">${s||CATS[e.cat]?.e||'🎫'} ${esc(T('Tonight'))}: ${esc(e.title)}</span>`:''}`, d:fmtMi(d)}); }).join('');
+  }
+  const empty = !sfOn() ? `<p class="xempty">${T('Pick where you\'re going and what you want there.')}</p>`
+    : r.list==null ? `<p class="skel">${T('Finding spots…')}</p>`
+    : `<p class="xempty">${T('Nothing listed that fits all of that. Try fewer picks or another area.')}</p>`;
+  el.innerHTML = (open?sfHead():sfCompact()) + summary + (rows||empty)
+    + (r.ev||f.music.length?`<p class="meta exnote" style="margin-top:10px">${T('Music comes from the listing, or what the room is known for.')}</p>`:'');
+  sfPins(pins);
+  if(fresh&&map&&!pins.length&&!r.ar.near&&r.ar.a) map.flyTo(r.ar.c,15,{duration:.6});
+  exAfter(el, pins.map(x=>x.ll), fresh&&!!pins.length); watchThumbs();
+}
+function sfPins(items){
+  if(!map) return; (SF.layer ||= L.layerGroup().addTo(map)).clearLayers();
+  items.slice(0,40).forEach(x=>L.marker(x.ll,{icon:L.divIcon({className:'sfpin',html:`<span>${x.e}</span>`,iconSize:[30,30],iconAnchor:[15,15]}),zIndexOffset:400})
+    .on('click',()=>searchGo(x.go)).addTo(SF.layer));
+}
+function sfToggle(list, v){ const i=list.indexOf(v); i<0?list.push(v):list.splice(i,1); }
+// the chips work the same on the search page and in the list; on the search page a pick opens the list over the map
+function sfPick(fn){ fn(sfState()); save(); try{ track('find'); }catch(e){} if(EXC.k==='find') return renderExCat(true); SF.expand=false; $('#qIn').value=''; $('#qIn').blur(); exploreCat('find'); }
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-sfa],[data-sfh],[data-sfm],[data-sft],[data-sfw],[data-sfmore],[data-sfreset],[data-sfexp]'); if(!t) return; const d=t.dataset;
+  if(d.sfexp!=null){ SF.expand=!SF.expand; return renderExCat(); }
+  if(d.sfa!=null) return sfPick(f=>{ f.area=d.sfa; f.areaOpen=false; SF.aq=''; });
+  if(d.sfmore!=null){ const f=sfState(); f.areaOpen=!f.areaOpen; if(EXC.k==='find') return renderExCat(); if(curTab==='search') return renderSearch(); return exploreCat('find'); }
+  if(d.sfh) return sfPick(f=>sfToggle(f.has,d.sfh));
+  if(d.sfm) return sfPick(f=>sfToggle(f.music,d.sfm));
+  if(d.sft) return sfPick(f=>sfToggle(f.theme,d.sft));
+  if(d.sfw) return sfPick(f=>{ f.when=d.sfw; });
+  if(d.sfreset!=null) return sfPick(f=>{ f.has=[]; f.music=[]; f.theme=[]; f.area='near'; f.areaOpen=false; });
+});
+document.addEventListener('input',e=>{ if(e.target.id!=='sfAreaQ') return; SF.aq=e.target.value; const box=e.target.closest('.sfareas'); if(!box) return;
+  const q=SF.aq.toLowerCase(), f=sfState();
+  box.querySelector('.sfalist').innerHTML=(SF.areas||[]).filter(a=>!a.hot&&(!q||a.name.toLowerCase().includes(q))).sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng]))
+    .map(a=>`<button data-sfa="${esc(a.name)}" class="${f.area===a.name?'on':''}">${esc(a.name)}</button>`).join(''); });
+
 /* ---------- You: your profile, with everything that used to hide in the name menu ---------- */
 function renderYou(){
   if(!$('#youList')) return; const guest=!AUTHED&&location.protocol.startsWith('http'), v=SV.v2||{};
@@ -5631,11 +5889,12 @@ function renderYou(){
     guest?'':row('data-yshare','📍','#2ec5ff26',T("On friends' maps"),fmOn()?T('Sharing'):T('Off')),
     row('data-yedit="profile"','✏️','#ffffff14',T('Edit profile')),
     row('data-yedit="settings"','🔒','#ffffff14',T('Settings & privacy')),
+    row('data-ytheme','🌗','#bf5af226',T('Appearance'),T({light:'Light',dark:'Dark'}[S.theme]||'Auto')),
     row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-ytheme],[data-fmgo],#glance');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
@@ -5660,6 +5919,7 @@ document.addEventListener('click',e=>{
   if(d.ystat) return d.ystat==='friends' ? (meetTab='friends', tab('meet')) : openQuests();
   if(d.yfriends!==undefined){ meetTab='friends'; return tab('meet'); }
   if(d.yedit){ showMeSec(d.yedit); return setTimeout(()=>$('#v-me').scrollTo({top:$('#meEdit').offsetTop-8,behavior:'smooth'}),60); }
+  if(d.ytheme!==undefined){ S.theme={auto:'light',light:'dark'}[S.theme||'auto']||'auto'; save(); applyTheme(); return renderYou(); }   // Auto → Light → Dark
   if(d.yshare!==undefined){ $('#placesBg').hidden=true; return openShareSheet(); }
   if(d.yjoin!==undefined){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
   if(d.fmgo){ const f=(FMAP.friends||[]).find(x=>x.h===d.fmgo); if(f?.lat){ tab('map'); setTimeout(()=>map.setView([f.lat,f.lng],16),80); } }
@@ -5694,7 +5954,7 @@ function popClosed(e){
     if(curTab==='home') setDrawer(EXC.k?'half':POP.at==='peek'||!POP.at?'peek':POP.at==='full'?'half':POP.at); POP.at=null; },60);   // back to the list it came from
 }
 document.addEventListener('click',e=>{ if(e.target.closest('[data-popclose]')) map?.closePopup();
-  if(e.target.closest('[data-holdflare]')){ const sp=HOLD.spot; map?.closePopup(); if(needAccount('post a flare')||!sp) return; openCompose(); CF.place=spotOf(sp); refreshLoc('fl'); }
+  if(e.target.closest('[data-holdflare]')){ const sp=HOLD.spot; map?.closePopup(); if(needAccount('post a hangout')||!sp) return; openCompose(); CF.place=spotOf(sp); refreshLoc('fl'); }
   if(e.target.closest('[data-holdgo]')){ const sp=HOLD.spot; map?.closePopup(); if(sp) (PL.byId[sp.id]?focusPlace:focusSight)(sp.id); } });
 // Press and hold the map (right-click with a mouse): what's here, and do something here.
 const HOLD = {spot:null};
@@ -5704,7 +5964,7 @@ function mapHold(e){
   (SG.data||[]).forEach(([id,kind,name,lat,lng])=>{ const d=km(here,[lat,lng]); if(d<bd){ bd=d; best={id,name,kind,lat,lng,e:SG_KIND[kind]?.[0]||'🏛️'}; } });
   HOLD.spot=best;
   L.popup().setLatLng(ll).setContent(`<b>📍 ${best?esc(T('Near {p}',{p:best.name})):T('This spot')}</b><div class="meta">${esc(fmtMi(km(ME_POS,here)))} ${T('from you')}</div>
-    <div class="btns" style="margin-top:10px">${best?`<button class="btn sm primary" data-holdflare>📣 ${T('Flare here')}</button><button class="btn sm" data-holdgo>${esc(best.e)} ${esc(best.name.slice(0,24))}</button>`:''}
+    <div class="btns" style="margin-top:10px">${best?`<button class="btn sm primary" data-holdflare>📣 ${T('Hangout here')}</button><button class="btn sm" data-holdgo>${esc(best.e)} ${esc(best.name.slice(0,24))}</button>`:''}
     <a class="btn sm" href="${mapsUrl(ll.lat,ll.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')} ↗</a></div>`).openOn(map);
 }
 new ResizeObserver(()=>{ if(POP.p&&DRW.at==='half') setDrawer('half'); }).observe($('#exPop'));
@@ -6023,7 +6283,7 @@ function openCompose(group){
   freshFix().then(()=>spotsNear()).then(()=>refreshLoc('fl'));
 }
 $('#compose').onsubmit=async e=>{ e.preventDefault();
-  if(needAccount('post a flare')) return;
+  if(needAccount('post a hangout')) return;
   const later=segVal('cWhen')==='later', at=later&&Date.parse($('#cAt').value);
   if(later&&!(at>Date.now())) return toast('Pick a date and time in the future.','orange');
   const v=CF.place, mins=later?Math.round((at-Date.now())/M):+segVal('cWhen'), j=()=>(Math.random()-.5)*.012;
@@ -6035,9 +6295,9 @@ $('#compose').onsubmit=async e=>{ e.preventDefault();
   else S.myPings.push(p);
   logAct('post',{k:p.k,v:p.v}); save(); $('#sheetBg').hidden=true; $('#cText').value=''; renderAll(); tab('map');
   setTimeout(()=>{ map.setView(pos(p),14); markers[p.id]?.openPopup(); },80);
-  toast(`📣 <b>Flare's up!</b> ${p.vis==='broadcast'?'Broadcast to everyone nearby.':'Sent to your '+p.vis+'.'}`,'orange',[],3000);
+  toast(`📣 <b>Hangout posted!</b> ${p.vis==='broadcast'?'Broadcast to everyone nearby.':'Sent to your '+p.vis+'.'}`,'orange',[],3000);
   const fan=CFG.demo&&USERS.filter(u=>u.on&&(u.i.includes(p.k)||isFriend(u.h)))[0];
-  if(fan) setTimeout(()=>{ p.downs.push(fan.h); save(); renderAll(); toast(`🙌 <b>${esc(fan.h)}</b> is down for your flare!`,'green'); },4000);
+  if(fan) setTimeout(()=>{ p.downs.push(fan.h); save(); renderAll(); toast(`🙌 <b>${esc(fan.h)}</b> is down for your hangout!`,'green'); },4000);
 };
 
 
@@ -6582,7 +6842,7 @@ const MAP_CATS=[
   {k:'night', e:'🌙', l:'Night', subs:[['clubs','🪩 Clubs'],['bars','🍸 Bars (street level)']]},
   {k:'zones', e:'🔥', l:'Hot spots', subs:[['zones','🔥 Hot spots: glow brighter the more is open and happening']]},
   {k:'outdoors', e:'🌲', l:'Outdoors', subs:[['parks','🌳 Parks & nature'],['water','💧 Lakes & rivers'],['trails','🚲 Hike & bike trails'],['spots','🛶 Rentals, ramps & trailheads']]},
-  {k:'friends', e:'👥', l:'Friends', subs:[['friendlocs','🧑‍🤝‍🧑 Friends sharing where they are'],['posts','📍 Flares'],['live','📺 Live streams'],['stories','📸 Stories'],['heat','🔥 Story heat: busy spots today']]},
+  {k:'friends', e:'👥', l:'Friends', subs:[['friendlocs','🧑‍🤝‍🧑 Friends sharing where they are'],['posts','📍 Hangouts'],['live','📺 Live streams'],['stories','📸 Stories'],['heat','🔥 Story heat: busy spots today']]},
   {k:'food', e:'🍔', l:'Food', subs:[['food','🍔 Food & drink spots'],['markets','🧺 Farmers markets (big on weekends)'],['openonly','🟢 Open now only',true]]},   // true: a setting, not a layer
   {k:'sights', e:'🏛️', l:'Sights', subs:[['landmarks','🏛️ Landmarks & museums'],['markers','🪧 Historical markers'],['art','🎨 Statues, murals & views']]},
 ];
@@ -6630,7 +6890,7 @@ function openMapLayers(){
       <span class="lkey" style="background:#ffd23f;border-radius:1px;height:3px"></span>bike trail · <span class="lkey" style="background:#ff9a3c;border-radius:1px;height:3px"></span>foot trail<br>
       <span class="lkey" style="background:#9bd35a"></span>farmers market (big when it's on today or this weekend)<br>
       <span class="lkey" style="background:#c9a227"></span>landmark / museum · <span class="lkey" style="background:#8a6d3b"></span>historical marker · <span class="lkey" style="background:#b57bff"></span>art / view<br>
-      <span class="lkey" style="background:var(--accent)"></span>flare for everyone · <span class="lkey" style="background:var(--accent2)"></span>flare for friends</div></div>`;
+      <span class="lkey" style="background:var(--accent)"></span>hangout for everyone · <span class="lkey" style="background:var(--accent2)"></span>hangout for friends</div></div>`;
   $('#placesBg').hidden=false; sh.scrollTop=keep;
 }
 const openMapFilter = openMapLayers;
@@ -6702,7 +6962,7 @@ const SCT = {ex:'happy', busy:false, talkT:null, stopT:null, rec:null, listening
 
 // Things Scout can point at: id -> [selector, screen it lives on (null = header, any screen), what it is]
 const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bottom bar, You
-  scout:['#scoutBtn',null,'the Scout button, on the map just above the drawer on the left (that is you)'],
+  scout:['#scoutBtn',null,'the Scout button: the glowing compass in the middle, just above the drawer (that is you)'],
   profile:['[data-dock="me"]',null,'You, at the right of the bottom bar: profile, plans, saved, quests, invite, Español, privacy'],
   signup:['#meChip:not(.authed)',null,'Sign up, top left (guests only)'], bell:['#bellBtn',null,'notifications bell, top right'],
   online:['#presBtn','me','Online/Offline switch at the top of You'],
@@ -6713,20 +6973,20 @@ const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bo
   chip_tonight:['[data-excat="events"]','home','🎫 Tonight chip (events tonight, this weekend, this week)'],
   chip_night:['[data-excat="night"]','home','🍸 Nightlife chip (bars, clubs)'], chip_outdoors:['[data-excat="outdoors"]','home','🌳 Outdoors chip'],
   chip_sights:['[data-excat="sights"]','home','🏛️ Sights chip (landmarks, museums, historical markers, art)'],
-  chip_friends:['[data-excat="friends"]','home','👥 Friends chip (friends out, sharing location, flares, live)'], chip_hot:['[data-excat="zones"]','home','🔥 Hot spots chip'],
+  chip_friends:['[data-excat="friends"]','home','👥 Friends chip (friends out, sharing location, hangouts, live)'], chip_hot:['[data-excat="zones"]','home','🔥 Hot spots chip'],
   dock_explore:['[data-dock="home"]',null,'Explore, at the left of the bottom bar (the map and what\'s around)'],
-  dock_feed:['[data-dock="feed"]',null,'For you in the bottom bar (the feed)'],
-  dock_create:['[data-dock="create"]',null,'the ＋ in the middle of the bottom bar (story, flare, event, group, go live)'],
-  dock_chats:['[data-dock="meet"]',null,'Chats in the bottom bar (messages, friends, groups, the Meet swipe deck)'],
+  dock_feed:['[data-dock="feed"]',null,'Feed in the bottom bar'],
+  dock_create:['[data-dock="create"]',null,'the ＋ in the middle of the bottom bar (story, hangout, event, group, go live)'],
+  dock_chats:['[data-dock="meet"]',null,'Social in the bottom bar (messages, friends, groups, the Meet swipe deck)'],
   map_layers:['[data-mlayers]',null,'map layers button on the right of the map'], map_live:['#mapLive',null,'LIVE pill just above the drawer'],
   y_plans:['#youList [data-menu="plans"]','me','My plans on You'], y_saved:['#youList [data-quick="favs"]','me','Saved on You'],
   y_quests:['#youList [data-menu="quests"]','me','Quests & rewards on You'], y_invite:['#youList [data-menu="invite"]','me','Invite friends on You'],
   y_share:['#youList [data-yshare]','me','Location sharing on You (ghost mode or friends)'], y_edit:['#youList [data-yedit="profile"]','me','Edit profile on You'],
   feedback:['[data-feedback]','home','beta feedback link at the bottom of Explore'],
-  feed_customize:['[data-fcustom]','feed','feed Customize button'], feed_mapit:['#feedMapBtn','feed','map button at the top of For you (shows the feed on the map)'],
-  meet_filter:['[data-meetfilter]','meet','Meet sort & filter button'], meet_search:['#meetQ','meet','search box in Chats (narrows the open tab; on Friends it finds anyone by name or interest)'], meet_deck:['#meetBody','meet','the Meet swipe deck'],
-  meet_friends:['[data-mt="friends"]','meet','Friends tab in Chats (requests, friends, people you would click with)'],
-  meet_msgs:['[data-mt="msgs"]','meet','Chats tab (messages)'], meet_groups:['[data-mt="groups"]','meet','Groups tab in Chats'], meet_swipe:['[data-mt="swipe"]','meet','Meet tab in Chats (swipe people, events, groups, flares)'],
+  feed_customize:['[data-fcustom]','feed','feed Customize button'], feed_mapit:['#feedMapBtn','feed','map button at the top of Feed (shows the feed on the map)'],
+  meet_filter:['[data-meetfilter]','meet','Meet sort & filter button'], meet_search:['#meetQ','meet','search box in Social (narrows the open tab; on Friends it finds anyone by name or interest)'], meet_deck:['#meetBody','meet','the Meet swipe deck'],
+  meet_friends:['[data-mt="friends"]','meet','Friends tab in Social (requests, friends, people you would click with)'],
+  meet_msgs:['[data-mt="msgs"]','meet','Messages tab in Social'], meet_groups:['[data-mt="groups"]','meet','Groups tab in Social'], meet_swipe:['[data-mt="swipe"]','meet','Meet tab in Social (swipe people, events, groups, hangouts)'],
   me_interests:['#interestChips','me','interest chips on your profile'], me_quiz:['#quizCard','me','personality quiz card'],
   me_astro:['#astroT','me','astrology on/off switch'], me_life:['#lifeCard','me','about-you questions'],
   me_tab_personality:['[data-mesec="personality"]','me','Personality tab on You (quiz + astrology)'],
@@ -6734,66 +6994,20 @@ const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bo
   me_signout:['#signOut','me','Sign out button'], me_delete:['#delAcct','me','Delete my account button'],
 };
 
-/* face: one SVG drawn from the look; expressions, blinking and talking are CSS classes on it */
-function scoutSvg(L){
-  const c=SC_COL[L.body]||SC_COL.orange, a=SC_COL[L.accent]||SC_COL.cyan, ink='#141a33', id='sc'+(++SCT.n);
-  const [rx,ry,cy] = L.shape==='tall'?[28,36,57]:L.shape==='wide'?[38,30,58]:[33,33,56], top=cy-ry, ex=rx*.38, ey=cy-4, my=cy+12;
-  let back='', ears='', hat='', eyes='', gl='', extra='';
-  if(L.extra==='backpack') back=`<rect x="${50-rx-6}" y="${cy-6}" width="${2*rx+12}" height="${ry+4}" rx="10" fill="${a}" opacity=".95"/><rect x="${50-rx-6}" y="${cy+2}" width="${2*rx+12}" height="5" fill="#0003"/>`;
-  if(L.ears==='cat') ears=[-1,1].map(s=>`<path d="M${50+s*rx*.82} ${top+14} L${50+s*rx*.9} ${top-9} L${50+s*rx*.28} ${top+4}Z" fill="${c}" stroke="#0003" stroke-width="2"/>`).join('');
-  if(L.ears==='bear') ears=[-1,1].map(s=>`<circle cx="${50+s*rx*.72}" cy="${top+6}" r="9" fill="${c}" stroke="#0003" stroke-width="2"/><circle cx="${50+s*rx*.72}" cy="${top+6}" r="4.5" fill="${a}"/>`).join('');
-  if(L.ears==='bunny') ears=[-1,1].map(s=>`<ellipse cx="${50+s*11}" cy="${top-11}" rx="6.5" ry="17" fill="${c}" stroke="#0003" stroke-width="2"/><ellipse cx="${50+s*11}" cy="${top-10}" rx="3" ry="11" fill="${a}"/>`).join('');
-  if(L.ears==='robot') ears=[-1,1].map(s=>`<rect x="${s<0?50-rx-6:50+rx-1}" y="${cy-10}" width="7" height="16" rx="2" fill="${a}" stroke="#0003" stroke-width="1.5"/>`).join('');
-  const head = L.photo
-    ? `<clipPath id="${id}"><ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath>
-       <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}"/>
-       <image href="${L.photo}" x="${50-rx}" y="${top}" width="${2*rx}" height="${2*ry}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id})"/>
-       <ellipse class="sc-ring" cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke-width="3.5"/>`
-    : `<ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" stroke="#0003" stroke-width="2"/>
-       <ellipse cx="50" cy="${cy+ry*.5}" rx="${rx*.55}" ry="${ry*.28}" fill="#fff" opacity=".14"/>`;
-  if(!L.photo){
-    const er = L.eyes==='big'?9:7, pr = L.eyes==='big'?4.8:3.6;
-    eyes = `<g class="sc-eyes">${[-1,1].map(s=>L.eyes==='sleepy'
-        ? `<ellipse cx="${50+s*ex}" cy="${ey}" rx="7" ry="4.3" fill="#fff"/><g class="sc-pupil"><circle cx="${50+s*ex}" cy="${ey+.6}" r="3" fill="${ink}"/></g>`
-        : `<circle cx="${50+s*ex}" cy="${ey}" r="${er}" fill="#fff"/><g class="sc-pupil"><circle cx="${50+s*ex}" cy="${ey+.8}" r="${pr}" fill="${ink}"/><circle cx="${50+s*ex+pr*.4}" cy="${ey-pr*.35}" r="${pr*.36}" fill="#fff"/></g>`).join('')}</g>
-      ${[-1,1].map(s=>`<path class="sc-brow ${s<0?'l':'r'}" d="M${50+s*ex-5} ${ey-er-4} Q${50+s*ex} ${ey-er-7} ${50+s*ex+5} ${ey-er-4}" stroke="${ink}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`).join('')}
-      ${L.cheeks?[-1,1].map(s=>`<circle cx="${50+s*rx*.6}" cy="${cy+8}" r="5" fill="#ff7eb6" opacity=".45"/>`).join(''):''}
-      <g class="mouths" stroke="${ink}" stroke-width="3" stroke-linecap="round" fill="none">
-        <path class="m-happy" d="M41 ${my} Q50 ${my+9} 59 ${my}"/>
-        <path class="m-calm" d="M44 ${my+1} Q50 ${my+5} 56 ${my+1}"/>
-        <path class="m-thinking" d="M46 ${my+3} L56 ${my+1}"/>
-        <path class="m-confused" d="M42 ${my+3} q4 -4 8 0 t8 0"/>
-        <ellipse class="m-surprised" cx="50" cy="${my+3}" rx="4" ry="5" fill="${ink}"/>
-        <g class="m-excited"><path d="M40 ${my-1} Q50 ${my+15} 60 ${my-1}Z" fill="${ink}"/><ellipse cx="50" cy="${my+6}" rx="4.5" ry="2.5" fill="#ff7eb6" stroke="none"/></g>
-        <g class="m-laughing"><path d="M39 ${my-2} Q50 ${my+17} 61 ${my-2}Z" fill="${ink}"/><ellipse cx="50" cy="${my+7}" rx="5" ry="3" fill="#ff7eb6" stroke="none"/></g>
-      </g>
-      <ellipse class="m-open" cx="50" cy="${my+3}" rx="6" ry="4.6" fill="${ink}"/>`;
-    if(L.glasses==='round') gl=`<g stroke="${ink}" stroke-width="2.4" fill="#fff2">${[-1,1].map(s=>`<circle cx="${50+s*ex}" cy="${ey}" r="${er+2.5}"/>`).join('')}<path d="M${50-ex+er+2.5} ${ey} L${50+ex-er-2.5} ${ey}"/></g>`;
-    if(L.glasses==='shades') gl=`<g fill="${ink}" opacity=".94">${[-1,1].map(s=>`<rect x="${50+s*ex-10}" y="${ey-6.5}" width="20" height="13" rx="5"/>`).join('')}<rect x="${50-ex+8}" y="${ey-2.5}" width="${2*ex-16}" height="3"/></g>
-      ${[-1,1].map(s=>`<path d="M${50+s*ex-6} ${ey-3} L${50+s*ex-1} ${ey-3}" stroke="#fff8" stroke-width="2" stroke-linecap="round"/>`).join('')}`;
-  } else {
-    eyes = `<g class="sc-badge"><circle cx="${50+rx*.78}" cy="${top+rx*.32}" r="10" fill="${SC_COL.white}" stroke="#0003"/></g>`;
-  }
-  if(L.hat==='explorer') hat=`<ellipse cx="50" cy="${top+5}" rx="${rx*.98}" ry="5.5" fill="#c9a46a"/><path d="M${50-rx*.6} ${top+5} Q50 ${top-25} ${50+rx*.6} ${top+5}Z" fill="#dcbb7d"/><path d="M${50-rx*.58} ${top+1} L${50+rx*.58} ${top+1}" stroke="${a}" stroke-width="4"/>`;
-  if(L.hat==='cowboy') hat=`<path d="M${50-rx-6} ${top+2} Q50 ${top+12} ${50+rx+6} ${top+2} Q50 ${top+6} ${50-rx-6} ${top+2}Z" fill="#8a5a2b"/><path d="M${50-rx*.5} ${top+4} L${50-rx*.45} ${top-16} Q50 ${top-10} ${50+rx*.45} ${top-16} L${50+rx*.5} ${top+4}Z" fill="#a0703c"/><path d="M${50-rx*.48} ${top} L${50+rx*.48} ${top}" stroke="${a}" stroke-width="3"/>`;
-  if(L.hat==='beanie') hat=`<path d="M${50-rx*.85} ${top+10} Q50 ${top-24} ${50+rx*.85} ${top+10}Z" fill="${a}"/><rect x="${50-rx*.88}" y="${top+5}" width="${rx*1.76}" height="7" rx="3" fill="${a}" stroke="#0002"/><circle cx="50" cy="${top-12}" r="5" fill="#fff"/>`;
-  if(L.hat==='cap') hat=`<path d="M${50-rx*.8} ${top+9} Q50 ${top-20} ${50+rx*.8} ${top+9}Z" fill="${a}"/><path d="M${50+rx*.2} ${top+8} Q${50+rx*1.3} ${top+5} ${50+rx*1.25} ${top+11} L${50+rx*.3} ${top+11}Z" fill="${a}" stroke="#0003"/>`;
-  if(L.hat==='crown') hat=`<path d="M${50-rx*.55} ${top+6} L${50-rx*.6} ${top-12} L${50-rx*.28} ${top-3} L50 ${top-16} L${50+rx*.28} ${top-3} L${50+rx*.6} ${top-12} L${50+rx*.55} ${top+6}Z" fill="#ffd166" stroke="#c99a1e" stroke-width="1.5"/><circle cx="50" cy="${top-2}" r="2.6" fill="${a}"/>`;
-  if(L.hat==='headphones') hat=`<path d="M${50-rx*.95} ${cy-2} Q50 ${top-22} ${50+rx*.95} ${cy-2}" stroke="${ink}" stroke-width="5" fill="none"/>${[-1,1].map(s=>`<rect x="${50+s*rx-(s<0?6:2)}" y="${cy-12}" width="8" height="18" rx="4" fill="${a}" stroke="#0004"/>`).join('')}`;
-  if(L.hat==='wizard') hat=`<path d="M${50-rx*.7} ${top+8} L${50+4} ${top-34} L${50+rx*.7} ${top+8}Z" fill="${a}"/><ellipse cx="50" cy="${top+8}" rx="${rx*.85}" ry="4" fill="${a}" stroke="#0003"/><text x="${50}" y="${top-6}" font-size="10" text-anchor="middle">⭐</text>`;
-  if(L.hat==='bow') hat=`<g transform="translate(${50+rx*.45} ${top+5}) rotate(15)"><path d="M0 0 L-11 -7 L-11 7Z M0 0 L11 -7 L11 7Z" fill="${a}" stroke="#0003"/><circle r="3.4" fill="${a}" stroke="#0003"/></g>`;
-  if(L.hat==='antenna') hat=`<path d="M50 ${top+1} L50 ${top-14}" stroke="${ink}" stroke-width="2.5"/><circle class="sc-badge" cx="50" cy="${top-16}" r="4.5" fill="${a}"/>`;
-  if(L.extra==='scarf') extra=`<path d="M${50-rx*.8} ${cy+ry*.72} Q50 ${cy+ry*.98} ${50+rx*.8} ${cy+ry*.72} L${50+rx*.78} ${cy+ry*.9} Q50 ${cy+ry*1.12} ${50-rx*.78} ${cy+ry*.9}Z" fill="${a}"/><rect x="${50+rx*.3}" y="${cy+ry*.86}" width="7" height="14" rx="3" fill="${a}" transform="rotate(-10 ${50+rx*.3} ${cy+ry*.86})"/>`;
-  if(L.extra==='bowtie') extra=`<g transform="translate(50 ${cy+ry*.86})"><path d="M0 0 L-9 -6 L-9 6Z M0 0 L9 -6 L9 6Z" fill="${a}" stroke="#0003"/><circle r="2.6" fill="${a}"/></g>`;
-  const badge = L.photo ? '' : `<g class="sc-badge"><circle cx="${50+rx*.66}" cy="${cy+ry*.66}" r="6.5" fill="${a}" stroke="#fff" stroke-width="1.6"/><path d="M${50+rx*.66} ${cy+ry*.66-4} l2 4 l-2 4 l-2 -4Z" fill="#fff"/></g>`;
-  const emo = L.photo ? SC_FACES.map(f=>`<text class="m-${f}" x="${50+rx*.78}" y="${top+rx*.32+4}" font-size="12" text-anchor="middle">${SC_EMO[f]}</text>`).join('') : '';
-  return `<svg class="scface" data-ex="${SCT.ex}" viewBox="0 -14 100 114" aria-hidden="true"><g class="sc-root">
-    <ellipse cx="50" cy="${cy+ry+6}" rx="${rx*.7}" ry="3.5" fill="#000" opacity=".25"/>${back}${ears}${head}${eyes}${gl}${extra}${badge}${hat}
-    ${L.photo?`<g class="mouths">${emo}</g>`:''}</g></svg>`;
+/* Scout is a compass in a glowing orb, Siri-style: the colors swirl, the needle drifts like it's finding north.
+   Its moods are CSS on data-ex (thinking spins the needle, excited whips it round), talking pulses it. */
+function scoutSvg(){
+  const ticks=Array.from({length:24},(_,i)=>{ const a=i*15*Math.PI/180, big=i%6===0, r1=big?33:36, r2=39;
+    return `<line x1="${(50+r1*Math.sin(a)).toFixed(1)}" y1="${(50-r1*Math.cos(a)).toFixed(1)}" x2="${(50+r2*Math.sin(a)).toFixed(1)}" y2="${(50-r2*Math.cos(a)).toFixed(1)}" stroke-width="${big?2.2:1.1}"/>`; }).join('');
+  return `<span class="scface sc-orb" data-ex="${SCT.ex}" aria-hidden="true"><i class="orb-sw"></i><i class="orb-sw b"></i><i class="orb-core"></i>
+    <svg viewBox="0 0 100 100"><g class="orb-ticks" stroke="#fff">${ticks}</g>
+      <text x="50" y="27" text-anchor="middle" font-size="11" font-weight="800" fill="#fff" font-family="Inter,system-ui,sans-serif">N</text>
+      <g class="orb-needle"><path d="M50 22 L56 50 L44 50Z" fill="#ff3b6b"/><path d="M50 78 L56 50 L44 50Z" fill="#e9ecff"/><circle cx="50" cy="50" r="4" fill="#0b1236" stroke="#fff" stroke-width="1.6"/></g></svg>
+    <i class="orb-glass"></i></span>`;
 }
 function scoutFaces(){   // redraw every Scout on screen with the current look
   const html=scoutSvg(scS().look);
-  document.querySelectorAll('#scoutBtn .scwrap, #scoutHead, #driveView .dv-face, #lookPrev, [data-scface]').forEach(el=>{ el.innerHTML=html.replace(/id="sc\d+"/,`id="sc${++SCT.n}"`).replace(/url\(#sc\d+\)/,`url(#sc${SCT.n})`); });
+  document.querySelectorAll('#scoutBtn .scwrap, #scoutHead, #driveView .dv-face, #lookPrev, [data-scface]').forEach(el=>{ el.innerHTML=html; });
   scoutEx(SCT.ex);
 }
 function scoutEx(ex){
@@ -7028,12 +7242,12 @@ const SC_FAQ = [
   [/food|eat|hungry|taco|bbq|pizza|burger|dinner|lunch|breakfast|late[- ]night/i, "Hungry? The Food chip has tacos, BBQ, late-night eats and more, open now and nearest first. You can also type a dish in the search box. Make a free account and I can pick spots for you.", 'excited', [['point','chip_food','Food']]],
   [/direction|how do i get|take me (to|there)|navigate|route/i, "Tap any event or spot on the map and hit Directions; it opens your Maps app. Make a free account and I can work out when to leave, too.", 'happy', [['point','search','Find it here']]],
   [/joke|funny|laugh/i, "Why did the map join Side Quest? It was tired of everyone saying it had no social life… just a lot of legends. 😄", 'laughing', []],
-  [/flare|who'?s down/i, "A flare is a quick “who's down?” post for right now. Tap the plus at the bottom, then Flare, and send one up!", 'excited', [['point','dock_create','Flare is in here']]],
+  [/flare|hangout|who'?s down/i, "A hangout is a quick “who's down?” post for right now. Tap the plus at the bottom, then Hangout, and post one!", 'excited', [['point','dock_create','Hangout is in here']]],
   [/story|stories|photo/i, "Stories are photos or videos that last 24 hours, and you can tag a place, an event, groups or people. Tap the plus at the bottom, then Story.", 'happy', [['point','dock_create','Stories start here']]],
   [/live|stream|gopro|insta360|camera/i, "You can go live from your phone camera or a GoPro, Insta360 or DJI (the plus, then Go live). The LIVE pill on the map shows who's streaming now.", 'excited', [['point','map_live','Live streams']]],
-  [/message|dm|chat|text (someone|people)/i, "Messages are for friends, in Chats at the bottom. You become friends when you both wave at each other in Meet.", 'happy', [['point','dock_chats','Your chats']]],
-  [/swipe|meet|friend|people|wave/i, "Chats → Meet is one swipe deck: swipe right to wave at people, say you're going to events, join groups or say you're down for flares.", 'happy', [['point','dock_chats','Chats and Meet']]],
-  [/group/i, "Groups are in Chats under the Groups tab, and you can start your own from the plus.", 'happy', [['point','dock_chats','Groups are in here']]],
+  [/message|dm|chat|text (someone|people)/i, "Messages are for friends, in Social at the bottom. You become friends when you both wave at each other in Meet.", 'happy', [['point','dock_chats','Your chats']]],
+  [/swipe|meet|friend|people|wave/i, "Social → Meet is one swipe deck: swipe right to wave at people, say you're going to events, join groups or say you're down for hangouts.", 'happy', [['point','dock_chats','Social and Meet']]],
+  [/group/i, "Groups are in Social under the Groups tab, and you can start your own from the plus.", 'happy', [['point','dock_chats','Groups are in here']]],
   [/tonight|what'?s the move|whats the move|weekend|event|bored|to do/i, "Tap Tonight for everything on tonight, nearest first. Make a free account and I can pick the best ones for you.", 'excited', [['point','chip_tonight',"Tonight's events"]]],
   [/map|near|around|where/i, "The map is always right here. Tap a chip to see one thing at a time, or search for anything up top.", 'happy', [['point','chips','Pick one']]],
   [/search|find|look for/i, "Type anything in the search box: a place, an event, a person, a group or a dish. Or just ask me.", 'happy', [['point','search','Search']]],
@@ -7043,7 +7257,7 @@ const SC_FAQ = [
   [/block|report|safe|creep|harass|scared|unsafe/i, "Tap ⋯ on any post, story or profile to report or block. And always meet in public and tell a friend where you're going.", 'calm', []],
   [/online|offline|location|gps/i, "This switch shows people you're around. Offline hides you and stops the app using your location.", 'calm', [['point','online','Online / Offline']]],
   [/account|sign ?up|log ?in|join|register/i, "Tap here to make a free account. Everything you did as a guest comes with you.", 'excited', [['point','profile','Free account']]],
-  [/create|post|event/i, "The plus at the bottom is where you post a photo or video, a flare, an event or a group, or go live.", 'happy', [['point','dock_create','Create']]],
+  [/create|post|event/i, "The plus at the bottom is where you post a photo or video, a hangout, an event or a group, or go live.", 'happy', [['point','dock_create','Create']]],
   [/drive|driving|car/i, "Tap the car button and I'll switch to voice only. Eyes on the road, I'll do the talking!", 'calm', []],
   [/look|avatar|design|custom|photo of me/i, "Tap the paint palette to design how I look. Pick parts, describe me, or use your own photo!", 'excited', []],
   [/^(hi|hey|hello|yo|sup)\b/i, "Hey hey! I'm your Side Quest guide. Ask me how anything works. Let's go explore!", 'excited', []],
@@ -7174,9 +7388,9 @@ const SC_TOUR_RE = /\b(tour|show me around)\b|how does (this|the) app work|what 
 const SC_TOUR = [
   ['search','Search',"Search anything up here: a place, an event, a person, even a dish. Or just ask me a question."],
   ['chips','Chips',"Tap a chip to see one thing at a time, on the map and in a list: food, tonight's events, nightlife, parks, sights, friends."],
-  ['dock_feed','For you',"For you is your feed: events, flares and posts picked for what you're into."],
-  ['dock_create','Create',"The plus is where you post a photo or video, send up a flare (“who's down?”), plan an event, start a group or go live."],
-  ['dock_chats','Chats',"Chats has your messages, friends and groups, plus Meet, where you swipe to find people and plans."],
+  ['dock_feed','Feed',"Feed is events, hangouts and posts picked for what you're into."],
+  ['dock_create','Create',"The plus is where you post a photo or video, start a hangout (“who's down?”), plan an event, start a group or go live."],
+  ['dock_chats','Social',"Social has your messages, friends and groups, plus Meet, where you swipe to find people and plans."],
   ['profile','You',()=>AUTHED?"You is your profile, plans, saved spots, quests and settings.":"Make a free account here whenever you're ready. Everything you did as a guest comes with you."],
   ['scout','Me!',"And I'm always right here on the map. Ask me anything, or tap the mic and just talk. Let's go explore!"],
 ];
@@ -7332,12 +7546,10 @@ function scoutSpeed(v){   // called with each location fix; v is metres/second (
 /* design your assistant */
 function openLook(){ $('#lookBg').hidden=false; renderLook(); }
 function renderLook(){
-  const s=scS(), L=s.look;
-  const sw=k=>`<div class="lk-sw">${Object.entries(SC_COL).map(([n,c])=>`<button data-lk="${k}|${n}" class="${L[k]===n?'on':''}" style="background:${c}" aria-label="${n}"></button>`).join('')}</div>`;
-  const chips=k=>`<div class="chips">${SC_PARTS[k].map(v=>`<button class="ichip ${L[k]===v?'on':''}" data-lk="${k}|${v}">${v}</button>`).join('')}</div>`;
-  $('#lookSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">🎨 Design your assistant</b><button class="btn sm primary" data-sc="lookdone">Done</button></div>
-    <div id="lookPrev" class="scwrap" data-sc="lookface" title="Tap to see expressions"></div>
-    <p class="meta" style="text-align:center;margin:0 0 6px">Tap the face to try expressions. Only you see this look; it's saved on this device.</p>
+  const s=scS();
+  $('#lookSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">🧭 ${T('Customize Scout')}</b><button class="btn sm primary" data-sc="lookdone">Done</button></div>
+    <div id="lookPrev" class="scwrap" data-sc="lookface" title="Tap to see it move"></div>
+    <p class="meta" style="text-align:center;margin:0 0 6px">${T('Tap it to see how it moves.')}</p>
     <label>Name</label><input id="lookName" maxlength="16" value="${esc(s.name)}" placeholder="Scout">
     <div class="lk-voice">
       <div class="row"><b class="grow">🔊 Voice</b><span class="meta">${s.voice?'Reads every answer':'Muted'}</span>
@@ -7348,15 +7560,7 @@ function renderLook(){
       :`<p class="meta" style="margin:4px 0 6px">Using your phone's built-in voice.</p>`}
       <div class="lk-sub">Speed</div><div class="chips">${SCOUT_RATES.map(([r,l])=>`<button class="ichip ${scoutRate()===r?'on':''}" data-scrate="${r}">${l}</button>`).join('')}</div>
     </div>
-    <label>Describe it</label>
-    <div class="row" style="gap:6px"><input id="lookDesc" maxlength="200" placeholder="e.g. a cowboy armadillo in sunglasses called Tex" autocomplete="off"><button class="btn sm primary" data-sc="lookdesc">✨ Make it</button></div>
-    <label>Or use your photo</label>
-    <div class="btns"><button class="btn sm" data-sc="lookphoto">📷 ${L.photo?'Change photo':'Use my photo'}</button>${L.photo?'<button class="btn sm" data-sc="lookphotox">Remove photo</button>':''}</div>
-    <p class="meta" style="margin:6px 0 0">Your photo stays on this phone. It's never uploaded.</p>
-    <label>Color</label>${sw('body')}<label>Accent</label>${sw('accent')}
-    ${Object.keys(SC_PART_L).map(k=>`<label>${SC_PART_L[k]}</label>${chips(k)}`).join('')}
-    <label>Cheeks</label><div class="chips"><button class="ichip ${L.cheeks?'on':''}" data-lk="cheeks|1">rosy</button><button class="ichip ${L.cheeks?'':'on'}" data-lk="cheeks|0">none</button></div>
-    <div class="btns" style="margin-top:14px"><button class="btn sm" data-sc="lookreset">↺ Back to the original Scout</button></div>`;
+    `;
   scoutFaces();
 }
 async function lookFromText(){
@@ -7369,7 +7573,7 @@ async function lookFromText(){
   catch(e){ scoutEx('confused'); toast(esc(e.message),'orange'); btn.disabled=false; btn.textContent='✨ Make it'; }
 }
 function scoutOfferLook(){
-  toast(`🎨 <b>Design your assistant?</b> Make ${esc(scS().name)} look however you like, or use your own photo.`,'',[{l:'Design it',cls:'primary',f:openLook},{l:'Later',f:()=>{}}],10000);
+  toast(`🧭 <b>${T('Customize Scout')}?</b> ${T('Pick its name and voice.')}`,'',[{l:T('Customize'),cls:'primary',f:openLook},{l:T('Later'),f:()=>{}}],10000);
 }
 
 /* wiring */
@@ -7435,7 +7639,7 @@ const v2head = (title, close) => `<div class="xhead"><b>${title}</b><button clas
 
 /* ---- 🔔 notifications ---- */
 const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['dm','Messages'],['group','Posts, comments and requests in your groups'],['chat','Chat replies'],
-  ['down','People down for your flares'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)']];
+  ['down','People down for your hangouts'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)']];
 const NOTIF_E = {group:'🏘️', dm:'💬', freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆', mod:'🛡️'};
 function renderBell(){
   const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
@@ -7634,7 +7838,7 @@ function savedGo(k,id,name){
 const QUEST_GO = {history:['🪧 '+'Show markers',()=>questMap({landmarks:1,markers:1})], culture:['🖼️ Museums & art',()=>questMap({landmarks:1,art:1})],
   tacos:['🌮 Taco spots',()=>openPlaces({cat:'tacos'})], outdoors:['🌲 Parks & trails',()=>questMap({parks:1,water:1,trails:1})],
   shows:['🎸 Events tonight',()=>{ tab('feed'); }], nightowl:['🌙 Late-night eats',()=>openPlaces({cat:'late'})],
-  explorer:['🔥 Hot spots',()=>questMap({zones:1})], squad:['👋 Meet people',()=>tab('meet')], flare:['🔥 Post a flare',()=>openCompose()],
+  explorer:['🔥 Hot spots',()=>questMap({zones:1})], squad:['👋 Meet people',()=>tab('meet')], flare:['🔥 Post a hangout',()=>openCompose()],
   story:['📸 Share a story',()=>tab('home')], recruiter:['💌 Invite link',()=>inviteLink()], regular:['📍 Check in this week',()=>questMap({landmarks:1,markers:1,parks:1})]};
 function questMap(on){ $('#questBg').hidden=true; tab('map'); Object.keys(on).forEach(k=>S.mapL[k]=true); refreshMapLayers(); setTimeout(()=>map?.setView(ME_POS,15),150); }
 async function openQuests(){
@@ -7684,6 +7888,11 @@ function inviteLink(){
   if(needAccount('invite friends')) return;
   track('invite_copy'); shareLink(`${location.origin}/i/${S.me.h}${SV.v2?.invite?'/'+SV.v2.invite:''}`,'Side Quest',T("I'm on Side Quest: Austin events, friends and quests. Join me!"));
 }
+/* ---- 🏆 Best of Austin (rankings.js + rankings.rb): loaded after the first paint ---- */
+function loadRank(){ return loadRank.p ||= new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='/rankings.js'; s.onload=ok;
+  s.onerror=()=>{ loadRank.p=null; no(new Error('offline')); }; document.head.appendChild(s); }); }
+function openRankings(k){ loadRank().then(()=>Rank.open(k)).catch(()=>toast(T("Couldn't load Best of Austin. Check your connection."),'orange')); }
+function bestRail(){ const el=$('#exBest'); if(!el||!location.protocol.startsWith('http')) return; loadRank().then(()=>Rank.rail(el)).catch(()=>{}); }
 function handleDeepLink(){
   const q=new URLSearchParams(location.search); if(![...q.keys()].length) return;
   const ev=q.get('ev'), sg=q.get('sight'), ref=q.get('ref'), g=q.get('g');
@@ -7691,6 +7900,7 @@ function handleDeepLink(){
   if(q.get('quests')) setTimeout(()=>openQuests(),600);
   if(q.get('inbox')) setTimeout(()=>openNotifs(),600);
   if(q.get('tonight')) setTimeout(()=>quick('tonight'),600);
+  if(q.has('rank')) setTimeout(()=>openRankings(q.get('rank')||undefined),600);
   if(q.get('dm')) setTimeout(()=>{ meetTab='msgs'; tab('meet'); openThread(q.get('dm').slice(0,40)); },700);
   if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; S.refK=(q.get('rk')||'').slice(0,12); save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
   if(ev) openEvent(ev.startsWith('e:')?ev:'e:'+ev);
@@ -7770,7 +7980,7 @@ document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.ta
     setInterval(async()=>{ if(document.hidden) return; const a=await loadState(), b=await loadThreads(); if(!a&&!b) return;   // nothing new: no redraw
       renderSocial(); notifyTags(); if(!$('#v-meet').hidden&&!DM.open) renderMeet(); else if(DM.open){ const u=dmUnread(); $('#dmPill').hidden=!u; $('#dmPill').textContent=u; } }, 15000);
     loadFriendLocs(); setInterval(()=>{ if(!document.hidden){ loadFriendLocs(); sendMyLoc(); } }, 30000);
-    loadWall().then(()=>{ if(FEED_MODE.m==='foryou') renderFeed(); });   // the best public posts, woven into For you
+    loadWall().then(()=>{ if(FEED_MODE.m==='foryou') renderFeed(); if(curTab==='home'&&!EXC.k&&!POP.p) renderHome(); });   // the best public posts, woven into Feed and Explore's photos
     setInterval(()=>{ if(document.hidden||$('#v-feed').hidden) return; if(FEED_MODE.m==='foryou') loadWall().then(renderFeed); }, 60000);
     setInterval(()=>{ if(document.hidden||!DM.open||$('#v-meet').hidden||isDemoUser(DM.open)) return; const w=DM.open;
       fetchThread(w).then(ch=>{ if(ch&&DM.open===w){ renderThreadMsgs(); markRead(); } }).catch(()=>{}); }, 3000); }

@@ -70,11 +70,13 @@ MENU_LINES = <<~TXT
   NOTE: <one short line for the reader>   (only if needed)
   HAPPY: <when, in OpenStreetMap opening_hours form, e.g. Mo-Fr 15:00-18:00; Sa,Su 14:00-17:00> | <the deals in a few words>
     (only if it shows a happy hour with its times; one line)
+  KITCHEN: <when food is served, in OpenStreetMap opening_hours form, e.g. Mo-Th 11:00-22:00; Fr,Sa 11:00-24:00>
+    (only if it says when the kitchen is open or closes, or "food until …"; one line)
   No menu found: answer only NONE.
 TXT
 
 def menu_lines(text)
-  secs, sources, notes, happy = [], [], [], nil
+  secs, sources, notes, happy, kitchen = [], [], [], nil, nil
   text.to_s.each_line do |l|
     l = l.strip.gsub(/\*\*|`/, '')
     next if l.empty? || l =~ /\A(```|NONE\z)/
@@ -87,6 +89,8 @@ def menu_lines(text)
     elsif (hh = l[/\AHAPPY:\s*(.+)/i, 1])
       w, deals = hh.split('|', 2).map(&:strip)
       happy ||= { 'hours' => w.to_s, 'deals' => deals.to_s }
+    elsif (k = l[/\AKITCHEN:\s*(.+)/i, 1])
+      kitchen ||= k.strip
     elsif l.include?('|')
       name, price, desc = l.sub(/\A[-*•]\s*/, '').split('|', 3).map { |x| x.to_s.strip }
       next if name.empty? || name =~ /\A-+\z/ || name.casecmp?('item name')
@@ -94,7 +98,7 @@ def menu_lines(text)
       secs.last['items'] << { 'name' => name, 'price' => price.to_s, 'desc' => desc.to_s }
     end
   end
-  { 'sections' => secs, 'sources' => sources, 'note' => notes.join(' '), 'happy' => happy }
+  { 'sections' => secs, 'sources' => sources, 'note' => notes.join(' '), 'happy' => happy, 'kitchen' => kitchen }
 end
 
 def menu_claude(prompt, **o)
@@ -188,7 +192,8 @@ def menu_clean(o, from)
     { 'name' => name, 'items' => items } if items.any?
   end.compact
   { 'sections' => secs, 'sources' => Array(o['sources']).map(&:to_s).grep(%r{\Ahttps?://}).uniq.first(6),
-    'note' => o['note'].to_s.strip[0, 400], 'from' => from, 'at' => Time.now.to_i, 'happy' => happy_clean(o['happy']) }.compact
+    'note' => o['note'].to_s.strip[0, 400], 'from' => from, 'at' => Time.now.to_i, 'happy' => happy_clean(o['happy']),
+    'kitchen' => (o['kitchen'].to_s.strip[0, 120] if Hours.parse(o['kitchen'].to_s)) }.compact
 end
 
 # Parts read separately, joined in order: a section that runs on into the next part becomes one, repeats dropped.
@@ -213,7 +218,7 @@ def menu_join(parts, from)
   secs.each { |s| s['items'] = s['items'].first(150) }
   { 'sections' => secs.first(60), 'sources' => parts.compact.flat_map { |m| m['sources'] }.uniq.first(6),
     'note' => parts.compact.map { |m| m['note'] }.reject(&:empty?).uniq.first(2).join(' '), 'from' => from, 'at' => Time.now.to_i,
-    'happy' => parts.compact.map { |m| m['happy'] }.compact.first }.compact
+    'happy' => parts.compact.map { |m| m['happy'] }.compact.first, 'kitchen' => parts.compact.map { |m| m['kitchen'] }.compact.first }.compact
 end
 
 # A page's text in parts of about MENU_PART characters, cut between lines.
@@ -316,8 +321,8 @@ def menu_find(p, gweb, warm: false, progress: nil, pics: nil)
   pages, imgs = menu_pages([p['menu'], p['web'], gweb].compact.uniq.first(2))
   pics&.concat(imgs.map(&:last))
   # pages with prices, and pages that say when happy hour is (often its own page, or the home page)
-  priced = menu_dedupe(pages.select { |_, t| menu_prices(t) >= 4 || t =~ /happy\s*hours?\b.{0,80}\d/im })
-  site_happy = nil
+  priced = menu_dedupe(pages.select { |_, t| menu_prices(t) >= 4 || t =~ /happy\s*hours?\b.{0,80}\d|kitchen\b.{0,60}\d/im })
+  site_happy = site_kitchen = nil
   unless priced.empty?
     texts = priced.map { |u, t| [u, t[0, 24_000]] }
     size = [MENU_PART, texts.sum { |_, t| t.size }.clamp(0, 60_000) / 10].max   # about 10 parts at most
@@ -341,16 +346,17 @@ def menu_find(p, gweb, warm: false, progress: nil, pics: nil)
     warn "[menu] #{p['id']} site: #{menu_count(m)} items in #{parts.size} parts, #{(Time.now - t0).round}s"
     return m if menu_count(m) >= 5
     site_happy = m['happy']   # the menu itself comes from elsewhere, but the site's happy hour still counts
+    site_kitchen = m['kitchen']
   end
   # 2. the menu pictures on its website and the web search, side by side: good pictures win at once; otherwise the
   # web fills in.
   web = (!warm || warm == :web) && Thread.new { menu_web(p, where, p['web'] || gweb) rescue (warn("[menu] web: #{$!.message[0, 100]}"); nil) }
   shot = imgs.any? ? menu_photos(where, imgs, progress) : nil
   shot = nil if shot && menu_count(shot).zero?
-  hh = ->(x) { x && site_happy && !x['happy'] ? x.merge('happy' => site_happy) : x }
+  hh = ->(x) { x = x && site_happy && !x['happy'] ? x.merge('happy' => site_happy) : x; x && site_kitchen && !x['kitchen'] ? x.merge('kitchen' => site_kitchen) : x }
   return hh.(shot) if menu_good?(shot) || (warm == true && shot)
   progress&.call(shot) if shot
-  return (site_happy ? menu_clean({ 'happy' => site_happy }, 'site') : nil) unless web   # warm-up: no menu on the website
+  return (site_happy || site_kitchen ? menu_clean({ 'happy' => site_happy, 'kitchen' => site_kitchen }, 'site') : nil) unless web   # warm-up: no menu on the website
   m = web.value || menu_clean({}, 'web')
   hh.(shot ? menu_merge(shot, m) : m)
 end
@@ -368,7 +374,7 @@ def menu_merge(a, b)
     same ? same['items'].concat(items) : secs << { 'name' => s['name'], 'items' => items }
   end
   from = menu_count(b).zero? ? 'photos' : menu_count(a).zero? ? 'web' : 'photos+web'
-  a.merge('sections' => secs, 'sources' => (a['sources'] + b['sources']).uniq.first(6), 'from' => from, 'happy' => a['happy'] || b['happy'],
+  a.merge('sections' => secs, 'sources' => (a['sources'] + b['sources']).uniq.first(6), 'from' => from, 'happy' => a['happy'] || b['happy'], 'kitchen' => a['kitchen'] || b['kitchen'],
           'note' => [a['note'], b['note']].reject(&:empty?).join(' '))
 end
 
@@ -479,7 +485,7 @@ def menu_prewarm
       big = Popular[p['id']] >= 60 && MENU_JOBS[:lock].synchronize { MENU_JOBS[:warm_web] < MENU_WARM_WEB && (MENU_JOBS[:warm_web] += 1) }
       pics = []
       m = begin menu_find(p, nil, warm: big ? :web : true, pics: pics) rescue (warn("[menu] warm #{p['id']}: #{$!.message[0, 100]}"); nil) end
-      if m && (menu_count(m).positive? || m['happy'])   # a happy hour alone is worth keeping too
+      if m && (menu_count(m).positive? || m['happy'] || m['kitchen'])   # a happy hour or kitchen hours alone are worth keeping too
         m['web'] = p['menu'] || p['web']
         m['pics'] = pics.uniq.first(4)
         m['happy_checked'] = true

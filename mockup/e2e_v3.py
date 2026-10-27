@@ -65,7 +65,8 @@ with sync_playwright() as pw:
     check("opens on the map with the drawer down", at() == ["home", "peek"] and p.locator("#map").is_visible())
     check("members get no avatar at the top (You is in the dock); the map keeps just layers + locate",
           p.locator("#meChip").is_hidden() and p.eval_on_selector_all(".mapctl button", "b=>b.length") == 2)
-    check("dock: Explore · For you · ＋ · Chats · You", p.eval_on_selector_all("#dock [data-dock]", "b=>b.map(x=>x.dataset.dock)") == ["home", "feed", "create", "meet", "me"])
+    check("dock: Explore · Feed · ＋ · Social · You", p.eval_on_selector_all("#dock [data-dock]", "b=>b.map(x=>x.dataset.dock)") == ["home", "feed", "create", "meet", "me"]
+          and p.inner_text("#dock [data-dock='feed']").strip() == "Feed" and p.inner_text("#dock [data-dock='meet']").strip() == "Social")
     check("map starts calm: no food dots, nightlife or hot spot zones", p.evaluate("!S.mapL.food&&!S.mapL.clubs&&!S.mapL.bars&&!S.mapL.zones&&S.mapL.events"))
     p.wait_for_function("EV.loaded", timeout=20000); p.wait_for_timeout(300)
     check("the glance line says what's on tonight", "on tonight" in p.inner_text("#glance"), p.inner_text("#glance"))
@@ -133,7 +134,7 @@ with sync_playwright() as pw:
     check("…Flare here opens the composer with that place", p.locator("#sheetBg").is_visible() and p.evaluate("!!CF.place&&!!CF.place.name"))
     p.evaluate("closeTopOverlay()")
 
-    # dock: For you, Chats, You, ＋
+    # dock: Feed, Social, You, ＋
     p.click("[data-dock='feed']"); p.wait_for_timeout(300)
     check("For you opens the feed full height; the search box steps aside", at() == ["feed", "full"] and not p.locator("#qIn").is_visible())
     drag(p, "#v-feed", 160, 700, 10, 20)
@@ -155,12 +156,61 @@ with sync_playwright() as pw:
     check("You → Quests opens the quests", p.locator("#questBg").is_visible())
     p.evaluate("closeTopOverlay()")
     p.click("[data-dock='create']")
-    check("＋ opens Create: story, post, flare, event, group, live",
-          p.eval_on_selector_all("#createBg [data-create]", "b=>b.map(x=>x.dataset.create)") == ["story", "post", "flare", "event", "group", "live"])
+    check("＋ opens Create: story, post, hangout, event, group, live",
+          p.eval_on_selector_all("#createBg [data-create]", "b=>b.map(x=>x.dataset.create)") == ["story", "post", "flare", "event", "group", "live"]
+          and "Hangout" in p.inner_text("#createBg") and "Flare" not in p.inner_text("#createBg"))
     p.click("[data-create='post']"); p.wait_for_timeout(500)
     check("Create → Post lands on the posts composer", at()[0] == "feed" and p.evaluate("FEED_MODE.m") == "posts" and p.locator("#wText").is_visible())
     p.click("#logo"); p.wait_for_timeout(300)
     check("the name at the top goes back to the map", at() == ["home", "peek"])
+
+    # Find a spot: where you're going and what you want there
+    p.click("#qIn"); p.wait_for_selector("#searchOut .sfhead [data-sfa='6th Street']", timeout=8000)
+    check("the search page opens with Find a spot: where, what, music, vibe",
+          all(x in p.inner_text("#searchOut .sfhead") for x in ["Near me", "6th Street", "Live music", "DJ", "Jazz", "Brewery", "Rooftop"]))
+    p.click("#searchOut [data-sfa='6th Street']"); p.wait_for_timeout(900)
+    check("picking an area opens the list over the map, half way up", at() == ["home", "half"] and p.evaluate("EXC.k") == "find"
+          and "6th Street" in p.inner_text("#exCat .exlh"))
+    p.locator("#exCat .sfcompact [data-sfexp]").last.click(); p.wait_for_timeout(300)
+    p.click("#exCat [data-sfh='drinks']"); p.wait_for_timeout(800)
+    names = p.eval_on_selector_all("#exCat .xrow b", "b=>b.map(x=>x.textContent)")
+    check("6th Street + Drinks: its bar and club, and pins for them on the map", "Sixth Street Saloon" in names and "Late Owl Club" in names
+          and "Sunrise Coffee" not in names and p.locator(".sfpin").count() == len(names), names)
+    p.click("#exCat [data-sft='dive']"); p.wait_for_timeout(600)
+    names = p.eval_on_selector_all("#exCat .xrow b", "b=>b.map(x=>x.textContent)")
+    check("…a vibe narrows it (Dive & honky-tonk: the saloon, not the club)", names == ["Sixth Street Saloon"], names)
+    p.click("#exCat [data-sfreset]"); p.wait_for_timeout(300)
+    p.locator("#exCat .sfcompact [data-sfexp]").last.click() if p.locator("#exCat .sfcompact").count() else None
+    p.click("#exCat [data-sfm='jazz']"); p.click("#exCat [data-sfw='week']"); p.wait_for_timeout(800)
+    rows = p.eval_on_selector_all("#exCat .xrow", "r=>r.map(x=>x.innerText)")
+    check("Jazz this week: only shows that say jazz (or rooms known for it)", all("Jazz" in r for r in rows) and (rows or "Nothing listed" in p.inner_text("#exCat")), rows[:3])
+    p.go_back(); p.wait_for_timeout(500)
+    check("back closes it and takes its pins off the map", p.evaluate("EXC.k") is None and p.locator(".sfpin").count() == 0)
+    p.evaluate("S.sf=null; save()")
+
+    # Bars: serves food? kitchen till when? Unknown until someone who's been says (or its menu does)
+    p.evaluate("focusPlace('n1002')"); p.wait_for_selector("#exPop .barfood", timeout=8000)
+    check("a bar's card says when food isn't known yet and asks", "Not known yet" in p.inner_text("#exPop .barfood"))
+    p.click("#exPop [data-bfask]"); p.click("#exPop [data-bfans='yes']"); p.click("#exPop [data-bfsend][data-c='23:00']"); p.wait_for_timeout(800)
+    check("…telling it: serves food, kitchen closes at 11", "Serves food" in p.inner_text("#exPop .barfood") and "11 PM" in p.inner_text("#exPop .barfood"),
+          p.inner_text("#exPop .barfood"))
+    p.click("[data-popclose]"); p.wait_for_timeout(400)
+    p.click("#mapChips [data-excat='night']"); p.wait_for_timeout(500); p.click("#exCat [data-exsub='barfood']"); p.wait_for_timeout(1200)
+    names = p.eval_on_selector_all("#exCat .xrow b", "b=>b.map(x=>x.textContent)")
+    check("Nightlife → Bars with food lists it, with when food stops", names == ["Sixth Street Saloon"] and "food till ~11 PM" in p.inner_text("#exCat"), names)
+    p.click("#mapChips [data-excat='night']"); p.wait_for_timeout(300)
+
+    # Shared around town: real photos and videos only; a nudge until there are some
+    check("Explore: Shared around town says how to share the first one", "Shared around town" in p.inner_text("#exMedia")
+          and p.locator("#exMedia .mcard").count() == 0 and p.locator("#exMedia [data-mshare]").count() == 1)
+    jpg = p.evaluate("()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#f80'; x.fillRect(0,0,64,64); return c.toDataURL('image/jpeg',.8) }")
+    r = p.evaluate("([img])=>api('/api/wall/post',{t:'Sunset from the patio',img,vis:'everyone',place:{name:'Sixth Street Saloon',lat:30.26718,lng:-97.7399,id:'n1002'}})", [jpg])
+    p.evaluate("loadWall(true).then(()=>renderHome())"); p.wait_for_timeout(800)
+    check("…a photo someone posts at a place shows up there, with the place's name", p.locator("#exMedia .mcard").count() == 1
+          and "Sixth Street Saloon" in p.inner_text("#exMedia .mcard"), r)
+    p.click("#exMedia .mcard"); p.wait_for_timeout(800)
+    check("…tapping it opens the post", p.locator("#chatBg").is_visible() and "Sunset from the patio" in p.inner_text("#chatSheet"))
+    p.evaluate("closeTopOverlay()"); p.wait_for_timeout(200)
 
     # Scout's tour points at things that exist
     missing = p.evaluate("SC_TOUR.map(t=>t[0]).filter(id=>!document.querySelector(SC_T[id][0]))")

@@ -10,18 +10,28 @@ Keep this file up to date when features change. Only describe things that exist 
   During the beta, sign-up may need an invite code.
 - The screen (V3): the map fills the whole screen, always. Over it, at the bottom, a drawer you drag up and down
   (three stops: just the search box, half way, all the way up), and under that a bar with five buttons:
-  **Explore** (the map and what's around), **For you** (the feed), **＋** (create), **Chats**, and **You** (your picture).
+  **Explore** (the map and what's around), **Feed**, **＋** (create), **Social** (messages, friends, groups, Meet), and **You** (your picture).
 - Top of the screen: the Side Quest name (takes you back to the map) and the 🔔 bell at the top right. Down the right
   side of the map: map layers and "back to where I am". Your picture is the You button in the bottom bar (a green
   ring = you show as online).
 - Guests see an orange "Sign up" button at the top left; tapping You does the same.
-- When a screen is all the way up (For you, Chats, You) the top becomes a plain bar; pull the screen down to see the map.
+- When a screen is all the way up (Feed, Social, You) the top becomes a plain bar; pull the screen down to see the map.
 
 ## Explore (the drawer over the map)
 - The search box at the top: "Search Austin, or ask Scout". It finds places, parks, lakes, trails, sights, events,
   people and groups as you type, nearest first; "Find it on menus" searches every menu for a dish; a question
   ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode. Before typing, the
   search page shows a few things to ask you ("Plan my night", "Something free to do tonight"…) and recent searches.
+- **Find a spot**, at the top of the search page before typing: pick **Where** you're going (Near me, This map area,
+  6th Street, Rainey Street, Red River, West 6th, SoCo, East Austin, The Domain, or "More areas" for any neighborhood or
+  nearby town), then what you want there: **What** (Food, Drinks, Coffee, Live music, DJ, Karaoke, Trivia, Comedy, Happy
+  hour, Free, Open now, Open late), **Music** (Jazz, Blues, Country, Rock, Hip-hop & R&B, Latin, Electronic & dance, Indie
+  & songwriter, Punk & metal, Soul & funk, Pop & covers, Classical) and **Vibe** (Brewery, Wine bar, Cocktail lounge,
+  Sports bar, Games & arcade, Beer garden, Rooftop, Dive & honky-tonk, Irish pub, Tiki, Food trucks). One tap opens the
+  matches over the map with pins; the picks fold into one row (tap one to drop it, "＋ Filters" for all of them). Music
+  comes from the event listing or what a well-known room is known for (Elephant Room = jazz, Antone's = blues, Broken
+  Spoke = country…); places in the list say what's on there tonight. A neighborhood picked there also sorts typed
+  searches from that spot.
 - Under it, chips: 🎫 Events, 🍔 Food, 👥 Friends, 🍸 Nightlife, 🔥 Hot spots, 🌳 Outdoors, 🏛️ Sights. A chip shows that
   one thing on the map AND lists it in the drawer (nearest first), with smaller chips to narrow it (Food: Happy hour,
   Coffee, Tacos, BBQ, Pizza, Burgers, Asian, Trucks, Sweets, Late night, Breakfast, plus Open now; Events: Tonight /
@@ -32,20 +42,29 @@ Keep this file up to date when features change. Only describe things that exist 
 - Tapping any pin on the map opens its card in the drawer (hours, Menu, Directions, Check in, Save…), with a blue ring
   on the pin. ✕ or back closes it and returns to the list it came from.
 - Press and hold anywhere on the map (right-click on a computer): a card says what's there (the nearest place or
-  sight) with 📣 Flare here, that place, and Directions.
+  sight) with 📣 Hangout here, that place, and Directions.
 - One line under the chips says what's on ("37 things on tonight · 2 friends out"); tap it for tonight's list.
 - Picking a chip (or a neighborhood) moves the map to show what's listed, above the drawer.
+- 🏆 **Best of Austin** (the 🏆 Best of chip, or the "Best of Austin" row on Explore): ranked lists of the best spots in
+  town: Food (pizza, sushi, tacos, breakfast tacos, BBQ, Indian, Italian, Thai, ramen, brunch, coffee, food trucks…),
+  Drinks (cocktail bars, best drink menus, margaritas, mezcal, breweries, wine, happy hours, rooftops, patios, dives),
+  Music & DJs (live music, DJs & dance nights with their weekly schedule, jazz, karaoke, Latin dance, LGBTQ+ bars), Sports
+  (sports bars, soccer pubs, game day spots) and Things to do (trivia, arcade & game bars, comedy). Each spot shows its
+  score, why it ranks (best-of lists, awards, Reddit, videos, Side Quest ratings) with links to the sources, what to
+  get, when to go. Top / Near me / Open now, ✨ New to me (only places you haven't checked in). Been there? ⭐ Rate it and
+  say if you'd go back: it moves the list. "Missing a spot?" at the bottom suggests one. 🔗 shares a list or a spot.
 - Pulled up, the drawer shows: Up next (the next thing you're going to, with a countdown), Friends out now, Tonight
-  near you, Busy right now (hot spots) and Happy hour now. Dragging or tapping the map moves the drawer out of the way.
-  Stories are at the top of For you.
+  near you, 📸 Shared around town (photos and videos people posted, at places and events first; tap one to watch it),
+  Busy right now (hot spots) and Happy hour now. Dragging or tapping the map moves the drawer out of the way.
+  Stories are at the top of Feed.
 
 ## Create (the ＋ in the middle of the bottom bar)
 - Story (a photo or video for 24 hours), Post (a public post with a photo or text that stays on your profile and
-  in For you → Posts), Flare, Event, Group, Go live.
+  in Feed → Posts), Hangout, Event, Group, Go live.
 
-## Chats (bottom bar)
+## Social (bottom bar)
 - Tabs: 💬 Messages (messages and group chats; friends only), 👥 Friends (requests, your friends, people you'd click with,
-  find anyone by name or interest), 🏘️ Groups, 👋 Meet (the swipe deck). The red number on Chats counts unread
+  find anyone by name or interest), 🏘️ Groups, 👋 Meet (the swipe deck). The red number on Social counts unread
   messages plus friend requests.
 
 ## You (bottom bar)
@@ -58,26 +77,26 @@ Keep this file up to date when features change. Only describe things that exist 
   and the app stops using your location.
 
 ## Feed
-- A ranked list of real Austin events (from ~45 local sources, refreshed every 6 hours), flares,
+- A ranked list of real Austin events (from ~45 local sources, refreshed every 6 hours), hangouts,
   group posts, people and groups, each with reasons ("You're into comedy · 2 friends going").
-- When it's sorted "For you" (the default), the top shows "Tonight's picks for you": up to 3 flares
+- When it's sorted "Best match" (the default), the top shows "Tonight's picks for you": up to 3 hangouts
   picked for them (by Scout when signed in), each with a match %, reasons, I'm down / Show on map /
-  Not tonight, and a ↻ to pick again. The For you button in the bottom bar opens this.
+  Not tonight, and a ↻ to pick again. The Feed button in the bottom bar opens this.
 - ⚙️ Customize: content types, categories, sort, distance. 🗺 Map it shows the list on the map.
 
 ## Map
-- Event pins, flares, story bubbles, live-stream thumbnails, hot spots, parks and lakes, farmers markets and your
+- Event pins, hangouts, story bubbles, live-stream thumbnails, hot spots, parks and lakes, farmers markets and your
   blue location dot. It starts calm (what's happening); the chips under the search box bring in food, nightlife,
   sights and more. Other people's positions are venue-level or blurred about a quarter mile on purpose.
 
-## Meet (Chats → 👋 Meet)
+## Meet (Social → 👋 Meet)
 - One swipe deck: people (right = wave; you both wave = friends), events (right = going),
-  groups (right = join), flares (right = I'm down). Left = pass, and there's undo.
+  groups (right = join), hangouts (right = I'm down). Left = pass, and there's undo.
 - ⚙️ Sort & filter: activity, when, distance, goals, interests, new to Austin, from my groups, online now.
 - The 🔎 box under the tabs narrows whatever tab is open.
 
-## Stories, plans, flares
-- Stories: the row of rings at the top of For you. Tap one for a full-screen feed like TikTok:
+## Stories, plans, hangouts
+- Stories: the row of rings at the top of Feed. Tap one for a full-screen feed like TikTok:
   swipe up for the next story, tap a video to pause, double-tap to like ❤️, and use the buttons on the right to
   reply (friends only), share, or see the spot on the map. 🔇 turns sound on.
 - Plans: You → 📅 My plans shows saved itineraries and events you're going to.
@@ -85,7 +104,7 @@ Keep this file up to date when features change. Only describe things that exist 
   save it, see it on the map, add it to their calendar or share it.
 - Story: a photo, a video up to 60 seconds, or text; lasts 24 hours. "Where was this?"
   tags a place you've been or one nearby; you can also tag an event, groups and people.
-- Flare: a "who's down?" post for right now, asking who's free (＋ → Flare). Event: something for a later date and time. Group: start a
+- Hangout: a "who's down?" post for right now, asking who's free (＋ → Hangout). In the data and actions it is still called a "flare"; always call it a hangout when talking to people. Event: something for a later date and time. Group: start a
   community. Go live.
 
 ## Live
@@ -131,12 +150,12 @@ Keep this file up to date when features change. Only describe things that exist 
 - 🚗 Driving mode: voice only, big tap-anywhere-to-talk screen. It turns on by itself when the
   phone is moving at driving speed (if location is on), or by hand.
 - Scout can do things, not just explain them (signed-in people): search the feed, open a Food &
-  drink list, mark someone going to an event (they tap "Yes, I'm going" to confirm), open a flare
+  drink list, mark someone going to an event (they tap "Yes, I'm going" to confirm), open a hangout
   draft (they pick the spot and press Send), open a chat with a friend with a draft message, and get
   directions. Nothing is posted, sent or RSVP'd without the person tapping.
 - Directions: a card with the distance, a rough travel time (an estimate, not live traffic), when to
   leave for an event, and Drive / Walk / Transit buttons that open Apple Maps (iPhone, Mac) or Google
-  Maps for turn-by-turn. Flares without a venue are blurred on purpose, so Scout can't route to them.
+  Maps for turn-by-turn. Hangouts without a venue are blurred on purpose, so Scout can't route to them.
   In driving mode Scout says the gist out loud and shows one big "Start directions" button.
 - 🧭 Tour: a 20-second walk around the screen, offered once to new people and any time from the
   "Take the tour" chip in the Scout panel, or by asking "give me a tour". Next / Skip on each step.
@@ -169,7 +188,7 @@ Keep this file up to date when features change. Only describe things that exist 
   up, say so honestly and suggest Late-night eats instead.
 - Map controls: the chips under the search box pick one thing at a time (see Explore). The layers button on the right
   opens Map layers for fine control: quick picks (Night out, Outdoors day, Friends, Everything, Clear), a switch for
-  each part (clubs, bars, hot spots, parks, lakes & rivers, trails, rentals & trailheads, flares, live, stories, food,
+  each part (clubs, bars, hot spots, parks, lakes & rivers, trails, rentals & trailheads, hangouts, live, stories, food,
   open now only), when events happen and which types, and a color key. The arrow button goes back to where you are.
   Live streams are behind the small "LIVE 3 ›" pill at the top left of the map.
 - Outdoors: parks, greenbelts and preserves are outlined in green, lakes and rivers in blue. Tap one to see what you can
@@ -200,7 +219,7 @@ Keep this file up to date when features change. Only describe things that exist 
 
 ## New in V2
 - 🔔 Notifications: the bell at the top right collects waves, new friends, friends going to the
-  same event, replies in an event's chat, people down for your flare, group joins, story tags and likes, quest wins and
+  same event, replies in an event's chat, people down for your hangout, group joins, story tags and likes, quest wins and
   a reminder 2 hours before things you're going to. "Phone notifications" at the bottom of the inbox gives a heads-up
   while the app is open in the background.
 - Event details: tap any event (feed card, Details on its map card, Tonight near you in Explore) for the full page:
@@ -208,7 +227,7 @@ Keep this file up to date when features change. Only describe things that exist 
   💌 Invite (sends friends a message with the link), 🗳️ Plan it (a group vote), 💬 In a chat; Eat after; 📍 Check in only
   shows when you're there while it's on; who's going (friends first) and a chat for people going.
 - 🏆 Quests (You → Quests & rewards, or your level line on You): challenges like History buff (5 historical markers), Culture
-  hound, Taco crawl, Touch grass, Live and loud, Night owl, Explorer (3 hot spots), Squad up, Light a flare,
+  hound, Taco crawl, Touch grass, Live and loud, Night owl, Explorer (3 hot spots), Squad up, Start a hangout,
   Storyteller, Bring a friend, Regular (3 weeks in a row). You earn XP by checking in: tap 📍 Check in on a sight,
   place, park or event when you're within about 150 m. The phone checks the distance; Side Quest only learns which
   place, never your exact location. Levels and badges show to friends, and there's a friends-only leaderboard you can

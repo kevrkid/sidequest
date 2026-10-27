@@ -84,7 +84,7 @@ QUESTS = [
   { id: 'nightowl', e: '🦉', name: 'Night owl', desc: 'Check in somewhere between 11 PM and 4 AM', goal: 1, xp: 60 },
   { id: 'explorer', e: '🧭', name: 'Explorer', desc: 'Check in in 3 different hot spots', goal: 3, xp: 120 },
   { id: 'squad', e: '🤝', name: 'Squad up', desc: 'Make 3 friends on Side Quest', goal: 3, xp: 100 },
-  { id: 'flare', e: '🔥', name: 'Light a flare', desc: 'Post a flare and see who\'s down', goal: 1, xp: 40 },
+  { id: 'flare', e: '🔥', name: 'Start a hangout', desc: 'Post a hangout and see who\'s down', goal: 1, xp: 40 },
   { id: 'story', e: '📸', name: 'Storyteller', desc: 'Share 3 stories', goal: 3, xp: 60 },
   { id: 'recruiter', e: '💌', name: 'Bring a friend', desc: 'Invite someone who joins', goal: 1, xp: 80 },
   { id: 'regular', e: '📅', name: 'Regular', desc: 'Get out 3 weeks in a row', goal: 3, xp: 150 }
@@ -331,7 +331,7 @@ end
 TRACK_EVENTS = %w[open home_next home_tonight event_open event_share event_save event_invite event_chat notif_open
                   quests_open checkin quest_done saved_open invite_copy share_open sight_open sight_tell plan_save
                   scout_ask map_open search feed_open signup_ref push_on search_open
-                  chip_food chip_events chip_night chip_outdoors chip_sights chip_friends chip_zones
+                  chip_food chip_events chip_night chip_outdoors chip_sights chip_friends chip_zones chip_find find media_open
                   lens_open look_open menu_open mic_on mic_heard mic_none mic_err_audio mic_err_network mic_err_lang mic_err_service mic_err_denied mic_err_stuck mic_err_hear mic_err_other].freeze
 STATS_FILE = File.join(__dir__, 'data', 'stats.json')
 STATS = { lock: Mutex.new, d: (JSON.parse(File.read(STATS_FILE)) rescue nil) || {}, dirty: false }
