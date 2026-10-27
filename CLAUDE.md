@@ -21,27 +21,47 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   (`home` = Explore, default half; `map` = Explore at peek; feed/meet/me/live/search = full). `--dvis` on `#app` is how
   much of the screen the drawer + dock cover, so map overlays (Scout button, LIVE pill, Leaflet attribution, popup
   autopan) sit above it. ≥900px wide (`WIDE()`): the drawer is a fixed panel on the left, always open.
-  - Top, floating: your picture (`#meChip`, opens You; guests see an orange "Sign up" pill; green ring = online),
-    the name (`#logo`, back to the map at peek), the bell. Right side: layers, ghost/sharing, locate (SVG icons from
-    the `<symbol id="i-…">` sprite at the top of `#app`; `svgI(name)`).
+  - Top, floating: the name (`#logo`, back to the map at peek) and the bell; guests also get an orange "Sign up" pill
+    (`#meChip`, hidden for members: You is in the dock, whose avatar gets a green ring when online). Right side: layers
+    and locate (SVG icons from the `<symbol id="i-…">` sprite at the top of `#app`; `svgI(name)`). Location sharing
+    (ghost) is a row in You and at the top of the Layers sheet (`data-yshare` → `openShareSheet()`). At `full` the top
+    becomes a solid bar and the map buttons/credit hide.
   - **Search** (`#qIn`, `openSearchView`, `renderSearch`, `searchGo`): one box for places (PL.all + parks/lakes/trails
     + sights, nearest first), events, people, groups; "Find it on menus" (`openDishes`), "Search posts and the feed"
     (`runSearch`), and "Ask Scout" (questions go straight to Scout, `isQuestion`). Recent searches in `S.recentQ`.
     The old Search sheet still exists as `openSearchSheet()`; `openSearch()` now focuses the box.
   - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Food, Tonight, Nightlife, Outdoors, Sights,
     Friends, Hot spots. A chip turns the map to just that (`EX_LAYERS`; the previous layers are kept in `S.exPrev` and
-    put back by ✕ / tapping it again / back, `exploreClear`) and lists it in the drawer (`#exCat`, `renderExCat`) with
-    sub-chips (`EX_SUBS`, `data-exsub`) and, for food, the Open now switch (`data-exopen`). Rows are `.xrow`
-    `data-xgo="pl|id"` etc. → `searchGo` → focusPlace / focusSight / mapGo / openEvent.
-  - **Explore** (`#v-home`, `renderHome`): stories, Up next, Friends out, Tonight near you, Busy right now
-    (`hotRail`), Happy hour now (`happyRail`), quick buttons. `renderGlance` writes the peek line.
+    put back by tapping it again (it shows a ✕) / back, `exploreClear`), always at half, and lists it in the drawer
+    (`#exCat`, `renderExCat`) under sub-chips (`EX_SUBS`, `data-exsub`; food and nightlife start with a "● Open now"
+    toggle, `data-exopen`). Rows are `.xrow` `data-xgo="pl|id"` etc. → `searchGo` → focusPlace / focusSight / mapGo /
+    focusOnMap (`evmap`; search results use `ev` = the event page).
+    Hot spots: the sub-chips are the neighborhoods (`PL.hot`); picking one flies the map there and lists
+    `/api/places?zone=` (tap it again for all of them). Explore's "Busy right now" cards open the same.
+  - **Pin cards** (`POP`, `popToDrawer` / `popClosed` on Leaflet's popupopen/close): every map popup's content node is
+    moved into `#exPop` (the drawer, at a `half` sized to the card) and the bubble is hidden (`.leaflet-popup.indrawer`);
+    later `setContent` calls still land there. A ring marks the pin (`.popring`); ✕ (`data-popclose`) / back / another
+    pin closes it and the drawer goes back where it was (or to the chip's list). Leaflet's autopan is off; we
+    `panInside` above the drawer. Tests should look in `#exPop`, not `.leaflet-popup`.
+  - **Press and hold** the map (`contextmenu`, `mapHold`): a card with the nearest place/sight within 150 m, 📣 Flare
+    here (`data-holdflare`: compose with that place), the place, Directions.
+  - **Explore** (`#v-home`, `renderHome`): Up next, Friends out, Tonight near you, Happy hour now (`happyRail`), Open
+    near you (`openRail`, `/api/places?open=1`, every 10 min), Busy right now (`hotRail`), This weekend (`weekendRail`).
+    Stories are at the top of For you (`#feedStories`); `#homeStories` and `#quickBar` are hidden in V3 (level/coins
+    are on You). `renderGlance` writes the peek line (hidden while a chip or search is open).
   - The map starts calm (`S.v3map` once): events, flares, friends, live, parks/water, markets; food, nightlife, hot
     spot zones, trails and sights come with their chip or the layers sheet.
-  - **Chats** = the old Meet screen (`#v-meet`), tabs Chats · Friends · Groups · Meet (swipe), Chats first
+  - **Chats** = the old Meet screen (`#v-meet`), tabs Messages · Friends · Groups · Meet (swipe), Messages first
     (`meetTab='msgs'`); an open chat takes the whole drawer (`.inthread`). Dock badge = unread + friend requests.
-  - **You** (`#v-me`, `renderYou`): picture, Online switch (`#presBtn` moved here), level/coins/streak/friends, a list
-    (My plans, Saved, Friends, Quests & rewards, Invite, Español; `data-menu` / `data-quick` as before), then the old
-    four profile tabs. The name menu (`#meMenu`) is gone; `data-menu` still works anywhere.
+  - **You** (`#v-me`, `renderYou`): picture, Online switch (`#presBtn` moved here), one level/coins/streak line and a
+    friends count (`#youStats`), a list (My plans, Saved, Quests & rewards, Invite, Location sharing, Edit profile,
+    Settings & privacy, Español; `data-menu` / `data-quick` / `data-yedit` / `data-yshare`). The old four profile tabs
+    sit in `#meEdit`, hidden until Edit profile / Settings (or any `showMeSec()`); the dock's You hides them again.
+    The name menu (`#meMenu`) is gone; `data-menu` still works anywhere.
+  - **For you**: title + map/filter icons, Happening | Posts, one chip row (a 📅 chip cycles the time window,
+    `data-fwhen`; `#feedWhen` is hidden), the meta line only when something narrows it, no live cards (the map's LIVE
+    pill has them). "Scout is picking…" (never "Claude").
+  - **Search page** before typing: Ask Scout (opens voice), Scout ideas by time of day (`askIdeas()`), recent, try.
   - Back (`closeTopOverlay`): sheet → map popup → chip list → lower the drawer. Scout's tour, targets (`SC_T`) and
     offline answers (`SC_FAQ`) point at the V3 places; `scout_knowledge.md` describes the V3 screen.
 - **Story viewer** (`#storyView`, `renderReel()`): TikTok-style vertical scroll-snap feed of every story; the one ≥60%

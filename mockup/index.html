@@ -1825,7 +1825,7 @@ function openProfile(h){
       `<div class="log"><b style="color:var(--text);min-width:130px">${esc(f.q.replace(/[?…]$/,''))}</b><span>${esc([].concat(p[f.k]).join(', '))}</span></div>`).join('');
     return rows?`<label class="lbl">${title}</label>${rows}`:''; }).join('');
   $('#actSheet').innerHTML = `<div class="row">${av(h)}<div class="grow"><b style="font-size:19px">@${esc(h)}</b> ${u.real?'':'<span class="badge">demo</span>'} ${u.on?'<span class="onlinebadge">Online now</span>':''}
-      <div class="meta">${esc([ty?`${u.t} · ${ty[0]}`:'',big3].filter(Boolean).join(' · '))}</div></div><button class="btn sm" data-actclose>Close</button></div>
+      <div class="meta">${esc([ty?`${u.t} · ${ty[0]}`:'',big3].filter(Boolean).join(' · '))}</div></div><button class="xbtn" data-actclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="row" style="margin:14px 0 6px"><div class="grow"><span class="match">${pct}% MATCH</span><div class="bar"><b style="width:${pct}%"></b></div></div>
       ${isFriend(h)?`<button class="btn sm blue" data-thread="${esc(h)}" data-fromprofile>💬 Message</button>`:addBtn(h)}
       <button class="btn sm" data-more="user|${esc(h)}|${esc(h)}" style="padding:4px 9px">⋯</button></div>
@@ -2483,12 +2483,12 @@ let PLQ={};
 async function openPlaces(q){
   PLQ=q; const tile=FOOD_TILES.find(t=>t[0]===q.cat), zone=q.zone&&(PL.hot||[]).concat(Object.values(HOT_FALLBACK)).find(z=>z.id===q.zone);
   const title = zone ? `🔥 ${zone.name}` : tile ? `${tile[1]} ${tile[2]}` : '🍽️ Food & drink';
-  $('#placesSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:19px">${esc(title)}</b><button class="btn sm" data-pclose>Close</button></div><p class="skel">Finding spots…</p>`;
+  $('#placesSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:19px">${esc(title)}</b><button class="xbtn" data-pclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div><p class="skel">Finding spots…</p>`;
   $('#placesBg').hidden=false;
   let j; try{ j=await (await fetch(`/api/places?${new URLSearchParams({cat:q.cat||'',zone:q.zone||'',open:S.foodOpen?'1':''})}&${nearParam()}&limit=60`)).json(); if(j.error) throw new Error(j.error); }
   catch(e){ $('#placesSheet').innerHTML+=`<p class="meta">Couldn't load places: ${esc(e.message)}</p>`; return; }
   PL.lastList=j.places;
-  $('#placesSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:19px">${esc(title)}</b><button class="btn sm" data-pclose>Close</button></div>
+  $('#placesSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:19px">${esc(title)}</b><button class="xbtn" data-pclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     ${zone?.vibe?`<p class="meta" style="margin:4px 0 0">${esc(zone.vibe)}</p>`:''}
     <div class="row" style="margin:10px 0 4px"><span class="meta grow">${j.places.length} ${S.foodOpen?'open now':'spots'} · nearest first</span>
       <span class="meta">Open now</span><button class="toggle ${S.foodOpen?'on':''}" data-popen aria-label="Only places open now"></button>
@@ -2511,11 +2511,11 @@ function hhWhen(h){   // "Mo-Fr 15:00-18:00; Sa 14:00-16:00" → "Mon–Fri 3–
     .replace(/(\d{1,2}:\d\d)-(\d{1,2}:\d\d)/g,(_,a,b)=>{ if(/^0?0:00$/.test(a)&&b==='24:00') return T('all day'); const A=t(a),B=t(b); return `${A.s}${A.pm===B.pm?'':A.pm?' PM':' AM'}–${B.s} ${B.pm?'PM':'AM'}`; })).join(' · ');
 }
 async function openHappy(){
-  $('#placesSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🍻 ${T('Happy hour')}</b><button class="btn sm" data-pclose>${T('Close')}</button></div><p class="skel">${T('Finding happy hours…')}</p>`;
+  $('#placesSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🍻 ${T('Happy hour')}</b><button class="xbtn" data-pclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div><p class="skel">${T('Finding happy hours…')}</p>`;
   $('#placesBg').hidden=false;
   await loadHappy(true);
   const L=HH.list||[]; PL.lastList=L;
-  $('#placesSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🍻 ${T('Happy hour')}</b><button class="btn sm" data-pclose>${T('Close')}</button></div>
+  $('#placesSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🍻 ${T('Happy hour')}</b><button class="xbtn" data-pclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <p class="meta" style="margin:4px 0 8px">${HH.now?T('{n} on right now, nearest first.',{n:HH.now}):T('None on right now. Coming up:')}</p>
     ${L.length?L.map(p=>placeRow(p,null,null,`<div><span class="hhtag ${p.happy.now?'now':''}">${esc(p.happy.label)}</span>${p.happy.deals?` <span class="meta">${esc(p.happy.deals)}</span>`:''}</div>`)).join(''):`<p class="meta">${T('No happy hours found yet. They come from the menus Side Quest reads, and more are added every day.')}</p>`}
     <p class="meta" style="margin-top:12px">${T('From the places\' own menus; deals and times can change, so check before you go.')}</p>`;
@@ -2523,7 +2523,7 @@ async function openHappy(){
 // 🍴 A dish anywhere: every menu we've read, matching all the words; "under $10" and "open" work too.
 async function openDishes(q){
   q=String(q||'').trim(); if(!q) return;
-  const head=`<div class="row"><b class="grow" style="font-size:19px">🍴 ${esc(q)}</b><button class="btn sm" data-pclose>${T('Close')}</button></div>
+  const head=`<div class="row"><b class="grow" style="font-size:19px">🍴 ${esc(q)}</b><button class="xbtn" data-pclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <form id="dishForm2" style="margin-top:8px"><input id="dishQ2" type="search" value="${esc(q)}" autocomplete="off" enterkeyhint="search"></form>`;
   $('#placesSheet').innerHTML=head+`<p class="skel">${T('Looking through menus…')}</p>`; $('#placesBg').hidden=false;
   let j; try{ j=await (await fetch(`/api/dishes?q=${encodeURIComponent(q)}&${nearParam()}`)).json(); if(j.error) throw new Error(j.error); }
@@ -2549,7 +2549,7 @@ function placeRow(p,zone,after,extra=''){
 // "This club lets out at 2 AM: what's still open to eat nearby?" From a place (q.id) or an event (q.ev).
 async function openAfter(q){
   const e=q.ev&&EV.byId[q.ev], name=e?e.venue||e.title:q.name||'here';
-  const head=t=>`<div class="row"><b class="grow" style="font-size:19px">🌙 ${esc(t)}</b><button class="btn sm" data-pclose>Close</button></div>`;
+  const head=t=>`<div class="row"><b class="grow" style="font-size:19px">🌙 ${esc(t)}</b><button class="xbtn" data-pclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>`;
   $('#placesSheet').innerHTML=head(`Eat after ${name}`)+'<p class="skel">Finding food that’s still open…</p>'; $('#placesBg').hidden=false;
   const qs=e?`lat=${e.lat}&lng=${e.lng}&ends=${e.te}`:`id=${encodeURIComponent(q.id)}`;
   let j; try{ j=await (await fetch(`/api/places/after?${qs}`)).json(); if(j.error) throw new Error(j.error); }
@@ -3150,7 +3150,7 @@ function showPlanOnMap(plan){
 function openPlans(){
   const now=Date.now(), going=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>now).sort((a,b)=>a.ts-b.ts), saved=SV.plans||[];
   const asks=[['🌙','Plan my night'],['☀️','Plan my Saturday'],['🌲','Plan a chill day outdoors'],['🍽️','Plan dinner and drinks']].map(([e,t])=>[e,T(t)]);
-  $('#plansSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:20px">${T('📅 My plans ').trim()}</b><button class="btn sm" data-plansclose>${T('Close')}</button></div>
+  $('#plansSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:20px">${T('📅 My plans ').trim()}</b><button class="xbtn" data-plansclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <label class="lbl">${T('✨ Plan with Scout')}</label>
     <div class="tagchips">${asks.map(([e,t])=>`<button class="ichip" data-planask="${esc(t)}">${e} ${esc(t)}</button>`).join('')}</div>
     <label class="lbl" style="margin-top:16px">${T('Saved itineraries')}</label>
@@ -3192,7 +3192,7 @@ function openSearchSheet(){
     <label class="lbl" style="margin-top:14px">🔥 Hot spots</label>
     <div class="create-grid three">${(PL.hot||Object.values(HOT_FALLBACK)).map(z=>`<button data-pzone="${z.id}" style="background:linear-gradient(145deg,#ff512f,#dd2476)"><i>🔥</i>${esc(z.name)}<span>${z.open!=null?`${z.open} open now`:'tap to see'}</span></button>`).join('')}</div>`;
   const hr=new Date().getHours(), foodFirst = hr>=22 || hr<10;   // late night and breakfast: people are mostly looking for food
-  $('#searchSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:20px">🔎 What are you looking to do?</b><button class="btn sm" data-sclose>Close</button></div>
+  $('#searchSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:20px">🔎 What are you looking to do?</b><button class="xbtn" data-sclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <form id="sForm" style="margin-top:12px"><input id="sQ" type="search" placeholder="Search events, places, people, groups…" autocomplete="off"></form>
     <div style="margin-top:10px">${segHtml('sWhen',[['today','Tonight'],['weekend','This weekend'],['week','This week']],searchWhen)}</div>
     ${foodFirst ? food+events : events+food}
@@ -4256,7 +4256,7 @@ function renderChatSheet(){
 const sendToChat = card => openChatSheet('send', card);
 async function openWallPost(id){   // one public post, in the sheet (from a chat card or a profile)
   try{ const j=await (await fetch('/api/wall/one?id='+encodeURIComponent(id),{credentials:'same-origin'})).json(); if(j.error) throw new Error(j.error);
-    WL.top=[j.post,...WL.top.filter(p=>p.id!==id)]; $('#chatSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📝 ${T('Post')}</b><button class="btn sm" data-chclose>${T('Close')}</button></div>`+wallCard(j.post);
+    WL.top=[j.post,...WL.top.filter(p=>p.id!==id)]; $('#chatSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📝 ${T('Post')}</b><button class="xbtn" data-chclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>`+wallCard(j.post);
     CHS.mode='post'; $('#chatBg').hidden=false; }
   catch(e){ toast(esc(e.message),'orange'); }
 }
@@ -4554,7 +4554,7 @@ document.addEventListener('click',async e=>{
 const REASONS = ['Spam or scam','Harassment','Hate or violence','Sexual content','Unsafe meetup','Fake account','Something else'];
 function openActions(kind, id, author){
   const blocked=(SV.me?.blocks||[]).includes(author), mine=author===S.me.h, demo=isDemoUser(author);
-  $('#actSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">${kind==='user'?'@'+esc(author):'Options'}</b><button class="btn sm" data-actclose>Close</button></div>
+  $('#actSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">${kind==='user'?'@'+esc(author):'Options'}</b><button class="xbtn" data-actclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     ${mine?'<p class="meta">This is yours.</p>':`<label class="lbl">Report this ${kind==='user'?'person':kind}</label>
       <div class="tagchips">${REASONS.map(r=>`<button class="ichip" data-report="${kind}|${esc(id)}|${esc(r)}">${esc(r)}</button>`).join('')}</div>
       <p class="meta" style="margin:8px 0 0">Reports are private. Someone reviews every one.</p>
@@ -4575,7 +4575,7 @@ async function block(who, on){
   catch(e){ toast(esc(e.message),'orange'); }
 }
 function openFeedback(){
-  $('#actSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">💬 Beta feedback</b><button class="btn sm" data-actclose>Close</button></div>
+  $('#actSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">💬 Beta feedback</b><button class="xbtn" data-actclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <p class="meta">What's confusing, broken, or missing? What would make you open this on a Friday night?</p>
     <textarea id="fbText" rows="5" maxlength="2000" placeholder="Be blunt, it helps."></textarea>
     <button class="btn primary" data-fbsend style="width:100%;margin-top:12px;padding:13px">Send</button>`;
@@ -5240,7 +5240,9 @@ function tab(t, at){
   if(t!=='search'){ $('[data-qback]').hidden=true; if(document.activeElement===$('#qIn')) $('#qIn').blur(); }
   setDrawer(at || (t==='home' ? (was==='home'||was==='search'&&DRW.at!=='full' ? DRW.at : 'half') : 'full'));
   $('#scoutBtn').hidden = t!=='home'; scoutUnpoint?.();
-  if(!map) initMap(); else setTimeout(()=>map.invalidateSize(),0);
+  if(!map){ if(DRW.booted) initMap(); else setTimeout(()=>{ if(!map){ initMap(); setDrawer(); } },0); }   // first time: paint first, then build the map
+  else setTimeout(()=>map.invalidateSize(),0);
+  DRW.booted=true;
   if(t==='home') renderHome();
   if(!NAVBACK&&(t==='feed'||t==='search')) try{ track(t+'_open'); }catch(e){}
   if(LAZY[t]){ const f=LAZY[t]; delete LAZY[t]; f(); }
@@ -5329,7 +5331,7 @@ function renderDock(){
 function hotRail(){
   const z=(PL.hot||[]).filter(x=>x.open>0).sort((a,b)=>b.open-a.open).slice(0,8);
   return z.length ? `<div class="tnhead"><b>🔥 ${T('Busy right now')}</b><button class="linkbtn" data-excat="zones">${T('Map')} ›</button></div><div class="tnrail">${z.map(x=>
-    `<button class="tncard" data-pzone="${esc(x.id)}" style="width:170px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">🔥</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${T('{n} open now',{n:x.open})}</span></span></button>`).join('')}</div>` : '';
+    `<button class="tncard" data-excat="zones" data-exsubgo="${esc(x.id)}" style="width:170px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">🔥</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${T('{n} open now',{n:x.open})}</span></span></button>`).join('')}</div>` : '';
 }
 
 // Things to ask Scout, one tap each, on the search page (they go to Scout's chat; guests get the built-in answers).
@@ -5348,11 +5350,10 @@ function openRail(){
   return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
     `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${PLACE_E[p.kind]||'🍽️'}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.status||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>`;
 }
-// The weekend's best fits, when it isn't the weekend yet (Mon-Thu), or next week's on the weekend.
+// Mon-Thu: the coming weekend's best fits (Fri-Sun); Fri-Sun: the week ahead (from tomorrow).
 function weekendRail(){
-  const now=new Date(), dow=now.getDay(), aff=affinity();
-  const sat=new Date(now); sat.setHours(0,0,0,0); sat.setDate(sat.getDate()+((6-dow+7)%7||(dow===6?0:7)));
-  const from=dow>=1&&dow<=4?sat.getTime()-864e5*1:Date.now()+864e5*2, to=from+3*864e5;   // Fri-Sun, or the next few days
+  const now=new Date(), dow=now.getDay(), midweek=dow>=1&&dow<=4, aff=affinity(), day0=new Date(now).setHours(0,0,0,0);
+  const from=midweek?day0+(5-dow)*864e5:day0+864e5, to=from+(midweek?3:7)*864e5;
   const L=EV.list.filter(e=>e.ts>=from&&e.ts<to&&e.lat&&km(ME_POS,[e.lat,e.lng])<40).map(e=>({e,s:scoreEvent(e,aff,{}).s})).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.e);
   return L.length ? `<div class="tnhead"><b>📅 ${T(dow>=1&&dow<=4?'This weekend':'Coming up')}</b><button class="linkbtn" data-excat="events" data-exsubgo="${dow>=1&&dow<=4?'weekend':'week'}">${T('See all')} ›</button></div><div class="tnrail">${L.map(e=>
     `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:''}>${CATS[e.cat]?.e||'🎫'}</span><span class="tnt"><b>${esc(e.title)}</b><span class="meta">${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}</span></span></button>`).join('')}</div>` : '';
@@ -5399,7 +5400,7 @@ const xrow = ({go, e, th='', title, sub, d, attr=''}) => `<button class="xrow" $
   <span class="grow"><b>${esc(title)}</b><span class="meta">${sub||''}</span></span>${d!=null?`<span class="xd">${esc(d)}</span>`:''}</button>`;
 const mapC = () => map ? [map.getCenter().lat, map.getCenter().lng] : ME_POS;
 async function renderExCat(fresh){
-  const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq, [,e,l]=EX_CHIPS.find(c=>c[0]===k);
+  const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq;
   const head = exSubs(k);
   const busy = () => { el.innerHTML = head + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`; };
   if(k==='food'||k==='night'){
@@ -5444,10 +5445,22 @@ async function renderExCat(fresh){
   }
   if(k==='zones'){
     if(!PL.hot){ busy(); await loadHotspots(); } if(seq!==EXC.seq) return;
-    const z=(PL.hot||Object.values(HOT_FALLBACK)).slice().sort((a,b)=>(b.open||0)-(a.open||0));
-    el.innerHTML = head + `<p class="meta exnote">${T('Neighborhoods glow brighter the more is open and happening.')}</p>` +
-      z.map(x=>xrow({attr:`data-pzone="${esc(x.id)}"`, e:'🔥', title:x.name, sub:esc(x.open!=null?T('{n} open now',{n:x.open}):x.vibe||'')})).join('');
-    return;
+    const z=(PL.hot||Object.values(HOT_FALLBACK)).slice().sort((a,b)=>(b.open||0)-(a.open||0)), zone=z.find(x=>x.id===EXC.sub);
+    const subs=`<div class="subchips">${zone?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>● ${esc(T('Open now'))}</button>`:''}${z.map(x=>`<button data-exsub="${esc(x.id)}" class="${EXC.sub===x.id?'on':''}">${esc(x.name)}</button>`).join('')}</div>`;
+    if(!zone){
+      el.innerHTML = subs + `<p class="meta exnote">${T('Neighborhoods glow brighter the more is open and happening.')}</p>` +
+        z.map(x=>xrow({attr:`data-exsub="${esc(x.id)}"`, e:'🔥', title:x.name, sub:esc(x.open!=null?T('{n} open now',{n:x.open})+(x.vibe?' · '+x.vibe:''):x.vibe||'')})).join('');
+      return;
+    }
+    // one neighborhood: the map goes there, its spots are listed
+    if(fresh&&map&&zone.lat) map.flyTo([zone.lat,zone.lng],16,{duration:.6});
+    el.innerHTML = subs + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`;
+    let L=[]; try{ L=(await (await fetch(`/api/places?${new URLSearchParams({zone:zone.id,open:S.foodOpen?'1':''})}&${nearParam()}&limit=60`)).json()).places||[]; }catch(err){}
+    if(seq!==EXC.seq) return; PL.lastList=L;
+    el.innerHTML = subs + (zone.vibe?`<p class="meta exnote">${esc(zone.vibe)}</p>`:'') + (L.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
+        sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc(p.kind||'')}`, d:p.mi!=null?p.mi+' mi':null})).join('')
+      || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
+    watchThumbs(); return;
   }
   if(k==='friends'){
     const out=(AUTHED&&SV.v2?.out)||[], locs=(FMAP.friends||[]), flares=allPings().filter(p=>p.u!==S.me.h).slice(0,20), live=liveStreams();
@@ -5558,7 +5571,8 @@ document.addEventListener('click',e=>{
   if(d.qback!==undefined){ $('#qIn').value=''; return tab('home', NAVST.at(-1)==='home'?undefined:'half'); }
   if(d.qmic!==undefined) return openScoutVoice();
   if(d.excat) return exploreCat(d.excat, d.exsubgo);
-  if(d.exsub){ EXC.sub=d.exsub; if(EXC.k==='events'){ S.mapWhen=d.exsub; save(); renderMapChips(); renderMap(); } if(EXC.k==='food'||EXC.k==='night') EXC.list=null; return renderExCat(true); }
+  if(d.exsub){ if(EXC.sub===d.exsub&&EXC.k==='zones'){ EXC.sub=null; return renderExCat(true); }   // tap the picked neighborhood again: all of them
+    EXC.sub=d.exsub; if(EXC.k==='events'){ S.mapWhen=d.exsub; save(); renderMapChips(); renderMap(); } if(EXC.k==='food'||EXC.k==='night') EXC.list=null; return renderExCat(true); }
   if(d.exopen!==undefined){ S.foodOpen=!S.foodOpen; S.mapL.openonly=S.foodOpen; save(); refreshMapLayers(); return renderExCat(true); }
   if(d.xgo) return searchGo(d.xgo);
   if(d.sq!==undefined){ $('#qIn').value=d.sq; return renderSearch(); }
@@ -6697,7 +6711,7 @@ function scoutSvg(L){
 }
 function scoutFaces(){   // redraw every Scout on screen with the current look
   const html=scoutSvg(scS().look);
-  document.querySelectorAll('#scoutBtn .scwrap, #scoutHead, #driveView .dv-face, #lookPrev').forEach(el=>{ el.innerHTML=html.replace(/id="sc\d+"/,`id="sc${++SCT.n}"`).replace(/url\(#sc\d+\)/,`url(#sc${SCT.n})`); });
+  document.querySelectorAll('#scoutBtn .scwrap, #scoutHead, #driveView .dv-face, #lookPrev, [data-scface]').forEach(el=>{ el.innerHTML=html.replace(/id="sc\d+"/,`id="sc${++SCT.n}"`).replace(/url\(#sc\d+\)/,`url(#sc${SCT.n})`); });
   scoutEx(SCT.ex);
 }
 function scoutEx(ex){
@@ -7164,6 +7178,7 @@ function scoutPoint(id,label,hold){
   if(view==='home'&&$('#drawer main').contains($(sel))){ if(EXC.k) exploreClear(); if(DRW.at==='peek') setDrawer('half'); }
   setTimeout(()=>{
     const el=$(sel), pane=el?.closest('[data-mepane]'); if(pane?.hidden) showMeSec(pane.dataset.mepane);
+    if(el?.closest('#meEdit')&&$('#meEdit').hidden) $('#meEdit').hidden=false;   // V3: profile tabs sit behind Edit profile
     if(!el||!el.offsetParent) return;
     if(el.closest('.view,.sheet,.tnrail,.mapchips,#youList')&&!el.closest('.dhead')) el.scrollIntoView({block:'center',inline:'center',behavior:'smooth'});
     else { const mc=el.closest('.mapchips'); mc?.scrollTo({left:mc===el?0:Math.max(0,el.offsetLeft-mc.clientWidth/2+el.offsetWidth/2),behavior:'smooth'}); } scoutBeep();

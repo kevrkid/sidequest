@@ -26,7 +26,8 @@ Keep this file up to date when features change. Only describe things that exist 
   one thing on the map AND lists it in the drawer (nearest first), with smaller chips to narrow it (Food: Happy hour,
   Coffee, Tacos, BBQ, Pizza, Burgers, Asian, Trucks, Sweets, Late night, Breakfast, plus an Open now switch; Tonight:
   This weekend / This week; Nightlife: Bars, Clubs, Late eats; Outdoors: Parks, Lakes & rivers, Trails; Sights:
-  Landmarks, Museums, Markers, Art; "● Open now" is one of Food's and Nightlife's small chips). Tap a row to fly to it on
+  Landmarks, Museums, Markers, Art; Hot spots: each neighborhood (6th Street, Rainey…), which flies the map there and
+  lists its spots; "● Open now" is one of Food's, Nightlife's and a neighborhood's small chips). Tap a row to fly to it on
   the map and open its card in the drawer. The picked chip shows a ✕: tap it again (or back) to go back.
 - Tapping any pin on the map opens its card in the drawer (hours, Menu, Directions, Check in, Save…), with a blue ring
   on the pin. ✕ or back closes it and returns to the list it came from.

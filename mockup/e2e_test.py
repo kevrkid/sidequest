@@ -37,7 +37,9 @@ def wait_until(fn, secs=20):
 
 
 def me_sec(page, sec):
-    """The profile is split into tabs: profile, personality, about, settings."""
+    """The profile is split into tabs: profile, personality, about, settings (V3: behind You → Edit profile)."""
+    if page.locator("#meTabs").is_hidden():
+        page.click("#youList [data-yedit='profile']")
     if page.locator(f"[data-mepane='{sec}']").is_hidden():
         page.click(f"#meTabs [data-mesec='{sec}']")
 
@@ -82,6 +84,8 @@ def feed_search(page, q):
     """V3: searching starts in the drawer's box; "Search posts and the feed" narrows the feed (its box then shows it)."""
     if not page.locator("#qIn").is_visible():
         page.click("[data-dock='home']")
+    if page.locator("#exPop [data-popclose]").is_visible():   # a pin's card has the drawer: close it first
+        page.click("#exPop [data-popclose]"); page.wait_for_timeout(300)
     page.click("#qIn"); page.fill("#qIn", q); page.wait_for_timeout(300)
     page.click("#searchOut [data-xgo^='feed|']")
 

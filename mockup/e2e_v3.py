@@ -2,6 +2,7 @@
 map back), the one search box, back, the dock, You, Scout's tour targets and the desktop panel.
 
   SQ_BASE=http://localhost:8796 python e2e_v3.py <shot-dir>
+  SQ_BROWSER=webkit ...                  # the same in WebKit (Safari's engine)
 
 Run against a test server (test_places.json etc., empty data) like e2e_test.py.
 """
@@ -14,14 +15,31 @@ os.makedirs(OUT, exist_ok=True)
 results, errors = [], []
 
 
+TOUCH = [True]
+
+
+def drag(page, *a):
+    """Touch-drag; False (and the checks that need it are skipped) where the browser can't fake touches."""
+    TOUCH[0] = page.evaluate(DRAG, list(a)) is not False
+    return TOUCH[0]
+
+
+def tcheck(name, ok, detail=""):
+    if TOUCH[0]:
+        check(name, ok, detail)
+    else:
+        print("SKIP " + name + "  (no synthetic touch in this browser)")
+
+
 def check(name, ok, detail=""):
     results.append((bool(ok), name, str(detail)[:200]))
     print(("PASS " if ok else "FAIL ") + name + (f"  [{detail}]" if detail and not ok else ""))
 
 
-DRAG = """([sel,y1,y2,steps,ms])=>new Promise(ok=>{ const el=document.querySelector(sel), r=el.getBoundingClientRect(), x=r.left+r.width/2;
+DRAG = """([sel,y1,y2,steps,ms])=>new Promise(ok=>{ try{ new Touch({identifier:1,target:document.body}); }catch(e){ return ok(false); }   // WebKit: no synthetic touches
+  const el=document.querySelector(sel), r=el.getBoundingClientRect(), x=r.left+r.width/2;
   const mk=(type,y)=>{ const t=new Touch({identifier:7,target:el,clientX:x,clientY:y}); el.dispatchEvent(new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true,cancelable:true})); };
-  mk('touchstart',y1); let i=0; const tm=setInterval(()=>{ i++; mk('touchmove',y1+(y2-y1)*i/steps); if(i>=steps){ clearInterval(tm); mk('touchend',y2); setTimeout(ok,450); } }, ms); })"""
+  mk('touchstart',y1); let i=0; const tm=setInterval(()=>{ i++; mk('touchmove',y1+(y2-y1)*i/steps); if(i>=steps){ clearInterval(tm); mk('touchend',y2); setTimeout(()=>ok(true),450); } }, ms); })"""
 
 
 def user(browser, w=390, h=844):
@@ -39,7 +57,7 @@ def user(browser, w=390, h=844):
 
 
 with sync_playwright() as pw:
-    browser = pw.chromium.launch()
+    browser = getattr(pw, os.environ.get("SQ_BROWSER", "chromium")).launch()
     ctx, p = user(browser)
     at = lambda: p.evaluate("[curTab, DRW.at]")
 
@@ -54,15 +72,15 @@ with sync_playwright() as pw:
     p.screenshot(path=f"{OUT}/v3-01-peek.png")
 
     # drag and flick
-    p.evaluate(DRAG, ["#drawer .dhead", 700, 250, 12, 25])
-    check("drag the top up: the drawer opens", at()[1] == "full", at())
-    p.evaluate(DRAG, ["#drawer .dgrab", 120, 140, 2, 20])
-    check("a quick nudge (20 px) doesn't move it to another stop", at()[1] == "full", at())
-    p.evaluate(DRAG, ["#v-home", 200, 330, 3, 16])
-    check("flick down from the top of the list: it comes down a stop", at()[1] in ("half", "peek"), at())
+    drag(p, "#drawer .dhead", 700, 250, 12, 25)
+    tcheck("drag the top up: the drawer opens", at()[1] == "full", at())
+    drag(p, "#drawer .dgrab", 120, 140, 2, 20)
+    tcheck("a quick nudge (20 px) doesn't move it to another stop", at()[1] == "full", at())
+    drag(p, "#v-home", 200, 330, 3, 16)
+    tcheck("flick down from the top of the list: it comes down a stop", at()[1] in ("half", "peek"), at())
     p.evaluate("setDrawer('half')"); p.wait_for_timeout(350)
-    p.evaluate(DRAG, ["#v-home", 520, 470, 3, 16])
-    check("at half, pushing the list up opens it all the way", at()[1] == "full", at())
+    drag(p, "#v-home", 520, 470, 3, 16)
+    tcheck("at half, pushing the list up opens it all the way", at()[1] == "full", at())
     p.evaluate("setDrawer('half')"); p.wait_for_timeout(350)
     p.evaluate("map.fire('dragstart')"); p.wait_for_timeout(350)
     check("moving the map drops the drawer out of the way", at()[1] == "peek", at())
@@ -111,8 +129,8 @@ with sync_playwright() as pw:
     # dock: For you, Chats, You, ＋
     p.click("[data-dock='feed']"); p.wait_for_timeout(300)
     check("For you opens the feed full height; the search box steps aside", at() == ["feed", "full"] and not p.locator("#qIn").is_visible())
-    p.evaluate(DRAG, ["#v-feed", 160, 700, 10, 20])
-    check("pulling a screen down shows the map again", at()[0] == "home", at())
+    drag(p, "#v-feed", 160, 700, 10, 20)
+    tcheck("pulling a screen down shows the map again", at()[0] == "home", at())
     p.click("[data-dock='meet']"); p.wait_for_timeout(300)
     check("Chats opens on messages, tabs Messages · Friends · Groups · Meet",
           p.evaluate("meetTab") == "msgs" and p.eval_on_selector_all("#meetTabs [data-mt]", "b=>b.map(x=>x.dataset.mt)") == ["msgs", "friends", "groups", "swipe"])
