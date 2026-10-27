@@ -168,7 +168,7 @@ with sync_playwright() as pw:
     chips = p1.eval_on_selector_all("#mapChips [data-excat]", "ns=>ns.map(n=>n.dataset.excat)")
     dock = p1.eval_on_selector_all("#dock [data-dock]", "ns=>ns.map(n=>n.dataset.dock)")
     check("map first: the map, a search box, the chips and the five-button bar", p1.locator("#map .leaflet-tile-loaded").count() > 0 and p1.locator("#qIn").is_visible()
-          and chips == ["food", "events", "night", "outdoors", "sights", "friends", "zones"] and dock == ["home", "feed", "create", "meet", "me"], f"{chips} {dock}")
+          and chips == ["events", "food", "friends", "night", "zones", "outdoors", "sights"] and dock == ["home", "feed", "create", "meet", "me"], f"{chips} {dock}")
     pos = p1.evaluate("ME_POS")
     check("uses the device's real location", abs(pos[0] - 30.2671) < 0.001 and abs(pos[1] + 97.7395) < 0.001, str(pos))
     p1.click("#qIn"); p1.fill("#qIn", "comedy"); p1.wait_for_timeout(400)

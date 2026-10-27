@@ -22,7 +22,7 @@ Keep this file up to date when features change. Only describe things that exist 
   people and groups as you type, nearest first; "Find it on menus" searches every menu for a dish; a question
   ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode. Before typing, the
   search page shows a few things to ask you ("Plan my night", "Something free to do tonight"…) and recent searches.
-- Under it, chips: 🍔 Food, 🎫 Events, 🍸 Nightlife, 🌳 Outdoors, 🏛️ Sights, 👥 Friends, 🔥 Hot spots. A chip shows that
+- Under it, chips: 🎫 Events, 🍔 Food, 👥 Friends, 🍸 Nightlife, 🔥 Hot spots, 🌳 Outdoors, 🏛️ Sights. A chip shows that
   one thing on the map AND lists it in the drawer (nearest first), with smaller chips to narrow it (Food: Happy hour,
   Coffee, Tacos, BBQ, Pizza, Burgers, Asian, Trucks, Sweets, Late night, Breakfast, plus Open now; Events: Tonight /
   This weekend / This week; Nightlife: Bars, Clubs, Late eats; Outdoors: Parks, Lakes & rivers, Trails; Sights:

@@ -30,8 +30,8 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
     + sights, nearest first), events, people, groups; "Find it on menus" (`openDishes`), "Search posts and the feed"
     (`runSearch`), and "Ask Scout" (questions go straight to Scout, `isQuestion`). Recent searches in `S.recentQ`.
     The old Search sheet still exists as `openSearchSheet()`; `openSearch()` now focuses the box.
-  - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Food, Events, Nightlife, Outdoors, Sights,
-    Friends, Hot spots. A chip turns the map to just that (`EX_LAYERS`; the previous layers are kept in `S.exPrev` and
+  - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Events, Food, Friends, Nightlife, Hot spots, Outdoors,
+    Sights. A chip turns the map to just that (`EX_LAYERS`; the previous layers are kept in `S.exPrev` and
     put back by tapping it again (it shows a ✕) / back, `exploreClear`), always at half, and lists it in the drawer
     (`#exCat`, `renderExCat`) under sub-chips (`EX_SUBS`, `data-exsub`; food and nightlife start with a "● Open now"
     toggle, `data-exopen`). Rows are `.xrow` `data-xgo="pl|id"` etc. → `searchGo` → focusPlace / focusSight / mapGo /

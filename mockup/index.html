@@ -1036,6 +1036,7 @@
   #app.v3 [data-newgroup] i{font-style:normal;color:var(--good)} #app.v3 [data-newgroup] span{color:var(--muted)}
   @supports (height:100dvh){ #app.v3{height:100dvh} }   /* phones: the visible height, toolbars and all */
   #app.v3 .deck{height:calc(100vh - 480px);height:calc(100dvh - 480px);min-height:300px;max-height:520px}   /* the swipe buttons stay above the dock */
+  #createBg .create-grid button{display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start}
 </style>
 </head>
 <body>
@@ -4135,13 +4136,13 @@ function threadAv(t){
 const agoShort = at => { const m=Math.round((Date.now()-at)/6e4); return m<1?'now':m<60?m+'m':m<1440?Math.round(m/60)+'h':new Date(at).toLocaleDateString([],{month:'short',day:'numeric'}); };
 function threadsHtml(){
   const q=meetQ, ts=allThreads().filter(t=>qHit(q,t.with,t.name||'',t.last.t,t.members||[])), others=S.friends.filter(h=>!allThreads().some(t=>t.with===h)&&qHit(q,h));
-  return `${AUTHED?`<div class="row" style="margin-bottom:8px;justify-content:flex-end"><button class="btn sm" data-dmplan>📅 ${T('Make plans')}</button><button class="btn sm" data-dmnewgroup>👥 ${T('New group')}</button></div>`:''}`
+  return `${AUTHED&&allThreads().length?`<div class="row" style="margin-bottom:8px;justify-content:flex-end"><button class="btn sm" data-dmplan>📅 ${T('Make plans')}</button><button class="btn sm" data-dmnewgroup>👥 ${T('New group')}</button></div>`:''}`
     + (ts.map(t=>{ const n=t.unread??(t.last.f!==S.me.h&&t.last.at>(S.dmSeen[t.with]||0)?1:0);
       return `<button class="card row dmrow ${n?'unread':''}" data-thread="${esc(t.with)}" style="width:100%;text-align:left">${threadAv(t)}<div class="grow" style="min-width:0"><b>${esc(threadName(t))}</b>
         <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.last.f===S.me.h?'You: ':t.group&&t.last.f?'@'+esc(t.last.f)+': ':''}${esc(t.last.t)}</div></div>
         <span class="meta">${agoShort(t.last.at)}</span>${n?`<span class="dmn">${n>9?'9+':n}</span>`:''}</button>`; }).join('')
     || (q?`<p class="meta">No chats match “${esc(q)}”.</p>`:`<div class="xempty"><div style="font-size:34px">💬</div><b style="color:var(--text)">${T('No chats yet')}</b><p class="meta">${T('Wave at people in Meet: when they wave back you can chat. Or bring your friends.')}</p>
-      <div class="btns" style="justify-content:center;margin-top:10px"><button class="btn sm primary" data-mt="swipe">👋 ${T('Meet people')}</button><button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button></div></div>`))
+      <div class="btns" style="justify-content:center;margin-top:10px"><button class="btn sm primary" data-mt="swipe">👋 ${T('Meet people')}</button>${S.friends.length&&AUTHED?`<button class="btn sm" data-dmplan>📅 ${T('Make plans')}</button>`:`<button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button>`}</div></div>`))
     + (others.length?`<label class="lbl">Start a chat</label><div class="tagchips">${others.map(h=>`<button class="ichip" data-thread="${esc(h)}">${esc(h)}</button>`).join('')}</div>`:'');
 }
 function dmCardHtml(c, i){
@@ -5010,8 +5011,7 @@ function renderEventPins(){
       ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
       <div class="btns" style="margin-top:8px"><button class="btn sm ${going?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${going?'✓ Going':"I'm going"}</button>
       <button class="btn sm blue" data-evopen="${e.id}">${T('Details')}</button>
-      <button class="btn sm" data-cal="${e.id}">📅 Calendar</button>${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">Directions ↗</a>`:''}
-      ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 Eat after</button>`:''}</div>`);
+      ${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>`:''}</div>`);   // Calendar, Eat after… are on Details
     m.on('popupopen',()=>eventPhotos(e));
     markers[e.id]=m;
     if(z>=15&&(rk>=60||z>=17)) names.push({id:e.id,ll,dy:-17,r:16,text:e.title,score:60+Math.min(rk,400)/10,cls:'ev',go:()=>m.openPopup()});
@@ -5417,7 +5417,7 @@ function openRail(){
   const L=(OPENNEAR.list||[]).slice(0,10); if(!L.length) return '';
   PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];   // so a tap can fly to it
   return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
-    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${placeE(p.kind,p.name,p.cuisine)}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.status||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>`;
+    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${placeE(p.kind,p.name,p.cuisine)}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${p.mi!=null?p.mi+' mi · ':''}${esc(p.status||'')}</span></span></button>`).join('')}</div>`;
 }
 // Mon-Thu: the coming weekend's best fits (Fri-Sun); Fri-Sun: the week ahead (from tomorrow).
 function weekendRail(){
@@ -5435,8 +5435,8 @@ function happyRail(){
 /* the chips: one category at a time, on the map and in the list together */
 const EXC = {k:null, sub:null, list:null, seq:0};
 const EX_CHIPS = [
-  ['food','🍔','Food'], ['events','🎫','Events'], ['night','🍸','Nightlife'], ['outdoors','🌳','Outdoors'],
-  ['sights','🏛️','Sights'], ['friends','👥','Friends'], ['zones','🔥','Hot spots'],
+  ['events','🎫','Events'], ['food','🍔','Food'], ['friends','👥','Friends'], ['night','🍸','Nightlife'],
+  ['zones','🔥','Hot spots'], ['outdoors','🌳','Outdoors'], ['sights','🏛️','Sights'],
 ];
 const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1},
   sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}};
@@ -5641,7 +5641,7 @@ document.addEventListener('click',e=>{
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
     if(k==='home') return curTab==='home' ? setDrawer(DRW.at==='peek'?'half':'peek') : tab('home', 'half');
-    if(k==='me'&&!AUTHED&&location.protocol.startsWith('http')){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
+    if(k==='me'&&!AUTHED&&location.protocol.startsWith('http')){ tab('me'); ONB.mode='signup'; ONB.step=1; return renderOnb(); }
     if(k==='meet'&&curTab!=='meet'){ meetTab='msgs'; DM.open=null; loadThreads().then(()=>{ if(curTab==='meet') renderMeet(); }); }
     if(k==='me') $('#meEdit').hidden=true;   // You opens on the hub; Edit profile shows the rest
     if(k===curTab){ $('#v-'+k)?.scrollTo({top:0,behavior:'smooth'}); return; }
@@ -6608,6 +6608,7 @@ function renderMapChips(){   // V3: the chips under the search box pick one thin
   el.innerHTML = (mapFilter==='feed'?`<button class="chip on" data-mfeedoff>📋 ${T('My feed')}</button>`:'')
     + EX_CHIPS.map(([k,e,l])=>{
       return `<button class="chip ${EXC.k===k?'on':''}" data-excat="${k}" aria-pressed="${EXC.k===k}">${e} ${esc(T(l))}</button>`; }).join('');
+  const on=el.querySelector('.chip.on'); if(on) el.scrollLeft=Math.max(0,on.offsetLeft-el.clientWidth/2+on.offsetWidth/2);   // the picked one in view
 }
 function openMapLayers(){
   const sh=$('#placesSheet'), keep=$('#placesBg').hidden?0:sh.scrollTop;
@@ -7063,7 +7064,7 @@ function scoutLog(who,text,plan){ const s=scS(); s.log.push({who,text,at:Date.no
 function renderScoutLog(){
   const el=$('#scoutLog'); if(!el) return; const s=scS();
   el.innerHTML = (s.log.length?'':`<div class="scm scout">${S.lang==='es'?`¡Hola, soy <b>${esc(s.name)}</b>! 🧭 Toca 🎤 y háblame: qué hacer esta noche, cómo funciona la app o planear tu día. ¡Vamos a explorar!`
-      :`Hey, I'm <b>${esc(s.name)}</b>! 🧭 Tap 🎤 and just talk: what's the move tonight, how the app works, or plan your day. Let's go explore!`}</div>`)
+      :`Hey, I'm <b>${esc(s.name)}</b>! 🧭 Just talk to me (or type): what's the move tonight, how the app works, or plan your day.`}</div>`)
     + s.log.slice(-10).map(m=>{ const i=s.log.indexOf(m);
         return `<div class="scm ${m.who==='me'?'me':'scout'}">${esc(m.text)}</div>${m.plan?planCard(m.plan,{key:'log:'+i, save:m.saved?null:i}):''}`; }).join('')
     + (SCT.busy?'<div class="scm scout wait">🧭 Thinking…</div>':'');
