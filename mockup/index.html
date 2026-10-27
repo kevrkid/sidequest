@@ -983,6 +983,30 @@
   #app.v3{--panel:#141b38;--panel2:#1a2246;--line:#ffffff17}
   #app.v3 .card{border-radius:18px}
   #app.v3 .sheet{background:#121935;border-top-color:#ffffff1c}
+  /* event page: one main action */
+  .evmain{display:flex;gap:8px;margin-top:14px} .evmain .btn{flex:1;font-size:16px;padding:12px}
+  .evmain .iconbtn{width:48px;height:48px;font-size:19px} .evmain .iconbtn.fav{border-color:#ff5c8a;background:#ff5c8a22}
+  .evrow3{display:flex;gap:8px;margin-top:8px} .evrow3>*{flex:1;justify-content:center;text-align:center;font-size:13px;padding:10px 6px}
+  .evfriends{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px} .evfriends .meta{margin-right:2px}
+  .evhero.noimg{height:96px;font-size:40px;background:linear-gradient(135deg,#2a1a4a,#0b2233)}
+  .evx.xbtn{position:absolute;top:10px;right:12px;background:#070b18cc}
+  /* V3 review 2 */
+  #app.v3 .maplive{top:calc(env(safe-area-inset-top,0px) + 64px);bottom:auto!important;left:12px;right:70px;transition:none}
+  #app.v3 .maplive.closed{left:12px;right:auto;justify-content:flex-start}
+  #app.v3 .maplive .livepill{padding:6px 10px;font-size:12px}
+  #app.v3:has(.me-chip:not(.authed)) .maplive{top:calc(env(safe-area-inset-top,0px) + 66px)}
+  #app.v3[data-at=full] .maplive{visibility:hidden}
+  .subchips button.tog{order:99} .subchips{display:flex}
+  .subchips button.tog.on{background:#1a2246;border-color:var(--good);color:#bff5dc}
+  .subchips button.tog.on::before{content:"✓ "}
+  .exlh{display:flex;align-items:baseline;gap:8px;margin:2px 2px 8px} .exlh b{font-size:18px;letter-spacing:-.3px} .exlh .meta{flex:1}
+  #createBg .create-grid button{background:#1a2246!important;border:1px solid #ffffff14;color:var(--text);box-shadow:none}
+  #createBg .create-grid button i{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;font-style:normal;background:#ffffff10;margin-bottom:6px}
+  #createBg .create-grid button span{color:var(--muted)}
+  #drawer .view{padding-bottom:40px}
+  #drawer #v-meet.inthread{padding-bottom:10px}
+  .seg.mini{flex:none;padding:2px;border-radius:11px} .seg.mini button{flex:none;padding:7px 10px!important;font-size:12.5px!important}
+  #app.v3 #v-feed .fhd{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -1047,8 +1071,7 @@
     <section class="view" id="v-search" hidden><div id="searchOut"></div></section>
 
     <section class="view" id="v-feed" hidden>
-      <div class="fhd"><h2 class="grow" data-t="For you">For you</h2><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
-      <div class="seg" id="feedMode" style="margin:10px 0 10px"><button type="button" data-v="foryou" class="on" data-t="🎫 Happening">🎫 Happening</button><button type="button" data-v="posts" data-t="📝 Posts">📝 Posts</button></div>
+      <div class="fhd"><h2 class="grow" data-t="For you">For you</h2><div class="seg mini" id="feedMode"><button type="button" data-v="foryou" class="on" data-t="Happening">Happening</button><button type="button" data-v="posts" data-t="Posts">Posts</button></div><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
       <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:0 0 10px" hidden>
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
@@ -1420,7 +1443,7 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Explore':'Explorar','Watch':'Ver','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
   'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
@@ -1669,7 +1692,7 @@ function score(p){
   const h=historySummary(), done=h.cats.find(([c])=>c===catOf(p));
   if(done&&done[1]>=2){s+=1;r.push(`You've done ${CATS[catOf(p)].l.toLowerCase()} ${done[1]} times lately`);}
   if(p.v&&h.places.some(([n])=>n===venue(p.v).name)){s+=.5;r.push(`You've been to ${venue(p.v).name} before`);}
-  const d=km(ME_POS,pos(p)); if(d<3) s+=1; r.push(`${d.toFixed(1)} km from you`);
+  const d=km(ME_POS,pos(p)); if(d<3) s+=1; r.push(`${(d*.621).toFixed(1)} mi from you`);
   const mins=(p.start-Date.now())/M; if(mins<=0){s+=1;r.push('Happening right now');} else if(mins<90){s+=.5;r.push(`Starts in ${Math.round(mins)} min`);}
   return {p,a,s,r};
 }
@@ -3083,11 +3106,11 @@ async function renderHotZones(){
     const a=zoneActivity(z), lv=a.level, quiet=lv<.12, busy=lv>=.6;
     if(!quiet) L.circle([z.lat,z.lng],{radius:z.r,interactive:false,className:'hotglow',color:'#ff7a18',weight:busy?18:12,opacity:busy?.16:.1,fill:false}).addTo(PL.zones);
     const zone=L.circle([z.lat,z.lng],{radius:z.r,className:'hotzone'+(quiet?' quiet':busy?' busy':''),color:'#ff7a18',weight:1+lv*2,opacity:.18+lv*.72,
-      fillColor:'#ff7a18',fillOpacity:.015+lv*.22,dashArray:quiet?'3 7':null}).on('click',()=>openPlaces({zone:z.id})).addTo(PL.zones);
+      fillColor:'#ff7a18',fillOpacity:.015+lv*.22,dashArray:quiet?'3 7':null}).on('click',()=>exploreCat('zones',z.id)).addTo(PL.zones);
     zone.hotId=z.id; zone.hotName=z.name; zone.level=lv; if(!named) return;
     const bits=[a.open&&T('{n} open',{n:a.open}), a.ev&&(a.ev===1?T('1 event'):T('{n} events',{n:a.ev})), a.live&&`📺 ${a.live}`].filter(Boolean).join(' · ');
-    names.push({id:'hz'+z.id,ll:[z.lat+z.r/111320,z.lng],alts:[[z.lat,z.lng],[z.lat-z.r/111320,z.lng]],center:true,over:true,max:60,score:150+lv*50,cls:'hot hotlabel'+(quiet?' quiet':''),go:()=>openPlaces({zone:z.id}),
-      text:`${quiet?'💤':'🔥'} ${z.name}${bits?' · '+bits:quiet?' · '+T('quiet now'):''}${busy?' · '+T('busy now'):''}`}); });
+    names.push({id:'hz'+z.id,ll:[z.lat+z.r/111320,z.lng],alts:[[z.lat,z.lng],[z.lat-z.r/111320,z.lng]],center:true,over:true,max:60,score:150+lv*50,cls:'hot hotlabel'+(quiet?' quiet':''),go:()=>exploreCat('zones',z.id),
+      text:`${quiet?'💤':'🔥'} ${z.name}${a.open?' · '+T('{n} open',{n:a.open}):''}`}); });   // the rest is in the drawer
   setLabels('zones',[],names);
 }
 // Hours change as the night goes on: refresh the hot spots every 5 minutes while the map is open.
@@ -3972,7 +3995,8 @@ const MEET_PH = {swipe:'🔎 Search people, events, groups, flares…', friends:
 function renderMeet(){
   const body=$('#meetBody'); if(!body) return;
   $('#v-meet').classList.toggle('inthread', meetTab==='msgs'&&!!DM.open);   // an open chat gets the whole drawer
-  const qEl=$('#meetQ'); qEl.hidden=meetTab==='msgs'&&!!DM.open; qEl.placeholder=T(MEET_PH[meetTab]); if(qEl.value!==meetQ) qEl.value=meetQ;
+  const qEl=$('#meetQ'), guest=!AUTHED&&location.protocol.startsWith('http');
+  qEl.hidden=meetTab==='msgs'&&(!!DM.open||guest||!allThreads().length&&!meetQ); qEl.placeholder=T(MEET_PH[meetTab]); if(qEl.value!==meetQ) qEl.value=meetQ;
   setTimeout(scoutDock,0);   // the swipe buttons and message box sit at the bottom: keep Scout off them
   document.querySelectorAll('#meetTabs button').forEach(b=>b.classList.toggle('on',b.dataset.mt===meetTab));
   $('[data-meetfilter]').hidden = meetTab!=='swipe';
@@ -3980,6 +4004,8 @@ function renderMeet(){
   const asks=(SV.friends?.incoming||[]).length; $('#frPill').hidden=!asks; $('#frPill').textContent=asks;
   if(meetTab==='friends'){ body.innerHTML=friendsHtml(); return; }
   if(meetTab==='groups'){ body.innerHTML=groupsHtml(); return; }
+  if(meetTab==='msgs'&&guest){ body.innerHTML=`<div class="xempty"><div style="font-size:34px">💬</div><b style="color:var(--text)">${T('Chats are for friends')}</b>
+      <p class="meta">${T('Make a free account to message friends, start group chats and plan things together.')}</p><button class="btn primary" data-yjoin style="margin-top:10px">${T('Create account')}</button></div>`; return; }
   if(meetTab==='msgs'){ body.innerHTML=DM.open?threadHtml():threadsHtml(); if(DM.open){ const t=$('#thread'); if(t) t.scrollTop=1e9; } return; }
   const xs=deckItems().filter(x=>deckHit(x,meetQ)), f=S.meet, top=xs[0];
   const nf=f.cats.length+f.goals.length+f.interests.length+f.newbies+f.groupsOnly+!!f.onlineOnly+(f.dist?1:0)+(f.when!=='week'?1:0);
@@ -4622,7 +4648,7 @@ function renderPicks(){
   const el=$('#fyStrip'); if(!el) return;
   if(S.feed.sort!=='foryou'||feedQ||feedFocus||!(ns.length||AI.loading)){ el.innerHTML=''; return; }
   el.innerHTML = `<div class="row" style="margin:0 0 8px"><div class="grow"><div class="kicker" style="margin:0">✨ Tonight's picks for you</div>
-      <div class="meta">${AI.loading?'🧭 '+T('Scout is picking…'):esc((ai&&AI.summary)||"From your interests, your friends and what's close")}</div></div>
+      <div class="meta">${AI.loading&&!AI.picks?'':AI.loading?'🧭 '+T('Scout is picking…'):esc((ai&&AI.summary)||"From your interests, your friends and what's close")}</div></div>
       ${ENGINE?`<button class="btn sm" id="refreshPicks" title="Ask Scout again" ${AI.loading?'disabled':''}>↻</button>`:''}</div>`
     + (ENGINE&&AI.loading&&!AI.picks ? `<div class="card skel" style="height:64px">🧭 ${T('Scout is picking…')}</div>` : ns.map(n=>`<div class="card nudge">
       <div class="row">${av(n.a.h)}<div class="grow"><span class="match">${pct(n)}% MATCH</span><div class="bar"><b style="width:${ai?n.s:n.s/max*100}%"></b></div></div>${when(n.p)}</div>
@@ -4923,7 +4949,7 @@ function initMap(){
 function renderMapLive(){
   const el=$('#mapLive'); if(!el) return; const ls=liveStreams();
   el.classList.toggle('closed',!S.liveOpen);
-  el.innerHTML = !ls.length ? '' : !S.liveOpen ? `<button class="livepill" data-livetoggle><span class="onair">LIVE</span> ${T('{n} streaming ▴',{n:ls.length})}</button>`
+  el.innerHTML = !ls.length ? '' : !S.liveOpen ? `<button class="livepill" data-livetoggle aria-label="${T('{n} streaming',{n:ls.length})}"><span class="onair">LIVE</span> ${ls.length} ›</button>`
     : `<button class="livepill" data-livetoggle aria-label="Hide live streams">▾</button>`+ls.map(s=>`<button data-watch="${s.id}">${thumbHtml(s,true)}<span><span>${esc(s.u)} · 👁 ${s.viewers}</span><span class="meta">${esc(s.title)}</span></span></button>`).join('');
 }
 // Real events: the Filter's time window and types, or just the feed's after "Map it". Yours and your friends' first,
@@ -5302,7 +5328,7 @@ function tab(t, at){
 })();
 /* ---------- Explore: the drawer's first page. What's around right now; a chip turns the map and this list to one thing. ---------- */
 const svgI = (n, cls='') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
-const fmtMi = k => k==null ? '' : k<0.16 ? T('Here') : `${(k*0.621).toFixed(k<16?1:0)} mi`;
+const fmtMi = k => k==null ? '' : k<0.16 ? '0.1 mi' : `${(k*0.621).toFixed(k<16?1:0)} mi`;
 function renderHome(){
   renderGlance(); renderDock();
   if(!$('#exMain')) return;
@@ -5370,7 +5396,7 @@ function happyRail(){
 /* the chips: one category at a time, on the map and in the list together */
 const EXC = {k:null, sub:null, list:null, seq:0};
 const EX_CHIPS = [
-  ['food','🍔','Food'], ['events','🎫','Tonight'], ['night','🍸','Nightlife'], ['outdoors','🌳','Outdoors'],
+  ['food','🍔','Food'], ['events','🎫','Events'], ['night','🍸','Nightlife'], ['outdoors','🌳','Outdoors'],
   ['sights','🏛️','Sights'], ['friends','👥','Friends'], ['zones','🔥','Hot spots'],
 ];
 const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1},
@@ -5399,10 +5425,19 @@ function exploreClear(){
   if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }
   EXC.k=null; EXC.list=null; delete $('#app').dataset.cat; refreshMapLayers(); renderMapChips(); renderHome();
 }
-const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${k==='food'||k==='night'?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>● ${esc(T('Open now'))}</button>`:''}${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
+const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${k==='food'||k==='night'?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>${esc(T('Open now'))}</button>`:''}${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
 const xrow = ({go, e, th='', title, sub, d, attr=''}) => `<button class="xrow" ${go?`data-xgo="${esc(go)}"`:''} ${attr}><span class="xe thumb"${th}>${e}</span>
   <span class="grow"><b>${esc(title)}</b><span class="meta">${sub||''}</span></span>${d!=null?`<span class="xd">${esc(d)}</span>`:''}</button>`;
 const mapC = () => map ? [map.getCenter().lat, map.getCenter().lng] : ME_POS;
+// After a chip's list is drawn: the picked sub-chip in view, and (when it was just picked) the map framing the results
+// in the part of the screen above the drawer.
+function exAfter(el, pts, fresh){
+  const sc=el.querySelector('.subchips'), on=sc?.querySelector('.on:not(.tog)'); if(on) sc.scrollLeft=Math.max(0,on.offsetLeft-sc.clientWidth/2+on.offsetWidth/2);
+  pts=(pts||[]).filter(p=>p&&isFinite(p[0])&&isFinite(p[1])).slice(0,15);
+  if(!fresh||!map||!pts.length) return;
+  const v=parseFloat(getComputedStyle($('#app')).getPropertyValue('--dvis'))||0;
+  map.flyToBounds(pts.length>1?pts:[pts[0],pts[0]],{paddingTopLeft:[WIDE()?470:24,90],paddingBottomRight:[WIDE()?70:24,v+24],maxZoom:16,duration:.5});
+}
 async function renderExCat(fresh){
   const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq;
   const head = exSubs(k);
@@ -5423,7 +5458,7 @@ async function renderExCat(fresh){
       : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
           sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc([p.kind,(p.cuisine||[]).slice(0,2).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}));
     el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
-    watchThumbs(); return;
+    exAfter(el, (EXC.sub==='happy'?HH.list||[]:EXC.list).map(p=>[p.lat,p.lng]), fresh); watchThumbs(); return;
   }
   if(k==='events'){
     const aff=affinity(), now=Date.now(), until={tonight:new Date().setHours(28,0,0,0), weekend:now+4*864e5, week:now+7*864e5}[EXC.sub]||now+864e5;
@@ -5432,7 +5467,7 @@ async function renderExCat(fresh){
     el.innerHTML = head + (list.map(({x,d})=>{ const fr=goingList(x).filter(isFriend).length;
       return xrow({go:`evmap|${x.id}`, e:CATS[x.cat]?.e||'🎫', th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
         sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}${fr?` · 👥 ${fr}`:''}`, d:fmtMi(d)}); }).join('') || `<p class="xempty">${T('Nothing listed for then yet.')}</p>`);
-    return;
+    exAfter(el, list.map(({x})=>[x.lat,x.lng]), fresh); return;
   }
   if(k==='outdoors'||k==='sights'){
     if(k==='outdoors'&&!OD.data){ busy(); try{ OD.data=await (OD.p ||= fetch('/api/outdoors').then(r=>r.json())); }catch(err){ OD.p=null; } }
@@ -5440,31 +5475,31 @@ async function renderExCat(fresh){
     if(seq!==EXC.seq) return; const c=mapC();
     const items = k==='outdoors'
       ? (OD.data?.areas||[]).filter(a=>a.name&&(EXC.sub==='all'||a.kind===EXC.sub||EXC.sub==='water'&&a.kind==='river')).map(a=>({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name,
-          sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:km(c,a.c)}))
+          sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:km(c,a.c), ll:a.c}))
       : (SG.data||[]).filter(([,kind,name])=>!/, Texas\b|\(.*Texas\)|^Greater /.test(name)).filter(([,kind])=>EXC.sub==='all'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
-          sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:km(c,[lat,lng])}));
+          sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:km(c,[lat,lng]), ll:[lat,lng]}));
     el.innerHTML = head + `<p class="meta exnote">${T('Closest to the middle of the map')}</p>` +
       (items.sort((a,b)=>a.k-b.k).slice(0,40).map(x=>xrow({...x, d:fmtMi(x.k)})).join('') || `<p class="xempty">${T('Nothing here yet.')}</p>`);
-    return;
+    exAfter(el, items.slice(0,8).map(x=>x.ll), fresh&&!!EXC.sub&&EXC.sub!=='all'); return;   // all of them: the map stays where you're looking
   }
   if(k==='zones'){
     if(!PL.hot){ busy(); await loadHotspots(); } if(seq!==EXC.seq) return;
     const z=(PL.hot||Object.values(HOT_FALLBACK)).slice().sort((a,b)=>(b.open||0)-(a.open||0)), zone=z.find(x=>x.id===EXC.sub);
-    const subs=`<div class="subchips">${zone?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>● ${esc(T('Open now'))}</button>`:''}${z.map(x=>`<button data-exsub="${esc(x.id)}" class="${EXC.sub===x.id?'on':''}">${esc(x.name)}</button>`).join('')}</div>`;
+    const subs=`<div class="subchips">${zone?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>${esc(T('Open now'))}</button>`:''}${z.map(x=>`<button data-exsub="${esc(x.id)}" class="${EXC.sub===x.id?'on':''}">${esc(x.name)}</button>`).join('')}</div>`;
     if(!zone){
       el.innerHTML = subs + `<p class="meta exnote">${T('Neighborhoods glow brighter the more is open and happening.')}</p>` +
         z.map(x=>xrow({attr:`data-exsub="${esc(x.id)}"`, e:'🔥', title:x.name, sub:esc(x.open!=null?T('{n} open now',{n:x.open})+(x.vibe?' · '+x.vibe:''):x.vibe||'')})).join('');
-      return;
+      exAfter(el, z.filter(x=>x.lat).map(x=>[x.lat,x.lng]), fresh); return;
     }
     // one neighborhood: the map goes there, its spots are listed
     if(fresh&&map&&zone.lat) map.flyTo([zone.lat,zone.lng],16,{duration:.6});
     el.innerHTML = subs + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`;
     let L=[]; try{ L=(await (await fetch(`/api/places?${new URLSearchParams({zone:zone.id,open:S.foodOpen?'1':''})}&${nearParam()}&limit=60`)).json()).places||[]; }catch(err){}
     if(seq!==EXC.seq) return; PL.lastList=L;
-    el.innerHTML = subs + (zone.vibe?`<p class="meta exnote">${esc(zone.vibe)}</p>`:'') + (L.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
+    el.innerHTML = subs + `<div class="exlh"><b>🔥 ${esc(zone.name)}</b><span class="meta">${T('{n} spots',{n:L.length})}${zone.vibe?' · '+esc(zone.vibe):''}</span></div>` + (L.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
         sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc(p.kind||'')}`, d:p.mi!=null?p.mi+' mi':null})).join('')
       || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
-    watchThumbs(); return;
+    exAfter(el, [], false); watchThumbs(); return;
   }
   if(k==='friends'){
     const out=(AUTHED&&SV.v2?.out)||[], locs=(FMAP.friends||[]), flares=allPings().filter(p=>p.u!==S.me.h).slice(0,20), live=liveStreams();
@@ -5493,7 +5528,7 @@ function renderSearch(){
     el.innerHTML = ask(T('Or tap the mic and just talk'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
       + `<div class="srecent" style="margin-top:10px">${askIdeas().map(q=>`<button data-xgo="scout|${esc(q)}">✨ ${esc(q)}</button>`).join('')}</div>`
       + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
-      + `<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`;
+      + (rec.length?'':`<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`);
     scoutFaces(); return;
   }
   const words=fold(ql).split(/\s+/).filter(Boolean), hit=(...xs)=>{ const h=fold(xs.join(' ').toLowerCase()); return words.every(w=>h.includes(w)); };
@@ -5553,7 +5588,7 @@ function renderYou(){
     row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
     guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
     row('data-menu="invite"','💌','#b57bff26',T('Invite friends')),
-    guest?'':row('data-yshare','📍','#2ec5ff26',T('Location sharing'),fmOn()?T('On'):T('Ghost')),
+    guest?'':row('data-yshare','📍','#2ec5ff26',T('Share my location'),fmOn()?T('With friends'):T('Off')),
     row('data-yedit="profile"','✏️','#ffffff14',T('Edit profile')),
     row('data-yedit="settings"','🔒','#ffffff14',T('Settings & privacy')),
     row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
@@ -6528,7 +6563,7 @@ function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
 function renderMapChips(){   // V3: the chips under the search box pick one thing for the map and the list at once (exploreCat)
   const el=$('#mapChips'); if(!el) return;
   el.innerHTML = (mapFilter==='feed'?`<button class="chip on" data-mfeedoff>📋 ${T('My feed')} ✕</button>`:'')
-    + EX_CHIPS.map(([k,e,l])=>{ if(k==='events'&&EXC.k==='events') l={tonight:'Tonight',weekend:'This weekend',week:'This week'}[S.mapWhen]||l;   // the chip says which days
+    + EX_CHIPS.map(([k,e,l])=>{
       return `<button class="chip ${EXC.k===k?'on':''}" data-excat="${k}" aria-pressed="${EXC.k===k}">${e} ${esc(T(l))}</button>`; }).join('');
 }
 function openMapLayers(){
@@ -6537,7 +6572,7 @@ function openMapLayers(){
   const cats=Object.entries(CATS).filter(([k])=>k!=='other'), typeOn=k=>!S.mapCats.length||S.mapCats.includes(k);
   sh.innerHTML=`<div class="row"><b class="grow" style="font-size:19px">${T('🗂 Map layers')}</b><button class="btn sm primary" data-pclose>${T('Done')}</button></div>
     ${AUTHED?`<button class="ylist" data-yshare style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:12px 0 4px;text-align:left;font-weight:650">
-      <span class="yi" style="background:#2ec5ff26;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${fmOn()?'🧑‍🤝‍🧑':'👻'}</span><span class="grow">${T('Location sharing')}</span><span class="meta">${fmOn()?T('On'):T('Ghost')}</span></button>`:''}
+      <span class="yi" style="background:#2ec5ff26;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${fmOn()?'🧑‍🤝‍🧑':'👻'}</span><span class="grow">${T('Share my location')}</span><span class="meta">${fmOn()?T('With friends'):T('Off')}</span></button>`:''}
     <div class="tagchips" style="margin:10px 0 4px">${Object.entries(MAP_PRESETS).map(([k,[l]])=>`<button class="ichip" data-mpreset="${k}">${T(l)}</button>`).join('')}</div>
     ${MAP_CATS.map(c=>{ const st=catState(c);
       return `<div class="lcat cat-${c.k}"><div class="row"><b class="grow">${c.e} ${esc(T(c.l))}</b>${sw(c.k,!!st,'data-mlcat')}</div>
@@ -7438,27 +7473,28 @@ function renderEventSheet(e){
   const hero=/^https:\/\//.test(e.image||'')?`style="background-image:url('${esc(evImg(e.image,960))}')"`:(e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):'');
   const desc=(e.description||'').trim(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
   const saved=isSaved('event',e.id), soon=e.ts>now?Math.round((e.ts-now)/6e4):null;
-  $('#evSheet').innerHTML=`<div class="evhero thumb" ${hero}><span>${CATS[e.cat].e}</span><button class="btn sm evx" data-v2close="evBg" aria-label="${T('Close')}">✕</button></div>
+  const near=e.lat&&ME_FIX&&km(ME_POS,[e.lat,e.lng])<.25;   // check in only where it makes sense
+  $('#evSheet').innerHTML=`<div class="evhero thumb ${/^https:\/\//.test(e.image||'')?'':'noimg'}" ${hero}><span>${CATS[e.cat].e}</span><button class="xbtn evx" data-v2close="evBg" aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="kicker" style="margin-top:12px">${CATS[e.cat].e} ${esc(CATS[e.cat].l)}${on?` · <span class="pst open">${T('On now')}</span>`:soon!=null&&soon<180?` · ${T('starts in {n}',{n:soon<60?soon+' min':Math.round(soon/60)+' h'})}`:''}</div>
     <h2 class="evtitle">${esc(e.title)}</h2>
-    <div class="meta">🗓 ${fmtWhen(e.ts,e.tba)}${e.price?` · ${esc(e.price)}`:''}</div>
+    <div class="meta">🗓 ${fmtWhen(e.ts,e.tba)}${e.tba?' · '+T('time TBA'):e.te&&e.te-e.ts<12*36e5?'–'+clock(e.te):''}${e.price?` · ${esc(e.price)}`:''}</div>
     ${e.venue?`<div class="meta">📍 ${esc(e.venue)}${e.city?', '+esc(e.city):''}${e.geo_precise?'':` · ${T('approximate location')}`}</div>`:''}
-    <div class="evact">
+    <div class="evmain">
       <button class="btn ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?T('✓ Going'):T("I'm going")}</button>
-      <button class="btn ${mine==='interested'?'blue':''}" data-rsvp="${e.id}" data-st="interested">${mine==='interested'?'★':'☆'} ${T('Interested')}</button>
-      <button class="btn ${saved?'fav':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}">${saved?'❤️ '+T('Favorite'):'🤍 '+T('Favorite')}</button>
-      <button class="btn" data-evinvite="${e.id}">💌 ${T('Invite')}</button>
-      <button class="btn" data-evsend="${e.id}">💬 ${T('Send')}</button>
-      <button class="btn" data-evplan="${e.id}">🗳️ ${T('Plan it')}</button>
-      <button class="btn" data-evshare="${e.id}">🔗 ${T('Share')}</button>
+      <button class="iconbtn ${saved?'fav':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}" aria-label="${T('Favorite')}" title="${T('Favorite')}">${saved?'❤️':'🤍'}</button>
+      <button class="iconbtn" data-evshare="${e.id}" aria-label="${T('Share')}" title="${T('Share')}">🔗</button>
+      ${e.lat?`<button class="iconbtn" data-evmap="${e.id}" aria-label="${T('Map')}" title="${T('Show on the map')}"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button>`:''}
     </div>
+    <div class="evrow3">
+      ${e.geo_precise?`<a class="btn" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>`:''}
+      <button class="btn" data-cal="${e.id}">📅 ${T('Calendar')}</button>
+      ${link?`<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">🎟 ${T('Tickets')}</a>`:''}
+    </div>
+    <div class="evfriends"><span class="meta">${T('With friends')}</span>
+      <button class="ichip" data-evinvite="${e.id}">💌 ${T('Invite')}</button><button class="ichip" data-evplan="${e.id}">🗳️ ${T('Plan it')}</button><button class="ichip" data-evsend="${e.id}">💬 ${T('Send')}</button></div>
     <div class="btns" style="margin-top:8px">
-      ${on&&e.geo_precise?`<button class="btn sm primary" data-checkin2="event|${e.id}">📍 ${T('Check in')}</button>`:''}
-      <button class="btn sm" data-cal="${e.id}">📅 ${T('Calendar')}</button>
-      ${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">${T('Directions')} ↗</a>`:''}
-      ${e.lat?`<button class="btn sm" data-evmap="${e.id}">🗺 ${T('Map')}</button>`:''}
+      ${on&&e.geo_precise&&near?`<button class="btn sm primary" data-checkin2="event|${e.id}">📍 ${T('Check in')}</button>`:''}
       ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 ${T('Eat after')}</button>`:''}
-      ${link?`<a class="btn sm" href="${esc(link)}" target="_blank" rel="noopener">${T('Tickets & info')} ↗</a>`:''}
       ${(vp=>vp?menuBtn({id:vp[0],name:vp[1],kind:vp[2]}):'')(venuePlace(e))}
       ${CFG.google&&e.venue&&e.geo_precise?`<button class="btn sm" data-evvenue="${e.id}">🏢 ${T('Venue phone & hours')}</button>`:''}
     </div><div id="gp_ev_${e.id}"></div>

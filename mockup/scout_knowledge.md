@@ -22,9 +22,9 @@ Keep this file up to date when features change. Only describe things that exist 
   people and groups as you type, nearest first; "Find it on menus" searches every menu for a dish; a question
   ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode. Before typing, the
   search page shows a few things to ask you ("Plan my night", "Something free to do tonight"…) and recent searches.
-- Under it, chips: 🍔 Food, 🎫 Tonight, 🍸 Nightlife, 🌳 Outdoors, 🏛️ Sights, 👥 Friends, 🔥 Hot spots. A chip shows that
+- Under it, chips: 🍔 Food, 🎫 Events, 🍸 Nightlife, 🌳 Outdoors, 🏛️ Sights, 👥 Friends, 🔥 Hot spots. A chip shows that
   one thing on the map AND lists it in the drawer (nearest first), with smaller chips to narrow it (Food: Happy hour,
-  Coffee, Tacos, BBQ, Pizza, Burgers, Asian, Trucks, Sweets, Late night, Breakfast, plus an Open now switch; Tonight:
+  Coffee, Tacos, BBQ, Pizza, Burgers, Asian, Trucks, Sweets, Late night, Breakfast, plus Open now; Events: Tonight /
   This weekend / This week; Nightlife: Bars, Clubs, Late eats; Outdoors: Parks, Lakes & rivers, Trails; Sights:
   Landmarks, Museums, Markers, Art; Hot spots: each neighborhood (6th Street, Rainey…), which flies the map there and
   lists its spots; "● Open now" is one of Food's, Nightlife's and a neighborhood's small chips). Tap a row to fly to it on
@@ -34,6 +34,7 @@ Keep this file up to date when features change. Only describe things that exist 
 - Press and hold anywhere on the map (right-click on a computer): a card says what's there (the nearest place or
   sight) with 📣 Flare here, that place, and Directions.
 - One line under the chips says what's on ("37 things on tonight · 2 friends out"); tap it for tonight's list.
+- Picking a chip (or a neighborhood) moves the map to show what's listed, above the drawer.
 - Pulled up, the drawer shows: Up next (the next thing you're going to, with a countdown), Friends out now, Tonight
   near you, Busy right now (hot spots) and Happy hour now. Dragging or tapping the map moves the drawer out of the way.
   Stories are at the top of For you.
@@ -49,8 +50,8 @@ Keep this file up to date when features change. Only describe things that exist 
 
 ## You (bottom bar)
 - Your picture and name, the Online/Offline switch, one line with your level, coins and day streak, your friend count,
-  then My plans, Saved, Quests & rewards, Invite friends, Location sharing (ghost mode or friends; also at the top of
-  the map's layers sheet), Edit profile, Settings & privacy, and Español. Edit profile opens four tabs: Profile,
+  then My plans, Saved, Quests & rewards, Invite friends, Share my location (Off = ghost mode, or With friends; also at
+  the top of the map's layers sheet; separate from Online, which is whether people see you as around), Edit profile, Settings & privacy, and Español. Edit profile opens four tabs: Profile,
   Personality (quiz + astrology), About you, Privacy (location precision, delay, your data, blocked people, sign out,
   delete account).
 - Online = friends and Meet see you as around and your location dot stays live; Offline = nobody sees you as active
@@ -170,7 +171,7 @@ Keep this file up to date when features change. Only describe things that exist 
   opens Map layers for fine control: quick picks (Night out, Outdoors day, Friends, Everything, Clear), a switch for
   each part (clubs, bars, hot spots, parks, lakes & rivers, trails, rentals & trailheads, flares, live, stories, food,
   open now only), when events happen and which types, and a color key. The arrow button goes back to where you are.
-  Live streams are behind the "LIVE" pill just above the drawer.
+  Live streams are behind the small "LIVE 3 ›" pill at the top left of the map.
 - Outdoors: parks, greenbelts and preserves are outlined in green, lakes and rivers in blue. Tap one to see what you can
   do there (hiking, fishing, paddleboarding, kayak, canoe) and nearby rentals, boat ramps, fishing spots and trailheads.
   Zoom in to see those spots as pins. Hike & bike trails are dashed lines: yellow where bikes are allowed,
@@ -202,9 +203,10 @@ Keep this file up to date when features change. Only describe things that exist 
   same event, replies in an event's chat, people down for your flare, group joins, story tags and likes, quest wins and
   a reminder 2 hours before things you're going to. "Phone notifications" at the bottom of the inbox gives a heads-up
   while the app is open in the background.
-- Event details: tap any event (feed card, Details on the map, Tonight near you in Explore) for the full page: Going,
-  Interested, 🔖 Save, 💌 Invite (sends friends a message with the link), 🔗 Share (a link with a preview), Calendar,
-  Directions, Eat after, who's going (friends first) and a chat for people going.
+- Event details: tap any event (feed card, Details on its map card, Tonight near you in Explore) for the full page:
+  I'm going (with ❤️ save, 🔗 share and map buttons beside it), then Directions · Calendar · Tickets, then "With friends":
+  💌 Invite (sends friends a message with the link), 🗳️ Plan it (a group vote), 💬 Send; Eat after; 📍 Check in only
+  shows when you're there while it's on; who's going (friends first) and a chat for people going.
 - 🏆 Quests (You → Quests & rewards, or your level line on You): challenges like History buff (5 historical markers), Culture
   hound, Taco crawl, Touch grass, Live and loud, Night owl, Explorer (3 hot spots), Squad up, Light a flare,
   Storyteller, Bring a friend, Regular (3 weeks in a row). You earn XP by checking in: tap 📍 Check in on a sight,

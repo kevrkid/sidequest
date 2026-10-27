@@ -116,9 +116,9 @@ with sync_playwright() as pw:
     a.evaluate("id=>openEvent(id)", ev); a.wait_for_selector("#evSheet .evtitle")
     check("event details: title, when, actions", title in a.inner_text("#evSheet") and a.locator("#evSheet [data-evinvite]").count() == 1)
     a.click("#evSheet [data-rsvp][data-st='going']"); a.wait_for_timeout(700)
-    check("going from the details sheet", a.evaluate("id=>myRsvp(id)", ev) == "going" and "Going" in a.inner_text("#evSheet .evact"))
+    check("going from the details sheet", a.evaluate("id=>myRsvp(id)", ev) == "going" and "Going" in a.inner_text("#evSheet .evmain"))
     a.click("#evSheet [data-v2save]"); a.wait_for_timeout(600)
-    check("favorite an event", a.evaluate("id=>isSaved('event',id)", ev) and "❤️" in a.inner_text("#evSheet .evact"))
+    check("favorite an event", a.evaluate("id=>isSaved('event',id)", ev) and "❤️" in a.inner_text("#evSheet .evmain"))
     a.fill("#evChatIn", "Who wants to meet at the door at 7?"); a.click("#evChatForm button")
     a.wait_for_function("document.querySelector('#evChat')?.innerText.includes('meet at the door')", timeout=40000)   # screened by Claude first
     check("post in the event's discussion", "meet at the door" in a.inner_text("#evChat"))

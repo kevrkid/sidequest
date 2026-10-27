@@ -274,11 +274,14 @@ with sync_playwright() as pw:
     p1.click("#placesSheet [data-pclose]")
     p1.screenshot(path=f"{OUT}/71-map-food.png")
     p1.evaluate("PL.zones.getLayers().find(l=>l.hotId==='rainey').fire('click')")
-    p1.wait_for_selector("#placesSheet .prow", timeout=10000)
-    check("tapping a hot spot lists what's open there", "Rainey Street" in p1.locator("#placesSheet").inner_text() and "Taco Test Trailer" in p1.locator("#placesSheet").inner_text())
-    # back: closes the sheet first, then goes to the previous screen
+    p1.wait_for_selector("#exCat .exlh", timeout=10000); p1.wait_for_timeout(800)
+    check("tapping a hot spot lists what's open there, in the drawer", "Rainey Street" in p1.locator("#exCat").inner_text() and "Taco Test Trailer" in p1.locator("#exCat").inner_text())
+    # back: the sheet on top first, then the list, then the drawer comes down
+    p1.click("[data-mlayers]"); p1.wait_for_timeout(300)
     p1.go_back(); p1.wait_for_timeout(300)            # the phone's back (Android button / swipe) while a sheet is open
-    check("back closes the open sheet first", p1.locator("#placesBg").is_hidden() and p1.locator("#v-map").is_visible())
+    check("back closes the open sheet first", p1.locator("#placesBg").is_hidden() and p1.evaluate("EXC.k") == "zones")
+    p1.evaluate("goBack()"); p1.wait_for_timeout(300)
+    check("back again closes the list and puts the map back", p1.evaluate("!EXC.k"))
     p1.evaluate("setDrawer('half')"); p1.evaluate("goBack()"); p1.wait_for_timeout(300)
     check("back again lowers the drawer onto the map", p1.evaluate("DRW.at") == "peek", p1.evaluate("DRW.at"))
     nav(p1, "feed"); p1.wait_for_timeout(200)

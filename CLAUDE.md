@@ -30,12 +30,13 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
     + sights, nearest first), events, people, groups; "Find it on menus" (`openDishes`), "Search posts and the feed"
     (`runSearch`), and "Ask Scout" (questions go straight to Scout, `isQuestion`). Recent searches in `S.recentQ`.
     The old Search sheet still exists as `openSearchSheet()`; `openSearch()` now focuses the box.
-  - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Food, Tonight, Nightlife, Outdoors, Sights,
+  - **Chips** (`#mapChips`, `EX_CHIPS`, `exploreCat(k, sub)`, `EXC`): Food, Events, Nightlife, Outdoors, Sights,
     Friends, Hot spots. A chip turns the map to just that (`EX_LAYERS`; the previous layers are kept in `S.exPrev` and
     put back by tapping it again (it shows a ✕) / back, `exploreClear`), always at half, and lists it in the drawer
     (`#exCat`, `renderExCat`) under sub-chips (`EX_SUBS`, `data-exsub`; food and nightlife start with a "● Open now"
     toggle, `data-exopen`). Rows are `.xrow` `data-xgo="pl|id"` etc. → `searchGo` → focusPlace / focusSight / mapGo /
-    focusOnMap (`evmap`; search results use `ev` = the event page).
+    focusOnMap (`evmap`; search results use `ev` = the event page). `exAfter(el, pts, fresh)` scrolls the picked sub-chip
+    into view and, when just picked, flies the map to frame the results above the drawer.
     Hot spots: the sub-chips are the neighborhoods (`PL.hot`); picking one flies the map there and lists
     `/api/places?zone=` (tap it again for all of them). Explore's "Busy right now" cards open the same.
   - **Pin cards** (`POP`, `popToDrawer` / `popClosed` on Leaflet's popupopen/close): every map popup's content node is
@@ -58,9 +59,14 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
     Settings & privacy, Español; `data-menu` / `data-quick` / `data-yedit` / `data-yshare`). The old four profile tabs
     sit in `#meEdit`, hidden until Edit profile / Settings (or any `showMeSec()`); the dock's You hides them again.
     The name menu (`#meMenu`) is gone; `data-menu` still works anywhere.
-  - **For you**: title + map/filter icons, Happening | Posts, one chip row (a 📅 chip cycles the time window,
+  - **For you**: title + Happening | Posts (`#feedMode`, beside the title) + map/filter icons, one chip row (a 📅 chip cycles the time window,
     `data-fwhen`; `#feedWhen` is hidden), the meta line only when something narrows it, no live cards (the map's LIVE
     pill has them). "Scout is picking…" (never "Claude").
+  - **Event page** (`renderEventSheet`): one "I'm going" with ❤️ / 🔗 / map icon buttons (`.evmain`), Directions ·
+    Calendar · Tickets (`.evrow3`), "With friends" Invite · Plan it · Send (`.evfriends`), Eat after / menu; Check in only
+    when within 250 m while it's on; compact header without a photo (`.evhero.noimg`). "Interested" is only on feed cards.
+  - LIVE pill: small, top-left of the map (`.maplive`). Hot spot labels are "🔥 name · N open"; tapping a zone opens it
+    in the drawer. Guests get one "Create account" in Chats → Messages. The Create sheet uses calm dark tiles.
   - **Search page** before typing: Ask Scout (opens voice), Scout ideas by time of day (`askIdeas()`), recent, try.
   - Back (`closeTopOverlay`): sheet → map popup → chip list → lower the drawer. Scout's tour, targets (`SC_T`) and
     offline answers (`SC_FAQ`) point at the V3 places; `scout_knowledge.md` describes the V3 screen.
