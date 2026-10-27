@@ -1210,12 +1210,12 @@
   <div class="sheet-bg" id="createBg" hidden><div class="sheet">
     <div class="xhead"><b>✨ <span data-t="Create">Create</span></b><button class="xbtn" data-cclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="create-grid">
-      <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i>Story<span>A photo or video for 24 hours · tag the place, event, people</span></button>
-      <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i>Post<span>A photo or thought that stays on your profile</span></button>
-      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i>Flare<span>"Who's down?" right now</span></button>
-      <button data-create="event" style="background:linear-gradient(145deg,#8e2de2,#e9408a)"><i>📅</i>Event<span>Plan something later</span></button>
-      <button data-create="group" style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>🏘️</i>Group<span>Start a community</span></button>
-      <button data-create="live" style="background:linear-gradient(145deg,#ff416c,#ff9a3c)"><i>📺</i>Go live<span>Stream from your phone</span></button>
+      <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Story">Story</b><span data-t="A photo or video for 24 hours · tag the place, event, people">A photo or video for 24 hours · tag the place, event, people</span></button>
+      <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i><b data-t="Post">Post</b><span data-t="A photo or thought that stays on your profile">A photo or thought that stays on your profile</span></button>
+      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Flare">Flare</b><span data-t="&quot;Who's down?&quot; right now">"Who's down?" right now</span></button>
+      <button data-create="event" style="background:linear-gradient(145deg,#8e2de2,#e9408a)"><i>📅</i><b data-t="Event">Event</b><span data-t="Plan something later">Plan something later</span></button>
+      <button data-create="group" style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>🏘️</i><b data-t="Group">Group</b><span data-t="Start a community">Start a community</span></button>
+      <button data-create="live" style="background:linear-gradient(145deg,#ff416c,#ff9a3c)"><i>📺</i><b data-t="Go live">Go live</b><span data-t="Stream from your phone">Stream from your phone</span></button>
     </div></div></div>
   <div class="sheet-bg" id="actBg" hidden style="z-index:950"><div class="sheet" id="actSheet"></div></div>
   <div class="sheet-bg" id="searchBg" hidden><div class="sheet" id="searchSheet"></div></div>
@@ -1454,7 +1454,7 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Explore':'Explorar','Watch':'Ver','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Flare':'Bengala','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
   'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
@@ -2091,7 +2091,7 @@ const demoGoing = e => !CFG.demo ? [] : USERS.filter(u=>u.i.some(i=>(INTEREST_CA
 const goingList = e => [...new Set(Object.entries(SV.rsvps[e.id]||{}).filter(([h,st])=>st==='going'&&h!==S.me.h).map(([h])=>h).concat(demoGoing(e)))];
 function fmtWhen(ts, tba){
   const d=new Date(ts), now=new Date(), day=Math.round((new Date(d).setHours(0,0,0,0)-new Date(now).setHours(0,0,0,0))/864e5);
-  const dl = day===0?'Today':day===1?'Tomorrow':d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  const dl = day===0?T('Today'):day===1?T('Tomorrow'):d.toLocaleDateString(S.lang==='es'?'es':[],{weekday:'short',month:'short',day:'numeric'});
   return tba ? dl : `${dl} · ${clock(ts)}`;
 }
 async function rsvp(id, st){
