@@ -421,7 +421,7 @@
   .lv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .lv .tag{position:absolute;top:8px;left:8px;display:flex;gap:6px;z-index:2}
   .lv .tag .badge{background:#000a;color:#fff}
-  .lv .ov{position:absolute;left:10px;bottom:8px;right:10px;font-size:12px;font-weight:600;text-shadow:0 1px 4px #000;z-index:2}
+  .lv .ov{position:absolute;left:10px;bottom:8px;right:10px;font-size:12px;font-weight:600;text-shadow:0 1px 4px #000;z-index:2;color:#fff}
   .onair{background:#ff3b5c;color:#fff;font-weight:800;font-size:11px;border-radius:6px;padding:2px 7px;letter-spacing:.05em}
   .fakefeed{position:absolute;inset:0;display:grid;place-items:center;font-size:44px;
     background:linear-gradient(120deg,#1b2a6b,#ff7a1855,#b57bff55,#2ec5ff44);background-size:300% 300%;animation:pan 9s ease-in-out infinite alternate}
@@ -432,7 +432,7 @@
   .src button.on{border-color:var(--accent2);background:#2ec5ff18}
   .lbl{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 6px}
   .code{font:12px ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;word-break:break-all}
-  .steps{margin:0;padding-left:18px;color:#cfd5f5;font-size:13px} .steps li{margin:3px 0}
+  .steps{margin:0;padding-left:18px;color:var(--text);font-size:13px} .steps li{margin:3px 0}
   .req{border-left:3px solid var(--line)} .req.accepted{border-left-color:var(--accent2)}
   .req.done{border-left-color:var(--good);opacity:.75} .req.declined,.req.blocked{opacity:.5}
   .pin.live{border-color:#ff3b5c;box-shadow:0 0 0 4px #ff3b5c33,0 0 18px #ff3b5c}
@@ -6393,7 +6393,8 @@ document.addEventListener('click',e=>{
   else if(d.watch) openWatch(d.watch);
   else if(d.lvback!==undefined){ leaveWatch(); LIVE.mode='list'; renderLive(); }
   else if(d.golive!==undefined){ leaveWatch(); LIVE.mode='studio'; renderLive(); }
-  else if(d.src){ LIVE.src=d.src; renderLive(); if(INGEST_ON()&&AUTHED&&!LIVE.ingest) ingest('status'); }
+  else if(d.src){ if(LIVE.on) return; if(d.src!==LIVE.src&&d.src!=='device') stopSource();   // the action camera goes live, not a leftover phone camera
+    LIVE.src=d.src; renderLive(); }
   else if(d.ingest){ if(needAccount('stream from a camera')) return; if(d.ingest==='reset'&&!confirm('Make a new stream key? The old one stops working, so you will need to paste the new one into your camera app.')) return; ingest(d.ingest); }
   else if(d.showkey!==undefined){ LIVE.showKey=!LIVE.showKey; renderLive(); }
   else if(d.restream) restream(d.restream);
@@ -6482,22 +6483,25 @@ $('#compose').onsubmit=async e=>{ e.preventDefault();
 /* ---------- live: action cams (Bluetooth / Wi-Fi RTMP / USB webcam) + viewer requests ---------- */
 const AS = new URLSearchParams(location.search).get('as');     // ?as=lowkey_lu: be a different viewer in a 2nd tab
 const meH = () => AS && USERS.some(u=>u.h===AS) ? AS : S.me.h;
+// The camera apps take one RTMP address (server + "/" + key); OBS takes the two separately (split:true).
 const CAMS = {
   insta360:{l:'Insta360', app:'the Insta360 app', ble:['Insta360','X3 ','X4 ','X5 ','ONE ','GO 3','Ace'],
-    steps:['Connect the camera in the Insta360 app','Open Live, choose RTMP / custom server','Paste the server URL and key below, pick 1080p, go live']},
+    steps:['Tap "Get my camera address" below and copy it','In the Insta360 app: connect the camera, open Live and pick RTMP (custom server)','Paste the address, pick 1080p or 720p and start. Keep the Insta360 app open: it sends the video'],
+    note:'The Insta360 app sends the video through your phone, so it needs mobile data or Wi-Fi the whole time.'},
   gopro:{l:'GoPro', app:'GoPro Quik', ble:['GoPro'],
-    steps:['Connect the camera in GoPro Quik','Tap Live, choose Other / RTMP','Paste the server URL and key below, pick 1080p, go live']},
+    steps:['Tap "Get my camera address" below and copy it','In GoPro Quik: connect the camera, tap Live, set up a livestream and pick RTMP','Pick a Wi-Fi network (or your phone\'s hotspot), paste the address, pick 720p or 1080p and go live'],
+    note:'Live streaming needs a HERO7 Black or newer (or MAX). The camera streams over that Wi-Fi by itself.'},
   dji:{l:'DJI', app:'DJI Mimo', ble:['Osmo','DJI'],
-    steps:['Connect the camera in DJI Mimo','Open Live, choose RTMP','Paste the server URL and key below, go live']},
-  obs:{l:'OBS', app:'OBS Studio', ble:[],
-    steps:['In OBS: Settings → Stream → Service: Custom','Paste the server URL and stream key below','Start Streaming']},
+    steps:['Tap "Get my camera address" below and copy it','In DJI Mimo: connect the camera, open Live and pick RTMP','Pick a Wi-Fi network (or your phone\'s hotspot), paste the address and start']},
+  obs:{l:'OBS', app:'OBS Studio', ble:[], split:true,
+    steps:['Tap "Get my camera address" below','In OBS: Settings → Stream → Service: Custom','Paste the Server and Stream key below, then Start Streaming']},
   other:{l:'Other', app:"the camera's app", ble:[],
-    steps:['Find Live / RTMP streaming in the camera app','Paste the server URL and key below']},
+    steps:['Tap "Get my camera address" below and copy it','In the camera\'s app, find Live / RTMP / custom server','Paste the address (or the server and key separately, if it asks for two) and start']},
 };
-// Open GoPro BLE spec: command characteristic GP-0072 under service 0xFEA6.
+// Open GoPro BLE spec: command characteristic GP-0072 under service 0xFEA6; Set Shutter = 0x01 (1 on, 0 off).
+// (Its "AP control" turns on the camera's own hotspot, for a phone to join; it doesn't help a livestream.)
 const GP = {svc:0xFEA6, cmd:'b5f90072-aa8d-11e3-9046-0002a5d5c51b'};
-const GP_CMDS = {wifi:[[3,0x17,1,1],'📶 Camera Wi-Fi on'], rec:[[3,1,1,1],'⏺ Recording'], stop:[[3,1,1,0],'⏹ Stopped']};
-const RTMP = {url:'rtmp://<your-server>:1935/live', key:'sq_'+hash(S.me.h+'key').toString(36)};
+const GP_CMDS = {rec:[[3,1,1,1],'⏺ Recording to the card'], stop:[[3,1,1,0],'⏹ Stopped recording']};
 const SEED_STREAMS = !CFG.demo ? [] : [
   {id:'s1',u:'zilker_zoe',cam:'Insta360 X4 · 360°',title:'Sunset swim at Barton Springs 🌅',v:'bw',viewers:41,e:'🌅',who:'everyone',delay:0,reqs:[
     {id:'r1',by:'lowkey_lu',kind:'task',text:'Do a slow 360 spin so we can see the whole pool',tip:0,votes:['cue_ball_cass','mesquite_mo'],status:'accepted'},
@@ -6535,7 +6539,7 @@ function liveStopped(){
   if(!LIVE.on) return; endLive();
   toast('🛡️ A moderator ended your stream. You can go live again in a little while.','orange',[],8000);
 }
-const pub = s => ({id:s.id,u:s.u,title:s.title,v:s.v,cam:s.cam,who:s.who,delay:s.delay,viewers:s.viewers,reqs:s.reqs,e:'📺',startedAt:s.startedAt,thumb:s.thumb,room:s.room});
+const pub = s => ({id:s.id,u:s.u,title:s.title,v:s.v,cam:s.cam,who:s.who,delay:s.delay,viewers:s.viewers,reqs:s.reqs,e:'📺',startedAt:s.startedAt,thumb:s.thumb,room:s.room,ingest:s.ingest});
 
 /* LiveKit relay (when the server has it set up): video goes phone → LiveKit → every viewer, so it works on
    mobile networks and for big audiences. Announcements, requests and votes still use the relay above. */
@@ -6545,24 +6549,46 @@ function lkLoad(){ return LK.lib ||= new Promise((ok,no)=>{ const s=document.cre
 async function lkToken(body){ const j=await (await fetch('/api/live/token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();
   if(j.error) throw new Error(j.error); return j; }
 async function lkPublish(){
-  if(!LIVE.stream){ LIVE.my.room='live-'+meH(); announce(); return; }   // action camera / OBS: already publishing via ingest
+  if(!LIVE.stream) return lkCamPreview();   // action camera / OBS: publishing through LiveKit Ingress
   const LKC=await lkLoad(), t=await lkToken({publish:true}), room=new LKC.Room({adaptiveStream:true, dynacast:true});
-  await room.connect(t.url,t.token);
+  await room.connect(t.url,t.token,{autoSubscribe:false});
   if(!LIVE.on){ room.disconnect(); return; }   // ended while connecting
   for(const tr of LIVE.stream.getTracks()) await room.localParticipant.publishTrack(tr,{source:tr.kind==='video'?LKC.Track.Source.Camera:LKC.Track.Source.Microphone});
   LK.room=room; LIVE.my.room=t.room; announce();
 }
-// Action cameras / OBS: your own RTMP address from the server (LiveKit Ingress), checked every few seconds
-// while the studio is open, so "Go live" lights up once the camera's picture arrives.
-const INGEST_ON = () => CFG.livekit && LIVE.src!=='device';
-const ingestLive = () => INGEST_ON() && LIVE.ingest?.status==='ENDPOINT_PUBLISHING';
-async function ingest(action){
-  try{ const j=await api('/api/live/ingress',{action}); const was=LIVE.ingest?.status; LIVE.ingest={...LIVE.ingest,...j};
-    if(action==='reset') toast('New stream key made. Update it in your camera app.','green',[],3500);
-    if(j.status!==was&&LIVE.mode==='studio'&&!LIVE.on) renderLive(); }
-  catch(e){ toast(esc(e.message),'orange'); }
+// Camera streams: the server announces the stream once the camera's picture reaches LiveKit (and keeps it on
+// the air while this app is in the background). Here we watch our own room to show that picture.
+async function lkCamPreview(){
+  LIVE.my.room='live-'+meH(); announce();
+  try{ const LKC=await lkLoad(), t=await lkToken({publish:true}), room=new LKC.Room({adaptiveStream:true}), ms=new MediaStream();
+    room.on(LKC.RoomEvent.TrackSubscribed, tr=>{ if(tr.kind!=='video') return;   // our own camera's sound isn't played: no echo
+      ms.getVideoTracks().forEach(x=>ms.removeTrack(x)); ms.addTrack(tr.mediaStreamTrack); PREVIEW.srcObject=ms; PREVIEW.play?.().catch(()=>{}); });
+    await room.connect(t.url,t.token);
+    if(!LIVE.on){ room.disconnect(); return; }
+    LK.room=room; PREVIEW.classList.remove('mirror');
+  }catch(e){ console.warn('camera preview', e); }   // only the preview: viewers still get the camera
 }
-setInterval(()=>{ if(INGEST_ON()&&LIVE.ingest?.key&&!$('#v-live').hidden&&(LIVE.mode==='studio'||LIVE.on)) ingest('status'); },3000);
+// Action cameras / OBS: your own RTMP address from the server (LiveKit Ingress), checked every few seconds
+// while the studio is open, so you can see when the camera's picture arrives.
+const INGEST_ON = () => CFG.livekit && LIVE.src!=='device';
+const ingestReady = () => INGEST_ON() && !!LIVE.ingest?.key;
+const ingestLive = () => INGEST_ON() && LIVE.ingest?.status==='ENDPOINT_PUBLISHING';
+const camAddr = ig => ig.url.replace(/\/+$/,'')+'/'+ig.key;   // what GoPro Quik / DJI Mimo / Insta360 take
+const IGST = {ENDPOINT_PUBLISHING:'✓ Receiving from your camera.',ENDPOINT_BUFFERING:'⏳ Camera connecting…',
+  ENDPOINT_ERROR:'⚠️ The camera connected but its video could not be read. Try 1080p or 720p, H.264.'};
+const igStatus = () => IGST[LIVE.ingest?.status] || '⏳ Waiting for the camera. Start streaming in the camera app.';
+async function ingest(action){
+  try{ const j=await api('/api/live/ingress',{action}); const was=LIVE.ingest?.status; LIVE.ingest={...(action==='reset'?{}:LIVE.ingest),...j};
+    if(action==='reset'){ LIVE.showKey=false; toast('New stream key made. Paste the new address into your camera app.','green',[],3500); }
+    if(j.status!==was||action!=='status'){ if(LIVE.mode==='studio'&&!LIVE.on) renderLive(); else { const el=$('#camSt'); if(el) el.textContent=camOnAir(); } } }
+  catch(e){ if(action!=='status') toast(esc(e.message),'orange',[],5000);   // a missed check just waits for the next
+    else if(!LIVE.ingest){ LIVE.ingest={}; if(LIVE.mode==='studio'&&!LIVE.on) renderLive(); } }
+}
+const camOnAir = () => ingestLive() ? '' : LIVE.ingest?.status==='ENDPOINT_ERROR' ? IGST.ENDPOINT_ERROR
+  : "⏳ Waiting for your camera's video. Viewers see you as soon as it arrives.";
+let IG_T = 0;
+setInterval(()=>{ if(!INGEST_ON()||!LIVE.ingest?.key||$('#v-live').hidden) return;
+  if(LIVE.on ? LIVE.my?.ingest && ++IG_T%2===0 : LIVE.mode==='studio') ingest('status'); },3000);
 
 // Copy the stream out to YouTube / TikTok while live. Keys stay on this device; the server only passes them to LiveKit.
 S.restream ??= {yt:'', ttUrl:'', ttKey:''};
@@ -6682,20 +6708,24 @@ function demoCam(kind){
 }
 const brandOf = n => /gopro/i.test(n)?'gopro':/osmo|dji/i.test(n)?'dji':/insta|^x[345]\b|^one |^go ?3|^ace/i.test(n)?'insta360':'other';
 async function pairBle(){
-  if(!navigator.bluetooth) return toast("Bluetooth pairing needs Chrome or Edge on a computer or Android. Safari and iPhone don't support Web Bluetooth (the native app would).",'orange',
-    [{l:'Use demo camera',cls:'blue',f:()=>demoCam('ble')}],9000);
+  if(!navigator.bluetooth) return toast("Bluetooth pairing needs Chrome or Edge on a computer or Android. Safari and iPhone don't support Web Bluetooth (the native app would). You can still stream over Wi-Fi.",'orange',
+    CFG.demo&&!CFG.livekit?[{l:'Use demo camera',cls:'blue',f:()=>demoCam('ble')}]:[],9000);
+  let b=null;
   try{
     const filters=[{services:[GP.svc]},...Object.values(CAMS).flatMap(c=>c.ble.map(namePrefix=>({namePrefix})))];
     const dev=await navigator.bluetooth.requestDevice({filters,optionalServices:[GP.svc,'battery_service']});
-    const b=LIVE.ble={dev,name:dev.name||'Camera',brand:brandOf(dev.name||''),status:'connecting…'}; LIVE.brand=b.brand; renderLive();
+    b=LIVE.ble={dev,name:dev.name||'Camera',brand:brandOf(dev.name||''),status:'connecting…'}; LIVE.brand=b.brand; renderLive();
     dev.addEventListener('gattserverdisconnected',()=>{ if(LIVE.ble===b){ b.status='disconnected'; b.cmd=null; renderLive(); } });
     const g=await dev.gatt.connect(); b.status='connected';
     try{ b.battery=(await (await (await g.getPrimaryService('battery_service')).getCharacteristic('battery_level')).readValue()).getUint8(0); }catch(e){}
     if(b.brand==='gopro') try{ b.cmd=await (await g.getPrimaryService(GP.svc)).getCharacteristic(GP.cmd); }catch(e){}
     toast(`🔵 Paired with <b>${esc(b.name)}</b>`,'green',[],3000); renderLive();
-  }catch(e){ if(e.name!=='NotFoundError') toast('Bluetooth: '+esc(e.message),'orange'); }
+  }catch(e){
+    if(b&&LIVE.ble===b){ b.status='not connected'; renderLive(); }
+    if(e.name!=='NotFoundError') toast(`Bluetooth: ${esc(e.message)}${b?'. Make sure the camera is on and in pairing mode, then try again.':''}`,'orange',[],6000); }
 }
 async function gpCmd(k){ const [bytes,label]=GP_CMDS[k];
+  if(!LIVE.ble?.cmd) return toast('The camera is not connected. Pair it again.','orange');
   try{ await LIVE.ble.cmd.writeValue(new Uint8Array(bytes)); toast(label,'green',[],2000); }catch(e){ toast('Camera said no: '+esc(e.message),'orange'); } }
 
 // Swap front/back mid-stream without dropping viewers: replace the track on every connection.
@@ -6778,11 +6808,13 @@ function vote(id){
 /* streamer side */
 function startLive(){
   if(needAccount('go live')) return;
-  if(!LIVE.stream&&!ingestLive()) return; const d=LIVE.draft;
-  LIVE.my={id:'L'+TAB,u:meH(),title:d.title.trim()||(d.v?`Live from ${venue(d.v).name}`:'Live nearby'),v:d.v,cam:LIVE.stream?LIVE.srcLabel:`${CAMS[LIVE.brand]?.l||'Action'} camera`,who:d.who,delay:d.delay,
-    viewers:0,reqs:[],e:'📺',startedAt:Date.now()};
+  const cam=!LIVE.stream&&ingestReady(); if(!LIVE.stream&&!cam) return; const d=LIVE.draft;
+  LIVE.my={id:'L'+TAB,u:meH(),title:d.title.trim()||(d.v?`Live from ${venue(d.v).name}`:'Live nearby'),v:d.v,
+    cam:LIVE.stream?LIVE.srcLabel:LIVE.ble?.name||`${CAMS[LIVE.brand]?.l||'Action'} camera`,who:d.who,delay:d.delay,
+    viewers:0,reqs:[],e:'📺',startedAt:Date.now(),ingest:cam||undefined};
   LIVE.on=true; LIVE.earned=0; logAct('live',{k:'live',v:d.v}); announce(); renderLive(); renderMap();
-  toast(`🔴 <b>You're live.</b> ${d.delay?`Your spot shows on the map in ${d.delay} min.`:"You're on the map."}`,'green',[],4000);
+  toast(cam&&!ingestLive()?"🔴 <b>Ready.</b> You go live as soon as your camera's video arrives. You can switch to the camera app now."
+    :`🔴 <b>You're live.</b> ${d.delay?`Your spot shows on the map in ${d.delay} min.`:"You're on the map."}`,'green',[],5000);
   LIVE.sim=setInterval(simViewerRequest,15000); setTimeout(simViewerRequest,5000);
   if(CFG.livekit) lkPublish().catch(e=>toast('Video relay: '+esc(e.message)+'. Viewers will connect directly to your phone instead.','orange',[],5000));
 }
@@ -6821,7 +6853,7 @@ function liveTick(){
   const my=LIVE.my;
   // real viewers: direct connections, plus everyone in our LiveKit room (only we publish there); demo mode pads it
   if(LIVE.on){ const sec=(Date.now()-my.startedAt)/1000|0;
-    my.viewers=(CFG.demo?2+(sec/20|0):0)+Object.keys(PCS).length+(LK.room?.remoteParticipants?.size||0);
+    my.viewers=(CFG.demo?2+(sec/20|0):0)+Object.keys(PCS).length+[...(LK.room?.remoteParticipants?.values()||[])].filter(p=>!/~cam$/.test(p.identity)).length;
     const el=$('#lvStat'); if(el) el.textContent=`👁 ${my.viewers} · ${sec/60|0}:${String(sec%60).padStart(2,'0')}`; }
   const w=LIVE.mode==='watch'&&streamById(LIVE.watch), el=$('#lvViewers'); if(w&&el) el.textContent='👁 '+w.viewers;
 }
@@ -6882,28 +6914,31 @@ function renderStudio(root){
   const my=LIVE.my;
   if(LIVE.on){
     root.innerHTML = `<div class="row" style="margin:6px 0 10px"><button class="btn sm" data-lvback>← Live</button><span class="grow"></span><span class="badge live">🪙 ${LIVE.earned} earned</span></div>
-      <div class="lv" id="lvBox"><div class="tag"><span class="onair">● ON AIR</span><span class="badge" id="lvStat"></span></div><div class="ov">📷 ${esc(my.cam)}</div></div>
+      <div class="lv" id="lvBox">${my.ingest?`<div class="fakefeed" id="camPh" style="font-size:14px;color:#c9cee6;animation:none;background:#0d1226">📡 Your camera's video shows here</div>`:''}<div class="tag"><span class="onair">● ON AIR</span><span class="badge" id="lvStat"></span></div><div class="ov">📷 ${esc(my.cam)}</div></div>
+      ${my.ingest?`<p class="meta" id="camSt" style="margin:8px 0 0">${camOnAir()}</p>`:''}
       <div class="row" style="margin:12px 0"><div class="grow"><b>${esc(my.title)}</b><div class="meta">📍 ${esc(venue(my.v)?.name||'Somewhere nearby')} · ${my.delay?my.delay+'-min location delay':'no location delay'} · requests: ${my.who}</div></div>
         <div class="btns" style="flex:none">${LIVE.demoTimer||!LIVE.stream?'':'<button class="btn sm" data-flip>🔄 Flip</button>'}<button class="btn sm" data-endlive style="border-color:#ff3b5c;color:#ff6b81">End</button></div></div>
       ${CFG.livekit?'<div class="card" id="rsCard" style="margin-bottom:12px"></div>':''}
       <h3>Requests</h3><div id="reqList"></div>`;
-    $('#lvBox').prepend(PREVIEW); liveTick(); renderQueue(); renderRestream(); return;
+    if(my.ingest) $('#camPh').after(PREVIEW); else $('#lvBox').prepend(PREVIEW);   // the camera's picture covers the placeholder
+    liveTick(); renderQueue(); renderRestream(); return;
   }
   const d=LIVE.draft, b=LIVE.ble, c=CAMS[LIVE.brand];
   const srcBtn=(k,i,l)=>`<button class="${LIVE.src===k?'on':''}" data-src="${k}"><i>${i}</i>${l}</button>`;
   const seg=(id,opts,cur)=>`<div class="seg" id="${id}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" class="${String(cur)===String(v)?'on':''}">${l}</button>`).join('')}</div>`;
-  const ig=LIVE.ingest, igSt={ENDPOINT_PUBLISHING:'✓ Receiving from your camera. Fill in step 2 and go live.',ENDPOINT_BUFFERING:'⏳ Camera connecting…',ENDPOINT_ERROR:'⚠️ The camera connected but its video could not be read. Try 1080p or 720p, H.264.'}[ig?.status]||'⏳ Waiting for the camera. Start streaming in the camera app.';
+  const ig=LIVE.ingest, hid='•'.repeat(12), secure=/^rtmps:/i.test(ig?.url||'');
+  const keyRow=(l,v,shown)=>`<label class="lbl">${l}</label><div class="row"><div class="code grow">${shown}</div><button class="btn sm" data-copy="${esc(v)}">Copy</button></div>`;
   const rtmp = CFG.livekit ? `<label class="lbl">Stream over Wi-Fi or mobile data with ${esc(c.app)}</label><ol class="steps">${c.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
-    ${!ig?.key?`<button class="btn blue" data-ingest="get" style="margin:6px 0">Get my camera address</button>`:`
-    <label class="lbl">Server URL</label><div class="row"><div class="code grow">${esc(ig.url)}</div><button class="btn sm" data-copy="${esc(ig.url)}">Copy</button></div>
-    <label class="lbl">Stream key <span class="meta">(private: anyone with it can stream as you)</span></label>
-    <div class="row"><div class="code grow">${LIVE.showKey?esc(ig.key):'•'.repeat(16)}</div><button class="btn sm" data-showkey>${LIVE.showKey?'Hide':'Show'}</button><button class="btn sm" data-copy="${esc(ig.key)}">Copy</button></div>
-    <p class="meta" style="margin:10px 0">${igSt}</p><button class="btn sm" data-ingest="reset">New key</button>`}`
-  : `<label class="lbl">Stream over Wi-Fi with ${esc(c.app)}</label><ol class="steps">${c.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
-    <label class="lbl">Server URL</label><div class="row"><div class="code grow">${esc(RTMP.url)}</div><button class="btn sm" data-copy="${esc(RTMP.url)}">Copy</button></div>
-    <label class="lbl">Stream key</label><div class="row"><div class="code grow">${RTMP.key}</div><button class="btn sm" data-copy="${RTMP.key}">Copy</button></div>
-    <p class="meta" style="margin:10px 0">${LIVE.demoTimer?'✓ Receiving (demo signal)':'⏳ Waiting for the camera. The mockup has no ingest server yet; in production this URL points at your Hetzner box running MediaMTX, which passes the stream on to viewers over WebRTC.'}</p>
-    <button class="btn" data-demo="${LIVE.src}">${LIVE.demoTimer?'↻ Restart demo signal':'▶ Simulate camera signal'}</button>`;
+    ${c.note?`<p class="meta" style="margin:6px 0 0">${esc(c.note)}</p>`:''}
+    ${!AUTHED?`<button class="btn blue" data-ingest="get" style="margin:10px 0 0">Get my camera address</button>`
+    :!ig?.key?`<button class="btn blue" data-ingest="get" style="margin:10px 0 0">${ig?'Get my camera address':'Checking…'}</button>`:`
+    ${c.split?'':keyRow('Camera address <span class="meta">(server + key in one)</span>',camAddr(ig),LIVE.showKey?esc(camAddr(ig)):esc(ig.url.replace(/\/+$/,''))+'/'+hid)}
+    ${c.split?keyRow('Server',ig.url,esc(ig.url)):''}${keyRow(c.split?'Stream key':'Only stream key (if the app asks for server and key separately)',ig.key,LIVE.showKey?esc(ig.key):hid)}
+    <div class="row" style="margin-top:8px;gap:8px"><button class="btn sm" data-showkey>${LIVE.showKey?'Hide key':'Show key'}</button><button class="btn sm" data-ingest="reset">New key</button><span class="grow"></span></div>
+    <p class="meta" style="margin:8px 0 0">🔒 Private: anyone with this key can stream as you. It stays the same, so your camera app can remember it.${secure?" It's a secure rtmps:// address; if an older camera app won't take it, update the app.":''}</p>
+    <p class="meta" style="margin:10px 0 0" id="igSt">${igStatus()}</p>`}`
+  : `<p class="meta" style="margin:10px 0 0;color:var(--accent)">Streaming from a camera app over Wi-Fi isn't set up on this server yet (it needs the LiveKit video service). Use the phone camera${navigator.mediaDevices?.getUserMedia?', or plug the camera in by USB (webcam mode) on a computer':''}: tap 📱 Phone / USB.</p>
+    ${CFG.demo?`<button class="btn" data-demo="${LIVE.src}" style="margin-top:10px">${LIVE.demoTimer?'↻ Restart demo signal':'▶ Simulate camera signal (demo)'}</button>`:''}`;
   const brandSeg=seg('rtBrand',Object.entries(CAMS).map(([k,v])=>[k,v.l]),LIVE.brand);
   const act=/insta360|gopro|osmo|dji/i.exec(LIVE.srcLabel);
   const panel = LIVE.src==='device' ? `<b>Phone camera or USB webcam</b>
@@ -6913,22 +6948,23 @@ function renderStudio(root){
       ${LIVE.devices.length>1?`<select id="lvDev" style="margin-bottom:8px">${LIVE.devices.map(x=>`<option value="${x.deviceId}" ${LIVE.stream?.getVideoTracks()[0]?.getSettings().deviceId===x.deviceId?'selected':''}>${esc(x.label||'Camera')}</option>`).join('')}</select>`:''}
       ${act&&!LIVE.demoTimer?`<p class="meta" style="color:var(--good)">🎥 ${esc(act[0])} detected in webcam mode</p>`:''}
       <button class="btn blue" data-camon>${LIVE.stream&&!LIVE.demoTimer?'↻ Restart camera':'Turn on camera'}</button>`
-    : LIVE.src==='wifi' ? `<b>Wi-Fi (RTMP)</b><p class="meta">The camera streams straight to Side Quest over your phone's hotspot or any Wi-Fi.</p>
-      <div style="margin:10px 0">${brandSeg}</div>${rtmp}`
-    : `<b>Bluetooth pairing</b><p class="meta">Pairing finds the camera and checks its battery. On a GoPro it can also turn on the camera's Wi-Fi and start recording. The video itself goes over Wi-Fi, because Bluetooth is too slow for it.</p>
-      ${!navigator.bluetooth?`<p class="meta" style="color:var(--accent)">This browser can't use Bluetooth. Use Chrome or Edge on a computer or Android. Safari and iPhone don't support Web Bluetooth (a native app would).</p>`:''}
-      ${b?`<div class="row" style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)"><span style="font-size:22px">📷</span>
+    : LIVE.src==='wifi' ? `<b>Wi-Fi (RTMP)</b><p class="meta">Your camera's own app streams to Side Quest over Wi-Fi or mobile data. No phone camera needed.</p>
+      ${CFG.livekit||CFG.demo?`<div style="margin:10px 0">${brandSeg}</div>`:''}${rtmp}`
+    : `<b>Bluetooth pairing</b><p class="meta">Pairing finds the camera and shows its battery when the camera shares it; on a GoPro it can also start and stop recording to the card. The live video itself goes over Wi-Fi from the camera's own app (steps below): Bluetooth is too slow for video.</p>
+      ${!navigator.bluetooth?`<p class="meta" style="color:var(--accent)">This browser can't use Bluetooth${/iPhone|iPad|iPod/.test(navigator.userAgent)?' (iPhone and iPad browsers don\'t support Web Bluetooth)':''}. Pairing needs Chrome or Edge on Android or a computer. You don't need it to go live: follow the Wi-Fi steps below.</p>`
+      :b?`<div class="row" style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)"><span style="font-size:22px">📷</span>
           <div class="grow"><b>${esc(b.name)}</b><div class="meta">${CAMS[b.brand].l} · ${b.status}${b.battery!=null?` · 🔋 ${b.battery}%`:''}</div></div><button class="btn sm" data-unpair>Forget</button></div>`
         :`<button class="btn blue" data-pair style="margin:10px 0">🔵 Pair action camera</button>`}
-      ${b?.cmd?`<div class="btns" style="margin-bottom:8px"><button class="btn sm" data-gp="wifi">📶 Camera Wi-Fi on</button><button class="btn sm" data-gp="rec">⏺ Record</button><button class="btn sm" data-gp="stop">⏹ Stop</button></div>`:''}
-      ${b?.brand==='insta360'?`<p class="meta">Insta360 keeps its Bluetooth control protocol private (their SDK needs approval), so pairing identifies the camera and the stream goes over Wi-Fi below.</p>`:''}
-      ${b?'':`<div style="margin-bottom:6px">${brandSeg}</div>`}${rtmp}`;
+      ${b?.cmd&&b.status==='connected'?`<div class="btns" style="margin-bottom:8px"><button class="btn sm" data-gp="rec">⏺ Record to card</button><button class="btn sm" data-gp="stop">⏹ Stop recording</button></div>`:''}
+      ${b?.brand==='insta360'?`<p class="meta">Insta360 keeps its Bluetooth control protocol private (their SDK needs approval), so pairing only identifies the camera.</p>`:''}
+      ${b?.brand==='dji'?`<p class="meta">DJI's Bluetooth control is private too, so pairing only identifies the camera.</p>`:''}
+      ${b&&b.brand!=='other'||!(CFG.livekit||CFG.demo)?'':`<div style="margin:8px 0 6px">${brandSeg}</div>`}${rtmp}`;
   root.innerHTML = `<div class="row" style="margin:6px 0 2px"><button class="btn sm" data-lvback>←</button><h2 class="grow" style="margin:0">Go live</h2></div>
     <p class="sub" style="margin-top:6px">Stream from your phone's camera, or an Insta360, GoPro or DJI. Viewers send you places to visit and tasks to do.</p>
     <h3>1 · Camera</h3>
     <div class="src">${srcBtn('device','📱','Phone / USB')}${srcBtn('ble','🔵','Bluetooth')}${srcBtn('wifi','📶','Wi-Fi (RTMP)')}</div>
     <div class="card" style="margin-top:10px">${panel}</div>
-    <div class="lv" id="lvBox">${LIVE.stream?`<div class="ov">✓ ${esc(LIVE.srcLabel)}</div>`:'<div class="fakefeed" style="font-size:14px;color:var(--muted);animation:none;background:#0d1226">No signal yet</div>'}</div>
+    <div class="lv" id="lvBox">${LIVE.stream?`<div class="ov">✓ ${esc(LIVE.srcLabel)}</div>`:`<div class="fakefeed" style="font-size:14px;color:var(--muted);animation:none;background:#0d1226;text-align:center;padding:0 16px">${ingestLive()?"✓ Your camera's video is arriving":INGEST_ON()?'Your camera shows here once you go live':'No signal yet'}</div>`}</div>
     <h3>2 · Stream</h3>
     <div class="card">
       <input id="lvTitle" maxlength="70" placeholder="What are you up to? e.g. Sunset swim at Barton Springs" value="${esc(d.title)}">
@@ -6937,8 +6973,10 @@ function renderStudio(root){
       <label class="lbl">Show my spot on the map</label>${seg('lvDelay',[[0,'Right away'],[5,'5 min late'],[15,'15 min late']],d.delay)}
       <p class="meta" style="margin:10px 0 0">🛡️ Viewers only see the venue name, never GPS. A delay keeps people from turning up mid-stream.</p>
     </div>
-    <button class="btn primary" data-startlive style="width:100%;padding:13px;${LIVE.stream||ingestLive()?'':'opacity:.5'}" ${LIVE.stream||ingestLive()?'':'disabled'}>🔴 Go live</button>`;
+    <button class="btn primary" data-startlive style="width:100%;padding:13px;${LIVE.stream||ingestReady()?'':'opacity:.5'}" ${LIVE.stream||ingestReady()?'':'disabled'}>🔴 Go live</button>
+    ${!LIVE.stream&&ingestReady()&&!ingestLive()?`<p class="meta" style="margin:8px 0 0;text-align:center">You can go live now: you're on the air as soon as the camera's video arrives.</p>`:''}`;
   if(LIVE.stream) $('#lvBox').prepend(PREVIEW);
+  if(INGEST_ON()&&AUTHED&&!LIVE.ingest&&!LIVE.igAsk){ LIVE.igAsk=true; ingest('status').finally(()=>LIVE.igAsk=false); }   // your saved camera address
 }
 document.addEventListener('input',e=>{ if(e.target.id==='lvTitle') LIVE.draft.title=e.target.value; });
 document.addEventListener('change',e=>{ if(e.target.id==='lvDev') useDevice(e.target.value); });

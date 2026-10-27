@@ -7,6 +7,7 @@ BASE = URI("http://127.0.0.1:#{PORT}")
 
 $lk = []   # [method, body, jwt claims] for every LiveKit API call
 $ingress = {}; $n = 0   # fake LiveKit Ingress: camera addresses by id
+$lk_down = false        # true: ListIngress answers 500, like a LiveKit hiccup
 lk = WEBrick::HTTPServer.new(Port: LK_PORT, BindAddress: '127.0.0.1', Logger: WEBrick::Log.new('/dev/null'), AccessLog: [])
 lk.mount_proc('/twirp') do |req, res|
   head, body, sig = req['Authorization'].to_s.sub('Bearer ', '').split('.')
@@ -15,7 +16,7 @@ lk.mount_proc('/twirp') do |req, res|
   m, b = req.path.split('/').last, JSON.parse(req.body)
   $lk << [m, b, claims]
   res['Content-Type'] = 'application/json'
-  res.status = ok ? 200 : 401
+  res.status = !ok ? 401 : $lk_down && m == 'ListIngress' ? 500 : 200
   res.body = JSON.generate(
     case m
     when 'CreateIngress'
@@ -82,14 +83,13 @@ t('streamer gets a publish pass for their own room only') {
   code, j, = call('/api/live/token', { publish: true }, amy)
   c = jwt(j['token'])
   check(code == 200 && j['room'] == 'live-test_amy' && c['sub'] == 'test_amy', "#{code} #{j}")
-  check(c['video'] == { 'room' => 'live-test_amy', 'roomJoin' => true, 'canPublish' => true, 'canSubscribe' => false, 'canPublishData' => false }, c.inspect)
+  # canSubscribe: the streamer sees their own action camera's picture and counts viewers
+  check(c['video'] == { 'room' => 'live-test_amy', 'roomJoin' => true, 'canPublish' => true, 'canSubscribe' => true, 'canPublishData' => false }, c.inspect)
   "exp in #{c['exp'] - Time.now.to_i}s"
 }
-t('viewers get an anonymous watch-only pass') {
-  _, j, = call('/api/live/token', { room: 'live-test_amy' }, bo)
-  c = jwt(j['token'])
-  check(c['sub'] =~ /\Av[0-9a-f]{12}\z/ && c['name'] == '' && !c['video']['canPublish'] && c['video']['canSubscribe'], c.inspect)
-  c['sub']
+t('no watch pass for someone who is not live (their camera key may be streaming into the room)') {
+  code, = call('/api/live/token', { room: 'live-test_amy' }, bo)
+  check(code == 403, code.to_s)
 }
 since = poll(bo, -1)['seq']
 t('announcements go out under the real account and room, spot held back by the delay') {
@@ -99,6 +99,12 @@ t('announcements go out under the real account and room, spot held back by the d
   check(code == 200 && s['u'] == 'test_amy' && s['room'] == 'live-test_amy' && m['by'] == 'test_amy', s.inspect)
   check(s['v'].nil? && s['startedAt'].is_a?(Integer), "venue leaked during the 5-min delay: #{s['v'].inspect}")
   'venue hidden'
+}
+t('viewers get an anonymous watch-only pass once the stream is on') {
+  _, j, = call('/api/live/token', { room: 'live-test_amy' }, bo)
+  c = jwt(j['token'])
+  check(c['sub'] =~ /\Av[0-9a-f]{12}\z/ && c['name'] == '' && !c['video']['canPublish'] && c['video']['canSubscribe'], c.inspect)
+  c['sub']
 }
 t('no delay chosen: the venue shows') {
   since = poll(bo, -1)['seq']
@@ -142,6 +148,23 @@ t('New key: the old camera key is deleted') {
   _, before, = call('/api/live/ingress', { action: 'status' }, amy); $lk.clear
   _, after, = call('/api/live/ingress', { action: 'reset' }, amy)
   check(after['key'] != before['key'] && $lk.any? { |m, _, _| m == 'DeleteIngress' } && $ingress.size == 2, "#{before} #{after} #{$lk.map(&:first)}")
+}
+t('a LiveKit hiccup never swaps the camera key behind your back') {
+  _, before, = call('/api/live/ingress', { action: 'status' }, amy)
+  $lk_down = true; $lk.clear
+  c1, j1, = call('/api/live/ingress', { action: 'get' }, amy)
+  c2, = call('/api/live/ingress', { action: 'status' }, amy)
+  $lk_down = false
+  _, after, = call('/api/live/ingress', { action: 'get' }, amy)
+  check(c1 == 400 && j1['error'] =~ /LiveKit/ && c2 == 400 && $lk.none? { |m, _, _| m == 'CreateIngress' }, "#{c1} #{j1} #{c2} #{$lk.map(&:first)}")
+  check(after['key'] == before['key'], "#{before} #{after}")
+}
+t('checking the camera every 3 s for an hour is fine; making keys is rate-limited') {
+  eve = signup('test_eve')
+  codes = Array.new(300) { call('/api/live/ingress', { action: 'status' }, eve)[0] }
+  gets = Array.new(31) { call('/api/live/ingress', { action: 'get' }, eve)[0] }
+  check(codes.uniq == [200] && gets[0, 30].uniq == [200] && gets[30] == 429, "status #{codes.uniq} get #{gets}")
+  '300 checks ok, 31st key request refused'
 }
 t('copy-out needs you live, and a real rtmp:// address') {
   c1, j1, = call('/api/live/restream', { action: 'start', targets: [{ url: 'rtmps://a.rtmps.youtube.com/live2', key: 'abcd-1234' }] }, bo)
@@ -191,6 +214,63 @@ t('suspending someone also ends their LiveKit room') {
   call('/api/admin', { action: 'ban', h: 'test_cy' }, nil, true)
   sleep 0.5
   check($lk.any? { |m, b, _| m == 'DeleteRoom' && b['room'] == 'live-test_cy' }, $lk.inspect)
+}
+dee = signup('test_dee')
+cam = { id: 'Ltabdee', u: 'test_dee', title: 'GoPro ride', v: 'bw', delay: 0, room: 'live-test_dee', reqs: [], viewers: 0, ingest: true }
+t("camera stream: Go live before the camera's picture arrives is held, not shown") {
+  _, ig, = call('/api/live/ingress', { action: 'get' }, dee)
+  $dee_ing = $ingress.find { |_, x| x[:stream_key] == ig['key'] }[0]
+  since = poll(bo, -1)['seq']
+  code, j, = call('/api/relay', { t: 'stream', s: cam, from: 'tabdee', mid: 'c1' }, dee)
+  sleep 3.5
+  shown = poll(bo, since)['msgs'].any? { |x| x['by'] == 'test_dee' }
+  w, = call('/api/live/token', { room: 'live-test_dee' }, bo)
+  _, a, = call('/api/admin', nil, nil, true)
+  check(code == 200 && j['held'] && !shown && w == 403 && a['live'].none? { |s| s['h'] == 'test_dee' }, "#{code} #{j} shown=#{shown} watch=#{w}")
+}
+t("camera stream: on the air when the picture arrives, and kept there while the phone app is in the background") {
+  since = poll(bo, -1)['seq']
+  $ingress[$dee_ing][:state] = { status: 'ENDPOINT_PUBLISHING' }
+  sleep 4
+  first = poll(bo, since)['msgs'].select { |x| x['t'] == 'stream' && x['by'] == 'test_dee' }
+  since2 = poll(bo, -1)['seq']
+  sleep 7   # the phone app sends nothing now
+  later = poll(bo, since2)['msgs'].select { |x| x['t'] == 'stream' && x['by'] == 'test_dee' }
+  w, = call('/api/live/token', { room: 'live-test_dee' }, bo)
+  s = first.first && first.first['s']
+  check(s && s['room'] == 'live-test_dee' && s['u'] == 'test_dee' && first.first['from'] == 'tabdee' && s['startedAt'], first.inspect)
+  check(later.any? && w == 200, "re-announced #{later.size}x, watch #{w}")
+  "#{later.size} server re-announcements in 7 s"
+}
+t('camera stream: viewers are told when the camera stops; blocked viewers never see it') {
+  gil = signup('test_gil')
+  call('/api/block', { who: 'test_dee' }, gil)
+  sc = poll(gil, -1)['seq']
+  since = poll(bo, -1)['seq']
+  $ingress[$dee_ing][:state] = { status: 'ENDPOINT_INACTIVE' }
+  sleep 19
+  ended = poll(bo, since)['msgs'].find { |x| x['t'] == 'end' && x['id'] == 'Ltabdee' }
+  leaked = poll(gil, sc)['msgs'].any? { |x| x['by'] == 'test_dee' }
+  _, a, = call('/api/admin', nil, nil, true)
+  check(ended && !leaked && a['live'].none? { |s| s['h'] == 'test_dee' }, "ended=#{ended.inspect} leaked=#{leaked}")
+}
+t('camera stream: a moderator stop takes it off the air for good') {
+  $ingress[$dee_ing][:state] = { status: 'ENDPOINT_PUBLISHING' }
+  call('/api/relay', { t: 'stream', s: cam, from: 'tabdee', mid: 'c2' }, dee)
+  sleep 4
+  _, a1, = call('/api/admin', nil, nil, true)
+  call('/api/admin', { action: 'end_stream', h: 'test_dee' }, nil, true)
+  since = poll(bo, -1)['seq']
+  sleep 4
+  back = poll(bo, since)['msgs'].any? { |x| x['t'] == 'stream' && x['by'] == 'test_dee' }
+  check(a1['live'].any? { |s| s['h'] == 'test_dee' } && !back && !$ingress.key?($dee_ing), "was live=#{a1['live'].map { |s| s['h'] }} back=#{back}")
+}
+t('deleting an account deletes its camera key') {
+  call('/api/live/ingress', { action: 'get' }, eve = signup('test_fay'))
+  id = $ingress.find { |_, x| x[:room_name] == 'live-test_fay' }[0]
+  code, = call('/api/account/delete', { pw: 'correct horse 9' }, eve)
+  sleep 0.5
+  check(code == 200 && !$ingress.key?(id), "#{code} still there=#{$ingress.key?(id)}")
 }
 puts "#{$pass}/#{$pass + $fail} passed"
 exit($fail.zero? ? 0 : 1)
