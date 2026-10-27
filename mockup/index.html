@@ -1017,6 +1017,8 @@
   #app.v3 .sc-lens small{color:var(--muted);opacity:1}
   #app.v3 .sc-lens i{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;font-size:24px;background:linear-gradient(135deg,#2ec5ff,#7b5cff)}
   #app.v3 .sc-lens.look i{background:linear-gradient(135deg,#ff7a18,#e9408a)}
+  #drawer .mapchips{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent);padding-right:40px}
+  #drawer .mapchips.end{-webkit-mask-image:none;mask-image:none}
 </style>
 </head>
 <body>
@@ -5335,6 +5337,7 @@ function tab(t, at){
   d.querySelector('.dgrab').addEventListener('click',()=>Date.now()-(DRW.dragged||0)<400||setDrawer(DRW.at==='peek'?'half':DRW.at==='half'?'full':'half'));
   addEventListener('resize',()=>setDrawer());
   document.fonts?.ready.then(()=>setDrawer());
+  $('#mapChips').addEventListener('scroll',e=>{ const c=e.target; c.classList.toggle('end',c.scrollLeft+c.clientWidth>=c.scrollWidth-4); },{passive:true});
   $('#app').addEventListener('scroll',e=>{ if(e.target.id==='app') e.target.scrollTop=e.target.scrollLeft=0; });   // nothing may scroll the whole screen (a scrollIntoView, a keyboard)
 })();
 /* ---------- Explore: the drawer's first page. What's around right now; a chip turns the map and this list to one thing. ---------- */
@@ -6574,7 +6577,7 @@ function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
   refreshMapLayers(); openMapLayers(); mapHint(true); }
 function renderMapChips(){   // V3: the chips under the search box pick one thing for the map and the list at once (exploreCat)
   const el=$('#mapChips'); if(!el) return;
-  el.innerHTML = (mapFilter==='feed'?`<button class="chip on" data-mfeedoff>📋 ${T('My feed')} ✕</button>`:'')
+  el.innerHTML = (mapFilter==='feed'?`<button class="chip on" data-mfeedoff>📋 ${T('My feed')}</button>`:'')
     + EX_CHIPS.map(([k,e,l])=>{
       return `<button class="chip ${EXC.k===k?'on':''}" data-excat="${k}" aria-pressed="${EXC.k===k}">${e} ${esc(T(l))}</button>`; }).join('');
 }
