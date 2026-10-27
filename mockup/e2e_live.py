@@ -63,8 +63,8 @@ with sync_playwright() as pw:
     s = person(browser, STREAMER)
     viewers = [person(browser, f"test_view{SUFFIX}{i}") for i in range(VIEWERS)]
 
-    # streamer: Live → Go live → phone camera (Chrome's fake camera here) → title → Go live
-    s.click("[data-home='live']"); s.click("[data-golive]"); s.click("[data-camon]")
+    # streamer (V3): ＋ → Go live → phone camera (Chrome's fake camera here) → title → Go live
+    s.click("[data-dock='create']"); s.click("[data-create='live']"); s.click("[data-camon]")
     s.wait_for_function("LIVE.stream && PREVIEW.videoWidth > 0", timeout=15000)
     s.fill("#lvTitle", "Test stream from the e2e run")
     check("location delay defaults to 5 minutes", s.evaluate("LIVE.draft.delay") == 5)
@@ -73,10 +73,12 @@ with sync_playwright() as pw:
     sid = s.evaluate("LIVE.my.id")
     s.screenshot(path=f"{OUT}/live-1-streamer.png")
 
-    # viewers: the stream shows up in Live, and each one watches it
+    # viewers (V3): the LIVE pill on the map opens the strip of streams, and each one watches it
     for i, v in enumerate(viewers):
-        v.click("[data-home='live']")
-        watch = f"#v-live [data-watch='{sid}']"   # the same button also sits in the map's live strip and Home
+        v.wait_for_selector("#mapLive [data-livetoggle]", timeout=15000)
+        if v.evaluate("!S.liveOpen"):
+            v.click("#mapLive [data-livetoggle]")
+        watch = f"#mapLive [data-watch='{sid}']"
         v.wait_for_selector(watch, timeout=15000)
         if i == 0:
             st = v.evaluate("id => LIVE.remote[id]", sid)
