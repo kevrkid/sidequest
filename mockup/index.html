@@ -1001,7 +1001,12 @@
   .sfareas{margin:0 0 10px 46px} .sfareas input{width:100%;margin:0 0 8px;padding:8px 12px;border-radius:12px;font-size:14px}
   .sfalist{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow-y:auto}
   .sfalist button{padding:6px 11px;border-radius:99px;background:#161e40;border:1px solid #ffffff14;font-size:12.5px;font-weight:650;color:#cfd5f5} .sfalist button.on{background:var(--accent2);color:#03131d}
-  .sfsound{color:var(--accent2);font-weight:650} .barfood{margin:2px 0 8px;font-size:13.5px} .barfood .kclosed{color:#ff9a8a} .sfcompact{margin-bottom:6px} .exlh .linkbtn{margin-left:10px}
+  .sfsound{color:var(--accent2);font-weight:650}
+  .scfind{width:100%;margin:14px 0 4px;text-align:left} .scfind .sfrow .subchips{margin-right:-16px}
+  .scpick{margin:0 0 12px;padding:10px 12px;border-radius:18px;background:linear-gradient(180deg,#b04bff22,#3d7bff14);border:1px solid #b04bff55}
+  .scpick-h{display:flex;align-items:center;gap:8px;margin-bottom:2px} .scpick-h .scwrap{width:26px;flex:none} .scpick .xrow:first-of-type{border-top:0}
+  .scpick .scn{display:grid;place-items:center;width:100%;height:100%;font-size:17px;color:#fff;background:linear-gradient(135deg,#ff2d95,#b04bff,#3d7bff);border-radius:inherit}
+  .scwalk{font-size:11.5px;color:var(--muted);padding:0 0 0 54px} .barfood{margin:2px 0 8px;font-size:13.5px} .barfood .kclosed{color:#ff9a8a} .sfcompact{margin-bottom:6px} .exlh .linkbtn{margin-left:10px}
   .mrail .mcard{flex:none;position:relative;width:118px;height:158px;border-radius:14px;overflow:hidden;background:#161e40 center/cover no-repeat;border:1px solid #ffffff14;scroll-snap-align:start;padding:0;text-align:left}
   .mcard video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .mcard .mplay{position:absolute;top:7px;right:7px;width:24px;height:24px;border-radius:50%;background:#0009;display:grid;place-items:center;font-size:10px;font-style:normal;color:#fff}
@@ -1311,6 +1316,7 @@
     <div id="scoutLog"></div>
     <div class="scvoice"><button class="bigmic" data-sc="mic" id="scMic" aria-label="Talk to Scout"><span class="scwrap" data-scface></span></button>
       <div id="scMicL" class="scmicl">Tap to talk</div><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button>
+      <div id="scFind" class="scfind"></div>
       <button class="sc-lens" data-sc="lens"><i>📷</i><span><b data-t="Live Translate">Live Translate</b><small data-t="Point your camera at a sign or menu">Point your camera at a sign or menu</small></span></button>
       <button class="sc-lens look" data-sc="identify"><i>🔍</i><span><b data-t="What is this?">What is this?</b><small data-t="Point at a building, landmark, storefront or dish">Point at a building, landmark, storefront or dish</small></span></button></div>
     <form id="scoutForm" class="row" hidden><input id="scoutIn" maxlength="300" placeholder="Ask about the app, or what's the move…" data-tp="Ask about the app, or what's the move…" autocomplete="off">
@@ -1706,7 +1712,7 @@ const ES = {
   '{n} open':'{n} abiertos', '{n} events':'{n} eventos', 'quiet now':'tranquilo ahora', 'busy now':'animado ahora',
   '🔥 Bright zones are busy right now: tap one':'🔥 Las zonas brillantes están animadas: toca una', 'From Side Quest stories':'De historias de Side Quest', 'Photos: Google':'Fotos: Google',
   // V3: find a spot, shared around town
-  'Find a spot':'Encuentra un lugar', 'Where':'Dónde', 'What':'Qué', 'Music':'Música', 'Vibe':'Ambiente', 'When':'Cuándo', 'Near me':'Cerca de mí', 'This map area':'Esta zona del mapa', 'More areas':'Más zonas', 'Neighborhood or town':'Barrio o pueblo', 'Drinks':'Bebidas', 'Live music':'Música en vivo', 'DJ':'DJ', 'Karaoke':'Karaoke', 'Trivia':'Trivia', 'Comedy':'Comedia', 'Free':'Gratis', 'Open late':'Abierto tarde', 'Jazz':'Jazz', 'Blues':'Blues', 'Country':'Country', 'Rock':'Rock', 'Hip-hop & R&B':'Hip-hop y R&B', 'Latin':'Latina', 'Electronic & dance':'Electrónica y baile', 'Indie & songwriter':'Indie y cantautores', 'Punk & metal':'Punk y metal', 'Soul & funk':'Soul y funk', 'Pop & covers':'Pop y covers', 'Classical':'Clásica', 'Brewery':'Cervecería', 'Wine bar':'Bar de vinos', 'Cocktail lounge':'Coctelería', 'Sports bar':'Bar deportivo', 'Games & arcade':'Juegos y arcade', 'Beer garden':'Jardín cervecero', 'Rooftop':'Azotea', 'Dive & honky-tonk':'Cantina y honky-tonk', 'Irish pub':'Pub irlandés', 'Tiki':'Tiki', 'Pick what you want there':'Elige qué quieres ahí', 'Clear':'Borrar', 'Pick where you\'re going and what you want there.':'Elige a dónde vas y qué quieres ahí.', 'Nothing listed that fits all of that. Try fewer picks or another area.':'No hay nada que cumpla todo eso. Prueba con menos opciones u otra zona.', 'Music comes from the listing, or what the room is known for.':'La música viene del anuncio o de lo que suele tocar el lugar.', 'Open':'Abierto', 'Opens soon':'Abre pronto', 'Closed':'Cerrado', 'Hours unknown':'Horario desconocido', 'restaurant':'restaurante', 'fast food':'comida rápida', 'cafe':'café', 'bakery':'panadería', 'ice cream':'helados', 'food truck':'food truck', 'club':'club', 'food hall':'food hall', 'truck park':'parque de food trucks', 'beer garden':'jardín cervecero', 'Shared around town':'Compartido en la ciudad', 'Photos and videos people share at places and events show up here.':'Aquí salen las fotos y videos que la gente comparte en lugares y eventos.', 'Share one':'Comparte uno', 'Appearance':'Apariencia', 'Light':'Claro', 'Dark':'Oscuro', 'Auto':'Automático', 'Tap it to see how it moves.':'Tócalo para ver cómo se mueve.', 'Pick its name and voice.':'Elige su nombre y su voz.', 'Customize':'Personalizar', 'Later':'Luego', 'Kitchen open till {t}':'Cocina abierta hasta las {t}', 'Kitchen open 24 hours':'Cocina abierta 24 horas', 'Kitchen closed · opens {t}':'Cocina cerrada · abre a las {t}', 'Kitchen closed':'Cocina cerrada', 'Kitchen closes around {t}':'La cocina cierra como a las {t}', 'food till {t}':'comida hasta las {t}', 'kitchen closed':'cocina cerrada', 'food till ~{t}':'comida hasta ~{t}', 'food':'comida', 'drinks only':'solo bebidas', "from people who've been":'según gente que ha ido', 'from its menu':'según su menú', 'from OpenStreetMap':'según OpenStreetMap', 'Serves food':'Sirve comida', 'Drinks only':'Solo bebidas', 'Serves food? Not known yet':'¿Sirve comida? Aún no se sabe', 'Been there? Tell us':'¿Has ido? Cuéntanos', 'Not right? Tell us':'¿No es así? Cuéntanos', 'Does it serve food?':'¿Sirve comida?', 'Yes':'Sí', 'When does the kitchen close?':'¿A qué hora cierra la cocina?', 'Not sure':'No sé', 'Thanks! That helps everyone.':'¡Gracias! Eso ayuda a todos.', 'midnight':'medianoche', '🍔 Bars with food':'🍔 Bares con comida', 'No bars here are known to serve food yet. Open a bar and tell us if it does.':'Aún no sabemos de bares con comida aquí. Abre un bar y cuéntanos si sirve.', 'Filters':'Filtros', 'Done':'Listo', '{n} found':'{n} encontrados'
+  'Find a spot':'Encuentra un lugar', 'Where':'Dónde', 'What':'Qué', 'Music':'Música', 'Vibe':'Ambiente', 'When':'Cuándo', 'Near me':'Cerca de mí', 'This map area':'Esta zona del mapa', 'More areas':'Más zonas', 'Neighborhood or town':'Barrio o pueblo', 'Drinks':'Bebidas', 'Live music':'Música en vivo', 'DJ':'DJ', 'Karaoke':'Karaoke', 'Trivia':'Trivia', 'Comedy':'Comedia', 'Free':'Gratis', 'Open late':'Abierto tarde', 'Jazz':'Jazz', 'Blues':'Blues', 'Country':'Country', 'Rock':'Rock', 'Hip-hop & R&B':'Hip-hop y R&B', 'Latin':'Latina', 'Electronic & dance':'Electrónica y baile', 'Indie & songwriter':'Indie y cantautores', 'Punk & metal':'Punk y metal', 'Soul & funk':'Soul y funk', 'Pop & covers':'Pop y covers', 'Classical':'Clásica', 'Brewery':'Cervecería', 'Wine bar':'Bar de vinos', 'Cocktail lounge':'Coctelería', 'Sports bar':'Bar deportivo', 'Games & arcade':'Juegos y arcade', 'Beer garden':'Jardín cervecero', 'Rooftop':'Azotea', 'Dive & honky-tonk':'Cantina y honky-tonk', 'Irish pub':'Pub irlandés', 'Tiki':'Tiki', 'Pick what you want there':'Elige qué quieres ahí', 'Clear':'Borrar', 'Pick where you\'re going and what you want there.':'Elige a dónde vas y qué quieres ahí.', 'Nothing listed that fits all of that. Try fewer picks or another area.':'No hay nada que cumpla todo eso. Prueba con menos opciones u otra zona.', 'Music comes from the listing, or what the room is known for.':'La música viene del anuncio o de lo que suele tocar el lugar.', 'Open':'Abierto', 'Opens soon':'Abre pronto', 'Closed':'Cerrado', 'Hours unknown':'Horario desconocido', 'restaurant':'restaurante', 'fast food':'comida rápida', 'cafe':'café', 'bakery':'panadería', 'ice cream':'helados', 'food truck':'food truck', 'club':'club', 'food hall':'food hall', 'truck park':'parque de food trucks', 'beer garden':'jardín cervecero', 'Shared around town':'Compartido en la ciudad', 'Photos and videos people share at places and events show up here.':'Aquí salen las fotos y videos que la gente comparte en lugares y eventos.', 'Share one':'Comparte uno', 'Find my spot':'Encuentra mi lugar', 'One spot':'Un lugar', 'A few stops':'Varias paradas', 'Say the vibe, or tap what you want:':'Dime el ambiente, o toca lo que quieres:', 'Plan my stops':'Planea mis paradas', 'Your night, a short walk apart':'Tu noche, a pocos pasos', "Scout's pick":'La elección de Scout', '{n} min walk':'{n} min a pie', 'Walk it':'Ir caminando', 'Another pick':'Otra opción', 'Try this: {list}. All a short walk apart.':'Prueba esto: {list}. Todo a pocos pasos.', 'Try {name}.':'Prueba {name}.', "Here's a little route for that, a short walk apart.":'Aquí tienes una ruta corta para eso.', "Here's my pick for that, and everything else that fits.":'Esta es mi elección, y todo lo demás que encaja.', 'Appearance':'Apariencia', 'Light':'Claro', 'Dark':'Oscuro', 'Auto':'Automático', 'Tap it to see how it moves.':'Tócalo para ver cómo se mueve.', 'Pick its name and voice.':'Elige su nombre y su voz.', 'Customize':'Personalizar', 'Later':'Luego', 'Kitchen open till {t}':'Cocina abierta hasta las {t}', 'Kitchen open 24 hours':'Cocina abierta 24 horas', 'Kitchen closed · opens {t}':'Cocina cerrada · abre a las {t}', 'Kitchen closed':'Cocina cerrada', 'Kitchen closes around {t}':'La cocina cierra como a las {t}', 'food till {t}':'comida hasta las {t}', 'kitchen closed':'cocina cerrada', 'food till ~{t}':'comida hasta ~{t}', 'food':'comida', 'drinks only':'solo bebidas', "from people who've been":'según gente que ha ido', 'from its menu':'según su menú', 'from OpenStreetMap':'según OpenStreetMap', 'Serves food':'Sirve comida', 'Drinks only':'Solo bebidas', 'Serves food? Not known yet':'¿Sirve comida? Aún no se sabe', 'Been there? Tell us':'¿Has ido? Cuéntanos', 'Not right? Tell us':'¿No es así? Cuéntanos', 'Does it serve food?':'¿Sirve comida?', 'Yes':'Sí', 'When does the kitchen close?':'¿A qué hora cierra la cocina?', 'Not sure':'No sé', 'Thanks! That helps everyone.':'¡Gracias! Eso ayuda a todos.', 'midnight':'medianoche', '🍔 Bars with food':'🍔 Bares con comida', 'No bars here are known to serve food yet. Open a bar and tell us if it does.':'Aún no sabemos de bares con comida aquí. Abre un bar y cuéntanos si sirve.', 'Filters':'Filtros', 'Done':'Listo', '{n} found':'{n} encontrados'
 };
 const T = (s, p) => { let t=S.lang==='es'&&ES[s]!=null?ES[s]:s; if(p) t=t.replace(/\{(\w+)\}/g,(m,k)=>p[k]??m); return t; };
 function applyLang(){
@@ -5839,11 +5845,12 @@ async function renderFind(el, seq, fresh){
   const empty = !sfOn() ? `<p class="xempty">${T('Pick where you\'re going and what you want there.')}</p>`
     : r.list==null ? `<p class="skel">${T('Finding spots…')}</p>`
     : `<p class="xempty">${T('Nothing listed that fits all of that. Try fewer picks or another area.')}</p>`;
-  el.innerHTML = (open?sfHead():sfCompact()) + summary + (rows||empty)
+  sfPickNow(r); if(SF.pick?.length) pins=SF.pick.map((x,i)=>({ll:x.ll, e:SF.pick.length>1?String(i+1):x.e, go:`${x.kind==='ev'?'evmap':'pl'}|${x.id}`})).concat(pins.filter(p=>!SF.pick.some(x=>x.ll[0]===p.ll[0]&&x.ll[1]===p.ll[1])));
+  el.innerHTML = (open?sfHead():sfCompact()) + scoutPickCard() + summary + (rows||empty)
     + (r.ev||f.music.length?`<p class="meta exnote" style="margin-top:10px">${T('Music comes from the listing, or what the room is known for.')}</p>`:'');
   sfPins(pins);
   if(fresh&&map&&!pins.length&&!r.ar.near&&r.ar.a) map.flyTo(r.ar.c,15,{duration:.6});
-  exAfter(el, pins.map(x=>x.ll), fresh&&!!pins.length); watchThumbs();
+  exAfter(el, (SF.pick?.length?SF.pick.map(x=>x.ll):pins.map(x=>x.ll)), (fresh||!!SF.pick?.length)&&!!pins.length); watchThumbs(); scoutFaces();
 }
 function sfPins(items){
   if(!map) return; (SF.layer ||= L.layerGroup().addTo(map)).clearLayers();
@@ -5852,9 +5859,12 @@ function sfPins(items){
 }
 function sfToggle(list, v){ const i=list.indexOf(v); i<0?list.push(v):list.splice(i,1); }
 // the chips work the same on the search page and in the list; on the search page a pick opens the list over the map
-function sfPick(fn){ fn(sfState()); save(); try{ track('find'); }catch(e){} if(EXC.k==='find') return renderExCat(true); SF.expand=false; $('#qIn').value=''; $('#qIn').blur(); exploreCat('find'); }
+function sfPick(fn){ fn(sfState()); save(); SF.pick=null; try{ track('find'); }catch(e){} if(EXC.k==='find') return renderExCat(true); SF.expand=false; $('#qIn').value=''; $('#qIn').blur(); exploreCat('find'); }
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-sfa],[data-sfh],[data-sfm],[data-sft],[data-sfw],[data-sfmore],[data-sfreset],[data-sfexp]'); if(!t) return; const d=t.dataset;
+  if(t.closest('#scFind')){ const f=sfState();   // under Scout: just pick, then Find my spot
+    if(d.sfa!=null){ f.area=d.sfa; f.areaOpen=false; } if(d.sfmore!=null) f.areaOpen=!f.areaOpen; if(d.sfh) sfToggle(f.has,d.sfh); if(d.sfm) sfToggle(f.music,d.sfm);
+    if(d.sft) sfToggle(f.theme,d.sft); if(d.sfw) f.when=d.sfw; save(); return renderScoutFind(); }
   if(d.sfexp!=null){ SF.expand=!SF.expand; return renderExCat(); }
   if(d.sfa!=null) return sfPick(f=>{ f.area=d.sfa; f.areaOpen=false; SF.aq=''; });
   if(d.sfmore!=null){ const f=sfState(); f.areaOpen=!f.areaOpen; if(EXC.k==='find') return renderExCat(); if(curTab==='search') return renderSearch(); return exploreCat('find'); }
@@ -5869,6 +5879,105 @@ document.addEventListener('input',e=>{ if(e.target.id!=='sfAreaQ') return; SF.aq
   box.querySelector('.sfalist').innerHTML=(SF.areas||[]).filter(a=>!a.hot&&(!q||a.name.toLowerCase().includes(q))).sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng]))
     .map(a=>`<button data-sfa="${esc(a.name)}" class="${f.area===a.name?'on':''}">${esc(a.name)}</button>`).join(''); });
 
+/* ---------- Scout finds your spot: say the vibe ("chill jazz and cocktails on Rainey") or tap it under Scout; one
+   perfect spot, or a few stops a short walk apart. The picks are Find a spot's, so it's the same real data. ---------- */
+const VIBE_WORDS = [
+  ['has','food',/\b(food|eat|eats|hungry|dinner|lunch|brunch|bite|snacks?)\b/i], ['has','drinks',/\b(drinks?|bars?|beers?|booze|a drink)\b/i],
+  ['has','coffee',/\b(coffee|espresso|cafe|latte)\b/i], ['has','live',/\blive (music|band|show)s?\b|\bbands?\b|\bconcerts?\b|\bgigs?\b/i],
+  ['has','dj',/\bdjs?\b|\bdanc(e|ing)\b|\bclubs?\b/i], ['has','karaoke',/karaoke/i], ['has','trivia',/\btrivia|quiz\b/i],
+  ['has','comedy',/comedy|stand.?up|improv|\bfunny\b/i], ['has','happy',/happy hour|cheap drinks|drink deals?/i], ['has','free',/\bfree\b|no cover/i],
+  ['has','open',/\b(open|right) now\b/i], ['has','late',/\blate.?night\b|\bopen late\b|after midnight/i],
+  ['theme','brewery',/brewer(y|ies)|craft beer/i], ['theme','wine',/\bwine\b/i], ['theme','cocktail',/cocktails?|speakeasy|lounge/i],
+  ['theme','sports',/sports|watch the game|game on tv/i], ['theme','games',/arcade|\bpool\b|billiards|bowling|board games|darts/i],
+  ['theme','garden',/beer garden|biergarten/i], ['theme','rooftop',/rooftop|\bviews?\b/i], ['theme','dive',/\bdive\b|honky.?tonk|ice ?house/i],
+  ['theme','irish',/irish/i], ['theme','tiki',/\btiki\b/i], ['theme','trucks',/food trucks?/i],
+];
+const SC_FEW = /crawl|bar hop|hopping|a few (places|spots|stops|bars)|couple (of )?(places|spots|stops|bars)|multiple|more than one|night out|plan (my|a|the) night|stops/i;
+function vibeParse(text){
+  const t=String(text||''), lo=t.toLowerCase(), f={area:'near', has:[], music:[], theme:[], when:'tonight', mode:SC_FEW.test(t)?'few':'one'};
+  let best='';
+  (SF.areas||[]).forEach(a=>[a.name,...(a.aka||[])].forEach(n=>{ const k=n.toLowerCase().replace(/^the /,''); if(k.length>=4&&lo.includes(k)&&k.length>best.length){ best=k; f.area=a.name; } }));
+  if(f.area==='near'&&/\bdowntown\b/.test(lo)) f.area=(SF.areas||[]).find(a=>/downtown/i.test(a.name))?.name||'near';
+  if(f.area==='near'&&/\beast (side|austin)\b/.test(lo)) f.area='East Austin';
+  VIBE_WORDS.forEach(([k,v,re])=>{ if(re.test(t)) (k==='has'?f.has:f.theme).push(v); });
+  Object.entries(MUSIC_RE).forEach(([k,re])=>{ if(k!=='electronic'&&re.test(t)) f.music.push(k); });
+  if(/\b(edm|techno|house music|electronic|rave)\b/i.test(t)) f.music.push('electronic');
+  if(/this weekend|saturday|friday|sunday/i.test(t)) f.when='weekend'; else if(/this week\b/i.test(t)) f.when='week';
+  return f;
+}
+const vibeCount = f => f.has.length+f.music.length+f.theme.length+(f.area!=='near'?1:0);
+// Scout's find action: "area=Rainey Street;has=live,drinks;music=jazz;vibe=cocktail;when=tonight;mode=few"
+const sfTarget = f => `area=${f.area||'near'};has=${(f.has||[]).join(',')};music=${(f.music||[]).join(',')};vibe=${(f.theme||[]).join(',')};when=${f.when||'tonight'};mode=${f.mode||'one'}`;
+function sfFromTarget(x){
+  const f={area:'near', has:[], music:[], theme:[], when:'tonight', mode:'one'}, ok=(list,v)=>list.some(y=>y[0]===v);
+  String(x).split(';').forEach(kv=>{ const [k,v='']=kv.split('='), vals=v.split(',').map(s=>s.trim()).filter(Boolean);
+    if(k==='area'&&v) f.area=(SF.areas||[]).find(a=>a.name.toLowerCase()===v.toLowerCase())?.name||'near';
+    if(k==='has') f.has=vals.filter(v=>ok(SF_HAS,v)); if(k==='music') f.music=vals.filter(v=>ok(SF_MUSIC,v));
+    if(k==='vibe'||k==='theme') f.theme=vals.filter(v=>ok(SF_THEME,v));
+    if(k==='when'&&['tonight','weekend','week'].includes(v)) f.when=v; if(k==='mode'&&['one','few'].includes(v)) f.mode=v; });
+  return f;
+}
+// From the matches: the best one, or 2-3 stops a short walk apart (one of each kind you asked for when you asked for
+// more than one: dinner, then a bar). Best = well known, open, something on tonight, close.
+function scoutPickFrom(r, mode){
+  if(!r.list?.length) return [];
+  const f=sfState(), tonight=new Date().setHours(28,0,0,0), on={};
+  EV.list.forEach(e=>{ if(e.te>Date.now()&&e.ts<tonight&&e.lat&&r.ar.in([e.lat,e.lng])){ const vp=venuePlace(e); if(vp) on[vp[0]]=e; } });
+  const items = r.ev
+    ? r.list.map(e=>({kind:'ev', id:e.id, name:e.title, sub:`${fmtWhen(e.ts,e.tba)}${e.venue?' · '+e.venue:''}`, ll:[e.lat,e.lng], e:CATS[e.cat]?.e||'🎫', p:venuePlace(e),
+        s:-Math.max(0,(e.ts-Date.now())/36e5)*2-km(r.ar.c,[e.lat,e.lng])*4+(isFree(e)?4:0)+(/^https:/.test(e.image||'')?2:0)}))
+    : r.list.map(({p,d})=>{ const st=placeState(p[5]), ev=on[p[0]];
+        return {kind:'pl', id:p[0], name:p[1], p, ll:[p[3],p[4]], e:placeE(p[2],p[1]), sub:[T(p[2]||''), st==='open'?T('Open now'):'', ev?`${CATS[ev.cat]?.e||'🎫'} ${ev.title}`:''].filter(Boolean).join(' · '),
+          s:(p[6]||40)+(st==='open'?25:st==='soon'?8:st==='closed'?-35:-10)+(ev?12:0)-d*6}; });
+  items.sort((a,b)=>b.s-a.s);
+  if(mode!=='few') return items.slice(0,1);
+  const groups=f.has.filter(k=>PL_HAS[k]), out=[items[0]];
+  const fits=(x,k)=>x.p&&PL_HAS[k](x.p);
+  if(!r.ev&&groups.length>1){   // one of each kind, each a short walk from the stop before
+    groups.forEach(k=>{ if(out.some(x=>fits(x,k))) return; const prev=out.at(-1);
+      const nx=items.filter(x=>!out.includes(x)&&fits(x,k)&&km(prev.ll,x.ll)<1.2).sort((a,b)=>b.s-a.s)[0]; if(nx) out.push(nx); });
+  }
+  while(out.length<3){ const prev=out.at(-1), nx=items.find(x=>!out.includes(x)&&!out.some(o=>o.name===x.name)&&km(prev.ll,x.ll)<.9); if(!nx) break; out.push(nx); }
+  return out;
+}
+const walkMin = (a,b) => Math.max(1,Math.round(km(a,b)*1.25/5*60));   // streets aren't straight: ×1.25, 5 km/h
+function scoutPickCard(){
+  const P=SF.pick; if(!P?.length) return '';
+  const route = P.length>1 ? `https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${P.at(-1).ll.join(',')}&waypoints=${P.slice(0,-1).map(x=>x.ll.join(',')).join('|')}`
+    : mapsUrl(P[0].ll[0],P[0].ll[1]);
+  return `<div class="scpick"><div class="scpick-h"><span class="scwrap" data-scface></span><b>${esc(P.length>1?T('Your night, a short walk apart'):T("Scout's pick"))}</b></div>
+    ${P.map((x,i)=>`${i?`<div class="scwalk">🚶 ${T('{n} min walk',{n:walkMin(P[i-1].ll,x.ll)})}</div>`:''}<button class="xrow" data-xgo="${x.kind==='ev'?'evmap':'pl'}|${esc(x.id)}"><span class="xe">${P.length>1?`<b class="scn">${i+1}</b>`:x.e}</span><span class="grow"><b>${esc(x.name)}</b><span class="meta">${esc(x.sub||'')}</span></span>${svgI('chev')}</button>`).join('')}
+    <div class="btns" style="margin-top:8px"><a class="btn sm primary" href="${esc(route)}" target="_blank" rel="noopener">🧭 ${T(P.length>1?'Walk it':'Directions')}</a><button class="btn sm" data-scagain>↻ ${T('Another pick')}</button></div></div>`;
+}
+// Run it: the picks go into Find a spot, the list opens over the map, Scout's pick sits on top.
+function scoutFind(f, say){
+  const s=sfState(); Object.assign(s,{area:f.area||'near', has:f.has||[], music:f.music||[], theme:f.theme||[], when:f.when||'tonight'}); save();
+  SF.mode=f.mode||'one'; SF.wantPick=true; SF.skip=0; SF.expand=false; SF.say=say||''; $('#scoutBg').hidden=true; try{ track('find'); }catch(e){}
+  if(EXC.k==='find') renderExCat(true); else exploreCat('find');
+}
+function sfPickNow(r){
+  if(!SF.wantPick) return; SF.wantPick=false;
+  const all=scoutPickFrom(r, SF.mode); SF.pick=all;
+  if(SF.skip){ const more=scoutPickFrom({...r, list:r.list.slice(SF.skip)}, SF.mode); SF.pick=more.length?more:all; }
+  if(!SF.pick.length) return;
+  const said=SF.say || (SF.pick.length>1 ? T('Try this: {list}. All a short walk apart.',{list:SF.pick.map(x=>x.name).join(' → ')}) : T('Try {name}.',{name:SF.pick[0].name}));
+  SF.say=''; scoutBubble(said); scoutSpeak(said);
+}
+function renderScoutFind(){
+  const el=$('#scFind'); if(!el) return; if(!SF.areas) loadAreas().then(()=>!$('#scoutBg').hidden&&renderScoutFind());
+  const n=vibeCount({...sfState(), area:sfState().area}), m=SF.mode||'one';
+  el.innerHTML=`<div class="row" style="gap:8px;margin-bottom:6px"><b class="grow">🎯 ${T('Find my spot')}</b>
+    <div class="seg mini"><button data-scmode="one" class="${m==='one'?'on':''}">${T('One spot')}</button><button data-scmode="few" class="${m==='few'?'on':''}">${T('A few stops')}</button></div></div>
+    <p class="meta" style="margin:0 0 6px">${T('Say the vibe, or tap what you want:')}</p>${sfHead()}
+    <button class="btn primary" data-scfind style="width:100%;margin-top:4px" ${n?'':'disabled'}>✨ ${T(m==='few'?'Plan my stops':'Find my spot')}</button>`;
+  scoutFaces();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-scmode],[data-scfind],[data-scagain]'); if(!t) return; const d=t.dataset;
+  if(d.scmode){ SF.mode=d.scmode; return renderScoutFind(); }
+  if(d.scfind!=null) return scoutFind({...sfState(), mode:SF.mode||'one'});
+  if(d.scagain!=null){ SF.skip=(SF.skip||0)+(SF.pick?.length||1); SF.wantPick=true; return renderExCat(); }
+});
 /* ---------- You: your profile, with everything that used to hide in the name menu ---------- */
 function renderYou(){
   if(!$('#youList')) return; const guest=!AUTHED&&location.protocol.startsWith('http'), v=SV.v2||{};
@@ -7265,6 +7374,8 @@ const SC_FAQ = [
 function scoutLocal(q){
   if(S.lang==='es'&&location.protocol.startsWith('http')) return {say:'Como invitado sé lo básico, y en inglés. Crea una cuenta gratis y te contesto todo en español, como qué hacer esta noche. ¡Vamos!',
     expression:'happy', actions:[{type:'point',target:'profile',label:'Cuenta gratis'}], local:true};
+  const v=vibeParse(q); if(vibeCount(v)&&(/\b(find|where|spot|place|somewhere|looking for|want|vibe|go(ing)? out|tonight|crawl|hop|plan)\b/i.test(q)||vibeCount(v)>=2))
+    return {say:T(v.mode==='few'?"Here's a little route for that, a short walk apart.":"Here's my pick for that, and everything else that fits."), expression:'excited', actions:[{type:'find',target:sfTarget(v)}]};
   const hit=SC_FAQ.find(([re])=>re.test(q));
   if(hit) return {say:hit[1], expression:hit[2], actions:hit[3].map(([type,target,label])=>({type,target,label}))};
   return {say: location.protocol.startsWith('http')
@@ -7308,6 +7419,9 @@ async function scoutAsk(q, byVoice){
   if(r.places) SCT.placeInfo={...(SCT.placeInfo||{}), ...r.places};
   if(r.sights) SCT.placeInfo={...(SCT.placeInfo||{}), ...Object.fromEntries(Object.entries(r.sights).map(([k,v])=>[k,{...v,sight:true}]))};
   if(SCT.driving) $('#dvSay').textContent=r.say;
+  const v=vibeParse(q);
+  if(!SCT.driving&&!(r.actions||[]).some(a=>['find','place','map','food','sight','search','point','go'].includes(a.type))&&vibeCount(v)>=2) (r.actions ||= []).push({type:'find',target:sfTarget(v)});
+  if((r.actions||[]).some(a=>a.type==='find')){ scoutDo(r.actions, r.say); return; }   // the pick says it
   scoutSpeak(r.say, byVoice);
   scoutDo(r.actions||[], r.say);
 }
@@ -7320,7 +7434,7 @@ function scoutDo(acts, say){
   if(acts.some(a=>a.type==='place')) acts=acts.filter(a=>a.type!=='food');   // a specific spot beats a list that would cover it
   $('#scoutBg').hidden=true;
   // where Scout's words go: a card when it needs a tap, a toast over sheets it opens, else the bubble
-  if(acts.some(a=>a.type==='rsvp'||a.type==='directions')){}
+  if(acts.some(a=>a.type==='rsvp'||a.type==='directions'||a.type==='find')){}   // find says it over its own pick
   else if(acts.some(a=>['search','food','flare','chat','event','open'].includes(a.type))) toast(`🧭 <b>${esc(scS().name)}:</b> ${esc(say)}`,'',[],6000);
   else scoutBubble(say);
   let t=0;
@@ -7334,6 +7448,7 @@ function scoutDo(acts, say){
     if(a.type==='food') openPlaces(FOOD_TILES.some(f=>f[0]===x)?{cat:x}:{zone:x});
     if(a.type==='flare'){ openCompose(); $('#cText').value=x.slice(0,200); composeHint(); }   // a draft: they pick the spot and press Send
     if(a.type==='chat'){ meetTab='msgs'; tab('meet'); openThread(x).then(()=>{ const i=$('#dmIn'); if(i&&a.label) i.value=String(a.label).slice(0,300); }); }
+    if(a.type==='find') scoutFind(sfFromTarget(x), say);
     if(a.type==='rsvp') scoutRsvp(x, say);
     if(a.type==='directions') scoutDirections(x, say);
   }, t); t+=a.type==='go'?350:['point','map','place','sight'].includes(a.type)?2600:400; });
@@ -7437,7 +7552,7 @@ function openLens(mode){
   s.onerror=()=>toast("Couldn't load the translator. Check your connection.",'orange'); document.head.appendChild(s);
 }
 function openScoutVoice(quiet){
-  scoutNudgeHide(); $('#scoutBg').hidden=false; renderScoutLog(); scoutFaces(); scoutMicUi();
+  scoutNudgeHide(); $('#scoutBg').hidden=false; renderScoutLog(); renderScoutFind(); scoutFaces(); scoutMicUi();
   if(!quiet&&(SR||micRec())&&!SCT.busy&&!SCT.listening&&!SCT.mic&&$('#scoutForm').hidden) scoutListen();   // voice first, started inside the tap that opened Scout (phones only give the mic to a tap)
 }
 // "Need help? Talk to me!": Scout waves with a bubble when you've been idle on Home or the map. Never while driving or

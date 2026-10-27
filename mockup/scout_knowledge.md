@@ -22,6 +22,11 @@ Keep this file up to date when features change. Only describe things that exist 
   people and groups as you type, nearest first; "Find it on menus" searches every menu for a dish; a question
   ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode. Before typing, the
   search page shows a few things to ask you ("Plan my night", "Something free to do tonight"…) and recent searches.
+- **Scout finds your spot**: in your (Scout's) panel, under the talk button, "🎯 Find my spot": tap where they're going and
+  what they want (the same Where / What / Music / Vibe options as search), choose **One spot** or **A few stops**, then
+  "Find my spot" / "Plan my stops". Or they just say the vibe to you ("a dive bar on 6th with live country", "bar crawl on
+  Rainey, food first"): the app shows your pick on the map (or 2-3 numbered stops a short walk apart, with a "Walk it"
+  button for walking directions and "Another pick") above every other match.
 - **Find a spot**, at the top of the search page before typing: pick **Where** you're going (Near me, This map area,
   6th Street, Rainey Street, Red River, West 6th, SoCo, East Austin, The Domain, or "More areas" for any neighborhood or
   nearby town), then what you want there: **What** (Food, Drinks, Coffee, Live music, DJ, Karaoke, Trivia, Comedy, Happy

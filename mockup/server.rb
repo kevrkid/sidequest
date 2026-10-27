@@ -390,7 +390,7 @@ SCOUT_SCHEMA = {
     expression: { type: 'string', enum: SCOUT_FACES },
     actions: { type: 'array', maxItems: 3, items: {
       type: 'object', required: %w[type target],
-      properties: { type: { type: 'string', enum: %w[point go map place sight search food rsvp flare chat directions event open] }, target: { type: 'string' },
+      properties: { type: { type: 'string', enum: %w[point go map place sight search food rsvp flare chat directions event open find] }, target: { type: 'string' },
                     label: { type: 'string' } } } },
     plan: { type: 'object', required: %w[title items], properties: {   # only when asked to plan / make an itinerary
       title: { type: 'string' }, day: { type: 'string' },
@@ -445,6 +445,7 @@ def scout_actions(raw, driving:, targets:, places:, ctx:, food_ids:, sights: [])
     when 'place' then place_ids.include?(t)
     when 'sight' then sights.any? { |x| x['id'] == t }
     when 'search' then !driving && t.strip.size.between?(1, 60)
+    when 'find' then !driving && t.size <= 240 && t =~ /\A(?:(?:area|has|music|vibe|when|mode)=[\w ,&'.-]*;?)+\z/
     when 'food' then !driving && food_ids.include?(t)
     when 'rsvp' then !driving && ev_ids.include?(t)
     when 'flare' then !driving && t.strip.size.between?(3, 200)
@@ -1446,7 +1447,7 @@ def mount_app(server)
   # Where you're going, for search's "Find a spot": the going-out districts first, then neighborhoods and nearby towns
   route(server, '/api/areas', auth: false, get: true) do |_b, _h, _req|
     { areas: Places::HOTSPOTS.map { |z| { id: z[:id], name: z[:name], lat: z[:lat], lng: z[:lng], km: (z[:r] / 1000.0).round(2), hot: true } } +
-             Areas.list.map { |a| { name: a['name'], lat: a['lat'], lng: a['lng'], km: a['r'] } } }
+             Areas.list.map { |a| { name: a['name'], aka: a['aka'], lat: a['lat'], lng: a['lng'], km: a['r'] } } }
   end
   # Outdoors layer: park / greenbelt / preserve and lake / river outlines + rentals, ramps, fishing spots,
   # trailheads (data/outdoors.json from fetch_outdoors.rb), sent as-is; phones keep it for an hour.

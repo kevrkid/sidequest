@@ -188,6 +188,22 @@ with sync_playwright() as pw:
     check("back closes it and takes its pins off the map", p.evaluate("EXC.k") is None and p.locator(".sfpin").count() == 0)
     p.evaluate("S.sf=null; save()")
 
+    # Scout finds your spot: tap the vibe under Scout, or say it
+    p.evaluate("S.sf=null; save(); openScoutVoice(true)"); p.wait_for_selector("#scFind [data-sfa='6th Street']", timeout=8000)
+    check("Scout has Find my spot: one spot or a few stops, and the vibe options", p.locator("#scFind [data-scmode='few']").count() == 1
+          and p.locator("#scFind [data-sfh='dj']").count() == 1 and p.locator("#scFind [data-scfind]").is_disabled())
+    p.click("#scFind [data-sfa='6th Street']"); p.click("#scFind [data-sfh='drinks']")
+    check("…tapping options picks them without leaving Scout", p.locator("#scoutBg").is_visible() and p.evaluate("S.sf.area==='6th Street'&&S.sf.has.includes('drinks')"))
+    p.click("#scFind [data-scmode='few']"); p.click("#scFind [data-scfind]"); p.wait_for_selector("#exCat .scpick", timeout=8000)
+    pick = p.eval_on_selector_all("#exCat .scpick .xrow .grow>b", "b=>b.map(x=>x.textContent)")
+    check("…Plan my stops: a short walk of stops on top of the list, numbered on the map", set(pick) == {"Sixth Street Saloon", "Late Owl Club"}
+          and "min walk" in p.inner_text("#exCat .scpick") and p.locator(".sfpin").count() >= 2, pick)
+    p.go_back(); p.wait_for_timeout(400)
+    p.evaluate("S.sf=null; save(); scoutAsk('a dive bar on 6th street with drinks tonight')"); p.wait_for_selector("#exCat .scpick", timeout=10000)
+    check("…or say it: Scout hears the vibe and picks one spot", p.evaluate("S.sf.area==='6th Street'&&S.sf.theme.includes('dive')")
+          and p.eval_on_selector_all("#exCat .scpick .xrow .grow>b", "b=>b.map(x=>x.textContent)") == ["Sixth Street Saloon"])
+    p.go_back(); p.wait_for_timeout(400); p.evaluate("S.sf=null; save()")
+
     # Bars: serves food? kitchen till when? Unknown until someone who's been says (or its menu does)
     p.evaluate("focusPlace('n1002')"); p.wait_for_selector("#exPop .barfood", timeout=8000)
     check("a bar's card says when food isn't known yet and asks", "Not known yet" in p.inner_text("#exPop .barfood"))

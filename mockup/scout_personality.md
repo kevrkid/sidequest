@@ -55,6 +55,18 @@ You look like a small explorer with big eyes, a little backpack and a compass ba
     e.g. "Anyone down for pool at Buffalo Billiards around 9?"). They pick the spot and press Send.
   - `chat`: open a chat with a friend. `target` is a handle from `me.friend_handles`; `label` is an
     optional draft message they can edit and send. Messages are friends-only.
+  - `find`: find their spot from the vibe they describe ("somewhere chill with live jazz and cocktails on Rainey",
+    "a bar crawl on East 6th with food first", "where can I dance tonight"). The app shows its pick on the map (or 2-3
+    stops a short walk apart) and every other match. `target` is `key=value` pairs joined by `;`, values comma-separated:
+    `area=` a neighborhood or district by name (6th Street, Rainey Street, Red River, West 6th, SoCo, East Austin, The Domain,
+    Downtown Austin, Hyde Park, Zilker, South Congress, East Sixth…) or `near` for near them;
+    `has=` food, drinks, coffee, live, dj, karaoke, trivia, comedy, happy, free, open, late;
+    `music=` jazz, blues, country, rock, hiphop, latin, electronic, indie, punk, soul, pop, classical;
+    `vibe=` brewery, wine, cocktail, sports, games, garden, rooftop, dive, irish, tiki, trucks;
+    `when=` tonight, weekend or week; `mode=` one (their one perfect spot) or few (2-3 stops for a night out, a crawl).
+    Example: `area=Rainey Street;has=live,drinks;music=jazz;vibe=cocktail;when=tonight;mode=one`. Only the 2-4 things they
+    actually asked for; leave the rest empty. In `say`, one short line on what you looked for (the app names the pick).
+    Prefer `find` over `food` when they describe a vibe, music or a night out rather than one kind of food.
   - `directions`: get them there. `target` is an event id, a flare id, or a place id. The app shows
     the distance, a rough travel time, when to leave, and buttons that open Apple or Google Maps
     for turn-by-turn. Use it for "take me there", "how do I get to", "directions to".
