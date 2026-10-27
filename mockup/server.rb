@@ -39,6 +39,7 @@ require_relative 'groups'   # Facebook-Groups-style walls: posts, photos, polls,
 require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, photos, voice notes, seen, typing
 require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
+require_relative 'pulse'   # V3: vibe check, busy forecasts, trends, the one right place tonight, media worth watching
 
 PORT    = (ENV['PORT'] || 8787).to_i
 LAN_PORT = (ENV['SQ_LAN_PORT'] || 8443).to_i
@@ -88,6 +89,7 @@ LIVEKIT_API_URL = (ENV['SQ_LIVEKIT_API_URL'].to_s.empty? ? LIVEKIT_URL.sub(/\Aws
 BEHIND_PROXY = ENV['SQ_BEHIND_PROXY'] == '1'
 PUBLIC_FILES = { 'index.html' => 'text/html; charset=utf-8', 'terms.html' => 'text/html; charset=utf-8',
                  'sw.js' => 'application/javascript',   # V2: service worker (app shell offline)
+                 'pulse.js' => 'application/javascript',   # V3: vibe check, your move tonight, rising now
                  'privacy.html' => 'text/html; charset=utf-8', 'admin.html' => 'text/html; charset=utf-8',
                  'manifest.webmanifest' => 'application/manifest+json', 'icon-512.png' => 'image/png',
                  'icon-192.png' => 'image/png', 'icon-180.png' => 'image/png', 'logo.png' => 'image/png',
@@ -2434,7 +2436,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_identify(s); mount_menus(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_pulse(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

@@ -244,6 +244,37 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   header, `icon-512/192/180.png`), cut from the tile in `~/Downloads/Side Quest Compass Logo.png` (1254 px; cream SQ + compass)
   and padded square on `#070b18`; ≤370px wide the header shows the mark without the name.
 
+## Pulse: vibe check, busy forecasts, trends, your move tonight (branch `v3-pulse`, `mockup/pulse.rb` + `mockup/pulse.js`)
+
+Helps people pick one right place instead of bar hopping. Server: `pulse.rb` (pure `Pulse` module + Side Quest adapter,
+`mount_pulse`); client: `pulse.js` (loaded after config.js; `Pulse.card(id)` from `placePopup`, `Pulse.rail()` at the top of
+Explore's `#exMore`). History in `data/pulse.json` (`SQ_PULSE_FILE`; counts per place per hour of the week, no handles).
+- **Signals** (`pulse_signals`, last 6 h): check-ins, public stories (by spot), public posts with a place, flares while on,
+  live streams (their delayed spot), vibe reports (memory only, `PULSE_MEM`). Places are matched by id or the nearest
+  place within ~70 m (`pulse_place_for`, a ~200 m grid). Heat per place: each kind has a weight and half-life
+  (`Pulse::KINDS`); one person counts once per place (strongest signal + 25% of the rest).
+- **Forecast** (`Pulse.forecast`): 168 hourly bins. Prior shape by kind (`prior_curve`: bars 10 PM-12 AM Thu-Sat,
+  clubs after midnight, cafés 9 AM, restaurants lunch/dinner + weekend brunch; a bar's 1 AM belongs to the night
+  before) × open hours (`Hours.parse` week; unknown = shape only) × fame (popular.json). Blends toward what Side
+  Quest has seen there (`fold!` hourly at :02, older weeks ×0.85) once ~25 visits exist.
+- **Vibe check** (`Pulse.vibe`): level 0..1 = forecast for this hour, pulled to live heat as people show up (3 people ≈
+  63% trust), and 75% to vibe reports from the last hour. Labels quiet / chill / lively / busy / packed; `sure`
+  usual / some / high; `hot` when heat ≥ 1.8x what the hour usually brings; words from captions and report tags.
+  Head counts under 3 aren't shown (`PULSE_MIN_PEOPLE`).
+- **Facts** (`Pulse.facts`): today's 5 AM-4 AM busy bars, busiest window, "get there by", quietest, last call for 2 AM
+  bars, and what it's based on ("usually" until 10+ visits).
+- **Your move** (`/api/pulse/pick`, `Pulse.rank`): scores the whole window (default 3 h at night): fit to the wanted
+  vibe (chill / lively / party), hours it stays good and open, taste (`taste_for`), friends there, events on, trending,
+  fame, fresh proof, distance; Plan B = next best within 0.3 mi. Friends "there" only from what they already show
+  (public stories/posts, flares, live: `PULSE_PUBLIC`) or opted-in check-ins (`friends_out`), never private check-ins.
+- **Routes**: `GET /api/pulse?lat&lng&km` (notable places, trending, zones, events gaining RSVPs), `GET /api/pulse/place?id`,
+  `POST /api/pulse/vibe {id, v: dead|chill|lively|packed, tags}` (members; the phone shows the buttons only within
+  200 m; 20/day; a new report replaces yours there for 45 min), `POST /api/pulse/pick {lat,lng,want,kind,hours}`
+  (guests too), `GET /api/pulse/feed` (stories / posts / live ranked by freshness, engagement, place heat, friends,
+  distance; an author or place can't repeat at the top; blocks both ways).
+- Tests: `ruby test_pulse.rb` (40, no server), `ruby test_pulse_api.rb` (12, own copy on :8805, fake events :9917).
+  New strings aren't in the `ES` table yet (they show in English).
+
 ## V2 (this folder: `~/claude/sidequest-v2`, git branch `v2`; V1 lives untouched in `~/claude/sidequest`)
 
 Brief: `V2_PROMPT.md`. Report: `V2_REPORT.md`. Server side in `mockup/v2.rb` (+ `mockup/webpush.rb`), mounted by

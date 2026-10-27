@@ -1294,6 +1294,7 @@
 </div>
 
 <script src="config.js"></script>
+<script src="pulse.js"></script>
 <script>
 const CFG = window.SQ_CONFIG || {demo:true, beta:false, invite:false};
 const M = 60000, NOW = Date.now();
@@ -2765,6 +2766,7 @@ async function placePopup(id, ll){
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}</div>
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
+      <div id="pv_${esc(p.id)}"></div>
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
         ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
@@ -2772,6 +2774,7 @@ async function placePopup(id, ll){
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
+    window.Pulse?.card(p.id);   // the vibe check: how it is now, tonight's busy hours, proof (pulse.js)
     if(CFG.google) googleInfo(p.id,'id',null,{web:!!p.web,phone:!!p.phone});
   }catch(e){ pop.setContent("Couldn't load this place."); }
 }
@@ -5371,7 +5374,7 @@ function renderHome(){
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail();   // stories live in For you; plans and level in You
+  renderQuick(); renderTonight(); $('#exMore').innerHTML=(window.Pulse?Pulse.rail():'')+happyRail()+openRail()+hotRail()+weekendRail();   // stories live in For you; plans and level in You
   const day=new Date().getHours()<15, tn=$('#homeTonight'), mo=$('#exMore');   // daytime: what's open now first; evening: tonight first
   if(day!==(mo.nextElementSibling===tn)) day ? tn.before(mo) : mo.before(tn);
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
@@ -5412,7 +5415,7 @@ const OPENNEAR={list:null, at:0, busy:false};
 function openRail(){
   if(!OPENNEAR.busy&&Date.now()-OPENNEAR.at>6e5){ OPENNEAR.busy=true;
     fetch(`/api/places?cat=all&open=1&${nearParam()}&limit=12`).then(r=>r.json()).then(j=>{ OPENNEAR.list=j.places||[]; OPENNEAR.at=Date.now(); })
-      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail(); }); }
+      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=(window.Pulse?Pulse.rail():'')+happyRail()+openRail()+hotRail()+weekendRail(); }); }
   const L=(OPENNEAR.list||[]).slice(0,10); if(!L.length) return '';
   PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];   // so a tap can fly to it
   return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
