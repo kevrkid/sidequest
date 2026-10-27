@@ -65,8 +65,10 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
     near you (`openRail`, `/api/places?open=1`, every 10 min), Busy right now (`hotRail`), This weekend (`weekendRail`).
     Stories are at the top of For you (`#feedStories`); `#homeStories` and `#quickBar` are hidden in V3 (level/coins
     are on You). `renderGlance` writes the peek line (hidden while a chip or search is open).
-  - The map starts calm (`S.v3map` once): events, flares, friends, live, parks/water, markets; food, nightlife, hot
-    spot zones, trails and sights come with their chip or the layers sheet.
+  - The map starts calm (`S.v3map` once): events, flares, friends, live, parks/water, markets; food, nightlife,
+    trails and sights come with their chip or the layers sheet. **Hot spot zones, the heat map and story heat are
+    always on** (2026-10-27, owner's call): `renderHotZones` and the story-heat glow ignore `S.mapL.zones` / `heat`, chips
+    don't hide them, and the Layers sheet shows "Hot spots & heat · Always on" (`MAP_CATS` `always: true`) instead of switches.
   - **Chats** = the old Meet screen (`#v-meet`), tabs Messages · Friends · Groups · Meet (swipe), Messages first
     (`meetTab='msgs'`); an open chat takes the whole drawer (`.inthread`). Dock badge = unread + friend requests.
   - **You** (`#v-me`, `renderYou`): picture, Online switch (`#presBtn` moved here), one level/coins/streak line and a
@@ -281,8 +283,16 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   there's none. Food & drink / hot spot / eat-after rows, feed event cards, plan stops, map search; park, lake and
   trail popups get 3 photos (`areaPhotos()`).
 - **Hot spots** have their own chip (🔥) and glow by live activity (`zoneActivity()`: open places + events now or
-  within 2 h ×3 + live streams / flares ×4): busy zones pulse brighter, quiet ones fade to a dashed outline with 💤;
-  refreshed every 5 minutes while the map is open.
+  within 2 h ×3 + live streams / flares ×4 + Pulse's live busy places ×8): busy zones pulse brighter, quiet ones fade to
+  a dashed outline with 💤; refreshed every 5 minutes while the map is open. Always on.
+- **🔥 Heat map** (`HEAT`, `loadHeat()` / `renderHeat()` in index.html; `/api/pulse/heat` → `pulse_heat` in pulse.rb):
+  food & drink places glow by how busy they are: Pulse's live vibe level where there are signals, else the forecast for
+  this hour (closed places and level < 0.3 dropped), live rows first, ≤150, the forecast part cached a minute per ~1 km
+  square (~0.15 s uncached over the real 2,600 places). One `L.canvas` in its own pane (`heat`, z 360, CSS blur,
+  `pointer-events:none` so it never covers the outdoors canvas's taps); circle size by zoom and level, colour amber →
+  orange → red. From zoom 13 the hottest get a tappable badge (`.hbadge`: 🔥, 📈 = busier than usual; pulsing = live)
+  → `placePopup` with the vibe check. Fetched on map moves (centre + half the view's diagonal, ≤12 km; skipped when the
+  same ~1 km key was fetched in the last 3 min) and every 3 min. `e2e_heat.py` (9 checks, needs real places).
 - **Photos on places and events**: Side Quest story photos/videos posted there come first (`storiesAt()`, tap →
   story feed), then Google's (credited): place popups get 3 with the Google details (`photos` field), event popups
   look up the venue by name within ~550 m (`/api/place/photos`). Photo URLs aren't stored (Google's terms);
@@ -291,6 +301,45 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
 - **Installable** as a home-screen app (PWA manifest + icons). Logo: the SQ mark (`mockup/logo.png` in the
   header, `icon-512/192/180.png`), cut from the tile in `~/Downloads/Side Quest Compass Logo.png` (1254 px; cream SQ + compass)
   and padded square on `#070b18`; ≤370px wide the header shows the mark without the name.
+
+## Pulse: vibe check, busy forecasts, trends, your move tonight (`mockup/pulse.rb` + `mockup/pulse.js`; built on branch `v3-pulse`, merged into v3 2026-10-27)
+
+Helps people pick one right place instead of bar hopping. Server: `pulse.rb` (pure `Pulse` module + Side Quest adapter,
+`mount_pulse`); client: `pulse.js` (loaded after config.js; `Pulse.card(id)` from `placePopup`, `Pulse.rail()` at the top of
+Explore's `#exMore`). History in `data/pulse.json` (`SQ_PULSE_FILE`; counts per place per hour of the week, no handles).
+- **Signals** (`pulse_signals`, last 6 h): check-ins, public stories (by spot), public posts with a place, flares while on
+  (every flare counts toward heat: they're saved as `broadcast` / `friends`, never `everyone`; only reviewed broadcast ones
+  lend words, and group flares (`vis: 'party'` in the signal) never reveal a friend), live streams (the public, delayed
+  spot `live_announce` stores on the `LIVE[:by_h]` record as `v`; nothing during the delay), vibe reports (memory only,
+  `PULSE_MEM`). A signal stamped up to 6 s after the caller's "now" (live) counts as now. Places are matched by id or the nearest
+  place within ~70 m (`pulse_place_for`, a ~200 m grid). Heat per place: each kind has a weight and half-life
+  (`Pulse::KINDS`); one person counts once per place (strongest signal + 25% of the rest).
+- **Forecast** (`Pulse.forecast`): 168 hourly bins. Prior shape by kind (`prior_curve`: bars 10 PM-12 AM Thu-Sat,
+  clubs after midnight, cafés 9 AM, restaurants lunch/dinner + weekend brunch; a bar's 1 AM belongs to the night
+  before) × open hours (`Hours.parse` week; unknown = shape only) × fame (popular.json). Blends toward what Side
+  Quest has seen there (`fold!` hourly at :02, older weeks ×0.85) once ~25 visits exist.
+- **Vibe check** (`Pulse.vibe`): level 0..1 = forecast for this hour, pulled to live heat as people show up (3 people ≈
+  63% trust), and 75% to vibe reports from the last hour. Labels quiet / chill / lively / busy / packed; `sure`
+  usual / some / high; `hot` when heat ≥ 1.8x what the hour usually brings; words from captions and report tags.
+  Head counts under 3 aren't shown (`PULSE_MIN_PEOPLE`).
+- **Facts** (`Pulse.facts`): today's 5 AM-4 AM busy bars, busiest window, "get there by", quietest, last call for 2 AM
+  bars, and what it's based on ("usually" until 10+ visits).
+- **Your move** (`/api/pulse/pick`, `Pulse.rank`): scores the whole window (default 3 h at night): fit to the wanted
+  vibe (chill / lively / party), hours it stays good and open, taste (`taste_for`), friends there, events on, trending,
+  fame, fresh proof, distance; Plan B = next best within 0.3 mi. Friends "there" only from what they already show
+  (public stories/posts, flares, live: `PULSE_PUBLIC`) or opted-in check-ins (`friends_out`), never private check-ins.
+- **Routes**: `GET /api/pulse?lat&lng&km` (notable places, trending, zones, events gaining RSVPs: going now vs ~a day ago,
+  or vs when first seen if that's 2+ h back; RSVPs are keyed `e:<uid>`), `GET /api/pulse/place?id`, `GET /api/pulse/heat?lat&lng&km`
+  (the heat map), `POST /api/pulse/vibe {id, v: dead|chill|lively|packed, tags, lat, lng}` (members; the phone shows the
+  buttons only within 200 m and sends its spot rounded to ~100 m; the server refuses beyond `PULSE_REPORT_M` 300 m; 20/day;
+  a new report replaces yours there for 45 min), `POST /api/pulse/pick {lat,lng,want,kind,hours}`
+  (guests too), `GET /api/pulse/feed` (stories / posts / live ranked by freshness, engagement, place heat, friends,
+  distance; an author or place can't repeat at the top; blocks both ways).
+- The events service is never called inside the store lock (`events_list` before `store {}` in every Pulse route and the
+  tick). Blocked people's signals are dropped from `/api/pulse`, `/place` and `/heat` too. `facts` "get there by" looks
+  only at the 3 hours before the peak.
+- Tests: `ruby test_pulse.rb` (41, no server), `ruby test_pulse_api.rb` (17, own copy on :8805, fake events :9917).
+  New strings aren't in the `ES` table yet (they show in English).
 
 ## V2 (this folder: `~/claude/sidequest-v2`, git branch `v2`; V1 lives untouched in `~/claude/sidequest`)
 
@@ -610,7 +659,10 @@ Two services, deliberately dependency-light.
   **Map tiles**: with `SQ_GOOGLE_MAPS_BROWSER_KEY` (a browser key locked to the app's origins + tile.googleapis.com)
   both maps use Google's Map Tiles API, dark-styled (`GMAP_STYLE`), with Google's viewport copyright and logo;
   tiles must load with `crossOrigin` or Chrome's ORB blocks them; no key / errors → OpenStreetMap.
-  **Sign in with Google** (`SQ_GOOGLE_CLIENT_ID`, Google Identity Services button on the sign-up sheet): the
+  **Sign in with Google is paused** (2026-10-27): `GOOGLE_SIGNIN` needs `SQ_GOOGLE_SIGNIN=1` as well as the client id;
+  paused = `config.js` sends no `gclient` (no button) and `/api/google` refuses. Google-only accounts have no password,
+  so they can't sign in or delete themselves while it's paused (`/api/account/delete` asks for a password).
+  `test_google.rb` sets `SQ_GOOGLE_SIGNIN=1`. **Sign in with Google** (`SQ_GOOGLE_CLIENT_ID`, Google Identity Services button on the sign-up sheet): the
   server checks the ID token with Google's tokeninfo (aud, iss, exp, verified email); a known `sub` signs in,
   a new one gets a 15-min HMAC ticket to pick a handle + 18+/Terms with no password (`users[h].google`,
   `d['google_ids']` sub → handle; no email stored). Google won't run the button on an IP origin, so test it on

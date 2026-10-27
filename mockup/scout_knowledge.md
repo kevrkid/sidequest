@@ -214,6 +214,15 @@ Keep this file up to date when features change. Only describe things that exist 
   Violet Crown, the Barton Creek Greenbelt). Tap a trail for its length. Remind people about fishing licenses and local boat rules if it comes up.
 - Hot spots glow orange on the map: 6th Street, Rainey Street, Red River, West 6th, SoCo, East
   Austin, The Domain, Old Downtown Round Rock. Tap one (or the 🔥 Hot spots chip) for what's open there.
+- The heat map is always on, whatever chip or layers are picked: soft glows where food & drink places are busy. Where
+  people are using Side Quest there (check-ins, how-is-it reports, stories, posts, hangouts, live streams) it's live;
+  elsewhere it's what that hour is usually like there. Brighter = busier; a pulsing 🔥 badge = busiest right now,
+  📈 = busier than usual. Tapping a badge or a place shows its **vibe check**: how it is now (or usually), tonight's
+  busy hours as bars, busiest time, when to get there to beat the crowd, last call. Someone actually at a place can
+  say how it is (💤 Dead, 😌 Chill, 🔥 Lively, 🚫 Packed) right on its card; it only works when they're there.
+- Explore's 🎯 "Your move tonight" picks one place for the whole night (Chill / Lively / Party; Drinks / Clubs / Food)
+  with a Plan B a short walk away, plus 📈 Rising right now and 👀 See it before you go.
+- Sign in with Google is paused for now: people sign up and sign in with a handle and password.
 - When someone asks about food, drinks, coffee, a cuisine, "open now" or a hot spot, you get a short
   list of matching nearby places. Answer like a local friend: name, roughly how far, and when it
   closes ("Veracruz is open till 3, about a mile away"). Use a `place` action to light it up on the

@@ -46,7 +46,7 @@ FileUtils.cp(Dir[File.join(__dir__, '*.{rb,md,json}')], dir)
 log = File.join(dir, 'server.log')
 pid = spawn({ 'PORT' => PORT.to_s, 'SQ_GOOGLE_PLACES_KEY' => 'gkey-test', 'SQ_GOOGLE_API_URL' => "http://127.0.0.1:#{G_PORT}/v1",
               'SQ_GOOGLE_DAILY' => '2', 'SQ_MODERATE' => '0', 'SQ_DEMO' => '0', 'SQ_PLACES_FILE' => 'test_places.json',
-              'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_CLIENT_ID' => 'test-client.apps.googleusercontent.com',
+              'SQ_LIVEKIT_URL' => nil, 'SQ_GOOGLE_CLIENT_ID' => 'test-client.apps.googleusercontent.com', 'SQ_GOOGLE_SIGNIN' => '1',
               'SQ_GOOGLE_TOKENINFO_URL' => "http://127.0.0.1:#{G_PORT}/tokeninfo",
               'SQ_GOOGLE_TTS_KEY' => 'tts-key', 'SQ_TTS_URL' => "http://127.0.0.1:#{G_PORT}/v1/text:synthesize", 'SQ_TTS_DAILY_CHARS' => '60' },
             'ruby', 'server.rb', chdir: dir, out: log, err: log)

@@ -42,6 +42,7 @@ require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, 
 require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
 require_relative 'scout_mind'   # Scout's memory of each person, its personalities, the setup interview, ratings
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
+require_relative 'pulse'   # V3: vibe check, busy forecasts, trends, the one right place tonight, media worth watching
 
 PORT    = (ENV['PORT'] || 8787).to_i
 LAN_PORT = (ENV['SQ_LAN_PORT'] || 8443).to_i
@@ -83,6 +84,9 @@ GOOGLE_NIGHT_DAILY = (ENV['SQ_GOOGLE_NIGHT_DAILY'] || 100).to_i
 # own addresses). Unset = OpenStreetMap tiles.
 # Sign in with Google: the web OAuth client id (public; Google only accepts it from the origins set on it).
 GOOGLE_CLIENT_ID = ENV['SQ_GOOGLE_CLIENT_ID'].to_s[/\A[\w.-]+\.apps\.googleusercontent\.com\z/].to_s
+# Paused (2026-10-27): no Google button and /api/google refuses, until SQ_GOOGLE_SIGNIN=1. Google-only accounts have no
+# password, so they can't sign in (or delete themselves) while it's paused.
+GOOGLE_SIGNIN = !GOOGLE_CLIENT_ID.empty? && ENV['SQ_GOOGLE_SIGNIN'] == '1'
 GOOGLE_MAPS_KEY = ENV['SQ_GOOGLE_MAPS_BROWSER_KEY'].to_s[/\A[A-Za-z0-9_-]{20,60}\z/].to_s
 # Where this server calls LiveKit's API (ending streams). Self-hosted: http://127.0.0.1:7880 skips Caddy.
 LIVEKIT_API_URL = (ENV['SQ_LIVEKIT_API_URL'].to_s.empty? ? LIVEKIT_URL.sub(/\Aws/, 'http') : ENV['SQ_LIVEKIT_API_URL']).chomp('/')
@@ -91,6 +95,7 @@ LIVEKIT_API_URL = (ENV['SQ_LIVEKIT_API_URL'].to_s.empty? ? LIVEKIT_URL.sub(/\Aws
 BEHIND_PROXY = ENV['SQ_BEHIND_PROXY'] == '1'
 PUBLIC_FILES = { 'index.html' => 'text/html; charset=utf-8', 'terms.html' => 'text/html; charset=utf-8',
                  'sw.js' => 'application/javascript',   # V2: service worker (app shell offline)
+                 'pulse.js' => 'application/javascript',   # V3: vibe check, your move tonight, rising now
                  'privacy.html' => 'text/html; charset=utf-8', 'admin.html' => 'text/html; charset=utf-8',
                  'manifest.webmanifest' => 'application/manifest+json', 'icon-512.png' => 'image/png',
                  'icon-192.png' => 'image/png', 'icon-180.png' => 'image/png', 'logo.png' => 'image/png',
@@ -699,6 +704,7 @@ end
 # kept, in d['google_ids'] (sub => handle), never the email or name.
 def google_identity(credential)
   raise AuthError, 'Google sign-in is not set up.' if GOOGLE_CLIENT_ID.empty?
+  raise AuthError, 'Sign in with Google is paused for now. Use your handle and password.' unless GOOGLE_SIGNIN
   uri = URI("#{ENV['SQ_GOOGLE_TOKENINFO_URL'] || 'https://oauth2.googleapis.com/tokeninfo'}?id_token=#{URI.encode_www_form_component(credential)}")
   r = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', open_timeout: 4, read_timeout: 6) { |http| http.get(uri.request_uri) }
   j = JSON.parse(r.body) rescue {}
@@ -954,6 +960,7 @@ def live_announce(s, h)
     end
   end
   s['v'] = live_place(id, spot_ref(s['v']) || '', s['delay'])
+  LIVE[:lock].synchronize { (r = LIVE[:by_h][h]) && r['id'] == id && r['v'] = s['v'] }   # the public (delayed) spot, for Pulse
   s
 end
 
@@ -1327,7 +1334,7 @@ def mount_app(server)
   server.mount_proc('/config.js') do |_req, res|
     res['Content-Type'] = 'application/javascript'
     res['Cache-Control'] = 'no-cache'
-    res.body = "window.SQ_CONFIG=#{JSON.generate(demo: DEMO, beta: BETA, invite: INVITES.any?, terms: TERMS_VERSION, livekit: LIVEKIT, google: GOOGLE, gmapKey: GOOGLE_MAPS_KEY, gclient: GOOGLE_CLIENT_ID, voice: !GOOGLE_TTS_KEY.empty?, hear: HEAR, vapid: (vapid_public rescue nil))};"
+    res.body = "window.SQ_CONFIG=#{JSON.generate(demo: DEMO, beta: BETA, invite: INVITES.any?, terms: TERMS_VERSION, livekit: LIVEKIT, google: GOOGLE, gmapKey: GOOGLE_MAPS_KEY, gclient: GOOGLE_SIGNIN ? GOOGLE_CLIENT_ID : '', voice: !GOOGLE_TTS_KEY.empty?, hear: HEAR, vapid: (vapid_public rescue nil))};"
   end
 
   server.mount_proc('/api/health') do |_req, res|
@@ -2475,7 +2482,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }
@@ -2486,7 +2493,7 @@ puts "  mode: #{BETA ? 'PUBLIC BETA' : 'local'} · demo content #{DEMO ? 'on' : 
      " · Claude billed to #{ENGINE == 'api' || ENV['SQ_USE_API_KEY'] == '1' ? 'API key' : 'your subscription'}"
 puts "  scout ears: #{HEAR ? 'whisper.cpp on this server (for phones without working speech recognition)' : "the browser's own (no whisper.cpp)"}"
 puts "  scout voice: #{GOOGLE_TTS_KEY.empty? ? "the phone's own (no SQ_GOOGLE_TTS_KEY)" : "Google (up to #{TTS_DAILY_CHARS} characters a day)"}"
-puts "  sign in with Google: #{GOOGLE_CLIENT_ID.empty? ? 'off (no SQ_GOOGLE_CLIENT_ID)' : 'on'}"
+puts "  sign in with Google: #{GOOGLE_CLIENT_ID.empty? ? 'off (no SQ_GOOGLE_CLIENT_ID)' : GOOGLE_SIGNIN ? 'on' : 'paused (SQ_GOOGLE_SIGNIN=1 turns it on)'}"
 puts "  map tiles: #{GOOGLE_MAPS_KEY.empty? ? 'OpenStreetMap' : 'Google (Map Tiles API), OpenStreetMap if that fails'}"
 puts "  google places: #{GOOGLE ? "on (up to #{GOOGLE_DAILY} detail lookups a day)" : 'off (no SQ_GOOGLE_PLACES_KEY: OpenStreetMap only)'}"
 puts "  live video: #{LIVEKIT ? "LiveKit at #{LIVEKIT_URL} (API #{LIVEKIT_API_URL})" : 'phone-to-phone (no SQ_LIVEKIT_*: a few viewers, same network works best)'}"

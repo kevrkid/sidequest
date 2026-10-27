@@ -67,7 +67,7 @@ with sync_playwright() as pw:
           p.locator("#meChip").is_hidden() and p.eval_on_selector_all(".mapctl button", "b=>b.length") == 2)
     check("dock: Explore · Feed · ＋ · Social · You", p.eval_on_selector_all("#dock [data-dock]", "b=>b.map(x=>x.dataset.dock)") == ["home", "feed", "create", "meet", "me"]
           and p.inner_text("#dock [data-dock='feed']").strip() == "Feed" and p.inner_text("#dock [data-dock='meet']").strip() == "Social")
-    check("map starts calm: no food dots, nightlife or hot spot zones", p.evaluate("!S.mapL.food&&!S.mapL.clubs&&!S.mapL.bars&&!S.mapL.zones&&S.mapL.events"))
+    check("map starts calm: no food dots or nightlife (hot spots and heat are always on)", p.evaluate("!S.mapL.food&&!S.mapL.clubs&&!S.mapL.bars&&S.mapL.events"))
     p.wait_for_function("EV.loaded", timeout=20000); p.wait_for_timeout(300)
     check("the glance line says what's on tonight", "on tonight" in p.inner_text("#glance"), p.inner_text("#glance"))
     p.screenshot(path=f"{OUT}/v3-01-peek.png")

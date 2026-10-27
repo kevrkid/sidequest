@@ -244,6 +244,12 @@
   .fpin b{font-size:11px;background:#10162cf2;border-radius:99px;padding:1px 7px;margin-top:-6px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .fpin i{font-style:normal;font-size:10px;color:#cfe6ff;text-shadow:0 1px 3px #000}
   .sheat{filter:blur(6px);animation:sheat 3s ease-in-out infinite} .sheat.hot{animation-duration:1.8s}
+  .leaflet-heat-pane{pointer-events:none} .leaflet-heat-pane canvas{filter:blur(7px);opacity:.95}
+  .hbadge{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#ff2d55;color:#fff;font-size:14px;
+    box-shadow:0 0 0 3px #ff2d5555,0 0 14px #ff2d55;animation:hbadge 1.6s ease-in-out infinite}
+  .hbadge.usual{background:#ff7a18;box-shadow:0 0 0 3px #ff7a1844;animation:none;width:22px;height:22px;font-size:12px}
+  @keyframes hbadge{50%{box-shadow:0 0 0 7px #ff2d5522,0 0 20px #ff2d55}}
+  @media (prefers-reduced-motion:reduce){.hbadge{animation:none}}
   @keyframes sheat{50%{opacity:.65}}
   .mapctl button{width:44px;height:44px;border-radius:14px;background:#10162cf2;border:1px solid var(--line);font-size:19px;box-shadow:0 6px 16px #0007}
   .maphint{position:absolute;left:50%;top:56px;transform:translateX(-50%);z-index:456;display:flex;gap:10px;align-items:center;max-width:calc(100% - 90px);
@@ -1350,6 +1356,7 @@
 </div>
 
 <script src="config.js"></script>
+<script src="pulse.js"></script>
 <script>
 const CFG = window.SQ_CONFIG || {demo:false, beta:false, invite:false};
 const M = 60000, NOW = Date.now();
@@ -2740,7 +2747,7 @@ function spaced(items, px, key, cap=1e9){   // items best first, each with .ll; 
 function setLabels(key, pins, labels){ DC.pins[key]=pins; DC.labels[key]=labels; cancelAnimationFrame(DC.raf); DC.raf=requestAnimationFrame(placeLabels); }
 const labelW = (t) => { const c=DC.ctx ||= document.createElement('canvas').getContext('2d'); c.font='600 11px Inter,system-ui,sans-serif'; return Math.ceil(c.measureText(t).width)+14; };
 // After every pan or zoom, the layers redraw in DC_ORDER so each one knows where the more important pins went.
-function redrawMapLayers(){ if(!map||$('#v-map').hidden) return; renderMarkets(); renderEventPins(); renderNightLayer(); renderSights(); renderPlacesLayer(); if(S.mapL.outdoors) renderOutdoors();
+function redrawMapLayers(){ if(!map||$('#v-map').hidden) return; renderHeat(); loadHeat(); renderMarkets(); renderEventPins(); renderNightLayer(); renderSights(); renderPlacesLayer(); if(S.mapL.outdoors) renderOutdoors();
   cancelAnimationFrame(DC.raf); DC.raf=requestAnimationFrame(placeLabels); }
 function placeLabels(){
   if(!map) return; if(!DC.layer){ map.createPane('labels').style.zIndex=580; map.createPane('toplabels').style.zIndex=640; DC.layer=L.layerGroup().addTo(map); }
@@ -2881,6 +2888,7 @@ async function placePopup(id, ll){
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}${p.sq_rating?` <span class="meta">⭐ <b>${p.sq_rating.avg}</b> ${T('on Side Quest')} (${p.sq_rating.n})</span>`:''}</div>
       ${barFood(p)}
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
+      <div id="pv_${esc(p.id)}"></div>
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
         ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
@@ -2888,6 +2896,7 @@ async function placePopup(id, ll){
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
+    window.Pulse?.card(p.id);   // the vibe check: how it is now, tonight's busy hours, proof (pulse.js)
     if(CFG.google) googleInfo(p.id,'id',null,{web:!!p.web,phone:!!p.phone});
   }catch(e){ pop.setContent("Couldn't load this place."); }
 }
@@ -3237,19 +3246,21 @@ function googleClubPopup(c){
 }
 
 // How lively a hot spot is right now: places open in it, events on now or within 2 hours, live streams and flares
-// there. 0 = dead (a faint dashed outline), 1 = packed (bright, pulsing).
+// there, and how busy Pulse sees its places (people there now). 0 = dead (a faint dashed outline), 1 = packed.
 function zoneActivity(z){
   const now=Date.now(), inZ=(lat,lng)=>lat!=null&&km([z.lat,z.lng],[lat,lng])*1000<=z.r, at=v=>v&&inZ(v.lat,v.lng);
   const ev=EV.list.filter(e=>e.geo_precise&&e.ts<=now+2*36e5&&e.te>now&&inZ(e.lat,e.lng)).length;
   const live=liveStreams().filter(s=>at(s.v&&venue(s.v))).length;
   const fl=allPings().filter(p=>p.v&&(p.start||0)<=now+36e5&&(p.end||now+1)>now&&at(venue(p.v))).length;
-  const open=z.open||0, score=open+ev*3+(live+fl)*4;
+  const busy=HEAT.rows.filter(p=>p.live&&inZ(p.lat,p.lng)).reduce((a,p)=>a+p.level,0);
+  const open=z.open||0, score=open+ev*3+(live+fl)*4+busy*8;
   return {open, ev, live, fl, level:Math.min(1,score/25)};
 }
+// Hot spots are always on the map (whatever chip or layers are picked), like the heat below: hot areas always show.
 async function renderHotZones(){
   if(!map) return; if(!PL.hot) await loadHotspots(); if(!PL.hot) return;
   if(PL.zones) PL.zones.clearLayers(); else { PL.zones=L.layerGroup().addTo(map); map.on('zoomend',()=>renderHotZones()); }
-  if(!S.mapL.zones) return setLabels('zones',[],[]); const named=map.getZoom()>=15, names=[];   // downtown's zones sit close together: names only up close
+  const named=map.getZoom()>=15, names=[];   // downtown's zones sit close together: names only up close
   PL.hot.forEach(z=>{   // the label sits on the zone's top edge so it never covers the spots inside
     const a=zoneActivity(z), lv=a.level, quiet=lv<.12, busy=lv>=.6;
     if(!quiet) L.circle([z.lat,z.lng],{radius:z.r,interactive:false,className:'hotglow',color:'#ff7a18',weight:busy?18:12,opacity:busy?.16:.1,fill:false}).addTo(PL.zones);
@@ -3262,7 +3273,40 @@ async function renderHotZones(){
   setLabels('zones',[],names);
 }
 // Hours change as the night goes on: refresh the hot spots every 5 minutes while the map is open.
-setInterval(async()=>{ if(!map||$('#v-map').hidden||!S.mapL.zones) return; await loadHotspots(); renderHotZones(); },5*60000);
+setInterval(async()=>{ if(!map||$('#v-map').hidden) return; await loadHotspots(); renderHotZones(); },5*60000);
+
+/* 🔥 Heat map (pulse.rb, /api/pulse/heat): how busy food & drink places are right now: live where people are
+   (check-ins, vibe reports, stories, posts, hangouts, live streams), otherwise what this hour usually brings there.
+   Always on, whatever chip or layers are picked, so the map always shows where it's hot. One blurred canvas under
+   every pin (no taps: it would cover the canvases below it); the hottest get a 🔥 badge you can tap. */
+const HEAT={rows:[], at:0, key:'', busy:false, layer:null, badges:null, canv:null};
+const heatColor = l => l>=.7?'#ff2d55':l>=.45?'#ff7a18':'#ffb800';
+async function loadHeat(force){
+  if(!map||document.hidden) return;
+  const c=map.getCenter(), b=map.getBounds(), r=Math.min(12,Math.max(1,km([b.getSouth(),b.getWest()],[b.getNorth(),b.getEast()])/2));
+  const key=`${c.lat.toFixed(2)},${c.lng.toFixed(2)},${Math.round(r)}`;
+  if(HEAT.busy||(!force&&key===HEAT.key&&Date.now()-HEAT.at<18e4)) return;
+  HEAT.busy=true;
+  try{ const j=await (await fetch(`/api/pulse/heat?lat=${c.lat.toFixed(3)}&lng=${c.lng.toFixed(3)}&km=${r.toFixed(1)}`)).json();
+    if(Array.isArray(j.places)){ HEAT.rows=j.places; HEAT.key=key; HEAT.at=Date.now(); } }catch(e){}
+  HEAT.busy=false; renderHeat(); renderHotZones();
+}
+function renderHeat(){
+  if(!map) return;
+  if(!HEAT.layer){ map.createPane('heat').style.zIndex=360; HEAT.canv=L.canvas({pane:'heat',padding:.3});
+    HEAT.layer=L.layerGroup().addTo(map); HEAT.badges=L.layerGroup().addTo(map); }
+  HEAT.layer.clearLayers(); HEAT.badges.clearLayers();
+  const z=map.getZoom(), n=z<=12?45:z<=14?100:150, base=z<=11?6:z<=13?9:z<=15?13:17;
+  const rows=HEAT.rows.slice(0,n);
+  rows.slice().reverse().forEach(p=>   // the hottest drawn last, on top
+    L.circleMarker([p.lat,p.lng],{renderer:HEAT.canv,interactive:false,stroke:false,radius:base*(.7+p.level*.9)*(p.live?1.3:1),
+      fillColor:heatColor(p.level),fillOpacity:Math.min(.9,.22+p.level*.55)}).addTo(HEAT.layer));
+  if(z<13) return;
+  rows.filter(p=>p.hot||(p.live&&p.level>=.45)||(!p.live&&p.level>=.7)).slice(0,z>=15?16:8).forEach(p=>
+    L.marker([p.lat,p.lng],{zIndexOffset:300,title:p.name,icon:L.divIcon({className:'',iconSize:[26,26],
+      html:`<div class="hbadge ${p.live?'':'usual'}">${p.hot?'📈':'🔥'}</div>`})}).on('click',()=>placePopup(p.id,[p.lat,p.lng])).addTo(HEAT.badges));
+}
+setInterval(()=>{ if(map&&!$('#v-map').hidden) loadHeat(true); },3*60000);
 function focusPlace(id){
   const l=(PL.lastList||[]).find(p=>p.id===id), sc=SCT.placeInfo?.[id];
   const info=PL.byId[id]||(l&&[l.id,l.name,l.kind,l.lat,l.lng])||(sc&&[id,sc.name,'',sc.lat,sc.lng]);
@@ -5118,7 +5162,7 @@ function initMap(){
   map.on('popupopen',popToDrawer); map.on('popupclose',popClosed); map.on('contextmenu',mapHold); L.Popup.prototype.options.autoPan=false;   // touching the map = you want the map
   map.on('movestart zoomstart',()=>{ MAPMOVING=true; $('#map').classList.add('mapmoving'); });
   map.on('moveend zoomend',()=>{ MAPMOVING=false; $('#map').classList.remove('mapmoving'); });
-  renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
+  renderMap(); renderHotZones(); loadHeat(true); renderMarkets(); loadPlacesMap();
 }
 function renderMapLive(){
   const el=$('#mapLive'); if(!el) return; const ls=liveStreams();
@@ -5189,8 +5233,8 @@ function renderMap(){
       social.push({id:'st'+p.join(),ll:p,r:34,rx:40,dy:6});
     });
   }
-  // Heat: where lots of stories were posted today (~1 km), a glow to tap and watch them all, like Snap Map.
-  if(S.mapL.heat&&mapFilter!=='feed'){
+  // Story heat: where lots of stories were posted today (~1 km), a glow to tap and watch them all, like Snap Map. Always on.
+  if(mapFilter!=='feed'){
     const hc={}; allStories().forEach(st=>{ const p=storyPos(st); if(!p) return; const k=p[0].toFixed(2)+','+p[1].toFixed(2); (hc[k] ||= []).push([st,p]); });
     Object.values(hc).filter(x=>x.length>=2).forEach(x=>{ const lat=x.reduce((a,[,p])=>a+p[0],0)/x.length, lng=x.reduce((a,[,p])=>a+p[1],0)/x.length, n=x.length;
       L.circle([lat,lng],{radius:220+Math.min(n,12)*60,className:'sheat'+(n>=5?' hot':''),stroke:false,fillColor:n>=5?'#ff3b5c':'#ffb800',fillOpacity:.35+Math.min(n,10)*.04})
@@ -5514,7 +5558,7 @@ function renderHome(){
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail(); $('#exMedia').innerHTML=mediaRail(); bestRail();   // stories live in Feed; plans and level in You
+  renderQuick(); renderTonight(); $('#exMore').innerHTML=(window.Pulse?Pulse.rail():'')+happyRail()+openRail()+hotRail()+weekendRail(); $('#exMedia').innerHTML=mediaRail(); bestRail();   // stories live in Feed; plans and level in You
   const day=new Date().getHours()<15, tn=$('#homeTonight'), mo=$('#exMore');   // daytime: what's open now first; evening: tonight first
   if(day!==(mo.nextElementSibling===tn)) day ? tn.before(mo) : mo.before(tn);
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
@@ -5555,7 +5599,7 @@ const OPENNEAR={list:null, at:0, busy:false};
 function openRail(){
   if(!OPENNEAR.busy&&Date.now()-OPENNEAR.at>6e5){ OPENNEAR.busy=true;
     fetch(`/api/places?cat=all&open=1&${nearParam()}&limit=12`).then(r=>r.json()).then(j=>{ OPENNEAR.list=j.places||[]; OPENNEAR.at=Date.now(); })
-      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail(); }); }
+      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=(window.Pulse?Pulse.rail():'')+happyRail()+openRail()+hotRail()+weekendRail(); }); }
   const L=(OPENNEAR.list||[]).slice(0,10); if(!L.length) return '';
   PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];   // so a tap can fly to it
   return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
@@ -7017,9 +7061,9 @@ const MAP_WHEN={tonight:'Tonight', weekend:'This weekend', week:'This week'};
 const MAP_CATS=[
   {k:'events', e:'🎫', l:'Events', subs:[['events','🎫 Events on the map']]},
   {k:'night', e:'🌙', l:'Night', subs:[['clubs','🪩 Clubs'],['bars','🍸 Bars (street level)']]},
-  {k:'zones', e:'🔥', l:'Hot spots', subs:[['zones','🔥 Hot spots: glow brighter the more is open and happening']]},
+  {k:'zones', e:'🔥', l:'Hot spots & heat', always:true, subs:[['zones','🔥 Busy places and hot spots: always on']]},
   {k:'outdoors', e:'🌲', l:'Outdoors', subs:[['parks','🌳 Parks & nature'],['water','💧 Lakes & rivers'],['trails','🚲 Hike & bike trails'],['spots','🛶 Rentals, ramps & trailheads']]},
-  {k:'friends', e:'👥', l:'Friends', subs:[['friendlocs','🧑‍🤝‍🧑 Friends sharing where they are'],['posts','📍 Hangouts'],['live','📺 Live streams'],['stories','📸 Stories'],['heat','🔥 Story heat: busy spots today']]},
+  {k:'friends', e:'👥', l:'Friends', subs:[['friendlocs','🧑‍🤝‍🧑 Friends sharing where they are'],['posts','📍 Hangouts'],['live','📺 Live streams'],['stories','📸 Stories']]},
   {k:'food', e:'🍔', l:'Food', subs:[['food','🍔 Food & drink spots'],['markets','🧺 Farmers markets (big on weekends)'],['openonly','🟢 Open now only',true]]},   // true: a setting, not a layer
   {k:'sights', e:'🏛️', l:'Sights', subs:[['landmarks','🏛️ Landmarks & museums'],['markers','🪧 Historical markers'],['art','🎨 Statues, murals & views']]},
 ];
@@ -7055,6 +7099,8 @@ function openMapLayers(){
       <span class="yi" style="background:#2ec5ff26;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${fmOn()?'🧑‍🤝‍🧑':'👻'}</span><span class="grow">${T("On friends' maps")}</span><span class="meta">${fmOn()?T('Sharing'):T('Off')}</span></button>`:''}
     <div class="tagchips" style="margin:10px 0 4px">${Object.entries(MAP_PRESETS).map(([k,[l]])=>`<button class="ichip" data-mpreset="${k}">${T(l)}</button>`).join('')}</div>
     ${MAP_CATS.map(c=>{ const st=catState(c);
+      if(c.always) return `<div class="lcat cat-${c.k}"><div class="row"><b class="grow">${c.e} ${esc(T(c.l))}</b><span class="meta">${T('Always on')}</span></div>
+        <div class="meta" style="margin-top:4px">${T('Glows where it’s busy now, or usually is at this hour; brighter = busier. 🔥 = busiest, 📈 = busier than usual.')}</div></div>`;
       return `<div class="lcat cat-${c.k}"><div class="row"><b class="grow">${c.e} ${esc(T(c.l))}</b>${sw(c.k,!!st,'data-mlcat')}</div>
         ${c.subs.length>1?c.subs.map(([k,l])=>`<div class="row lsub"><span class="grow">${esc(T(l))}</span>${sw(k,S.mapL[k])}</div>`).join(''):''}
         ${c.k==='events'?`<div style="margin-top:8px">${segHtml('mfWhen',Object.entries(MAP_WHEN).map(([k,v])=>[k,T(v)]),S.mapWhen)}</div>
