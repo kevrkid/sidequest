@@ -75,7 +75,7 @@ with sync_playwright() as pw:
     sign_up(a, AMY)
     check("bell shows in the header once signed in", a.is_visible("#bellBtn"))
     a.evaluate("tab('me')"); a.wait_for_timeout(300)
-    check("You shows your quest level", "Lv 1" in a.inner_text("#youStats"))
+    check("You: no row of zeros for someone new (level shows once there is something)", ("Lv 1" in a.inner_text("#youStats")) == bool(a.evaluate("(SV.v2?.coins||0)>0||(SV.v2?.day_streak||0)>0")))
     a.evaluate("tab('home','peek')")
     check("Home: 'Tonight near you' strip with events", a.locator("#homeTonight .tncard").count() >= 1 or a.evaluate(
         "!EV.list.some(e=>e.te>Date.now()&&e.ts<new Date().setHours(28,0,0,0)&&!e.tba&&e.lat)"))

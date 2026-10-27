@@ -1019,6 +1019,17 @@
   #app.v3 .sc-lens.look i{background:linear-gradient(135deg,#ff7a18,#e9408a)}
   #drawer .mapchips{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent);padding-right:40px}
   #drawer .mapchips.end{-webkit-mask-image:none;mask-image:none}
+  /* V3 review 3 */
+  #drawer .mapchips .chip{padding:7px 11px;font-size:13px}
+  #drawer .mapchips{gap:6px}
+  #app.v3 .me-chip.authed{display:grid;visibility:hidden;width:44px}   /* keeps the name centred for everyone */
+  #app.v3 .me-chip.authed+.logo{margin-left:auto}
+  #app.v3:has(#onbBg:not([hidden])) .me-chip{visibility:hidden}
+  #onb .ichip{text-transform:capitalize}
+  #app.v3 .tncard .tnt b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25}
+  #app.v3 .tncard{align-items:flex-start}
+  #exMain>#homeNext:empty+#homeTonight .tnhead:first-child,#exMain>div:first-child .tnhead:first-child{padding-top:8px}
+  .pmain .favb{flex:none}
 </style>
 </head>
 <body>
@@ -1214,7 +1225,7 @@
     <div class="create-grid">
       <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Story">Story</b><span data-t="A photo or video for 24 hours · tag the place, event, people">A photo or video for 24 hours · tag the place, event, people</span></button>
       <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i><b data-t="Post">Post</b><span data-t="A photo or thought that stays on your profile">A photo or thought that stays on your profile</span></button>
-      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Flare">Flare</b><span data-t="&quot;Who's down?&quot; right now">"Who's down?" right now</span></button>
+      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Flare">Flare</b><span data-t="Ask who's free right now">Ask who's free right now</span></button>
       <button data-create="event" style="background:linear-gradient(145deg,#8e2de2,#e9408a)"><i>📅</i><b data-t="Event">Event</b><span data-t="Plan something later">Plan something later</span></button>
       <button data-create="group" style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>🏘️</i><b data-t="Group">Group</b><span data-t="Start a community">Start a community</span></button>
       <button data-create="live" style="background:linear-gradient(145deg,#ff416c,#ff9a3c)"><i>📺</i><b data-t="Go live">Go live</b><span data-t="Stream from your phone">Stream from your phone</span></button>
@@ -1244,7 +1255,7 @@
   <div class="sheet-bg" id="scoutBg" hidden style="z-index:740"><div class="sheet scout-sheet">
     <div class="row sc-top"><span id="scoutHead" class="scwrap"></span>
       <div class="grow" style="min-width:0"><b id="scoutName">Scout</b><div class="meta" id="scoutLeft" data-t="Your guide to Side Quest">Your guide to Side Quest</div>
-        <div class="sc-mine"><button data-sc="look">🎨 <span data-t="Make me yours">Make me yours</span></button><button data-sc="tourgo">🧭 <span data-t="Tour">Tour</span></button></div></div>
+        <div class="sc-mine"><button data-sc="look">🎨 <span data-t="Customize Scout">Customize Scout</span></button><button data-sc="tourgo">🧭 <span data-t="Tour">Tour</span></button></div></div>
       <button class="btn sm" data-sc="voice" id="scVoice" title="Also read typed answers out loud">🔇</button><button class="btn sm" data-sc="drive" title="Driving mode">🚗</button>
       <button class="btn sm" data-sc="close" aria-label="Close">✕</button></div>
     <div id="scoutLog"></div>
@@ -1456,7 +1467,7 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Flare':'Bengala','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Explore':'Explorar','Watch':'Ver','In a chat':'En un chat','1 member':'1 miembro',"On friends' maps":'En el mapa de amigos','Sharing':'Compartiendo',"Ask who's free right now":'Pregunta quién está libre ahora','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Flare':'Bengala','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
   'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
@@ -1577,7 +1588,7 @@ const ES = {
   'Plan dinner and drinks':'Planea cena y tragos', '💾 Save to my plans':'💾 Guardar en mis planes', '🗺 Map':'🗺 Mapa', '📅 Calendar':'📅 Calendario',
   '↗ Share':'↗ Compartir', 'Close':'Cerrar', 'None yet. Ask Scout to plan something, then tap Save.':'Todavía nada. Pídele a Scout que planee algo y toca Guardar.',
   'Nothing yet. Tap "I\'m going" on an event and it shows up here.':'Todavía nada. Toca "Voy" en un evento y aparecerá aquí.',
-  'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Make me yours':'Hazme tuyo', 'Tour':'Recorrido', 'Live Translate':'Traducir en vivo', 'What is this?':'¿Qué es esto?', 'Point at a building, landmark, storefront or dish':'Apunta a un edificio, monumento, negocio o platillo',
+  'Tap to talk':'Toca para hablar', 'Translate':'Traducir', 'Make me yours':'Hazme tuyo','Customize Scout':'Personaliza a Scout', 'Tour':'Recorrido', 'Live Translate':'Traducir en vivo', 'What is this?':'¿Qué es esto?', 'Point at a building, landmark, storefront or dish':'Apunta a un edificio, monumento, negocio o platillo',
   'Opening the camera. Point it at what you want to know about and tap the button.':'Abriendo la cámara. Apunta a lo que quieras conocer y toca el botón.',
   'Menu':'Menú', 'Call':'Llamar', 'Finding the menu…':'Buscando el menú…', "Reading the place's own menu. Dishes show up here as they're found.":'Leyendo el menú del lugar. Los platos aparecen aquí a medida que se encuentran.', 'Reading the rest of the menu…':'Leyendo el resto del menú…', 'Favorite':'Favorito', 'Favorites':'Favoritos', 'My favorites':'Mis favoritos',
   'Add to favorites':'Agregar a favoritos', 'Remove from favorites':'Quitar de favoritos', 'Removed from favorites':'Quitado de favoritos',
@@ -2746,10 +2757,10 @@ async function placePopup(id, ll){
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}</div>
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
-      <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}</div>
+      <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
         ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
-        ${checkBtn('place',p.id,p.lat,p.lng)}${favBtn('place',p.id,p.name)}</div>
+        ${checkBtn('place',p.id,p.lat,p.lng)}</div>
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
@@ -4992,7 +5003,6 @@ function renderEventPins(){
       ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
       <div class="btns" style="margin-top:8px"><button class="btn sm ${going?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${going?'✓ Going':"I'm going"}</button>
       <button class="btn sm blue" data-evopen="${e.id}">${T('Details')}</button>
-      ${/^https?:/.test(e.ticket_url||e.url||'')?`<a class="btn sm" href="${esc(e.ticket_url||e.url)}" target="_blank" rel="noopener">Info ↗</a>`:''}
       <button class="btn sm" data-cal="${e.id}">📅 Calendar</button>${e.geo_precise?`<a class="btn sm" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">Directions ↗</a>`:''}
       ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 Eat after</button>`:''}</div>`);
     m.on('popupopen',()=>eventPhotos(e));
@@ -5382,7 +5392,7 @@ function renderDock(){
 // Hot spots, Friends out and Tonight sit in rails; this adds the busiest neighborhoods right now.
 function hotRail(){
   const z=(PL.hot||[]).filter(x=>x.open>0).sort((a,b)=>b.open-a.open).slice(0,8);
-  return z.length ? `<div class="tnhead"><b>🔥 ${T('Busy right now')}</b><button class="linkbtn" data-excat="zones">${T('Map')} ›</button></div><div class="tnrail">${z.map(x=>
+  return z.length ? `<div class="tnhead"><b>🔥 ${T('Busy right now')}</b><button class="linkbtn" data-excat="zones">${T('See all')} ›</button></div><div class="tnrail">${z.map(x=>
     `<button class="tncard" data-excat="zones" data-exsubgo="${esc(x.id)}" style="width:170px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">🔥</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${T('{n} open now',{n:x.open})}</span></span></button>`).join('')}</div>` : '';
 }
 
@@ -5470,7 +5480,7 @@ async function renderExCat(fresh){
     else {
       const cats = k==='night'&&EXC.sub==='bars' ? ['bars'] : [EXC.sub];
       try{ const lists=await Promise.all(cats.map(c=>fetch(`/api/places?${new URLSearchParams({cat:c,open:S.foodOpen?'1':''})}&${nearParam()}&limit=40`).then(r=>r.json())));
-        EXC.list=lists.flatMap(j=>j.places||[]); PL.lastList=EXC.list; }
+        EXC.list=lists.flatMap(j=>j.places||[]); if(k==='food'&&EXC.sub==='all') EXC.list=EXC.list.filter(p=>!['bar','pub','club','beer garden','nightclub'].includes(p.kind)); PL.lastList=EXC.list; }
       catch(err){ if(seq===EXC.seq) el.innerHTML=head+`<p class="meta">${T('Couldn\'t load places.')} ${esc(err.message)}</p>`; return; }
     }
     if(seq!==EXC.seq) return;
@@ -5485,7 +5495,7 @@ async function renderExCat(fresh){
   if(k==='events'){
     const aff=affinity(), now=Date.now(), until={tonight:new Date().setHours(28,0,0,0), weekend:now+4*864e5, week:now+7*864e5}[EXC.sub]||now+864e5;
     const list=EV.list.filter(x=>x.te>now&&x.ts<until&&x.lat).map(x=>({x, s:scoreEvent(x,aff,{})?.s ?? 0, d:km(ME_POS,[x.lat,x.lng])})).filter(x=>x.d<60)
-      .sort((a,b)=>a.x.ts-b.x.ts||b.s-a.s).slice(0,60);
+      .sort((a,b)=>EXC.sub==='tonight'?a.d-b.d:a.x.ts-b.x.ts||b.s-a.s).slice(0,60);
     el.innerHTML = head + (list.map(({x,d})=>{ const fr=goingList(x).filter(isFriend).length;
       return xrow({go:`evmap|${x.id}`, e:CATS[x.cat]?.e||'🎫', th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
         sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}${fr?` · 👥 ${fr}`:''}`, d:fmtMi(d)}); }).join('') || `<p class="xempty">${T('Nothing listed for then yet.')}</p>`);
@@ -5548,7 +5558,7 @@ function renderSearch(){
   if(!q){
     const rec=(S.recentQ||[]).slice(0,8), tries=['tacos','live music tonight','happy hour','coffee','trivia','brunch','pickup basketball','swimming'];
     el.innerHTML = ask(T('Or tap the mic and just talk'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
-      + `<div class="srecent" style="margin-top:10px">${askIdeas().map(q=>`<button data-xgo="scout|${esc(q)}">✨ ${esc(q)}</button>`).join('')}</div>`
+      + `<div class="srecent" style="margin-top:10px">${askIdeas().slice(0,3).map(q=>`<button data-xgo="scout|${esc(q)}">✨ ${esc(q)}</button>`).join('')}</div>`
       + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
       + (rec.length?'':`<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`);
     scoutFaces(); return;
@@ -5566,7 +5576,7 @@ function renderSearch(){
   EV.list.forEach(x=>{ if(x.te>Date.now()&&hit(x.title,x.venue||'',CATS[x.cat]?.l||'',x.genre||'')) evs.push({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', title:x.title, sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}`, ts:x.ts}); });
   evs.sort((a,b)=>a.ts-b.ts);
   people().forEach(u=>{ if(u.h!==S.me.h&&hit(u.h,(u.i||[]).join(' '))) ppl.push({go:`u|${u.h}`, e:av(u.h), title:'@'+u.h, sub:esc((u.i||[]).slice(0,3).join(' · '))}); });
-  allGroups().forEach(g=>{ if(hit(g.n,g.d||'',CATS[g.cat]?.l||'')) grps.push({go:`g|${g.id}`, e:esc(g.e||'🏘️'), title:g.n, sub:`${gCount(g)} ${T('members')}`}); });
+  allGroups().forEach(g=>{ if(hit(g.n,g.d||'',CATS[g.cat]?.l||'')) grps.push({go:`g|${g.id}`, e:esc(g.e||'🏘️'), title:g.n, sub:gCount(g)===1?T('1 member'):`${gCount(g)} ${T('members')}`}); });
   const dish = `<button class="xrow" data-xgo="dish|${esc(q)}"><span class="xe">🍴</span><span class="grow"><b>${T('Find “{q}” on menus',{q:esc(q)})}</b><span class="meta">${T('Every menu we’ve read, with prices')}</span></span>${svgI('chev')}</button>`;
   const feed = `<button class="xrow" data-xgo="feed|${esc(q)}"><span class="xe">📝</span><span class="grow"><b>${T('Search posts and the feed')}</b><span class="meta">${esc(q)}</span></span>${svgI('chev')}</button>`;
   const qs = isQuestion(q);
@@ -5604,14 +5614,15 @@ function renderYou(){
     : esc([S.me.t&&TYPES[S.me.t]?`${S.me.t} · ${TYPES[S.me.t][0]}`:'', S.me.astro&&S.me.z?`${SIGN_E[S.me.z]||''} ${S.me.z}`:''].filter(Boolean).join(' · ') || T('Austin'));
   $('#presBtn').hidden = guest;
   const nFr=(SV.friends?.list||[]).length||S.friends.length, plans=EV.list.filter(e=>myRsvp(e.id)&&e.te>Date.now()).length+(SV.plans||[]).length;
-  $('#youStats').innerHTML = guest ? '' : `<button data-ystat="quests">🏆 ${esc(T('Lv {n}',{n:v.level||1}))} · 🪙 ${v.coins||0} · 🔥 ${esc(T('{n}-day streak',{n:v.day_streak||0}))}</button><button data-ystat="friends">👥 ${esc(T('{n} friends',{n:nFr}))}</button>`;
+  const fresh=!(v.coins||v.day_streak>0||(v.level||1)>1);
+  $('#youStats').innerHTML = guest ? '' : (fresh?'':`<button data-ystat="quests">🏆 ${esc(T('Lv {n}',{n:v.level||1}))} · 🪙 ${v.coins||0} · 🔥 ${esc(T('{n}-day streak',{n:v.day_streak||0}))}</button>`)+`<button data-ystat="friends">👥 ${esc(T('{n} friends',{n:nFr}))}</button>`;
   const row=(attr,e,bg,l,meta='')=>`<button ${attr}><span class="yi" style="background:${bg}">${e}</span><span class="grow">${esc(l)}</span>${meta?`<span class="meta">${esc(String(meta))}</span>`:''}${svgI('chev')}</button>`;
   $('#youList').innerHTML = [
     row('data-menu="plans"','📅','#ff9a3c26',T('My plans'),plans||''),
     row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
     guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
     row('data-menu="invite"','💌','#b57bff26',T('Invite friends')),
-    guest?'':row('data-yshare','📍','#2ec5ff26',T('Share my location'),fmOn()?T('With friends'):T('Off')),
+    guest?'':row('data-yshare','📍','#2ec5ff26',T("On friends' maps"),fmOn()?T('Sharing'):T('Off')),
     row('data-yedit="profile"','✏️','#ffffff14',T('Edit profile')),
     row('data-yedit="settings"','🔒','#ffffff14',T('Settings & privacy')),
     row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
@@ -6597,7 +6608,7 @@ function openMapLayers(){
   const cats=Object.entries(CATS).filter(([k])=>k!=='other'), typeOn=k=>!S.mapCats.length||S.mapCats.includes(k);
   sh.innerHTML=`<div class="row"><b class="grow" style="font-size:19px">${T('🗂 Map layers')}</b><button class="btn sm primary" data-pclose>${T('Done')}</button></div>
     ${AUTHED?`<button class="ylist" data-yshare style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:12px 0 4px;text-align:left;font-weight:650">
-      <span class="yi" style="background:#2ec5ff26;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${fmOn()?'🧑‍🤝‍🧑':'👻'}</span><span class="grow">${T('Share my location')}</span><span class="meta">${fmOn()?T('With friends'):T('Off')}</span></button>`:''}
+      <span class="yi" style="background:#2ec5ff26;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${fmOn()?'🧑‍🤝‍🧑':'👻'}</span><span class="grow">${T("On friends' maps")}</span><span class="meta">${fmOn()?T('Sharing'):T('Off')}</span></button>`:''}
     <div class="tagchips" style="margin:10px 0 4px">${Object.entries(MAP_PRESETS).map(([k,[l]])=>`<button class="ichip" data-mpreset="${k}">${T(l)}</button>`).join('')}</div>
     ${MAP_CATS.map(c=>{ const st=catState(c);
       return `<div class="lcat cat-${c.k}"><div class="row"><b class="grow">${c.e} ${esc(T(c.l))}</b>${sw(c.k,!!st,'data-mlcat')}</div>
@@ -7494,7 +7505,7 @@ function openEvent(id){
 function renderEventSheet(e){
   const mine=myRsvp(e.id), go=goingList(e), fr=go.filter(isFriend), others=go.filter(h=>!isFriend(h));
   const inter=Object.entries(SV.rsvps[e.id]||{}).filter(([h,st])=>st==='interested'&&h!==S.me.h).length;
-  const link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null, now=Date.now(), on=e.ts-36e5<now&&now<e.te+36e5;
+  const link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null, now=Date.now(), on=!e.tba&&e.ts-36e5<now&&now<e.te+36e5;
   const hero=/^https:\/\//.test(e.image||'')?`style="background-image:url('${esc(evImg(e.image,960))}')"`:(e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):'');
   const desc=(e.description||'').trim(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
   const saved=isSaved('event',e.id), soon=e.ts>now?Math.round((e.ts-now)/6e4):null;
@@ -7508,7 +7519,6 @@ function renderEventSheet(e){
       <button class="btn ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?T('✓ Going'):T("I'm going")}</button>
       <button class="iconbtn ${saved?'fav':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}" aria-label="${T('Favorite')}" title="${T('Favorite')}">${saved?'❤️':'🤍'}</button>
       <button class="iconbtn" data-evshare="${e.id}" aria-label="${T('Share')}" title="${T('Share')}">🔗</button>
-      ${e.lat?`<button class="iconbtn" data-evmap="${e.id}" aria-label="${T('Map')}" title="${T('Show on the map')}"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button>`:''}
     </div>
     <div class="evrow3">
       ${e.geo_precise?`<a class="btn" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>`:''}
@@ -7516,7 +7526,7 @@ function renderEventSheet(e){
       ${link?`<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">🎟 ${T('Tickets')}</a>`:''}
     </div>
     <div class="evfriends"><span class="meta">${T('With friends')}</span>
-      <button class="ichip" data-evinvite="${e.id}">💌 ${T('Invite')}</button><button class="ichip" data-evplan="${e.id}">🗳️ ${T('Plan it')}</button><button class="ichip" data-evsend="${e.id}">💬 ${T('Send')}</button></div>
+      <button class="ichip" data-evinvite="${e.id}">💌 ${T('Invite')}</button><button class="ichip" data-evplan="${e.id}">🗳️ ${T('Plan it')}</button><button class="ichip" data-evsend="${e.id}">💬 ${T('In a chat')}</button></div>
     <div class="btns" style="margin-top:8px">
       ${on&&e.geo_precise&&near?`<button class="btn sm primary" data-checkin2="event|${e.id}">📍 ${T('Check in')}</button>`:''}
       ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 ${T('Eat after')}</button>`:''}

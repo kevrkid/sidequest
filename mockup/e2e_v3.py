@@ -147,7 +147,7 @@ with sync_playwright() as pw:
     p.click("[data-dock='me']"); p.wait_for_timeout(300)
     rows = p.locator("#youList").inner_text()
     check("You: online switch, stats, and plans / saved / quests / invite / sharing / edit / settings", p.locator("#presBtn").is_visible()
-          and all(x in rows for x in ["My plans", "Saved", "Quests", "Invite", "Share my location", "Edit profile", "Settings"]) and "Lv 1" in p.inner_text("#youStats")
+          and all(x in rows for x in ["My plans", "Saved", "Quests", "Invite", "On friends' maps", "Edit profile", "Settings"]) and "friends" in p.inner_text("#youStats")
           and p.locator("#meTabs").is_hidden())
     p.click("#youList [data-yedit='profile']"); p.wait_for_timeout(300)
     check("You → Edit profile shows the profile tabs", p.locator("#meTabs").is_visible())
