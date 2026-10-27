@@ -1034,6 +1034,8 @@
   @media (min-width:900px){ #app.v3 .me-chip.authed{display:none} #app.v3 .me-chip.authed+.logo,#app.v3 .logo{margin:0 auto 0 0} }
   #app.v3 [data-newgroup]{background:#1a2246!important;border:1px dashed #3ddc9766;color:var(--text);box-shadow:none;padding:12px 14px}
   #app.v3 [data-newgroup] i{font-style:normal;color:var(--good)} #app.v3 [data-newgroup] span{color:var(--muted)}
+  @supports (height:100dvh){ #app.v3{height:100dvh} }   /* phones: the visible height, toolbars and all */
+  #app.v3 .deck{height:calc(100vh - 480px);height:calc(100dvh - 480px);min-height:300px;max-height:520px}   /* the swipe buttons stay above the dock */
 </style>
 </head>
 <body>
