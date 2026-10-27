@@ -537,7 +537,7 @@ with sync_playwright() as pw:
     p2.screenshot(path=f"{OUT}/09-map-stories.png")
     nav(p2, "feed")
     feed_clear(p2)
-    p2.click(f"#feedList [data-stuser='{TEX}']")
+    p2.click(f"#feedStories [data-stuser='{TEX}']")
     p2.wait_for_selector("#storyView:not([hidden]) .media")
     sv = p2.locator("#storyView").inner_text()
     check("story viewer shows caption and all tags", "Front row" in sv and "@nitro_nate" in sv and "ATX Pickup Soccer" in sv, sv.replace("\n", " | ")[:120])

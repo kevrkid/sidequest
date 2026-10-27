@@ -11,38 +11,45 @@ Keep this file up to date when features change. Only describe things that exist 
 - The screen (V3): the map fills the whole screen, always. Over it, at the bottom, a drawer you drag up and down
   (three stops: just the search box, half way, all the way up), and under that a bar with five buttons:
   **Explore** (the map and what's around), **For you** (the feed), **＋** (create), **Chats**, and **You** (your picture).
-- Top of the screen, floating on the map: your picture at the top left (opens You; a green ring = you show as
-  online), the Side Quest name in the middle (takes you back to the map), and the 🔔 bell at the top right. Down the
-  right side: map layers, ghost / friends location sharing, and "back to where I am".
-- Guests: tapping You (or your picture) offers Create account / Sign in.
+- Top of the screen: the Side Quest name (takes you back to the map) and the 🔔 bell at the top right. Down the right
+  side of the map: map layers and "back to where I am". Your picture is the You button in the bottom bar (a green
+  ring = you show as online).
+- Guests see an orange "Sign up" button at the top left; tapping You does the same.
+- When a screen is all the way up (For you, Chats, You) the top becomes a plain bar; pull the screen down to see the map.
 
 ## Explore (the drawer over the map)
 - The search box at the top: "Search Austin, or ask Scout". It finds places, parks, lakes, trails, sights, events,
   people and groups as you type, nearest first; "Find it on menus" searches every menu for a dish; a question
-  ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode.
+  ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode. Before typing, the
+  search page shows a few things to ask you ("Plan my night", "Something free to do tonight"…) and recent searches.
 - Under it, chips: 🍔 Food, 🎫 Tonight, 🍸 Nightlife, 🌳 Outdoors, 🏛️ Sights, 👥 Friends, 🔥 Hot spots. A chip shows that
   one thing on the map AND lists it in the drawer (nearest first), with smaller chips to narrow it (Food: Happy hour,
   Coffee, Tacos, BBQ, Pizza, Burgers, Asian, Trucks, Sweets, Late night, Breakfast, plus an Open now switch; Tonight:
   This weekend / This week; Nightlife: Bars, Clubs, Late eats; Outdoors: Parks, Lakes & rivers, Trails; Sights:
-  Landmarks, Museums, Markers, Art). Tap a row to fly to it on the map. ✕ or tapping the chip again goes back.
-- One line under the chips says what's on ("37 things on tonight · 2 friends out"); tap it to pull the drawer up.
-- Pulled up, the drawer shows: stories (rings), Up next (the next thing you're going to, with a countdown),
-  Friends out now, Tonight near you, Busy right now (hot spots), Happy hour now, and quick buttons (My plans, your
-  level and coins). Dragging the map moves the drawer out of the way.
+  Landmarks, Museums, Markers, Art; "● Open now" is one of Food's and Nightlife's small chips). Tap a row to fly to it on
+  the map and open its card in the drawer. The picked chip shows a ✕: tap it again (or back) to go back.
+- Tapping any pin on the map opens its card in the drawer (hours, Menu, Directions, Check in, Save…), with a blue ring
+  on the pin. ✕ or back closes it and returns to the list it came from.
+- One line under the chips says what's on ("37 things on tonight · 2 friends out"); tap it for tonight's list.
+- Pulled up, the drawer shows: Up next (the next thing you're going to, with a countdown), Friends out now, Tonight
+  near you, Busy right now (hot spots) and Happy hour now. Dragging or tapping the map moves the drawer out of the way.
+  Stories are at the top of For you.
 
 ## Create (the ＋ in the middle of the bottom bar)
 - Story (a photo or video for 24 hours), Post (a public post with a photo or text that stays on your profile and
   in For you → Posts), Flare, Event, Group, Go live.
 
 ## Chats (bottom bar)
-- Tabs: 💬 Chats (messages and group chats; friends only), 👥 Friends (requests, your friends, people you'd click with,
+- Tabs: 💬 Messages (messages and group chats; friends only), 👥 Friends (requests, your friends, people you'd click with,
   find anyone by name or interest), 🏘️ Groups, 👋 Meet (the swipe deck). The red number on Chats counts unread
   messages plus friend requests.
 
 ## You (bottom bar)
-- Your picture and name, the Online/Offline switch, your level, coins, day streak and friends, then My plans, Saved,
-  Friends, Quests & rewards, Invite friends and Español. Below that, four tabs: Profile, Personality (quiz +
-  astrology), About you, Privacy (location precision, delay, your data, blocked people, sign out, delete account).
+- Your picture and name, the Online/Offline switch, one line with your level, coins and day streak, your friend count,
+  then My plans, Saved, Quests & rewards, Invite friends, Location sharing (ghost mode or friends; also at the top of
+  the map's layers sheet), Edit profile, Settings & privacy, and Español. Edit profile opens four tabs: Profile,
+  Personality (quiz + astrology), About you, Privacy (location precision, delay, your data, blocked people, sign out,
+  delete account).
 - Online = friends and Meet see you as around and your location dot stays live; Offline = nobody sees you as active
   and the app stops using your location.
 
@@ -66,10 +73,10 @@ Keep this file up to date when features change. Only describe things that exist 
 - The 🔎 box under the tabs narrows whatever tab is open.
 
 ## Stories, plans, flares
-- Stories: the row of rings at the top of Explore (and in the feed). Tap one for a full-screen feed like TikTok:
+- Stories: the row of rings at the top of For you. Tap one for a full-screen feed like TikTok:
   swipe up for the next story, tap a video to pause, double-tap to like ❤️, and use the buttons on the right to
   reply (friends only), share, or see the spot on the map. 🔇 turns sound on.
-- Plans: You → 📅 My plans (or the My plans button in Explore) shows saved itineraries and events you're going to.
+- Plans: You → 📅 My plans shows saved itineraries and events you're going to.
   When someone asks you to plan their night, day or weekend, build a plan (see the plan rules you're given); they can
   save it, see it on the map, add it to their calendar or share it.
 - Story: a photo, a video up to 60 seconds, or text; lasts 24 hours. "Where was this?"
@@ -94,7 +101,7 @@ Keep this file up to date when features change. Only describe things that exist 
 - Video works on mobile data and with lots of viewers once the app's video relay is turned on.
 
 ## Me / profile
-- Tap You in the bottom bar (or your picture, top left). Upload a photo or pick an emoji avatar and a color at
+- Tap You in the bottom bar, then Edit profile. Upload a photo or pick an emoji avatar and a color at
   the top. Four tabs: 👤 Profile (what others see + interests),
   🧬 Personality (quiz + astrology), 📝 About you (39 questions), 🔒 Privacy (location precision,
   broadcast delay, your data, blocked people, terms, sign out, delete account).
@@ -195,7 +202,7 @@ Keep this file up to date when features change. Only describe things that exist 
 - Event details: tap any event (feed card, Details on the map, Tonight near you in Explore) for the full page: Going,
   Interested, 🔖 Save, 💌 Invite (sends friends a message with the link), 🔗 Share (a link with a preview), Calendar,
   Directions, Eat after, who's going (friends first) and a chat for people going.
-- 🏆 Quests (You → Quests & rewards, or the "Lv" button in Explore): challenges like History buff (5 historical markers), Culture
+- 🏆 Quests (You → Quests & rewards, or your level line on You): challenges like History buff (5 historical markers), Culture
   hound, Taco crawl, Touch grass, Live and loud, Night owl, Explorer (3 hot spots), Squad up, Light a flare,
   Storyteller, Bring a friend, Regular (3 weeks in a row). You earn XP by checking in: tap 📍 Check in on a sight,
   place, park or event when you're within about 150 m. The phone checks the distance; Side Quest only learns which

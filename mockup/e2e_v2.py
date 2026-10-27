@@ -74,7 +74,9 @@ with sync_playwright() as pw:
     actx, a = new_page(browser, "amy", geo=MARKER)
     sign_up(a, AMY)
     check("bell shows in the header once signed in", a.is_visible("#bellBtn"))
-    check("Home: the quick row shows your quest level", "Lv 1" in a.inner_text("#quickBar"))
+    a.evaluate("tab('me')"); a.wait_for_timeout(300)
+    check("You shows your quest level", "Lv 1" in a.inner_text("#youStats"))
+    a.evaluate("tab('home','peek')")
     check("Home: 'Tonight near you' strip with events", a.locator("#homeTonight .tncard").count() >= 1 or a.evaluate(
         "!EV.list.some(e=>e.te>Date.now()&&e.ts<new Date().setHours(28,0,0,0)&&!e.tba&&e.lat)"))
     a.screenshot(path=f"{OUT}/v2-01-home.png")

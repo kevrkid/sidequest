@@ -955,6 +955,30 @@
   .leaflet-popup .popimg{height:90px;border-radius:10px}
   #exPop .poptitle,#exPop .leaflet-popup-content>b:first-child{display:block;font-size:18px;line-height:1.25;letter-spacing:-.2px;margin-bottom:2px}
   #exPop .popimg+.poptitle{margin-top:2px}
+  /* V3 review 1 */
+  #app.v3 .me-chip.authed{display:none} #app.v3 .me-chip.authed+.logo{margin-left:0}
+  #dock .dav.online .av{box-shadow:0 0 0 2px #0a0f22,0 0 0 3.5px var(--good)}
+  #dock button.on .dav.online .av{box-shadow:0 0 0 2px #0a0f22,0 0 0 3.5px var(--good),0 0 10px #3ddc9788}
+  /* a full screen gets a proper top bar (no map strip showing through) */
+  @media (max-width:899px){
+    #app.v3[data-at=full] header{background:#0b1024;border-bottom:1px solid #ffffff10;padding-bottom:9px}
+    #app.v3[data-at=full] .mapctl,#app.v3[data-at=full] #map .leaflet-control-attribution,#app.v3[data-at=full] .maphint{visibility:hidden}
+    #app.v3[data-at=full] #drawer{border-radius:0;border-top-color:transparent;box-shadow:none}
+  }
+  /* chips: the picked one carries the ✕; no extra heading */
+  #drawer .mapchips .chip.on::after{content:"✕";margin-left:7px;font-size:11px;opacity:.6}
+  #app.v3[data-cat] .glance,#app.v3[data-tab=search] .glance{display:none}
+  .subchips button.tog{border-color:#3ddc9766;color:#bff5dc} .subchips button.tog.on{background:var(--good);border-color:var(--good);color:#04210f}
+  .exnote{margin:-2px 2px 6px;font-size:12px}
+  /* a card open: it gets the drawer to itself */
+  #app.v3[data-pop] .qbar{display:none}
+  /* text that fits */
+  .srail button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .xrow b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25}
+  #youStats{flex-wrap:wrap} #youStats button{flex:none;min-width:0;flex-direction:row;align-items:center;padding:8px 12px;border-radius:99px;font-weight:700;font-size:13px}
+  .xhead{display:flex;align-items:center;gap:10px} .xhead b{font-size:19px;flex:1}
+  #app.v3 #v-home #quickBar,#app.v3 #v-home #homeStories{display:none}
+  #app.v3 #feedWhen{display:none} .chip.fwhen{border-color:#2ec5ff55;color:#bfe9ff}
 </style>
 </head>
 <body>
@@ -980,7 +1004,7 @@
 </defs></svg>
     <section class="view" id="v-map">
       <div id="map"></div>
-      <div class="mapctl"><button data-mlayers aria-label="Map layers" title="Map layers"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button><button data-mshare aria-label="Location sharing" title="Location sharing"><svg class="ic" aria-hidden="true"><use href="#i-ghost"/></svg></button><button data-mlocate aria-label="My location" title="My location"><svg class="ic" aria-hidden="true"><use href="#i-locate"/></svg></button></div>
+      <div class="mapctl"><button data-mlayers aria-label="Map layers" title="Map layers"><svg class="ic" aria-hidden="true"><use href="#i-layers"/></svg></button><button data-mlocate aria-label="My location" title="My location"><svg class="ic" aria-hidden="true"><use href="#i-locate"/></svg></button></div>
       <div class="maphint" id="mapHint" hidden></div>
       <div class="maplive" id="mapLive"></div>
     </section>
@@ -1025,13 +1049,14 @@
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
       <p class="meta" id="feedMeta" style="margin:0 0 10px"></p>
+      <div id="feedStories"></div>
       <div id="fyStrip"></div>
       <div id="feedList"></div>
     </section>
 
     <section class="view" id="v-meet" hidden>
       <div class="row"><h2 class="grow" data-t="Chats">Chats</h2><button class="btn sm" data-meetfilter>⚙️ Sort & filter</button></div>
-      <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="msgs">💬 Chats <span class="badge live" id="dmPill" hidden></span></button>
+      <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="msgs">💬 <span data-t="Messages">Messages</span> <span class="badge live" id="dmPill" hidden></span></button>
         <button type="button" data-mt="friends">👥 Friends <span class="badge live" id="frPill" hidden></span></button>
         <button type="button" data-mt="groups">🏘️ Groups</button><button type="button" data-mt="swipe" class="on">👋 Meet</button></div>
       <input id="meetQ" type="search" autocomplete="off" style="margin:0 0 12px">
@@ -1045,6 +1070,7 @@
         <button class="pres" id="presBtn" role="switch" aria-checked="true" title="Show others you're around, or go offline"><span id="presLbl">Online</span><span class="trk"><i></i></span></button></div>
       <div id="youStats"></div>
       <div class="ylist" id="youList"></div>
+      <div id="meEdit" hidden>
       <div class="seg" id="meTabs" style="margin:16px 0 14px"><button type="button" data-mesec="profile" class="on">👤 Profile</button><button type="button" data-mesec="personality">🧬 Personality</button>
         <button type="button" data-mesec="about">📝 About you</button><button type="button" data-mesec="settings">🔒 Privacy</button></div>
       <div data-mepane="profile">
@@ -1111,6 +1137,7 @@
         <div class="btns" style="margin-top:10px"><button class="btn sm" id="signOut">Sign out</button><button class="btn sm" id="delAcct" style="border-color:#ff3b5c;color:#ff6b81">Delete my account</button>
           <button class="btn sm" id="reset">Reset this browser</button></div></div>
       </div>
+    </div>
     </section>
   </main>
   </div>
@@ -1143,7 +1170,7 @@
   </div>
 
   <div class="sheet-bg" id="createBg" hidden><div class="sheet">
-    <div class="row"><b class="grow" style="font-size:20px">✨ Create</b><button class="btn sm" data-cclose>Close</button></div>
+    <div class="xhead"><b>✨ <span data-t="Create">Create</span></b><button class="xbtn" data-cclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <div class="create-grid">
       <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i>Story<span>A photo or video for 24 hours · tag the place, event, people</span></button>
       <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i>Post<span>A photo or thought that stays on your profile</span></button>
@@ -1389,7 +1416,8 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
+  'Explore':'Explorar','Watch':'Ver','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
   'Wave at people in Meet: when they wave back you can chat. Or bring your friends.':'Saluda a gente en Conocer: cuando te devuelvan el saludo podrán chatear. O trae a tus amigos.',
@@ -2384,9 +2412,9 @@ const liveCard = ls => `<div class="card"><div class="kicker">📺 Live now · $
 function renderFeed(){
   if(!$('#feedList')) return;
   if(FEED_MODE.m==='posts') return renderWallView();
-  const items=FEED_LAST=feedItems(), f=S.feed;
+  const items=FEED_LAST=feedItems().filter(x=>x.type!=='live'), f=S.feed;   // V3: live streams are on the map's LIVE pill
   $('#feedQ').hidden=!feedQ;   // V3: searching starts in the drawer's search box; this only shows what the feed is narrowed to
-  $('#feedCats').innerHTML = `<button class="chip ${!feedFocus?'on':''}" data-ffocus="">All</button>`+Object.entries(CATS)
+  $('#feedCats').innerHTML = `<button class="chip fwhen" data-fwhen>📅 ${esc(T(WHEN[f.when]))} ▾</button><button class="chip ${!feedFocus?'on':''}" data-ffocus="">All</button>`+Object.entries(CATS)
     .filter(([k])=>k!=='other'&&!f.off.includes(k)).map(([k,v])=>`<button class="chip ${feedFocus===k?'on':''}" data-ffocus="${k}">${v.e} ${v.l}</button>`).join('');
   $('#feedWhen').innerHTML = Object.entries(WHEN).map(([k,l])=>`<button type="button" data-v="${k}" class="${f.when===k?'on':''}">${l}</button>`).join('');
   const ne=items.filter(x=>x.type==='event').length, np=items.filter(x=>x.type==='post').length;
@@ -2396,7 +2424,8 @@ function renderFeed(){
   const plans=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts);
   const card = x => x.type==='event'?eventCard(x.it,x.r):x.type==='post'?pingCard(x.it):x.type==='person'?personCard(x.it):x.type==='group'
     ?`<div class="kicker" style="margin-top:4px">🏘️ A group you might like</div>${groupCard(x.it,false)}`:liveCard(x.it);
-  $('#feedList').innerHTML = (!feedQ&&!feedFocus?storyRail():'') + (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
+  $('#feedStories').innerHTML = !feedQ&&!feedFocus&&FEED_MODE.m==='foryou' ? storyRail() : '';   // stories first, Instagram-style
+  $('#feedList').innerHTML = (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
       ${plans.slice(0,4).map(e=>`<div class="row" style="margin:6px 0"><span>${CATS[e.cat].e}</span><span class="grow"><b>${esc(e.title)}</b> <span class="meta">${fmtWhen(e.ts,e.tba)}</span></span>
       ${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')}</div>`:'')
     + items.slice(0,feedN).map((x,i)=>card(x)+(i%4===2&&WL.top[(i-2)/4]&&!feedQ&&!feedFocus?wallCard(WL.top[(i-2)/4]):'')).join('')
@@ -2438,7 +2467,9 @@ const HOT_FALLBACK = {sixth:{id:'sixth',name:'6th Street'},rainey:{id:'rainey',n
 const PL = {all:null, byId:{}, hot:null, layer:null, zones:null, canv:null, cores:{}, pulseT:null, fetched:null, lastList:[]};
 const nearParam = () => `lat=${ME_POS[0].toFixed(2)}&lng=${ME_POS[1].toFixed(2)}`;   // ~1 km, never exact GPS
 const PLACE_E = {restaurant:'🍽️','fast food':'🍔','food truck':'🚚','truck park':'🚚','food hall':'🍱',bakery:'🥐','ice cream':'🍦',cafe:'☕',bar:'🍸',pub:'🍺','beer garden':'🍻',club:'🪩'};
-async function loadHotspots(){ try{ PL.hot=(await (await fetch('/api/places/hotspots')).json()).hotspots; }catch(e){} return PL.hot; }
+async function loadHotspots(){ const first=!PL.hot; try{ PL.hot=(await (await fetch('/api/places/hotspots')).json()).hotspots; }catch(e){}
+  if(first&&PL.hot&&curTab==='home'&&!EXC.k&&!POP.p) renderHome();   // Explore's "Busy right now"
+  return PL.hot; }
 // Austin minutes since Monday 00:00, for the map's open/closed colors (lists come pre-sorted from the server)
 let MOW=[0,0], MAPMOVING=false;   // worked out at most every 10 s: a map redraw asks once per place
 function austinMow(){ const n=Date.now(); if(n-MOW[0]<10000) return MOW[1];
@@ -2470,7 +2501,7 @@ async function openPlaces(q){
 const HH={now:0, list:null, at:0};
 async function loadHappy(force){
   if(!force&&HH.list&&Date.now()-HH.at<10*6e4) return HH;
-  try{ const j=await (await fetch(`/api/places/happy?${nearParam()}`)).json(); if(j.results){ HH.list=j.results; HH.now=j.now; HH.at=Date.now(); renderQuick(); } }catch(e){}
+  try{ const j=await (await fetch(`/api/places/happy?${nearParam()}`)).json(); if(j.results){ HH.list=j.results; HH.now=j.now; HH.at=Date.now(); renderQuick(); if(curTab==='home'&&!EXC.k&&!POP.p) renderHome(); else renderGlance(); } }catch(e){}
   return HH;
 }
 const DAYW={Mo:'Mon',Tu:'Tue',We:'Wed',Th:'Thu',Fr:'Fri',Sa:'Sat',Su:'Sun'};
@@ -4043,7 +4074,7 @@ function threadAv(t){
 const agoShort = at => { const m=Math.round((Date.now()-at)/6e4); return m<1?'now':m<60?m+'m':m<1440?Math.round(m/60)+'h':new Date(at).toLocaleDateString([],{month:'short',day:'numeric'}); };
 function threadsHtml(){
   const q=meetQ, ts=allThreads().filter(t=>qHit(q,t.with,t.name||'',t.last.t,t.members||[])), others=S.friends.filter(h=>!allThreads().some(t=>t.with===h)&&qHit(q,h));
-  return `<div class="row" style="margin-bottom:8px"><b class="grow">${T('Chats')}</b>${AUTHED?`<button class="btn sm" data-dmplan>📅 ${T('Make plans')}</button><button class="btn sm" data-dmnewgroup>👥 ${T('New group')}</button>`:''}</div>`
+  return `${AUTHED?`<div class="row" style="margin-bottom:8px;justify-content:flex-end"><button class="btn sm" data-dmplan>📅 ${T('Make plans')}</button><button class="btn sm" data-dmnewgroup>👥 ${T('New group')}</button></div>`:''}`
     + (ts.map(t=>{ const n=t.unread??(t.last.f!==S.me.h&&t.last.at>(S.dmSeen[t.with]||0)?1:0);
       return `<button class="card row dmrow ${n?'unread':''}" data-thread="${esc(t.with)}" style="width:100%;text-align:left">${threadAv(t)}<div class="grow" style="min-width:0"><b>${esc(threadName(t))}</b>
         <div class="meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.last.f===S.me.h?'You: ':t.group&&t.last.f?'@'+esc(t.last.f)+': ':''}${esc(t.last.t)}</div></div>
@@ -4435,7 +4466,7 @@ function renderWallView(){
 }
 function setFeedMode(m){
   FEED_MODE.m=m; document.querySelectorAll('#feedMode button').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
-  ['#feedCats','#feedWhen','#feedMeta','#fyStrip'].forEach(s=>{ const x=$(s); if(x) x.hidden=m!=='foryou'; });
+  ['#feedCats','#feedWhen','#feedMeta','#fyStrip','#feedStories'].forEach(s=>{ const x=$(s); if(x) x.hidden=m!=='foryou'; });
   if(m==='posts'){ renderWallView(); loadWall(true).then(()=>{ if(FEED_MODE.m==='posts') renderWallView(); }); }
   else renderFeed();
 }
@@ -4587,9 +4618,9 @@ function renderPicks(){
   const el=$('#fyStrip'); if(!el) return;
   if(S.feed.sort!=='foryou'||feedQ||feedFocus||!(ns.length||AI.loading)){ el.innerHTML=''; return; }
   el.innerHTML = `<div class="row" style="margin:0 0 8px"><div class="grow"><div class="kicker" style="margin:0">✨ Tonight's picks for you</div>
-      <div class="meta">${AI.loading?'🧠 Claude is picking…':esc((ai&&AI.summary)||"From your interests, your friends and what's close")}</div></div>
+      <div class="meta">${AI.loading?'🧭 '+T('Scout is picking…'):esc((ai&&AI.summary)||"From your interests, your friends and what's close")}</div></div>
       ${ENGINE?`<button class="btn sm" id="refreshPicks" title="Ask Claude again" ${AI.loading?'disabled':''}>↻</button>`:''}</div>`
-    + (ENGINE&&AI.loading&&!AI.picks ? '<div class="card skel" style="height:120px">🧠 Claude is picking…</div>' : ns.map(n=>`<div class="card nudge">
+    + (ENGINE&&AI.loading&&!AI.picks ? `<div class="card skel" style="height:64px">🧭 ${T('Scout is picking…')}</div>` : ns.map(n=>`<div class="card nudge">
       <div class="row">${av(n.a.h)}<div class="grow"><span class="match">${pct(n)}% MATCH</span><div class="bar"><b style="width:${ai?n.s:n.s/max*100}%"></b></div></div>${when(n.p)}</div>
       <div class="head">${esc(n.head||headline(n))}</div>
       <div class="meta">${esc(n.a.h)} posted: “${esc(n.p.t)}”</div>
@@ -4641,11 +4672,11 @@ function friendsHtml(){
 
 let meSec='profile';
 function showMeSec(sec){   // the profile is split into four tabs; only one shows at a time
-  meSec=sec;
+  meSec=sec; $('#meEdit').hidden=false;   // V3: they sit behind You → Edit profile / Settings
   document.querySelectorAll('#meTabs button').forEach(b=>b.classList.toggle('on',b.dataset.mesec===sec));
   document.querySelectorAll('[data-mepane]').forEach(p=>p.hidden=p.dataset.mepane!==sec);
   if(sec==='profile') renderFavs();
-  if(!$('#v-me').hidden) $('#v-me').scrollIntoView({block:'start'});
+  if(!$('#v-me').hidden&&$('#meEdit').offsetTop) $('#v-me').scrollTop=Math.min($('#v-me').scrollTop,$('#meEdit').offsetTop-8);
 }
 function renderMe(){
   $('#meTitle').textContent='@'+S.me.h; $('#privHandle').textContent='@'+S.me.h;
@@ -4984,7 +5015,7 @@ function renderLiveMarkers(){
 }
 
 /* ---------- friends on the map (Snap-Map-style) ----------
-   Off until you turn it on (👻 on the map). Then your phone sends where it is about once a minute while the app is
+   Off until you turn it on (You → Location sharing, or the map layers sheet). Then your phone sends where it is about once a minute while the app is
    open, and the friends you chose see your face there (exact, or a ~500 m square) for up to 8 hours. Friends who
    share with you show up the same way; tap one to chat, see their profile or get directions. */
 const FMAP = {friends:[], me:{mode:'off',list:[],precise:false,until:0}, sentAt:0, sentPos:null, layer:null, loaded:false};
@@ -5014,7 +5045,7 @@ function renderFriendLocs(){
         <a class="btn sm" href="${mapsUrl(f.lat,f.lng)}" target="_blank" rel="noopener">🧭 Go</a></div>`);
   });
 }
-function renderShareBtn(){ const b=$('[data-mshare]'); if(!b) return; b.innerHTML=svgI(fmOn()?'users':'ghost'); b.title=b.ariaLabel=fmOn()?'Sharing your location with friends':'Ghost mode: friends can’t see you'; b.classList.toggle('on',fmOn()); }
+function renderShareBtn(){ if(curTab==='me') renderYou(); const b=$('[data-mshare]'); if(!b) return; b.innerHTML=svgI(fmOn()?'users':'ghost'); b.title=b.ariaLabel=fmOn()?'Sharing your location with friends':'Ghost mode: friends can’t see you'; b.classList.toggle('on',fmOn()); }
 function openShareSheet(){
   if(needAccount('share your location with friends')) return;
   renderShareSheet(); $('#shareBg').hidden=false; if(!FMAP.loaded) loadFriendLocs().then(renderShareSheet);
@@ -5272,7 +5303,7 @@ function renderHome(){
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#homeStories').innerHTML=storyRail(); $('#exMore').innerHTML=hotRail()+happyRail()+askRail();
+  renderQuick(); renderTonight(); $('#exMore').innerHTML=hotRail()+happyRail();   // stories live in For you; plans and level in You
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
   $('#homeNext').innerHTML = next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
       const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
@@ -5292,7 +5323,7 @@ function renderGlance(){
 function renderDock(){
   const n=dmUnread()+(SV.friends?.incoming||[]).length, el=$('#dockChatN'); if(el) el.textContent=n||'';
   const guest=!AUTHED&&location.protocol.startsWith('http'), a=$('#dockAv');
-  if(a) a.innerHTML = guest ? `<span class="av emo" style="background:${S.me.c}">👤</span>` : av(S.me.h);
+  if(a){ a.innerHTML = guest ? `<span class="av emo" style="background:${S.me.c}">👤</span>` : av(S.me.h); a.classList.toggle('online',!guest&&!!S.online); }
 }
 // Hot spots, Friends out and Tonight sit in rails; this adds the busiest neighborhoods right now.
 function hotRail(){
@@ -5301,11 +5332,10 @@ function hotRail(){
     `<button class="tncard" data-pzone="${esc(x.id)}" style="width:170px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">🔥</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${T('{n} open now',{n:x.open})}</span></span></button>`).join('')}</div>` : '';
 }
 
-// Things to ask Scout, one tap each (they go to Scout's chat; guests get the built-in answers).
-function askRail(){
+// Things to ask Scout, one tap each, on the search page (they go to Scout's chat; guests get the built-in answers).
+function askIdeas(){
   const h=new Date().getHours(), we=[0,5,6].includes(new Date().getDay());
-  const qs=[h<11?'Where should I get breakfast?':h<16?'Lunch spot near me?':'Plan my night', 'Something free to do tonight', HH.now?'Best happy hour near me?':'Where\'s good tacos open late?', we?'Plan my Saturday outdoors':'Live music this week?'];
-  return `<div class="tnhead"><b>✨ ${T('Ask Scout')}</b></div><div class="srecent">${qs.map(q=>`<button data-xgo="scout|${esc(T(q))}">${esc(T(q))}</button>`).join('')}</div>`;
+  return [h<11?'Where should I get breakfast?':h<16?'Lunch spot near me?':'Plan my night', 'Something free to do tonight', HH.now?'Best happy hour near me?':'Where\'s good tacos open late?', we?'Plan my Saturday outdoors':'Live music this week?'].map(q=>T(q));
 }
 function happyRail(){
   const L=(HH.list||[]).filter(p=>p.happy?.now).slice(0,10);
@@ -5336,21 +5366,22 @@ function exploreCat(k, sub){
   if(k==='events'){ S.mapWhen=EXC.sub; mapFilter='all'; }
   if(k==='food') S.mapL.openonly=!!S.foodOpen;
   refreshMapLayers(); renderMapChips();
-  if(curTab!=='home') tab('home','half'); else if(DRW.at==='peek') setDrawer('half');
+  if(curTab!=='home') tab('home','half'); else setDrawer('half');   // half: the pins and the top of the list together
+  $('#app').dataset.cat=k;
   $('#exMain').hidden=true; $('#exCat').hidden=false; renderExCat(true); try{ track('chip_'+k); }catch(e){}
 }
 function exploreClear(){
   if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }
-  EXC.k=null; EXC.list=null; refreshMapLayers(); renderMapChips(); renderHome();
+  EXC.k=null; EXC.list=null; delete $('#app').dataset.cat; refreshMapLayers(); renderMapChips(); renderHome();
 }
-const exHead = (title, extra='') => `<div class="exch"><b class="grow">${title}</b>${extra}<button class="xbtn" data-exclose aria-label="${T('Close')}">${svgI('x')}</button></div>`;
-const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
+const exHead = () => '';   // the picked chip (with its ✕) is the heading
+const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${k==='food'||k==='night'?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>● ${esc(T('Open now'))}</button>`:''}${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
 const xrow = ({go, e, th='', title, sub, d, attr=''}) => `<button class="xrow" ${go?`data-xgo="${esc(go)}"`:''} ${attr}><span class="xe thumb"${th}>${e}</span>
   <span class="grow"><b>${esc(title)}</b><span class="meta">${sub||''}</span></span>${d!=null?`<span class="xd">${esc(d)}</span>`:''}</button>`;
 const mapC = () => map ? [map.getCenter().lat, map.getCenter().lng] : ME_POS;
 async function renderExCat(fresh){
   const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq, [,e,l]=EX_CHIPS.find(c=>c[0]===k);
-  const head = exHead(`${e} ${T(l)}`) + exSubs(k);
+  const head = exSubs(k);
   const busy = () => { el.innerHTML = head + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`; };
   if(k==='food'||k==='night'){
     if(fresh||!EXC.list) busy();
@@ -5362,7 +5393,7 @@ async function renderExCat(fresh){
       catch(err){ if(seq===EXC.seq) el.innerHTML=head+`<p class="meta">${T('Couldn\'t load places.')} ${esc(err.message)}</p>`; return; }
     }
     if(seq!==EXC.seq) return;
-    const openT = `<div class="row" style="margin:-2px 0 6px"><span class="meta grow">${EXC.sub==='happy'?T('Happy hours from menus, on now first'):S.foodOpen?T('Open now · nearest first'):T('Nearest first')}</span>${EXC.sub==='happy'?'':`<span class="meta">${T('Open now')}</span><button class="toggle ${S.foodOpen?'on':''}" data-exopen aria-label="${T('Only places open now')}"></button>`}</div>`;
+    const openT = EXC.sub==='happy' ? `<p class="meta exnote">${T('Happy hours from menus, on now first')}</p>` : '';
     if(EXC.sub==='happy') PL.lastList=HH.list||[];
     const rows = EXC.sub==='happy' ? (HH.list||[]).slice(0,40).map(p=>xrow({go:`pl|${p.id}`, e:'🍻', th:thumbAttr({id:p.id}), title:p.name, sub:`<span class="hhtag ${p.happy?.now?'now':''}">${esc(p.happy?.label||'')}</span> ${esc(p.happy?.deals||'')}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}))
       : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
@@ -5388,14 +5419,14 @@ async function renderExCat(fresh){
           sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:km(c,a.c)}))
       : (SG.data||[]).filter(([,kind,name])=>!/, Texas\b|\(.*Texas\)|^Greater /.test(name)).filter(([,kind])=>EXC.sub==='all'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
           sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:km(c,[lat,lng])}));
-    el.innerHTML = head + `<p class="meta" style="margin:-2px 0 4px">${T('Closest to the middle of the map')}</p>` +
+    el.innerHTML = head + `<p class="meta exnote">${T('Closest to the middle of the map')}</p>` +
       (items.sort((a,b)=>a.k-b.k).slice(0,40).map(x=>xrow({...x, d:fmtMi(x.k)})).join('') || `<p class="xempty">${T('Nothing here yet.')}</p>`);
     return;
   }
   if(k==='zones'){
     if(!PL.hot){ busy(); await loadHotspots(); } if(seq!==EXC.seq) return;
     const z=(PL.hot||Object.values(HOT_FALLBACK)).slice().sort((a,b)=>(b.open||0)-(a.open||0));
-    el.innerHTML = head + `<p class="meta" style="margin:-2px 0 4px">${T('Neighborhoods glow brighter the more is open and happening.')}</p>` +
+    el.innerHTML = head + `<p class="meta exnote">${T('Neighborhoods glow brighter the more is open and happening.')}</p>` +
       z.map(x=>xrow({attr:`data-pzone="${esc(x.id)}"`, e:'🔥', title:x.name, sub:esc(x.open!=null?T('{n} open now',{n:x.open}):x.vibe||'')})).join('');
     return;
   }
@@ -5423,7 +5454,8 @@ function renderSearch(){
   const ask = (text, sub, go=text) => `<button class="sask" data-xgo="scout|${esc(go)}"><span class="scwrap" data-scface></span><span class="grow"><b>${esc(sub)}</b><span class="meta">${esc(text)}</span></span>${svgI('chev')}</button>`;
   if(!q){
     const rec=(S.recentQ||[]).slice(0,8), tries=['tacos','live music tonight','happy hour','coffee','trivia','brunch','pickup basketball','swimming'];
-    el.innerHTML = ask(T('“Where’s good tacos open late?” “Plan my Saturday”'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
+    el.innerHTML = ask(T('Or tap the mic and just talk'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
+      + `<div class="srecent" style="margin-top:10px">${askIdeas().map(q=>`<button data-xgo="scout|${esc(q)}">✨ ${esc(q)}</button>`).join('')}</div>`
       + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
       + `<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`;
     scoutFaces(); return;
@@ -5434,7 +5466,9 @@ function renderSearch(){
   (PL.all||[]).forEach(([id,name,kind,lat,lng])=>{ if(hit(name,kind||'')) places.push({go:`pl|${id}`, e:PLACE_E[kind]||'🍽️', th:thumbAttr({id}), title:name, sub:esc(kind||''), k:near([lat,lng])}); });
   (OD.data?.areas||[]).forEach(a=>{ if(a.name&&hit(a.name)) places.push({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name, sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:near(a.c)}); });
   (SG.data||[]).forEach(([id,kind,name,lat,lng,year])=>{ if(hit(name)) places.push({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name, sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:near([lat,lng])}); });
-  places.sort((a,b)=>a.k-b.k).forEach(x=>x.d=fmtMi(x.k));
+  const seenP=new Set(); places.sort((a,b)=>a.k-b.k);
+  places.splice(0, places.length, ...places.filter(x=>{ const key=fold(x.title)+'|'+Math.round(x.k*5); if(seenP.has(key)) return false; seenP.add(key); return true; }));   // the same place listed twice (OSM has duplicates)
+  places.forEach(x=>x.d=fmtMi(x.k));
   EV.list.forEach(x=>{ if(x.te>Date.now()&&hit(x.title,x.venue||'',CATS[x.cat]?.l||'',x.genre||'')) evs.push({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', title:x.title, sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}`, ts:x.ts}); });
   evs.sort((a,b)=>a.ts-b.ts);
   people().forEach(u=>{ if(u.h!==S.me.h&&hit(u.h,(u.i||[]).join(' '))) ppl.push({go:`u|${u.h}`, e:av(u.h), title:'@'+u.h, sub:esc((u.i||[]).slice(0,3).join(' · '))}); });
@@ -5476,26 +5510,28 @@ function renderYou(){
     : esc([S.me.t&&TYPES[S.me.t]?`${S.me.t} · ${TYPES[S.me.t][0]}`:'', S.me.astro&&S.me.z?`${SIGN_E[S.me.z]||''} ${S.me.z}`:''].filter(Boolean).join(' · ') || T('Austin'));
   $('#presBtn').hidden = guest;
   const nFr=(SV.friends?.list||[]).length||S.friends.length, plans=EV.list.filter(e=>myRsvp(e.id)&&e.te>Date.now()).length+(SV.plans||[]).length;
-  $('#youStats').innerHTML = guest ? '' : [['quests',T('Lv {n}',{n:v.level||1}),T('Level')],['quests',`🪙 ${v.coins||0}`,T('Coins')],['quests',`🔥 ${v.day_streak||0}`,T('Day streak')],['friends',nFr,T('Friends')]]
-    .map(([k,b,l])=>`<button data-ystat="${k}"><b>${esc(String(b))}</b><span>${esc(l)}</span></button>`).join('');
+  $('#youStats').innerHTML = guest ? '' : `<button data-ystat="quests">🏆 ${esc(T('Lv {n}',{n:v.level||1}))} · 🪙 ${v.coins||0} · 🔥 ${esc(T('{n}-day streak',{n:v.day_streak||0}))}</button><button data-ystat="friends">👥 ${esc(T('{n} friends',{n:nFr}))}</button>`;
   const row=(attr,e,bg,l,meta='')=>`<button ${attr}><span class="yi" style="background:${bg}">${e}</span><span class="grow">${esc(l)}</span>${meta?`<span class="meta">${esc(String(meta))}</span>`:''}${svgI('chev')}</button>`;
   $('#youList').innerHTML = [
     row('data-menu="plans"','📅','#ff9a3c26',T('My plans'),plans||''),
     row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
-    row('data-yfriends','👥','#2ec5ff26',T('Friends'),(SV.friends?.incoming||[]).length?T('{n} new',{n:SV.friends.incoming.length}):''),
     guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
     row('data-menu="invite"','💌','#b57bff26',T('Invite friends')),
+    guest?'':row('data-yshare','📍','#2ec5ff26',T('Location sharing'),fmOn()?T('On'):T('Ghost')),
+    row('data-yedit="profile"','✏️','#ffffff14',T('Edit profile')),
+    row('data-yedit="settings"','🔒','#ffffff14',T('Settings & privacy')),
     row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-excat],[data-exsub],[data-exclose],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-excat],[data-exsub],[data-exclose],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
     if(k==='home') return curTab==='home' ? setDrawer(DRW.at==='peek'?'half':'peek') : tab('home', 'half');
     if(k==='me'&&!AUTHED&&location.protocol.startsWith('http')){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
     if(k==='meet'&&curTab!=='meet'){ meetTab='msgs'; DM.open=null; loadThreads().then(()=>{ if(curTab==='meet') renderMeet(); }); }
+    if(k==='me') $('#meEdit').hidden=true;   // You opens on the hub; Edit profile shows the rest
     if(k===curTab){ $('#v-'+k)?.scrollTo({top:0,behavior:'smooth'}); return; }
     return tab(k);
   }
@@ -5510,6 +5546,8 @@ document.addEventListener('click',e=>{
   if(d.sq!==undefined){ $('#qIn').value=d.sq; return renderSearch(); }
   if(d.ystat) return d.ystat==='friends' ? (meetTab='friends', tab('meet')) : openQuests();
   if(d.yfriends!==undefined){ meetTab='friends'; return tab('meet'); }
+  if(d.yedit){ showMeSec(d.yedit); return setTimeout(()=>$('#v-me').scrollTo({top:$('#meEdit').offsetTop-8,behavior:'smooth'}),60); }
+  if(d.yshare!==undefined){ $('#placesBg').hidden=true; return openShareSheet(); }
   if(d.yjoin!==undefined){ ONB.mode='signup'; ONB.step=1; return renderOnb(); }
   if(d.fmgo){ const f=(FMAP.friends||[]).find(x=>x.h===d.fmgo); if(f?.lat){ tab('map'); setTimeout(()=>map.setView([f.lat,f.lng],16),80); } }
 });
@@ -5772,6 +5810,7 @@ document.addEventListener('click',e=>{
   else if(d.fcat){ const o=S.feed.off; S.feed.off=o.includes(d.fcat)?o.filter(x=>x!==d.fcat):[...o,d.fcat]; if(feedFocus===d.fcat) feedFocus=null; save(); renderFeedSheet(); renderFeed(); }
   else if(d.fcatall){ const aff=affinity(); S.feed.off=d.fcatall==='all'?[]:Object.keys(CATS).filter(k=>d.fcatall==='none'||!aff[k]); feedFocus=null; save(); renderFeedSheet(); renderFeed(); }
   else if(d.fmore!==undefined){ feedN+=30; renderFeed(); }
+  else if(d.fwhen!==undefined){ const ks=Object.keys(WHEN); S.feed.when=ks[(ks.indexOf(S.feed.when)+1)%ks.length]; feedN=30; save(); renderFeed(); renderMap(); }   // one chip cycles the time window
   else if(['fSort','fDist','feedWhen'].includes(b.parentElement.id)){ const id=b.parentElement.id;
     if(id==='fSort') S.feed.sort=d.v; if(id==='fDist') S.feed.dist=+d.v; if(id==='feedWhen') S.feed.when=d.v;
     feedN=30; save(); if(id!=='feedWhen') renderFeedSheet(); renderFeed(); renderMap(); }
@@ -6440,13 +6479,16 @@ function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
 function renderMapChips(){   // V3: the chips under the search box pick one thing for the map and the list at once (exploreCat)
   const el=$('#mapChips'); if(!el) return;
   el.innerHTML = (mapFilter==='feed'?`<button class="chip on" data-mfeedoff>📋 ${T('My feed')} ✕</button>`:'')
-    + EX_CHIPS.map(([k,e,l])=>`<button class="chip ${EXC.k===k?'on':''}" data-excat="${k}" aria-pressed="${EXC.k===k}">${e} ${esc(T(l))}</button>`).join('');
+    + EX_CHIPS.map(([k,e,l])=>{ if(k==='events'&&EXC.k==='events') l={tonight:'Tonight',weekend:'This weekend',week:'This week'}[S.mapWhen]||l;   // the chip says which days
+      return `<button class="chip ${EXC.k===k?'on':''}" data-excat="${k}" aria-pressed="${EXC.k===k}">${e} ${esc(T(l))}</button>`; }).join('');
 }
 function openMapLayers(){
   const sh=$('#placesSheet'), keep=$('#placesBg').hidden?0:sh.scrollTop;
   const sw=(k,on,attr='data-ml')=>`<button class="toggle ${on?'on':''}" ${attr}="${k}" aria-pressed="${on?'true':'false'}" aria-label="${k}"></button>`;
   const cats=Object.entries(CATS).filter(([k])=>k!=='other'), typeOn=k=>!S.mapCats.length||S.mapCats.includes(k);
   sh.innerHTML=`<div class="row"><b class="grow" style="font-size:19px">${T('🗂 Map layers')}</b><button class="btn sm primary" data-pclose>${T('Done')}</button></div>
+    ${AUTHED?`<button class="ylist" data-yshare style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:12px 0 4px;text-align:left;font-weight:650">
+      <span class="yi" style="background:#2ec5ff26;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${fmOn()?'🧑‍🤝‍🧑':'👻'}</span><span class="grow">${T('Location sharing')}</span><span class="meta">${fmOn()?T('On'):T('Ghost')}</span></button>`:''}
     <div class="tagchips" style="margin:10px 0 4px">${Object.entries(MAP_PRESETS).map(([k,[l]])=>`<button class="ichip" data-mpreset="${k}">${T(l)}</button>`).join('')}</div>
     ${MAP_CATS.map(c=>{ const st=catState(c);
       return `<div class="lcat cat-${c.k}"><div class="row"><b class="grow">${c.e} ${esc(T(c.l))}</b>${sw(c.k,!!st,'data-mlcat')}</div>
@@ -6468,7 +6510,7 @@ const openMapFilter = openMapLayers;
 // A short hint right after a change, when a layer is on but has nothing to show where you're looking.
 function mapHint(now){
   const el=$('#mapHint'); if(!el||!map) return;
-  if(now&&!mapHint.armed) return;   // V3: the map is up from the first second; hints wait until you've changed something clearTimeout(el.t); const z=map.getZoom(), b=map.getBounds(); let msg='', act='';
+  if(now&&!mapHint.armed) return;   /* V3: the map is up from the first second; hints wait until you've changed something */ clearTimeout(el.t); const z=map.getZoom(), b=map.getBounds(); let msg='', act='';
   const evIn=Object.keys(markers).filter(id=>EV.byId[id]&&b.contains(markers[id].getLatLng())).length;
   const fmOn=S.mapL.markets&&(FM.list||[]).filter(m=>fmSoon(m)).length;
   if(fmOn&&now&&!mapHint.fmShown){ mapHint.fmShown=1; msg=T(placeStateAny()?'🧺 A farmers market is open now: look for the glowing baskets':fmOn>1?'🧺 {n} farmers markets coming up: tap a basket':'🧺 A farmers market is coming up: tap the basket',{n:fmOn}); }
@@ -6535,7 +6577,7 @@ const SCT = {ex:'happy', busy:false, talkT:null, stopT:null, rec:null, listening
 const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bottom bar, You
   scout:['#scoutBtn',null,'the Scout button, on the map just above the drawer on the left (that is you)'],
   profile:['[data-dock="me"]',null,'You, at the right of the bottom bar: profile, plans, saved, quests, invite, Español, privacy'],
-  avatar:['#meChip',null,'your picture, top left (opens You)'], bell:['#bellBtn',null,'notifications bell, top right'],
+  signup:['#meChip:not(.authed)',null,'Sign up, top left (guests only)'], bell:['#bellBtn',null,'notifications bell, top right'],
   online:['#presBtn','me','Online/Offline switch at the top of You'],
   search:['#qIn','home','the search box at the top of the drawer (places, events, people, groups, dishes, or ask Scout)'],
   search_mic:['[data-qmic]','home','the 🎤 in the search box (talk to Scout)'],
@@ -6550,9 +6592,9 @@ const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bo
   dock_create:['[data-dock="create"]',null,'the ＋ in the middle of the bottom bar (story, flare, event, group, go live)'],
   dock_chats:['[data-dock="meet"]',null,'Chats in the bottom bar (messages, friends, groups, the Meet swipe deck)'],
   map_layers:['[data-mlayers]',null,'map layers button on the right of the map'], map_live:['#mapLive',null,'LIVE pill just above the drawer'],
-  q_plans:['[data-quick="plans"]','home','My plans button in Explore'], q_msgs:['[data-quick="msgs"]','home','new messages button in Explore'],
   y_plans:['#youList [data-menu="plans"]','me','My plans on You'], y_saved:['#youList [data-quick="favs"]','me','Saved on You'],
   y_quests:['#youList [data-menu="quests"]','me','Quests & rewards on You'], y_invite:['#youList [data-menu="invite"]','me','Invite friends on You'],
+  y_share:['#youList [data-yshare]','me','Location sharing on You (ghost mode or friends)'], y_edit:['#youList [data-yedit="profile"]','me','Edit profile on You'],
   feedback:['[data-feedback]','home','beta feedback link at the bottom of Explore'],
   feed_customize:['[data-fcustom]','feed','feed Customize button'], feed_mapit:['#feedMapBtn','feed','map button at the top of For you (shows the feed on the map)'],
   meet_filter:['[data-meetfilter]','meet','Meet sort & filter button'], meet_search:['#meetQ','meet','search box in Chats (narrows the open tab; on Friends it finds anyone by name or interest)'], meet_deck:['#meetBody','meet','the Meet swipe deck'],
@@ -7261,7 +7303,7 @@ async function shareLink(url, title, text){
   if(navigator.share) try{ await navigator.share({title, text, url}); return; }catch(e){ if(e.name==='AbortError') return; }
   try{ await navigator.clipboard.writeText(url); toast(`🔗 ${T('Link copied')}`,'green',[],2500); }catch(e){ window.prompt(T('Copy this link'), url); }
 }
-const v2head = (title, close) => `<div class="row"><b class="grow" style="font-size:19px">${title}</b><button class="btn sm" data-v2close="${close}">${T('Close')}</button></div>`;
+const v2head = (title, close) => `<div class="xhead"><b>${title}</b><button class="xbtn" data-v2close="${close}" aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>`;
 
 /* ---- 🔔 notifications ---- */
 const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['dm','Messages'],['group','Posts, comments and requests in your groups'],['chat','Chat replies'],

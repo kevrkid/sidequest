@@ -45,6 +45,8 @@ with sync_playwright() as pw:
 
     # the first screen: the map, the drawer down, five buttons
     check("opens on the map with the drawer down", at() == ["home", "peek"] and p.locator("#map").is_visible())
+    check("members get no avatar at the top (You is in the dock); the map keeps just layers + locate",
+          p.locator("#meChip").is_hidden() and p.eval_on_selector_all(".mapctl button", "b=>b.length") == 2)
     check("dock: Explore · For you · ＋ · Chats · You", p.eval_on_selector_all("#dock [data-dock]", "b=>b.map(x=>x.dataset.dock)") == ["home", "feed", "create", "meet", "me"])
     check("map starts calm: no food dots, nightlife or hot spot zones", p.evaluate("!S.mapL.food&&!S.mapL.clubs&&!S.mapL.bars&&!S.mapL.zones&&S.mapL.events"))
     p.wait_for_function("EV.loaded", timeout=20000); p.wait_for_timeout(300)
@@ -104,15 +106,18 @@ with sync_playwright() as pw:
     p.evaluate(DRAG, ["#v-feed", 160, 700, 10, 20])
     check("pulling a screen down shows the map again", at()[0] == "home", at())
     p.click("[data-dock='meet']"); p.wait_for_timeout(300)
-    check("Chats opens on messages, tabs Chats · Friends · Groups · Meet",
+    check("Chats opens on messages, tabs Messages · Friends · Groups · Meet",
           p.evaluate("meetTab") == "msgs" and p.eval_on_selector_all("#meetTabs [data-mt]", "b=>b.map(x=>x.dataset.mt)") == ["msgs", "friends", "groups", "swipe"])
     p.evaluate("openThread('riff_raff_rae')"); p.wait_for_timeout(600)
     box = p.locator("#dmIn").bounding_box(); dock = p.locator("#dock").bounding_box()
     check("an open chat fills the drawer, the box just above the dock", 0 <= dock["y"] - (box["y"] + box["height"]) < 40, f"{box} {dock}")
     p.click("[data-dock='me']"); p.wait_for_timeout(300)
     rows = p.locator("#youList").inner_text()
-    check("You: online switch, stats, and plans / saved / friends / quests / invite", p.locator("#presBtn").is_visible()
-          and all(x in rows for x in ["My plans", "Saved", "Friends", "Quests", "Invite"]) and p.locator("#youStats button").count() == 4)
+    check("You: online switch, stats, and plans / saved / quests / invite / sharing / edit / settings", p.locator("#presBtn").is_visible()
+          and all(x in rows for x in ["My plans", "Saved", "Quests", "Invite", "Location sharing", "Edit profile", "Settings"]) and "Lv 1" in p.inner_text("#youStats")
+          and p.locator("#meTabs").is_hidden())
+    p.click("#youList [data-yedit='profile']"); p.wait_for_timeout(300)
+    check("You → Edit profile shows the profile tabs", p.locator("#meTabs").is_visible())
     p.click("#youList [data-menu='quests']"); p.wait_for_selector("#questSheet .lvlcard", timeout=8000)
     check("You → Quests opens the quests", p.locator("#questBg").is_visible())
     p.evaluate("closeTopOverlay()")
