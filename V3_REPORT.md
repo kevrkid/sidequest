@@ -51,3 +51,29 @@ never seen the app grading it against your goal), then fixes. Each round ended w
 - **Pin details in the drawer, not bubbles** (easier to read and tap, never under the map buttons).
 - **Hidden, not deleted:** the old Search sheet, quick bar and name menu code is still there behind the new
   screen, so nothing that links to them breaks.
+
+## Tests (final run, 2026-10-26 ~21:00)
+| Suite | Result |
+|---|---|
+| e2e_test.py (two new people, the whole app) | 117/117 |
+| e2e_v3.py (drawer, chips, search, cards, hold, dock, You, tour, desktop) | 41/41 in Chrome, 36/36 in WebKit (5 drag checks need Chrome) |
+| e2e_v2.py (V2 features) | 41/41 |
+| e2e_live.py (1 streamer, 3 viewers) | 14/14 |
+| chats 19 · groups 16 · friend map 11 · stories 14 · plans 11 · posts 13 · add location 24 · features 10 | all pass |
+| test_v2.rb 64 · spots 15 · menus 41 · tonight 6 · google 17 · webpush 6 · geofix 13 · live 14 · hours · api | all pass |
+
+A fresh reviewer who had never seen the app graded it against your goal: the old V2 home **D+**, V3 **B-**
+("Explore is now simple, polished and one-handed").
+
+## Try it
+On this Mac: `cd ~/claude/sidequest-v3/mockup && ./start_v3.sh`, then http://localhost:8802, or on your phone (same
+Wi-Fi) https://192.168.0.160:8446 (accept the certificate warning; it's this Mac's own certificate). It uses its own
+data, so nothing touches the live site.
+
+## Left for later (worth doing next)
+- For you and Chats still open as full pages over the map; a next step is For you at half height with its items lit
+  up on the map.
+- Meet (the swipe deck) could move out of Chats into the Friends chip.
+- Pins: one style across layers, and pulling the selected pin out of its cluster.
+- Real iPhone check of the drawer gestures (tested with simulated touches and WebKit, not a physical phone).
+- Going live with V3 is your call: it means merging `v3` into `v2` (or deploying `v3`) on the Hetzner server.
