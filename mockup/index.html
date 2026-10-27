@@ -3799,7 +3799,7 @@ const ONB = {step:1, mode:'signup', h:'', c:COLORS[0], i:[], err:'', busy:false}
 const ONB_TOP = ['live shows','food','comedy','outdoors','sports','pickup games','dancing','trivia','coffee','art','dogs','festivals'];   // the welcome shows these first
 function renderOnb(){
   const o=ONB, signup=o.mode==='signup'; let html='';
-  if(o.step===1) html=`<b style="font-size:22px">Welcome to Side Quest ⚔︎</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
+  if(o.step===1) html=`<button type="button" class="xbtn" data-onbclose aria-label="Close" style="float:right"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button><b style="font-size:22px">${signup?'Join Side Quest':'Welcome back'}</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
     <p class="meta" style="font-size:13px">Find things to do around Austin, and people to do them with.</p>
     <div class="seg" style="margin:12px 0 4px"><button type="button" data-onbmode="signup" class="${signup?'on':''}">Create account</button><button type="button" data-onbmode="login" class="${signup?'':'on'}">Sign in</button></div>
     ${CFG.gclient&&!o.google?`<div id="gsiBtn" style="display:flex;justify-content:center;min-height:44px;margin:14px 0 6px"></div>
@@ -3812,20 +3812,20 @@ function renderOnb(){
     <input id="onbP" name="password" type="password" maxlength="200" value="${esc(o.pw||'')}" autocomplete="${signup?'new-password':'current-password'}">`}
     ${signup&&S.ref&&S.refK?`<label class="row" style="gap:8px;margin-top:10px;font-weight:600"><input type="checkbox" id="onbRef" checked style="width:auto"> 💌 ${T('Be friends with @{h}, who invited you',{h:esc(S.ref)})}</label>`:''}
     ${signup?`${CFG.invite?`<label class="lbl">Invite code</label><input id="onbI" maxlength="40" placeholder="From the person who invited you" value="${esc(o.inv||'')}" autocomplete="off" autocapitalize="off">`:''}
-      <label class="lbl">Color</label><div class="chips">${COLORS.map(c=>`<button type="button" class="av" style="background:${c};${o.c===c?'outline:3px solid #fff;outline-offset:2px':''}" data-onbc="${c}" aria-label="color"></button>`).join('')}</div>
+      <label class="lbl">Your color <span class="meta">(behind your initial until you add a photo)</span></label><div class="chips">${COLORS.map(c=>`<button type="button" class="av" style="background:${c};${o.c===c?'outline:3px solid #fff;outline-offset:2px':''}" data-onbc="${c}" aria-label="color"></button>`).join('')}</div>
       <label class="row" style="margin-top:14px;gap:10px;align-items:flex-start"><input type="checkbox" id="onbAdult" style="width:auto;margin-top:2px" ${o.adult?'checked':''}><span class="meta" style="font-size:13px">I'm 18 or older.</span></label>
       <label class="row" style="margin-top:8px;gap:10px;align-items:flex-start"><input type="checkbox" id="onbTerms" style="width:auto;margin-top:2px" ${o.terms?'checked':''}><span class="meta" style="font-size:13px">I agree to the <a href="terms.html" target="_blank" style="color:var(--accent2)">Terms</a> and <a href="privacy.html" target="_blank" style="color:var(--accent2)">Privacy Policy</a>, and I'll meet people in public places.</span></label>`:''}
     ${o.err?`<p style="color:var(--accent);margin:12px 0 0">${esc(o.err)}</p>`:''}
     <button class="btn primary" data-onbnext style="width:100%;margin-top:18px;padding:13px" ${o.busy?'disabled':''}>${o.busy?'One sec…':signup?'Create account':'Sign in'}</button></form>
     <div style="text-align:center;margin-top:10px"><button type="button" class="meta" data-onbclose style="font-size:13px">Keep looking around without an account</button></div>`;
-  if(o.step==='welcome') html=`<button class="btn sm" data-langtoggle style="float:right">🌐 ${T('Español')}</button><b style="font-size:22px">Welcome to Side Quest ⚔︎</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
+  if(o.step==='welcome') html=`<button class="btn sm" data-langtoggle style="float:right">🌐 ${T('Español')}</button><b style="font-size:22px">Welcome to Side Quest</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
     <p class="meta" style="font-size:13px">Find things to do around Austin, and people to do them with. Look around first. No account needed.</p>
     <label class="lbl">What are you into? <span class="meta">(optional, shapes your feed)</span></label>
     <div class="chips">${(o.allI?INTERESTS:ONB_TOP.concat(o.i.filter(x=>!ONB_TOP.includes(x)))).map(x=>`<button class="ichip ${o.i.includes(x)?'on':''}" data-onbi="${x}">${esc(x)}</button>`).join('')}${o.allI?'':`<button class="ichip" data-onbmore>${T('+ more')}</button>`}</div>
     <button class="btn primary" data-onbguest style="width:100%;margin-top:18px;padding:13px">Start exploring →</button>
     <div class="row" style="justify-content:center;gap:16px;margin-top:12px"><button class="meta" data-onbmode="signup" style="font-size:13px">Create account</button>
       <button class="meta" data-onbmode="login" style="font-size:13px">I have an account · Sign in</button></div>`;
-  if(o.step==='gate') html=`<b style="font-size:20px">Create a free account to ${esc(o.why)}</b>
+  if(o.step==='gate') html=`<button type="button" class="xbtn" data-onbclose aria-label="Close" style="float:right"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button><b style="font-size:20px">Create a free account to ${esc(o.why)}</b>
     <p class="meta" style="font-size:13px">It takes 20 seconds. Everything you've done so far (interests, quiz, RSVPs) comes with you.</p>
     <div style="display:grid;gap:8px;margin-top:14px"><button class="btn primary" data-onbmode="signup" style="padding:13px">Create account</button>
       <button class="btn" data-onbmode="login">I have an account · Sign in</button><button class="btn" data-onbclose>Not now</button></div>`;
@@ -3836,7 +3836,7 @@ function renderOnb(){
     <p class="meta" style="font-size:13px">Want sharper picks and better matches? These take a few minutes, and you choose what's shared.</p>
     <div class="card" style="margin:12px 0 0;font-size:13px">🛡️ <b>Stay safe:</b> meet in public places, tell a friend where you're going, and use ⋯ on any post or person to report or block.</div>
     <div style="display:grid;gap:8px;margin-top:12px"><button class="btn blue" data-onbgo="quiz">🧬 Take the 16-type personality quiz</button>
-      <button class="btn" data-onbgo="about">📝 Answer the "about you" questions</button><button class="btn primary" data-onbgo="feed">Show me my feed →</button></div>`;
+      <button class="btn" data-onbgo="about">📝 Answer the "about you" questions</button><button class="btn primary" data-onbgo="feed">Show me what's on →</button></div>`;
   $('#onb').innerHTML=html; $('#onbBg').hidden=false;
   if($('#gsiBtn')) mountGoogleButton($('#gsiBtn'), signup);
 }
