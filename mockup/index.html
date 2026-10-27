@@ -1007,6 +1007,8 @@
   #drawer #v-meet.inthread{padding-bottom:10px}
   .seg.mini{flex:none;padding:2px;border-radius:11px} .seg.mini button{flex:none;padding:7px 10px!important;font-size:12.5px!important}
   #app.v3 #v-feed .fhd{margin-bottom:10px}
+  .pmain{margin-top:10px} .pmain .btn{font-size:14px}
+  .leaflet-popup .pmain{display:flex;gap:6px} .leaflet-popup .pmain .btn{padding:7px 8px;font-size:12px}
 </style>
 </head>
 <body>
@@ -2733,9 +2735,9 @@ async function placePopup(id, ll){
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}</div>
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
-      <div class="btns" style="margin-top:6px">${menuBtn(p)}${p.phone?`<a class="btn sm" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
-        <a class="btn sm" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Directions ↗</a>
-        ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 Eat after</button>`:''}
+      <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}</div>
+      <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
+        ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
         ${checkBtn('place',p.id,p.lat,p.lng)}${favBtn('place',p.id,p.name)}</div>
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
