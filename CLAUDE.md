@@ -507,6 +507,24 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   storytimes, toddler / homeschool / kids' classes, trunk-or-treats and the like are dropped (kids words in the title
   or the first 160 characters of the description; "family" category only with "Family" in the title). Grown-up
   events that only sound like it stay ("Cry Baby Tour", "Faith & Family Night", "teen slasher script").
+- **Scout gets to know you** (`scout_mind.rb`; client block "Scout gets to know you"): server-side memory per person
+  `d['scout_mem'][h]` = conversation log (40 turns; the newest 12 go to Claude, so chats carry across visits/devices),
+  notes Claude adds via the schema's `remember` (≤3 a turn, 60 kept; You → 🧭 Scout lists them with ✕, Clear chat,
+  Forget everything → `/api/scout/memory`, `/api/scout/forget`), and a turn count ("still new to each other" = shorter).
+  **Personalities** (`SCOUT_PERSONAS` / `SC_PERSONAS`: buddy, hype, chill, planner, curious; `auto` = from the 16-type
+  result, `scout_persona_for` / `pmAuto`, same rule both sides; asking "be more chill" returns `persona`).
+  **Setup interview** (`scoutInterview()`, "💬 Set up with Scout" on the sign-up "You're in" step and in You → Scout):
+  the phone sends what's still open (`interviewNeeds()`: interests, 4 quiz statements, 4 about-you questions), Claude
+  (smart model) asks one at a time and returns `profile` {interests, quiz {i,v}, life {k,v}, done}; `scoutProfile()`
+  checks it against INTERESTS / QUIZ / LIFE opts and saves (answers stay "Matching only"). **On/off**: `S.scout.off`
+  (body `scout-off` hides the compass, no nudges/tour; asking shows "Scout is off · Turn on"). **One mic**: the search
+  box 🎤 (`data-qmic`) is gone; the orb is the mic. **Ratings**: `/api/rate` {id, stars 1-5, dish, note} →
+  `d['ratings'][id][h]` (only the average is public: `place_rating`, `sq_rating` on `/api/place`, "⭐ 4.5 on Side
+  Quest" in place popups, ⭐ Rate button) + `d['orders'][h]`; after a place check-in the toast asks "🍽️ What did you
+  get?" (`openRate`, `#rateBg`), `S.scHere` lets Scout ask later, and "had the X, 5 stars" returns `order` → the same
+  card. Docs Scout reads: `scout_personality.md` (short replies), `scout_self.md` (job, limits, memory, growth),
+  `scout_knowledge.md`. Interests: search box + "＋ Add …" own words (`intChips`, `#onbIq`, `#meIq`). Limits now
+  100/day, 40/hour per person.
 - **Ice rinks** (events service `~/claude/live/sources.yaml`: `chaparral-ice`, `ice-and-field`, `pond-hockey-club`): adult
   drop-in hockey and stick & puck as `pickup` events with times, price and a sign-up link. Chaparral and Ice & Field come from
   DaySmart's public schedule API (`fetch_daysmart` in extractors/apis.py; type names / `match` / `skip`, price from the

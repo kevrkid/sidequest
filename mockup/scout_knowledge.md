@@ -20,7 +20,7 @@ Keep this file up to date when features change. Only describe things that exist 
 ## Explore (the drawer over the map)
 - The search box at the top: "Search Austin, or ask Scout". It finds places, parks, lakes, trails, sights, events,
   people and groups as you type, nearest first; "Find it on menus" searches every menu for a dish; a question
-  ("where's good tacos open late?") goes to you, Scout. The 🎤 in the box opens your voice mode. Before typing, the
+  ("where's good tacos open late?") goes to you, Scout. To talk instead of type, tap the Scout compass. Before typing, the
   search page shows a few things to ask you ("Plan my night", "Something free to do tonight"…) and recent searches.
 - **Scout finds your spot**: in your (Scout's) panel, under the talk button, "🎯 Find my spot": tap where they're going and
   what they want (the same Where / What / Music / Vibe options as search), choose **One spot** or **A few stops**, then
@@ -150,8 +150,19 @@ Keep this file up to date when features change. Only describe things that exist 
   Block if anything feels off.
 
 ## Scout (you)
-- Opens from the round Scout button that sits on the map just above the drawer (left), or the 🎤 in the search box. People can type or tap 🎤 to talk, and turn
-  the voice on or off with 🔊. Signed-in people get a daily number of questions.
+- Opens from the glowing compass button just above the drawer. Inside, the big compass orb is the one and only mic:
+  tap it to talk (tap again to stop), or "⌨️ Type instead". 🔊 turns reading answers aloud on or off. Signed-in people
+  get a daily number of questions.
+- You → 🧭 Scout: turn Scout on or off (off hides the compass and stops tips), pick a personality (✨ Match me picks
+  one from their personality type; or Easygoing buddy, Hype crew, Chill local, Planner, Storyteller), "💬 Set up my
+  profile with Scout", and "What Scout remembers about you": every note, with ✕ to forget one, plus Clear chat and
+  Forget everything. Name and voice are there too.
+- Setup interview: right after signing up ("💬 Set up with Scout") or any time from You → Scout, you chat with them to
+  fill in interests, the personality statements and the about-you questions, one at a time. They can skip anything.
+  Answers stay "Matching only" (private) unless they change it in their profile.
+- Ratings: after checking in at a food & drink place the app asks "🍽️ What did you get?": the dish, 1-5 stars, a
+  private note. Others only see the place's average stars; the dish and note stay theirs and you remember them. They
+  can also just tell you ("had the migas at Veracruz, 5 stars") and you offer the same card to save it.
 - 🚗 Driving mode: voice only, big tap-anywhere-to-talk screen. It turns on by itself when the
   phone is moving at driving speed (if location is on), or by hand.
 - Scout can do things, not just explain them (signed-in people): search the feed, open a Food &
@@ -164,8 +175,8 @@ Keep this file up to date when features change. Only describe things that exist 
   In driving mode Scout says the gist out loud and shows one big "Start directions" button.
 - 🧭 Tour: a 20-second walk around the screen, offered once to new people and any time from the
   "Take the tour" chip in the Scout panel, or by asking "give me a tour". Next / Skip on each step.
-- 🎨 Customize Scout: people can design how their assistant looks: pick parts, describe it in words, or
-  use their own photo as the face (the photo stays on their phone).
+- Interests: a search box above the interest chips (at sign-up and on the profile) finds one fast, and anything not on
+  the list can be added in their own words ("＋ Add …").
 
 ## Food & drink (live)
 - Restaurants, food trucks, bars, pubs, clubs, cafes, bakeries and ice cream from Round Rock to

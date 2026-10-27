@@ -330,6 +330,11 @@
   .chips{display:flex;flex-wrap:wrap;gap:6px}
   .ichip{border:1px solid var(--line);background:var(--panel2);border-radius:99px;padding:6px 11px;font-size:12px;font-weight:600;color:var(--muted)}
   .ichip.on{background:#ff7a1822;border-color:var(--accent);color:var(--text)}
+  .ichip.add{border-style:dashed;color:var(--accent2)} input.iq{width:100%;margin:0 0 10px}
+  body.scout-off #scoutBtn,body.scout-off #scoutBubble{display:none!important}
+  .scmem .scnote{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .rstars{display:flex;gap:6px;margin:4px 0 12px} .rstars button{font-size:32px;line-height:1;color:var(--line);background:none;border:0;padding:2px}
+  .rstars button.on{color:#ffd60a}
 
   #meetTabs button,#meTabs button{padding-inline:4px;font-size:12.5px;white-space:nowrap}
   #meTabs{position:sticky;top:0;z-index:5;box-shadow:0 6px 12px var(--bg)}
@@ -1127,7 +1132,7 @@
       <form id="qForm" class="qbar" role="search"><button type="button" class="qback" data-qback aria-label="Back" hidden><svg class="ic" aria-hidden="true"><use href="#i-back"/></svg></button><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
         <input id="qIn" type="search" placeholder="Search Austin, or ask Scout" data-tp="Search Austin, or ask Scout" autocomplete="off" enterkeyhint="search" aria-label="Search">
         <button type="button" class="qclear" data-qclear aria-label="Clear" hidden><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-        <button type="button" class="qmic" data-qmic aria-label="Talk to Scout" title="Talk to Scout"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></button></form>
+</form>
       <div class="mapchips" id="mapChips"></div>
       <button class="glance" id="glance"></button>
     </div>
@@ -1187,6 +1192,7 @@
 
       <h3>Interests</h3>
       <div class="card"><div class="row" style="margin-bottom:10px"><span class="meta grow">Pick as many as you like</span><span id="visInt"></span></div>
+        <input class="iq" id="meIq" type="search" placeholder="Search interests or add your own" data-tp="Search interests or add your own" autocomplete="off" aria-label="Search interests">
         <div class="chips" id="interestChips"></div></div>
 
       </div>
@@ -1323,6 +1329,7 @@
       <button class="btn primary" data-t="Ask">Ask</button></form>
   </div></div>
   <div class="sheet-bg" id="lookBg" hidden style="z-index:760"><div class="sheet" id="lookSheet"></div></div>
+  <div class="sheet-bg" id="rateBg" hidden style="z-index:770"><div class="sheet" id="rateSheet"></div></div>
   <input type="file" id="scoutPhoto" accept="image/*" hidden>
   <div id="driveView" hidden>
     <div class="dv-top"><b>🚗 Driving mode</b><button data-sc="passenger">I'm a passenger</button><button data-sc="driveoff">Exit</button></div>
@@ -1712,6 +1719,20 @@ const ES = {
   '{n} open':'{n} abiertos', '{n} events':'{n} eventos', 'quiet now':'tranquilo ahora', 'busy now':'animado ahora',
   '🔥 Bright zones are busy right now: tap one':'🔥 Las zonas brillantes están animadas: toca una', 'From Side Quest stories':'De historias de Side Quest', 'Photos: Google':'Fotos: Google',
   // V3: find a spot, shared around town
+  'Scout':'Scout', 'Scout is on':'Scout activado', 'Off hides the compass button and stops tips and questions.':'Apagado oculta la brújula y deja de dar consejos y preguntas.',
+  'Personality':'Personalidad', 'Match me':'Según mi tipo', 'Easygoing buddy':'Amigo relajado', 'Hype crew':'Pura energía', 'Chill local':'Local tranquilo', 'Planner':'Organizador', 'Storyteller':'Cuentacuentos',
+  'Warm and casual':'Cálido y casual', 'Upbeat and high-energy':'Alegre y con mucha energía', 'Calm, few words':'Tranquilo, pocas palabras', 'Crisp: times and next steps':'Directo: horarios y siguiente paso', 'Curious, shares stories':'Curioso, cuenta historias',
+  'Take the personality quiz (or let Scout ask you) and it matches you.':'Haz el test de personalidad (o deja que Scout te pregunte) y se adapta a ti.',
+  'Set up my profile with Scout':'Configurar mi perfil con Scout', 'Set up with Scout':'Configurar con Scout', 'What Scout remembers about you':'Lo que Scout recuerda de ti',
+  'Nothing yet. Scout learns as you talk: what you like, where you go, what you order.':'Nada aún. Scout aprende mientras hablan: lo que te gusta, a dónde vas, lo que pides.',
+  'What you ordered':'Lo que pediste', 'Clear chat':'Borrar chat', 'Forget everything':'Olvidar todo', 'Forget this':'Olvidar esto',
+  'Forget everything Scout knows about you? This clears your notes, chat and orders.':'¿Olvidar todo lo que Scout sabe de ti? Se borran tus notas, el chat y tus pedidos.',
+  'Scout is off.':'Scout está apagado.', 'Scout is off. Turn it back on in You → Scout.':'Scout está apagado. Actívalo en Tú → Scout.', 'Scout is back on.':'Scout está activado.',
+  'Hi! Help me set up my profile.':'¡Hola! Ayúdame a configurar mi perfil.', 'Your type':'Tu tipo', 'Scout matched its personality to you.':'Scout adaptó su personalidad a ti.',
+  'What did you get?':'¿Qué pediste?', 'on Side Quest':'en Side Quest', 'Rate':'Calificar', 'How was it?':'¿Qué tal estuvo?', 'e.g. brisket tacos, a margarita':'p. ej. tacos de brisket, una margarita', 'A note for yourself (optional)':'Una nota para ti (opcional)',
+  'Others only see the average stars. What you got stays yours, and Scout remembers it for next time.':'Los demás solo ven el promedio de estrellas. Lo que pediste es tuyo, y Scout lo recuerda para la próxima.',
+  '{avg} average from {n}':'promedio {avg} de {n}', 'Search interests or add your own':'Busca intereses o agrega los tuyos', 'Search interests':'Buscar intereses', 'Add':'Agregar',
+  "Want sharper picks and better matches? Chat with Scout for a few minutes, or fill it in yourself. You choose what's shared.":'¿Quieres mejores sugerencias y coincidencias? Habla con Scout unos minutos o llénalo tú. Tú eliges qué se comparte.',
   'Location':'Ubicación', 'Blocked':'Bloqueada', 'Tap to turn on':'Toca para activar', 'Location is blocked for Side Quest.':'La ubicación está bloqueada para Side Quest.',
   'iPhone: Settings → Privacy & Security → Location Services → Safari Websites (or Side Quest) → While Using. Then reload.':'iPhone: Ajustes → Privacidad y seguridad → Localización → Sitios web de Safari (o Side Quest) → Al usar la app. Luego recarga.',
   'Tap the lock or ⓘ next to the address, set Location to Allow, then reload.':'Toca el candado o ⓘ junto a la dirección, permite la ubicación y recarga.',
@@ -2857,13 +2878,13 @@ async function placePopup(id, ll){
   try{ const j=await (await fetch(`/api/place?id=${encodeURIComponent(id)}&${nearParam()}`)).json(); const p=j.place; if(!p) throw 0;
     if(FOOD_KINDS.test(p.kind||'restaurant')) menuWarm(p.id);
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
-      <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}</div>
+      <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}${p.sq_rating?` <span class="meta">⭐ <b>${p.sq_rating.avg}</b> ${T('on Side Quest')} (${p.sq_rating.n})</span>`:''}</div>
       ${barFood(p)}
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
         ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
-        ${checkBtn('place',p.id,p.lat,p.lng)}</div>
+        ${checkBtn('place',p.id,p.lat,p.lng)}<button class="btn sm" data-prate="${esc(p.id)}" data-pname="${esc(p.name)}">⭐ ${T('Rate')}</button></div>
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
@@ -3913,6 +3934,22 @@ function notifyTags(){   // someone tagged you in a story since you last looked
 const COLORS = ['#2ec5ff','#ff7a18','#b57bff','#3ddc97','#ff6b9a','#ffd166','#48dbfb','#a29bfe'];
 const ONB = {step:1, mode:'signup', h:'', c:COLORS[0], i:[], err:'', busy:false};
 const ONB_TOP = ['live shows','food','comedy','outdoors','sports','pickup games','dancing','trivia','coffee','art','dogs','festivals'];   // the welcome shows these first
+// Interests: the list to tap, a box to search it, and your own words when nothing fits ("pickleball", "salsa")
+const intClean = x => String(x||'').replace(/[^\p{L}\p{N} &'+-]/gu,'').replace(/\s+/g,' ').trim().slice(0,30);
+function intChips(have, q, attr, base){
+  const k=String(q||'').trim().toLowerCase(), add=intClean(q), every=[...new Set([...INTERESTS,...have])];
+  const list=k?every.filter(x=>x.toLowerCase().includes(k)):[...new Set([...(base||INTERESTS),...have])];
+  const exact=every.some(x=>x.toLowerCase().startsWith(add.toLowerCase()));   // "hock" is Hockey, not a new one
+  return list.map(x=>`<button type="button" class="ichip ${have.includes(x)?'on':''}" ${attr}="${esc(x)}">${esc(x)}</button>`).join('')
+    +(add.length>=2&&!exact?`<button type="button" class="ichip add" ${attr}="${esc(add)}">＋ ${esc(T('Add'))} “${esc(add)}”</button>`:'');
+}
+const onbIq = () => `<input class="iq" id="onbIq" type="search" placeholder="${esc(T('Search interests or add your own'))}" value="${esc(ONB.iq||'')}" autocomplete="off" aria-label="${esc(T('Search interests'))}">`;
+const onbIList = () => intChips(ONB.i, ONB.iq, 'data-onbi', ONB.step==='welcome'&&!ONB.allI?ONB_TOP:INTERESTS)
+  +(ONB.step==='welcome'&&!ONB.allI&&!ONB.iq?`<button class="ichip" data-onbmore>${T('+ more')}</button>`:'');
+document.addEventListener('input',e=>{
+  if(e.target.id==='onbIq'){ ONB.iq=e.target.value; $('#onbIList').innerHTML=onbIList(); }
+  if(e.target.id==='meIq') $('#interestChips').innerHTML=intChips(S.me.i, e.target.value, 'data-int');
+});
 function renderOnb(){
   const o=ONB, signup=o.mode==='signup'; let html='';
   if(o.step===1) html=`<button type="button" class="xbtn" data-onbclose aria-label="Close" style="float:right"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button><b style="font-size:22px">${signup?'Join Side Quest':'Welcome back'}</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
@@ -3937,7 +3974,7 @@ function renderOnb(){
   if(o.step==='welcome') html=`<button class="btn sm" data-langtoggle style="float:right">🌐 ${T('Español')}</button><b style="font-size:22px">Welcome to Side Quest</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
     <p class="meta" style="font-size:13px">Find things to do around Austin, and people to do them with. Look around first. No account needed.</p>
     <label class="lbl">What are you into? <span class="meta">(optional, shapes your feed)</span></label>
-    <div class="chips">${(o.allI?INTERESTS:ONB_TOP.concat(o.i.filter(x=>!ONB_TOP.includes(x)))).map(x=>`<button class="ichip ${o.i.includes(x)?'on':''}" data-onbi="${x}">${esc(x)}</button>`).join('')}${o.allI?'':`<button class="ichip" data-onbmore>${T('+ more')}</button>`}</div>
+    ${onbIq()}<div class="chips" id="onbIList">${onbIList()}</div>
     <button class="btn primary" data-onbguest style="width:100%;margin-top:18px;padding:13px">Start exploring →</button>
     <div class="row" style="justify-content:center;gap:16px;margin-top:12px"><button class="meta" data-onbmode="signup" style="font-size:13px">Create account</button>
       <button class="meta" data-onbmode="login" style="font-size:13px">I have an account · Sign in</button></div>`;
@@ -3946,13 +3983,13 @@ function renderOnb(){
     <div style="display:grid;gap:8px;margin-top:14px"><button class="btn primary" data-onbmode="signup" style="padding:13px">Create account</button>
       <button class="btn" data-onbmode="login">I have an account · Sign in</button><button class="btn" data-onbclose>Not now</button></div>`;
   if(o.step===2) html=`<b style="font-size:22px">What are you into?</b><p class="meta" style="font-size:13px">Pick at least 3. Your feed starts from these.</p>
-    <div class="chips">${INTERESTS.map(x=>`<button class="ichip ${o.i.includes(x)?'on':''}" data-onbi="${x}">${esc(x)}</button>`).join('')}</div>
+    ${onbIq()}<div class="chips" id="onbIList">${onbIList()}</div>
     <button class="btn primary" data-onbnext style="width:100%;margin-top:18px;padding:13px;${o.i.length<3?'opacity:.5':''}" ${o.i.length<3?'disabled':''}>${o.i.length<3?`Pick ${3-o.i.length} more`:'Next'}</button>`;
   if(o.step===3) html=`<b style="font-size:22px">You're in, @${esc(o.h)} 🎉</b>
-    <p class="meta" style="font-size:13px">Want sharper picks and better matches? These take a few minutes, and you choose what's shared.</p>
+    <p class="meta" style="font-size:13px">${T("Want sharper picks and better matches? Chat with Scout for a few minutes, or fill it in yourself. You choose what's shared.")}</p>
     <div class="card" style="margin:12px 0 0;font-size:13px">🛡️ <b>Stay safe:</b> meet in public places, tell a friend where you're going, and use ⋯ on any post or person to report or block.</div>
-    <div style="display:grid;gap:8px;margin-top:12px"><button class="btn blue" data-onbgo="quiz">🧬 Take the 16-type personality quiz</button>
-      <button class="btn" data-onbgo="about">📝 Answer the "about you" questions</button><button class="btn primary" data-onbgo="feed">Show me what's on →</button></div>`;
+    <div style="display:grid;gap:8px;margin-top:12px"><button class="btn primary" data-onbgo="scout">💬 ${T('Set up with Scout')}</button><button class="btn blue" data-onbgo="quiz">🧬 Take the 16-type personality quiz</button>
+      <button class="btn" data-onbgo="about">📝 Answer the "about you" questions</button><button class="btn" data-onbgo="feed">Show me what's on →</button></div>`;
   $('#onb').innerHTML=html; $('#onbBg').hidden=false;
   if($('#gsiBtn')) mountGoogleButton($('#gsiBtn'), signup);
 }
@@ -4836,7 +4873,7 @@ function showMeSec(sec){   // the profile is split into four tabs; only one show
 }
 function renderMe(){
   $('#meTitle').textContent='@'+S.me.h; $('#privHandle').textContent='@'+S.me.h;
-  $('#interestChips').innerHTML = INTERESTS.map(x=>`<button class="ichip ${S.me.i.includes(x)?'on':''}" data-int="${x}">${esc(x)}</button>`).join('');
+  $('#interestChips').innerHTML = intChips(S.me.i, $('#meIq')?.value||'', 'data-int');
   $('#visInt').innerHTML=visBtn('interests');
   $('#astroT').classList.toggle('on',S.me.astro); $('#astroBox').hidden=!S.me.astro; $('#zodiac').value=S.me.z;
   const bb=S.me.birth||{}; $('#bday').value=bb.date||''; $('#btime').value=bb.time||''; $('#moon').value=S.me.moon||''; $('#rising').value=S.me.rising||'';
@@ -5266,7 +5303,7 @@ async function setOnline(on){
     toast('⚫ <b>You\'re offline.</b> Nobody sees you as active, and the app stopped using your location. You can still browse.','',[],4500); }
 }
 // Back: close whatever is on top first (a sheet or story), otherwise go to the previous screen.
-const OVERLAYS = ['spotBg','chatBg','menuBg','notifBg','questBg','evBg','plansBg','actBg','placesBg','groupBg','storyBg','searchBg','feedSheetBg','createBg','sheetBg','groupsBg','onbBg'];
+const OVERLAYS = ['rateBg','lookBg','spotBg','chatBg','menuBg','notifBg','questBg','evBg','plansBg','actBg','placesBg','groupBg','storyBg','searchBg','feedSheetBg','createBg','sheetBg','groupsBg','onbBg'];
 function closeTopOverlay(){
   if(!$('#camBg').hidden){ closeCam(); return true; }   // back also turns the camera off
   if(!$('#storyView').hidden){ closeStories(); return true; }
@@ -6015,7 +6052,8 @@ function renderYou(){
     row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
     guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
     row('data-menu="invite"','💌','#b57bff26',T('Invite friends')),
-    row('data-yloc','🧭','#30d15826',T('Location'),T({on:'On',off:'Off',blocked:'Blocked',ask:'Tap to turn on'}[locState()])),
+    row('data-yscout','🧭','#ff9f0a26',T('Scout'),scoutOn()?T(SC_PERSONAS[scoutPersona()][1]):T('Off')),
+    row('data-yloc','📍','#30d15826',T('Location'),T({on:'On',off:'Off',blocked:'Blocked',ask:'Tap to turn on'}[locState()])),
     guest?'':row('data-yshare','📍','#2ec5ff26',T("On friends' maps"),fmOn()?T('Sharing'):T('Off')),
     row('data-yedit="profile"','✏️','#ffffff14',T('Edit profile')),
     row('data-yedit="settings"','🔒','#ffffff14',T('Settings & privacy')),
@@ -6024,7 +6062,7 @@ function renderYou(){
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-yloc],[data-ytheme],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-yloc],[data-yscout],[data-ytheme],[data-fmgo],#glance');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
@@ -6037,7 +6075,6 @@ document.addEventListener('click',e=>{
   }
   if(t.id==='glance') return EV.list.some(e=>e.te>Date.now()&&e.ts<new Date().setHours(28,0,0,0)) ? exploreCat('events','tonight') : setDrawer('half');   // "37 things on tonight" → that list
   if(d.qback!==undefined){ $('#qIn').value=''; return tab('home', NAVST.at(-1)==='home'?undefined:'half'); }
-  if(d.qmic!==undefined) return openScoutVoice();
   if(d.qclear!==undefined){ $('#qIn').value=''; t.hidden=true; $('#qIn').focus(); return renderSearch(); }
   if(d.excat) return exploreCat(d.excat, d.exsubgo);
   if(d.exsub){ if(EXC.sub===d.exsub&&EXC.k==='zones'){ EXC.sub=null; return renderExCat(true); }   // tap the picked neighborhood again: all of them
@@ -6051,6 +6088,7 @@ document.addEventListener('click',e=>{
   if(d.yedit){ showMeSec(d.yedit); return setTimeout(()=>$('#v-me').scrollTo({top:$('#meEdit').offsetTop-8,behavior:'smooth'}),60); }
   if(d.ytheme!==undefined){ S.theme={auto:'light',light:'dark'}[S.theme||'auto']||'auto'; save(); applyTheme(); return renderYou(); }   // Auto → Light → Dark
   if(d.yshare!==undefined){ $('#placesBg').hidden=true; return openShareSheet(); }
+  if(d.yscout!==undefined) return openLook();
   if(d.yloc!==undefined){   // on: the browser asks (first time); off: the app stops using it; blocked: how to allow it
     const st=locState();
     if(st==='on'){ S.locOff=true; save(); stopLocating(); toast(`🧭 ${T("Location off. The map won't follow you and check-ins need it back on.")}`,'',[],3500); return renderYou(); }
@@ -6138,7 +6176,7 @@ document.addEventListener('click',e=>{
   else if(d.map) focusOnMap(d.map);
   else if(d.skip){ S.skipped.push(d.skip); save(); renderAll(); }
   else if(d.add) addFriend(d.add);
-  else if(d.int){ S.me.i = S.me.i.includes(d.int)?S.me.i.filter(x=>x!==d.int):[...S.me.i,d.int]; save(); renderAll(); }
+  else if(d.int){ S.me.i = S.me.i.includes(d.int)?S.me.i.filter(x=>x!==d.int):[...S.me.i,d.int]; if($('#meIq')) $('#meIq').value=''; save(); renderAll(); }
   else if(d.ml){ S.mapL[d.ml]=!S.mapL[d.ml]; refreshMapLayers(); if(!$('#placesBg').hidden) openMapLayers(); mapHint(true); }
   else if(d.mlcat){ toggleMapCat(d.mlcat); if(!$('#placesBg').hidden&&$('#placesSheet .lcat')) openMapLayers(); }
   else if(d.mpreset) applyPreset(d.mpreset);
@@ -6344,10 +6382,11 @@ document.addEventListener('click',e=>{
   else if(d.newgroup!==undefined){ $('#groupsBg').hidden=true; newGroup(); }
   else if(d.ngcreate!==undefined) createGroup();
   else if(d.onbc){ ONB.c=d.onbc; ONB.h=$('#onbH')?.value||ONB.h; ONB.pw=$('#onbP')?.value||''; ONB.adult=!!$('#onbAdult')?.checked; ONB.terms=!!$('#onbTerms')?.checked; ONB.inv=$('#onbI')?.value||''; renderOnb(); }
-  else if(d.onbi){ ONB.i=ONB.i.includes(d.onbi)?ONB.i.filter(x=>x!==d.onbi):[...ONB.i,d.onbi]; renderOnb(); }
+  else if(d.onbi){ ONB.i=ONB.i.includes(d.onbi)?ONB.i.filter(x=>x!==d.onbi):[...ONB.i,d.onbi]; ONB.iq=''; renderOnb(); }
   else if(d.onbnext!==undefined) onbNext();
   else if(d.onbgo){ $('#onbBg').hidden=true;
-    if(d.onbgo==='feed') tab('home');
+    if(d.onbgo==='scout'){ tab('home','peek'); scoutInterview(); }
+    else if(d.onbgo==='feed') tab('home');
     else { tab('me'); showMeSec(d.onbgo==='quiz'?'personality':'about'); if(d.onbgo==='quiz'){ S.quizOpen=true; renderQuiz(); }
       setTimeout(()=>$(d.onbgo==='quiz'?'#quizCard':'#lifeCard')?.scrollIntoView({behavior:'smooth',block:'start'}),60); } }
   /* live */
@@ -7105,7 +7144,6 @@ const SC_T = {   // V3: the map, the drawer (search box, chips, Explore), the bo
   signup:['#meChip:not(.authed)',null,'Sign up, top left (guests only)'], bell:['#bellBtn',null,'notifications bell, top right'],
   online:['#presBtn','me','Online/Offline switch at the top of You'],
   search:['#qIn','home','the search box at the top of the drawer (places, events, people, groups, dishes, or ask Scout)'],
-  search_mic:['[data-qmic]','home','the 🎤 in the search box (talk to Scout)'],
   chips:['#mapChips','home','the chips under the search box (Food, Tonight, Nightlife, Outdoors, Sights, Friends, Hot spots)'],
   chip_food:['[data-excat="food"]','home','🍔 Food chip (food & drink near you, happy hour, coffee, tacos…)'],
   chip_tonight:['[data-excat="events"]','home','🎫 Tonight chip (events tonight, this weekend, this week)'],
@@ -7416,8 +7454,8 @@ function scoutLocal(q){
 function scoutLog(who,text,plan){ const s=scS(); s.log.push({who,text,at:Date.now(),...(plan?{plan}:{})}); s.log=s.log.slice(-20); save(); renderScoutLog(); }
 function renderScoutLog(){
   const el=$('#scoutLog'); if(!el) return; const s=scS();
-  el.innerHTML = (s.log.length?'':`<div class="scm scout">${S.lang==='es'?`¡Hola, soy <b>${esc(s.name)}</b>! 🧭 Toca 🎤 y háblame: qué hacer esta noche, cómo funciona la app o planear tu día. ¡Vamos a explorar!`
-      :`Hey, I'm <b>${esc(s.name)}</b>! 🧭 Just talk to me (or type): what's the move tonight, how the app works, or plan your day.`}</div>`)
+  el.innerHTML = (s.log.length?'':`<div class="scm scout">${S.lang==='es'?`¡Hola, soy <b>${esc(s.name)}</b>! 🧭 Pregúntame lo que sea.`
+      :`Hey, I'm <b>${esc(s.name)}</b> 🧭 Ask me anything.`}</div>`)
     + s.log.slice(-10).map(m=>{ const i=s.log.indexOf(m);
         return `<div class="scm ${m.who==='me'?'me':'scout'}">${esc(m.text)}</div>${m.plan?planCard(m.plan,{key:'log:'+i, save:m.saved?null:i}):''}`; }).join('')
     + (SCT.busy?'<div class="scm scout wait">🧭 Thinking…</div>':'');
@@ -7428,6 +7466,7 @@ function renderScoutLog(){
 }
 async function scoutAsk(q, byVoice){
   q=String(q).trim().slice(0,300); if(!q||SCT.busy) return; track('scout_ask');
+  if(!scoutOn()) return scoutOffToast();
   if(/\b(translat\w*|traduc\w*)\b/i.test(q)&&/\b(sign|menu|label|text|camera|this|that|letrero|men[uú]|c[aá]mara|esto|eso)\b/i.test(q)){   // a sign or a menu: that's the camera's job
     scoutLog('me',q); scoutLog('scout',T('Opening the camera translator. Point it at the text.')); renderScoutLog(); return openLens(); }
   if(/\b(what('?s| is) (this|that)( (building|place|statue|landmark|thing|mural|restaurant|dish))?|identify (this|that)|qu[eé] es (esto|eso))\b/i.test(q)&&q.length<60){   // "what is this?": the camera's Identify
@@ -7440,10 +7479,15 @@ async function scoutAsk(q, byVoice){
   else try{
     const s=scS();
     r=await api('/api/scout',{q, lang:S.lang, driving:SCT.driving, name:s.name, view:[...document.querySelectorAll('.view')].find(v=>!v.hidden)?.id.slice(2)||'home',
-      near:[+ME_POS[0].toFixed(2), +ME_POS[1].toFixed(2)], targets:scoutTargets(), context:scoutContext(), history:s.log.slice(-7,-1).map(m=>({who:m.who==='me'?'user':'scout',text:m.text}))});
+      near:[+ME_POS[0].toFixed(2), +ME_POS[1].toFixed(2)], targets:scoutTargets(), context:scoutContext(), history:s.log.slice(-7,-1).map(m=>({who:m.who==='me'?'user':'scout',text:m.text})),
+      persona:s.persona||'auto', ptype:S.me.t||undefined, interview:SCT.interview?interviewNeeds():undefined,
+      here:S.scHere&&Date.now()-S.scHere.at<4*36e5?{id:S.scHere.id}:undefined});
     if(r.left!=null) SCT.left=r.left;
   }catch(e){ r={say:/slow down/i.test(e.message)?"Whoa, you're asking faster than I can explore! Give me a few minutes.":"Hmm, I couldn't reach my compass. Try again in a moment!", expression:'confused', actions:[]}; }
   SCT.busy=false; scoutLog('scout',r.say,r.plan||null); scoutEx(r.expression); scoutMicUi();
+  if(r.profile) scoutProfile(r.profile);
+  if(r.persona&&SC_PERSONAS[r.persona]){ scS().persona=r.persona; save(); }
+  if(r.order) setTimeout(()=>openRate(r.order.id, r.order.name, {dish:r.order.dish, stars:r.order.stars}), 900);
   if(r.plan){ scoutSpeak(r.say, byVoice); return; }   // a plan stays in the panel as a card to save, not acted out
   if(r.places) SCT.placeInfo={...(SCT.placeInfo||{}), ...r.places};
   if(r.sights) SCT.placeInfo={...(SCT.placeInfo||{}), ...Object.fromEntries(Object.entries(r.sights).map(([k,v])=>[k,{...v,sight:true}]))};
@@ -7542,6 +7586,7 @@ function scoutTourCard(html, btns, top){
   const c=$('#scoutTour'); c.innerHTML=`<div>${html}</div><div class="btns" style="margin-top:10px">${btns}</div>`; c.classList.toggle('top',!!top); c.hidden=false;
 }
 function scoutOfferTour(){   // once, right after someone first lands (guest or new account)
+  if(!scoutOn()) return;
   if(SCT.driving||SCT.tour!=null||!$('#onbBg').hidden||!$('#scoutBg').hidden) return;   // busy, or already talking to Scout
   if(S.toured){ if(AUTHED) scoutOfferLook(); return; }
   SCT.tour=-1;
@@ -7581,6 +7626,8 @@ function openLens(mode){
   s.onerror=()=>toast("Couldn't load the translator. Check your connection.",'orange'); document.head.appendChild(s);
 }
 function openScoutVoice(quiet){
+  if(!scoutOn()) return scoutOffToast();
+  scoutMemLoad();
   scoutNudgeHide(); $('#scoutBg').hidden=false; renderScoutLog(); renderScoutFind(); scoutFaces(); scoutMicUi();
   if(!quiet&&(SR||micRec())&&!SCT.busy&&!SCT.listening&&!SCT.mic&&$('#scoutForm').hidden) scoutListen();   // voice first, started inside the tap that opened Scout (phones only give the mic to a tap)
 }
@@ -7592,6 +7639,7 @@ SCT.idleAt=Date.now(); SCT.nudges=0; SCT.nudgeAt=0;
 function scoutNudgeHide(){ const b=$('#scoutBubble'); if(b.classList.contains('nudge')){ b.hidden=true; b.classList.remove('nudge'); } $('#scoutBtn').classList.remove('waving'); }
 function scoutNudgeDismiss(){ scoutNudgeHide(); const d=new Date().toDateString(); S.nudgeX=S.nudgeDay===d?(S.nudgeX||0)+1:1; S.nudgeDay=d; save(); }
 function scoutNudge(){
+  if(!scoutOn()) return;
   const now=Date.now(), view=curTab, quiet=S.nudgeDay===new Date().toDateString()&&(S.nudgeX||0)>=2;
   const sheetOpen=[...document.querySelectorAll('.sheet-bg')].some(x=>!x.hidden)||!$('#storyView').hidden||!$('#onbBg').hidden;
   if(quiet||SCT.driving||SCT.busy||SCT.listening||sheetOpen||SCT.tour!=null||!$('#scoutTour').hidden||view!=='home'||DRW.at!=='peek'||EXC.k||SCT.nudges>=3) return;   // only over the open map
@@ -7691,7 +7739,16 @@ function scoutSpeed(v){   // called with each location fix; v is metres/second (
 function openLook(){ $('#lookBg').hidden=false; renderLook(); }
 function renderLook(){
   const s=scS();
-  $('#lookSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">🧭 ${T('Customize Scout')}</b><button class="btn sm primary" data-sc="lookdone">Done</button></div>
+  const pm=scoutPersona();
+  $('#lookSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">🧭 ${esc(s.name)}</b><button class="btn sm primary" data-sc="lookdone">Done</button></div>
+    <div class="row" style="margin:6px 0 10px"><span class="grow">${T('Scout is on')}<div class="meta">${T('Off hides the compass button and stops tips and questions.')}</div></span>
+      <button class="toggle ${s.off?'':'on'}" data-sc="onoff" role="switch" aria-checked="${s.off?'false':'true'}" aria-label="Scout on or off"></button></div>
+    <label>${T('Personality')}</label>
+    <div class="chips"><button class="ichip ${SC_PERSONAS[s.persona]?'':'on'}" data-scp="auto">✨ ${T('Match me')}${S.me.t?` · ${esc(T(SC_PERSONAS[pmAuto()][1]))}`:''}</button>
+      ${Object.entries(SC_PERSONAS).map(([k,[e,n,d]])=>`<button class="ichip ${s.persona===k?'on':''}" data-scp="${k}" title="${esc(T(d))}">${e} ${esc(T(n))}</button>`).join('')}</div>
+    <p class="meta" style="margin:4px 0 10px">${esc(T(SC_PERSONAS[pm][2]))}. ${S.me.t?'':T('Take the personality quiz (or let Scout ask you) and it matches you.')}</p>
+    ${AUTHED?`<button class="btn" data-sc="interview" style="width:100%;margin-bottom:10px">💬 ${T('Set up my profile with Scout')}</button>
+    <label>${T('What Scout remembers about you')}</label><div id="scMem" class="scmem"><span class="meta">…</span></div>`:''}
     <div id="lookPrev" class="scwrap" data-sc="lookface" title="Tap to see it move"></div>
     <p class="meta" style="text-align:center;margin:0 0 6px">${T('Tap it to see how it moves.')}</p>
     <label>Name</label><input id="lookName" maxlength="16" value="${esc(s.name)}" placeholder="Scout">
@@ -7705,7 +7762,7 @@ function renderLook(){
       <div class="lk-sub">Speed</div><div class="chips">${SCOUT_RATES.map(([r,l])=>`<button class="ichip ${scoutRate()===r?'on':''}" data-scrate="${r}">${l}</button>`).join('')}</div>
     </div>
     `;
-  scoutFaces();
+  scoutFaces(); if(AUTHED) scoutMemRender();
 }
 async function lookFromText(){
   const desc=$('#lookDesc').value.trim(); if(desc.length<3) return toast('Describe your assistant first, like “a purple fox with headphones”.','orange');
@@ -7732,13 +7789,19 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-scnudgex]')){ scoutNudgeDismiss(); return; }
   if(e.target.closest('#scoutBubble')){ $('#scoutBubble').hidden=true; return; }
   const q=e.target.closest('[data-scq]'); if(q) return scoutAsk(q.dataset.scq);
+  const sp=e.target.closest('[data-scp]'); if(sp){ scS().persona=sp.dataset.scp; save(); renderLook(); return; }
+  const mx=e.target.closest('[data-scmemx]'); if(mx){ api('/api/scout/forget',{what:'note',i:+mx.dataset.scmemx}).then(scoutMemRender).catch(err=>toast(esc(err.message),'orange')); return; }
   const sr=e.target.closest('[data-scrate]'); if(sr){ scS().rate=+sr.dataset.scrate; save(); renderLook(); scoutSpeak(T("This is how fast I'll talk."),true); return; }
   const sv=e.target.closest('[data-scv]'); if(sv){ scS().voiceName=sv.dataset.scv; save(); renderLook(); scoutSpeak(`Hi, I'm ${scS().name||'Scout'}. Let's go explore!`,true); return; }
   const lk=e.target.closest('[data-lk]'); if(lk){ const [k,v]=lk.dataset.lk.split('|'), L=scS().look;
     if(k==='cheeks') L.cheeks=v==='1'; else { L[k]=v; if(k==='eyes'||k==='glasses') delete L.photo; }   // a photo face has no drawn eyes
     save(); renderLook(); return; }
   const b=e.target.closest('[data-sc]'); if(!b) return; const a=b.dataset.sc, s=scS();
-  if(a==='close') $('#scoutBg').hidden=true;
+  if(a==='close'){ $('#scoutBg').hidden=true; SCT.interview=false; }
+  if(a==='onoff'){ s.off=!s.off; save(); scoutApplyOff(); renderLook(); renderYou?.(); toast(s.off?`🧭 ${T('Scout is off. Turn it back on in You → Scout.')}`:`🧭 ${T('Scout is back on.')}`,'',[],3000); }
+  if(a==='interview'){ $('#lookBg').hidden=true; scoutInterview(); }
+  if(a==='memchat'||a==='memall'){ if(a==='memall'&&!confirm(T('Forget everything Scout knows about you? This clears your notes, chat and orders.'))) return;
+    api('/api/scout/forget',{what:a==='memall'?'all':'chat'}).then(()=>{ s.log=[]; save(); renderScoutLog(); scoutMemRender(); }).catch(err=>toast(esc(err.message),'orange')); }
   if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(!$('#lookBg').hidden) renderLook(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
   if(a==='mic') scoutListen();
   if(a==='lens') openLens();
@@ -7758,8 +7821,86 @@ document.addEventListener('click',e=>{
   if(a==='lookphotox'){ delete s.look.photo; save(); renderLook(); }
   if(a==='lookreset'){ s.look={...SC_DEFAULT}; s.name='Scout'; save(); renderLook(); }
 });
+/* ---- Scout gets to know you: personalities, on/off, the setup interview, memory, what you ordered ---- */
+const SC_PERSONAS = {buddy:['😎','Easygoing buddy','Warm and casual'], hype:['🔥','Hype crew','Upbeat and high-energy'],
+  chill:['🌙','Chill local','Calm, few words'], planner:['🗓️','Planner','Crisp: times and next steps'], curious:['📖','Storyteller','Curious, shares stories']};
+function pmAuto(){   // the same match as scout_persona_for in scout_mind.rb
+  const t=String(S.me.t||'').toUpperCase();
+  if(!/^[EI][NS][TF][JP]$/.test(t)) return 'buddy';
+  if(t[2]==='T'&&t[3]==='J') return 'planner'; if(t[0]==='I'&&t[2]==='T') return 'chill';
+  if(t[0]==='I'&&t[1]==='N') return 'curious'; if(t[0]==='E'&&t[3]==='P') return 'hype'; return 'buddy';
+}
+const scoutPersona = () => SC_PERSONAS[scS().persona] ? scS().persona : pmAuto();
+const scoutOn = () => !scS().off;
+function scoutApplyOff(){ const off=!scoutOn(); document.body.classList.toggle('scout-off', off);
+  if(off){ $('#scoutBg').hidden=true; scoutNudgeHide(); $('#scoutBubble').hidden=true; } }
+function scoutOffToast(){ toast(`🧭 ${T('Scout is off.')}`,'',[{l:T('Turn on'),cls:'blue',f:()=>{ scS().off=false; save(); scoutApplyOff(); openScoutVoice(); }}],4000); }
+// The setup interview: what's still open on this phone (interests, quiz statements, about-you questions)
+function interviewNeeds(){
+  return {interests:S.me.i, interest_options:INTERESTS,
+    quiz:QUIZ.map((x,i)=>({i,text:x[0]})).filter(x=>S.me.ans?.[x.i]==null).slice(0,4),
+    life:LIFE.filter(x=>!S.me.p?.[x.k]).slice(0,4).map(x=>({k:x.k,q:x.q,opts:x.opts||[]}))};
+}
+function scoutInterview(){
+  if(needAccount('set up your profile with Scout')) return;
+  if(!scoutOn()){ scS().off=false; save(); scoutApplyOff(); }
+  SCT.interview=true; openScoutVoice(true); scoutAsk(T('Hi! Help me set up my profile.'));
+}
+function scoutProfile(p){   // what Scout heard, checked against the app's own lists; answers stay "Matching only"
+  const got=[];
+  (p.interests||[]).map(intClean).filter(x=>x.length>=2).forEach(x=>{ const hit=INTERESTS.find(y=>y.toLowerCase()===x.toLowerCase())||x;
+    if(!S.me.i.includes(hit)){ S.me.i.push(hit); got.push(hit); } });
+  S.me.ans ||= {}; S.me.p ||= {};
+  (p.quiz||[]).forEach(({i,v})=>{ if(QUIZ[i]&&v>=1&&v<=5){ S.me.ans[i]=v; got.push('q'); } });
+  (p.life||[]).forEach(({k,v})=>{ const L=LIFE.find(x=>x.k===k); if(!L) return; v=String(v).trim().slice(0,200);
+    if(L.opts) v=L.opts.find(o=>o.toLowerCase()===v.toLowerCase()); if(v){ S.me.p[k]=v; got.push(k); } });
+  if(!S.me.t&&QUIZ.every((_,i)=>S.me.ans[i]!=null)){ const sc=axisScores(); S.me.t=Object.entries(AXES).map(([k,a])=>sc[k]>=0?a[0]:a[1]).join(''); }
+  if(got.length){ save(); renderAll(); }
+  if(p.done){ SCT.interview=false; if(S.me.t) toast(`🧬 ${T('Your type')}: <b>${esc(S.me.t)}</b> · ${T('Scout matched its personality to you.')}`,'green',[],4000); }
+}
+// Memory: the conversation carries on from the server (another phone, a reload); notes you can see and delete
+async function scoutMemLoad(){
+  if(SCT.memLoaded||!AUTHED||!location.protocol.startsWith('http')) return; SCT.memLoaded=true;
+  try{ const j=await (await fetch('/api/scout/memory')).json(); if(j.error) throw new Error(j.error); const s=scS();
+    if(!s.log.length&&j.log?.length){ s.log=j.log.map(m=>({who:m.who,text:m.text})); save(); renderScoutLog(); } }catch(e){ SCT.memLoaded=false; }
+}
+async function scoutMemRender(){
+  const el=$('#scMem'); if(!el) return;
+  try{ const j=await (await fetch('/api/scout/memory')).json(); if(j.error) throw new Error(j.error);
+    el.innerHTML=(j.notes.length?j.notes.map(n=>`<div class="scnote"><span class="grow">${esc(n.t)}</span><button class="xbtn" data-scmemx="${n.i}" aria-label="${esc(T('Forget this'))}">✕</button></div>`).join('')
+        :`<p class="meta">${T("Nothing yet. Scout learns as you talk: what you like, where you go, what you order.")}</p>`)
+      +(j.orders.length?`<div class="lk-sub">${T('What you ordered')}</div>`+j.orders.slice(0,8).map(o=>`<div class="scnote"><span class="grow">${esc(o.dish||'…')} <span class="meta">· ${esc(o.name)}</span></span><span>${'★'.repeat(o.s||0)}</span></div>`).join(''):'')
+      +`<div class="row" style="gap:8px;margin-top:8px"><button class="btn sm" data-sc="memchat">${T('Clear chat')}</button><button class="btn sm" data-sc="memall">${T('Forget everything')}</button></div>`;
+  }catch(e){ el.innerHTML=`<p class="meta">${esc(e.message)}</p>`; }
+}
+// "What did you get, and how was it?": after a check-in, from Scout, or any time
+const RATE={};
+function openRate(id, name, pre={}){
+  if(needAccount('rate what you ordered')) return;
+  Object.assign(RATE,{id, name, dish:pre.dish||'', stars:pre.stars||0, note:''}); renderRate(); $('#rateBg').hidden=false;
+}
+function renderRate(){
+  $('#rateSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">🍽️ ${esc(RATE.name)}</b><button class="xbtn" data-rate="close" aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <label class="lbl">${T('What did you get?')}</label><input id="rateDish" maxlength="80" placeholder="${esc(T('e.g. brisket tacos, a margarita'))}" value="${esc(RATE.dish)}">
+    <label class="lbl">${T('How was it?')}</label><div class="rstars">${[1,2,3,4,5].map(n=>`<button type="button" data-rstar="${n}" class="${RATE.stars>=n?'on':''}" aria-label="${n}">★</button>`).join('')}</div>
+    <input id="rateNote" maxlength="200" placeholder="${esc(T('A note for yourself (optional)'))}" value="${esc(RATE.note)}">
+    <p class="meta">${T("Others only see the average stars. What you got stays yours, and Scout remembers it for next time.")}</p>
+    <button class="btn primary" data-rate="save" style="width:100%;padding:12px" ${RATE.stars?'':'disabled'}>${T('Save')}</button>`;
+}
+document.addEventListener('click',e=>{
+  const pr=e.target.closest('[data-prate]'); if(pr) return openRate(pr.dataset.prate, pr.dataset.pname);
+  const st=e.target.closest('[data-rstar]'); if(st){ RATE.dish=$('#rateDish').value; RATE.note=$('#rateNote').value; RATE.stars=+st.dataset.rstar; return renderRate(); }
+  const r=e.target.closest('[data-rate]'); if(!r) return;
+  if(r.dataset.rate==='close') return $('#rateBg').hidden=true;
+  api('/api/rate',{id:RATE.id, stars:RATE.stars, dish:$('#rateDish').value, note:$('#rateNote').value}).then(j=>{
+    $('#rateBg').hidden=true; if(S.scHere?.id===RATE.id){ delete S.scHere; save(); }
+    toast(`⭐ ${T('Saved')}: ${'★'.repeat(RATE.stars)}${j.rating?` · ${T('{avg} average from {n}',{avg:j.rating.avg,n:j.rating.n})}`:''}`,'green',[],3000);
+  }).catch(err=>toast(esc(err.message),'orange'));
+});
+$('#rateBg').onclick=e=>{ if(e.target.id==='rateBg') $('#rateBg').hidden=true; };
+scoutApplyOff();
 $('#scoutForm').onsubmit=e=>{ e.preventDefault(); const q=$('#scoutIn').value; $('#scoutIn').value=''; scoutAsk(q); };
-$('#scoutBg').onclick=e=>{ if(e.target.id==='scoutBg') $('#scoutBg').hidden=true; };
+$('#scoutBg').onclick=e=>{ if(e.target.id==='scoutBg'){ $('#scoutBg').hidden=true; SCT.interview=false; } };
 $('#lookBg').onclick=e=>{ if(e.target.id==='lookBg') $('#lookBg').hidden=true; };
 $('#scoutPhoto').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
   try{ scS().look.photo=await shrinkImage(f,240,.8); save(); renderLook(); scoutEx('excited'); }catch(err){ toast("Couldn't read that photo.",'orange'); } };
@@ -8022,7 +8163,10 @@ async function checkInAt(k, id, lat, lng){
   try{ const j=await api('/api/checkin',{k,id});
     if(j.again) return toast(`✓ ${T('Already checked in here today.')}`,'',[],2500);
     if(SV.v2){ SV.v2.xp=j.xp; SV.v2.level=j.level; } renderQuick();
-    toast(`📍 <b>${esc(j.name)}</b> · +${j.xp_gain} XP${j.completed.length?`<br>🏆 ${T('Quest complete')}: ${j.completed.map(q=>esc(q.e+' '+T(q.name))).join(', ')}`:''}`,'green',[{l:T('Quests'),cls:'blue',f:openQuests}],5000);
+    const eat=k==='place';   // places are food & drink spots: "what did you get?" now, and Scout asks later if they don't say
+    if(eat){ S.scHere={id, name:j.name, at:Date.now()}; save(); }
+    toast(`📍 <b>${esc(j.name)}</b> · +${j.xp_gain} XP${j.completed.length?`<br>🏆 ${T('Quest complete')}: ${j.completed.map(q=>esc(q.e+' '+T(q.name))).join(', ')}`:''}`,'green',
+      [...(eat?[{l:'🍽️ '+T('What did you get?'),cls:'blue',f:()=>openRate(id,j.name)}]:[]),{l:T('Quests'),cls:eat?'':'blue',f:openQuests}],eat?9000:5000);
     if(j.completed.length) scoutBeep?.();
   }catch(e){ toast(esc(e.message),'orange'); }
 }

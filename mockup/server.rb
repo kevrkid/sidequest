@@ -40,6 +40,7 @@ require_relative 'friendmap'   # Snap-Map-style: friends' faces where they are (
 require_relative 'groups'   # Facebook-Groups-style walls: posts, photos, polls, events, comments, admins, private groups
 require_relative 'chats'   # Messenger-style chats: groups, replies, reactions, photos, voice notes, seen, typing
 require_relative 'spots'   # "Add location" when posting: every place we know, nearest first or by name
+require_relative 'scout_mind'   # Scout's memory of each person, its personalities, the setup interview, ratings
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 
 PORT    = (ENV['PORT'] || 8787).to_i
@@ -361,8 +362,8 @@ end
 # (never served to browsers), re-read on each question so they can be edited without a restart.
 SCOUT_MODEL = ENV['SQ_SCOUT_MODEL'] || 'haiku'          # how-to questions: fast and cheap
 SCOUT_SMART_MODEL = ENV['SQ_SCOUT_SMART_MODEL'] || MODEL   # "what should I do tonight" questions
-SCOUT_DAILY = (ENV['SQ_SCOUT_DAILY'] || 30).to_i          # questions per person per day
-SCOUT_HOURLY = (ENV['SQ_SCOUT_HOURLY'] || 15).to_i        # burst limit per person
+SCOUT_DAILY = (ENV['SQ_SCOUT_DAILY'] || 100).to_i         # questions per person per day (a real conversation and the setup interview take many)
+SCOUT_HOURLY = (ENV['SQ_SCOUT_HOURLY'] || 40).to_i        # burst limit per person
 SCOUT_BUDGET = (ENV['SQ_SCOUT_BUDGET_USD'] || 10).to_f    # all users, per day; Scout pauses past it
 # Scout's voice: Google Text-to-Speech (a server key limited to that API). Unset = the phone's own voice.
 # SQ_TTS_DAILY_CHARS caps a day's speech for everyone (~1M a month stays in Google's free allowance).
@@ -378,7 +379,7 @@ FFMPEG_BIN = ENV['SQ_FFMPEG_BIN'] || '/usr/bin/ffmpeg'
 HEAR = File.executable?(WHISPER_BIN) && File.executable?(FFMPEG_BIN) && File.file?(WHISPER_MODEL)
 HEAR_LOCK = Mutex.new   # one at a time: the box has two cores
 TTS = { lock: Mutex.new, day: nil, chars: 0, cache: {} }
-SCOUT_FILES = %w[scout_personality.md scout_knowledge.md].map { |f| File.join(ROOT, f) }
+SCOUT_FILES = %w[scout_personality.md scout_self.md scout_knowledge.md].map { |f| File.join(ROOT, f) }
 SCOUT_TARGETS = /\A[a-z0-9_]{1,30}\z/
 SCOUT_VIEWS = %w[home map feed meet live me]
 SCOUT_FACES = %w[happy thinking surprised laughing confused excited calm]
@@ -395,7 +396,16 @@ SCOUT_SCHEMA = {
     plan: { type: 'object', required: %w[title items], properties: {   # only when asked to plan / make an itinerary
       title: { type: 'string' }, day: { type: 'string' },
       items: { type: 'array', maxItems: 6, items: { type: 'object', required: %w[ref at], properties: {
-        ref: { type: 'string' }, at: { type: 'string' }, note: { type: 'string' } } } } } }
+        ref: { type: 'string' }, at: { type: 'string' }, note: { type: 'string' } } } } } },
+    remember: { type: 'array', maxItems: 3, items: { type: 'string' } },   # new things learned about the person
+    profile: { type: 'object', properties: {   # the setup interview's answers (or anything they tell you that fits)
+      interests: { type: 'array', items: { type: 'string' } },
+      quiz: { type: 'array', items: { type: 'object', required: %w[i v], properties: { i: { type: 'integer' }, v: { type: 'integer' } } } },
+      life: { type: 'array', items: { type: 'object', required: %w[k v], properties: { k: { type: 'string' }, v: { type: 'string' } } } },
+      done: { type: 'boolean' } } },
+    order: { type: 'object', required: %w[place], properties: {   # what they ordered somewhere, to save with a tap
+      place: { type: 'string' }, dish: { type: 'string' }, stars: { type: 'integer' }, note: { type: 'string' } } },
+    persona: { type: 'string', enum: %w[buddy hype chill planner curious] }   # only when they ask you to change personality
   }
 }.to_json
 
@@ -1086,6 +1096,7 @@ end
 
 def delete_user!(d, h)
   d['users'].delete(h)
+  scout_forget!(d, h)
   (d['plans'] || {}).delete(h)
   (d['google_ids'] || {}).delete_if { |_sub, x| x == h }
   File.delete(File.join(AVATAR_DIR, "#{h}.jpg")) rescue nil
@@ -1490,7 +1501,7 @@ def mount_app(server)
     p = Places.find(req.query['id'].to_s[0, 30]) or raise 'No such place.'
     lat, lng = req.query['lat'], req.query['lng']
     mi = lat && lng ? Places.miles(lat.to_f.round(2), lng.to_f.round(2), p['lat'], p['lng']) : nil
-    { place: Places.row(p, Hours.status(p['week'], Places.now_mow), mi).merge(store(write: false) { |d| barfood_info(d, p) }) }
+    { place: Places.row(p, Hours.status(p['week'], Places.now_mow), mi).merge(store(write: false) { |d| barfood_info(d, p).merge(sq_rating: place_rating(d, p['id'])) }) }
   end
   # Google's rating, price level and hours for the place someone tapped (anyone can browse, so per-IP limits)
   route(server, '/api/place/google', auth: false, get: true) do |_b, _h, req|
@@ -2263,6 +2274,13 @@ def mount_routes(server)
     history = (b['history'].is_a?(Array) ? b['history'] : []).last(6).map do |m|
       { who: m['who'] == 'scout' ? 'scout' : 'user', text: m['text'].to_s[0, 300] }
     end
+    persona = scout_persona_for(b['persona'].to_s, b['ptype'])
+    interview = b['interview'].is_a?(Hash) ? b['interview'] : nil
+    mind, kept = store(write: false) do |d|
+      [scout_mind_prompt(d, h, persona), Array(((d['scout_mem'] || {})[h] || {})['log']).last(12).map { |m| { who: m['w'] == 'u' ? 'user' : 'scout', text: m['t'] } }]
+    end
+    history = kept if kept.any?   # the whole conversation, kept on the server: it carries on across visits and devices
+    here = b['here'].is_a?(Hash) && (hp = Places.find(b['here']['id'].to_s[0, 30])) ? { id: hp['id'], name: hp['name'], kind: hp['kind'] } : nil
     targets = (b['targets'].is_a?(Array) ? b['targets'] : []).first(60)
                 .select { |t| t['id'].to_s =~ SCOUT_TARGETS }.map { |t| { id: t['id'], what: t['what'].to_s[0, 80] } }
     smart = q =~ /tonight|weekend|recommend|suggest|what should|what's the move|whats the move|bored|anything (good|fun)|who's going|near me|plans?\b/i
@@ -2274,7 +2292,7 @@ def mount_routes(server)
       places = (places + scout_plan_places(near)).uniq { |p| p[:id] }.first(20)
       places_note ||= 'A mix of food, bars and clubs near the user for building a plan; status is right now, so check hours fit the time you plan.'
     end
-    smart ||= planning
+    smart ||= planning || !!interview
     ginfo = scout_google(q, near)
     sights, sights_named = q =~ SIGHT_Q || planning && q =~ /sight|histor|tour|museum|landmark|tourist/i ? Sights.search(q, near: near, limit: planning ? 8 : 6) : [[], false]
     model = smart ? SCOUT_SMART_MODEL : SCOUT_MODEL
@@ -2305,6 +2323,9 @@ def mount_routes(server)
         #{ginfo.any? ? "Google info for the place(s) the user asked about (live from Google just now; the top match is usually the one they mean):\n#{JSON.generate(ginfo)}" : ''}
         #{planning ? "The user wants a plan. Fill `plan`: a short title, `day` (e.g. \"Tonight\", \"Saturday\"), and 2-6 stops in time order. Each stop's `ref` must be an `id` from the events, flares, food & drink places or sights above (nothing else; a sightseeing day mixes sights with food); `at` is local 24-hour HH:MM; `note` is one short line (why, or a tip). Leave time to walk or drive between stops and fit opening hours. In `say`, sum it up in 1-2 sentences and invite them to save it." : ''}
         #{taste ? "What this user has enjoyed before, from their own RSVPs, saves and check-ins in the app (scores: bigger = more, recent counts more): #{JSON.generate(taste)}. When you recommend or plan, lead with things like these and with their interests, and say why in a few words (\"you liked the last comedy night at Cap City\"). Events with `fits` were picked for their taste. Mix in one new thing when it suits their interests. Don't recite this list or bring it up unless they're asking what to do." : ''}
+        #{mind}
+        #{interview ? scout_interview_prompt(interview) : ''}
+        #{here ? "They checked in at this food & drink place a little while ago: #{JSON.generate(here)}. If it fits and they haven't told you yet, ask once, briefly, what they got and how it was; when they tell you, fill `order` (place = that id, the dish, stars 1-5 if they gave a rating or clearly loved / hated it)." : ''}
         Recent conversation: #{JSON.generate(history)}
         The user says: #{JSON.generate(q)}
       P
@@ -2318,11 +2339,17 @@ def mount_routes(server)
     acts = scout_actions(out['actions'], driving: driving, targets: targets, places: places, ctx: ctx,
                          food_ids: Places::CATS.keys + Places::HOTSPOTS.map { |z| z[:id] }, sights: sights)
     left = scout_bill!(h, usd)
+    say = out['say'].to_s[0, 600]
+    profile = scout_profile_clean(out['profile'])
+    order = out['order'].is_a?(Hash) && (op = Places.find(out['order']['place'].to_s[0, 30])) &&
+            { id: op['id'], name: op['name'], dish: out['order']['dish'].to_s.strip[0, 80], stars: out['order']['stars'].to_i.clamp(0, 5) }
+    persona_new = SCOUT_PERSONAS.key?(out['persona'].to_s) && out['persona'] != persona ? out['persona'] : nil
+    store { |d| scout_remember!(d, h, q, say, out['remember']) }
     warn "[scout] #{model} #{(Time.now - t).round(1)}s $#{usd.round(4)}: #{q[0, 60]}"
     lit = acts.select { |a| %w[place directions].include?(a['type']) }.map { |a| places.find { |p| p[:id] == a['target'] } }.compact
     plan = planning ? scout_plan(out['plan'], ctx, places + sights.map { |x| { id: x['id'], name: x['name'], lat: x['lat'], lng: x['lng'] } }) : nil
     shown = acts.select { |a| %w[sight directions].include?(a['type']) }.map { |a| sights.find { |x| x['id'] == a['target'] } }.compact
-    { say: out['say'].to_s[0, 600], expression: SCOUT_FACES.include?(out['expression']) ? out['expression'] : 'happy', plan: plan,
+    { say: say, profile: profile, order: order || nil, persona: persona_new, expression: SCOUT_FACES.include?(out['expression']) ? out['expression'] : 'happy', plan: plan,
       actions: acts.map { |a| a.slice('type', 'target', 'label') }, left: left, model: model,
       places: lit.to_h { |p| [p[:id], p.slice(:name, :lat, :lng, :status, :kind, :menu, :web)] },
       sights: shown.to_h { |x| [x['id'], x.slice('name', 'lat', 'lng', 'kind')] } }
@@ -2448,7 +2475,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }
