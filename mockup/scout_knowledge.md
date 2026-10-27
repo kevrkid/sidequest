@@ -60,7 +60,7 @@ Keep this file up to date when features change. Only describe things that exist 
 - A ranked list of real Austin events (from ~45 local sources, refreshed every 6 hours), flares,
   group posts, people and groups, each with reasons ("You're into comedy · 2 friends going").
 - When it's sorted "For you" (the default), the top shows "Tonight's picks for you": up to 3 flares
-  picked for them (by Claude when signed in), each with a match %, reasons, I'm down / Show on map /
+  picked for them (by Scout when signed in), each with a match %, reasons, I'm down / Show on map /
   Not tonight, and a ↻ to pick again. The For you button in the bottom bar opens this.
 - ⚙️ Customize: content types, categories, sort, distance. 🗺 Map it shows the list on the map.
 

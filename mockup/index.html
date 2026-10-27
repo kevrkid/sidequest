@@ -979,6 +979,10 @@
   .xhead{display:flex;align-items:center;gap:10px} .xhead b{font-size:19px;flex:1}
   #app.v3 #v-home #quickBar,#app.v3 #v-home #homeStories{display:none}
   #app.v3 #feedWhen{display:none} .chip.fwhen{border-color:#2ec5ff55;color:#bfe9ff}
+  /* V3: one set of surfaces for old and new screens alike */
+  #app.v3{--panel:#141b38;--panel2:#1a2246;--line:#ffffff17}
+  #app.v3 .card{border-radius:18px}
+  #app.v3 .sheet{background:#121935;border-top-color:#ffffff1c}
 </style>
 </head>
 <body>
@@ -4619,7 +4623,7 @@ function renderPicks(){
   if(S.feed.sort!=='foryou'||feedQ||feedFocus||!(ns.length||AI.loading)){ el.innerHTML=''; return; }
   el.innerHTML = `<div class="row" style="margin:0 0 8px"><div class="grow"><div class="kicker" style="margin:0">✨ Tonight's picks for you</div>
       <div class="meta">${AI.loading?'🧭 '+T('Scout is picking…'):esc((ai&&AI.summary)||"From your interests, your friends and what's close")}</div></div>
-      ${ENGINE?`<button class="btn sm" id="refreshPicks" title="Ask Claude again" ${AI.loading?'disabled':''}>↻</button>`:''}</div>`
+      ${ENGINE?`<button class="btn sm" id="refreshPicks" title="Ask Scout again" ${AI.loading?'disabled':''}>↻</button>`:''}</div>`
     + (ENGINE&&AI.loading&&!AI.picks ? `<div class="card skel" style="height:64px">🧭 ${T('Scout is picking…')}</div>` : ns.map(n=>`<div class="card nudge">
       <div class="row">${av(n.a.h)}<div class="grow"><span class="match">${pct(n)}% MATCH</span><div class="bar"><b style="width:${ai?n.s:n.s/max*100}%"></b></div></div>${when(n.p)}</div>
       <div class="head">${esc(n.head||headline(n))}</div>
@@ -4648,10 +4652,10 @@ function friendsHtml(){
     ? MATCH.list.map(m=>({u:user(m.handle),pct:m.match,r:m.reasons,opener:m.opener}))
     : (()=>{ const ms=people().filter(u=>u.h!==S.me.h).map(matchPerson).sort((a,b)=>b.s-a.s), top=ms[0]?.s||1;
         return ms.slice(0,5).map(m=>({u:m.u,pct:Math.round(40+m.s/top*55),r:m.r})); })();
-  const suggest = `<div class="row" style="margin:-2px 0 10px"><span class="meta grow">${MATCH.loading?'🧠 Claude is comparing profiles…'
-      :ai?`🧠 Ranked by Claude (${(MATCH.ms/1000).toFixed(1)}s)`:'From your shared answers and what you\'ve been up to'}</span>
-      ${ENGINE?`<button class="btn sm" data-askmatch ${MATCH.loading?'disabled':''}>${ai?'↻ Ask again':'🧠 Ask Claude'}</button>`:''}</div>
-    ${MATCH.err?`<p class="meta" style="color:var(--accent)">Couldn't reach Claude: ${esc(MATCH.err)}</p>`:''}`
+  const suggest = `<div class="row" style="margin:-2px 0 10px"><span class="meta grow">${MATCH.loading?'🧭 Scout is comparing profiles…'
+      :ai?`🧭 Ranked by Scout`:'From your shared answers and what you\'ve been up to'}</span>
+      ${ENGINE?`<button class="btn sm" data-askmatch ${MATCH.loading?'disabled':''}>${ai?'↻ Ask again':'🧭 Ask Scout'}</button>`:''}</div>
+    ${MATCH.err?`<p class="meta" style="color:var(--accent)">Couldn't reach Scout: ${esc(MATCH.err)}</p>`:''}`
     + ranked.map(({u,pct,r,opener})=>`<div class="card"><div class="row">${av(u.h)}<div class="grow"><div class="handle">${esc(u.h)}
         ${isFriend(u.h)?'<span class="badge friends">friend</span>':''}</div><span class="match">${pct}% MATCH</span><div class="bar"><b style="width:${pct}%"></b></div></div>
         ${isFriend(u.h)?msgBtn(u.h):addBtn(u.h)}</div>
