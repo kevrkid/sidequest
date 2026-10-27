@@ -4683,11 +4683,10 @@ function renderPicks(){
       <div class="meta">${AI.loading&&!AI.picks?'':AI.loading?'🧭 '+T('Scout is picking…'):esc((ai&&AI.summary)||"From your interests, your friends and what's close")}</div></div>
       ${ENGINE?`<button class="btn sm" id="refreshPicks" title="Ask Scout again" ${AI.loading?'disabled':''}>↻</button>`:''}</div>`
     + (ENGINE&&AI.loading&&!AI.picks ? `<div class="card skel" style="height:64px">🧭 ${T('Scout is picking…')}</div>` : ns.map(n=>`<div class="card nudge">
-      <div class="row">${av(n.a.h)}<div class="grow"><span class="match">${pct(n)}% MATCH</span><div class="bar"><b style="width:${ai?n.s:n.s/max*100}%"></b></div></div>${when(n.p)}</div>
+      <div class="row">${av(n.a.h)}<div class="grow">${S.me.i.length||ai?`<span class="match">${pct(n)}% MATCH</span><div class="bar"><b style="width:${ai?n.s:n.s/max*100}%"></b></div>`:''}</div>${when(n.p)}</div>
       <div class="head">${esc(n.head||headline(n))}</div>
       <div class="meta">${esc(n.a.h)} posted: “${esc(n.p.t)}”</div>
-      <ul class="why">${n.r.slice(0,3).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-      <p style="margin:0 0 12px;font-style:italic;color:#dfe3ff">${esc(n.pitch||pitch(n))}</p>
+      ${n.r[0]?`<div class="meta" style="margin:6px 0 10px">✨ ${esc(n.r.slice(0,2).join(' · '))}</div>`:''}
       <div class="btns"><button class="btn sm ${n.p.downs.includes(S.me.h)?'down-on':'primary'}" data-down="${n.p.id}">${n.p.downs.includes(S.me.h)?"✓ I'm down":"I'm down"}</button>
         <button class="btn sm" data-map="${n.p.id}">Show on map</button><button class="btn sm" data-skip="${n.p.id}">Not tonight</button></div>
     </div>`).join(''))
