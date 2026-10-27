@@ -1456,7 +1456,7 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Flare':'Bengala','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Explore':'Explorar','Watch':'Ver','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Flare':'Bengala','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
   'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
@@ -5280,7 +5280,7 @@ function tab(t, at){
   document.querySelectorAll('#drawer .view').forEach(v=>v.hidden=v.id!=='v-'+t);
   $('#app').dataset.tab=t;
   document.querySelectorAll('#dock [data-dock]').forEach(b=>b.classList.toggle('on',b.dataset.dock===(t==='search'||t==='live'?'home':t)));
-  if(t!=='search'){ $('[data-qback]').hidden=true; if(document.activeElement===$('#qIn')) $('#qIn').blur(); $('[data-qclear]').hidden=!$('#qIn').value; }
+  if(t!=='search'){ $('[data-qback]').hidden=true; if(document.activeElement===$('#qIn')) $('#qIn').blur(); if(was==='search') $('#qIn').value=''; $('[data-qclear]').hidden=!$('#qIn').value; }
   setDrawer(at || (t==='home' ? (was==='home'||was==='search'&&DRW.at!=='full' ? DRW.at : 'half') : 'full'));
   $('#scoutBtn').hidden = t!=='home'; scoutUnpoint?.();
   if(!map){ if(DRW.booted) initMap(); else setTimeout(()=>{ if(!map){ initMap(); setDrawer(); } },0); }   // first time: paint first, then build the map
@@ -5341,6 +5341,12 @@ function tab(t, at){
   $('#app').addEventListener('scroll',e=>{ if(e.target.id==='app') e.target.scrollTop=e.target.scrollLeft=0; });   // nothing may scroll the whole screen (a scrollIntoView, a keyboard)
 })();
 /* ---------- Explore: the drawer's first page. What's around right now; a chip turns the map and this list to one thing. ---------- */
+// A place's icon from what it serves when we can tell (name or cuisine), else its kind.
+const DISH_E = [[/pizz/,'🍕'],[/taco|taquer|mexican|tex-mex/,'🌮'],[/bbq|barbecue|brisket|smokehouse/,'🍖'],[/burger/,'🍔'],[/coffee|caf[eé]|espresso/,'☕'],
+  [/sushi|ramen|japanese|pho|vietnam|thai|chinese|asian|noodle|korean/,'🍜'],[/donut|bakery|pastr|kolache/,'🥐'],[/ice cream|gelato|frozen/,'🍦'],[/brew|beer|tap ?room/,'🍺'],[/wine/,'🍷'],[/bbq/,'🍖']];
+const placeE = (kind, name='', cuisine=[]) => { const h=(name+' '+[].concat(cuisine||[]).join(' ')).toLowerCase();
+  if(!['bar','club','pub'].includes(kind)) for(const [re,e] of DISH_E) if(re.test(h)) return e;
+  return PLACE_E[kind]||'🍽️'; };
 const svgI = (n, cls='') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const fmtMi = k => k==null ? '' : k<0.16 ? '0.1 mi' : `${(k*0.621).toFixed(k<16?1:0)} mi`;
 function renderHome(){
@@ -5350,6 +5356,8 @@ function renderHome(){
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
   renderQuick(); renderTonight(); $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail();   // stories live in For you; plans and level in You
+  const day=new Date().getHours()<15, tn=$('#homeTonight'), mo=$('#exMore');   // daytime: what's open now first; evening: tonight first
+  if(day!==(mo.nextElementSibling===tn)) day ? tn.before(mo) : mo.before(tn);
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
   $('#homeNext').innerHTML = next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
       const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
@@ -5392,7 +5400,7 @@ function openRail(){
   const L=(OPENNEAR.list||[]).slice(0,10); if(!L.length) return '';
   PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];   // so a tap can fly to it
   return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
-    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${PLACE_E[p.kind]||'🍽️'}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.status||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>`;
+    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${placeE(p.kind,p.name,p.cuisine)}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.status||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>`;
 }
 // Mon-Thu: the coming weekend's best fits (Fri-Sun); Fri-Sun: the week ahead (from tomorrow).
 function weekendRail(){
@@ -5469,7 +5477,7 @@ async function renderExCat(fresh){
     const openT = EXC.sub==='happy' ? `<p class="meta exnote">${T('Happy hours from menus, on now first')}</p>` : '';
     if(EXC.sub==='happy') PL.lastList=HH.list||[];
     const rows = EXC.sub==='happy' ? (HH.list||[]).slice(0,40).map(p=>xrow({go:`pl|${p.id}`, e:'🍻', th:thumbAttr({id:p.id}), title:p.name, sub:`<span class="hhtag ${p.happy?.now?'now':''}">${esc(p.happy?.label||'')}</span> ${esc(p.happy?.deals||'')}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}))
-      : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
+      : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:placeE(p.kind,p.name,p.cuisine), th:thumbAttr({id:p.id}), title:p.name,
           sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc([p.kind,(p.cuisine||[]).slice(0,2).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}));
     el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
     exAfter(el, (EXC.sub==='happy'?HH.list||[]:EXC.list).map(p=>[p.lat,p.lng]), fresh); watchThumbs(); return;
@@ -5510,7 +5518,7 @@ async function renderExCat(fresh){
     el.innerHTML = subs + `<p class="skel" style="margin-top:6px">${T('Finding spots…')}</p>`;
     let L=[]; try{ L=(await (await fetch(`/api/places?${new URLSearchParams({zone:zone.id,open:S.foodOpen?'1':''})}&${nearParam()}&limit=60`)).json()).places||[]; }catch(err){}
     if(seq!==EXC.seq) return; PL.lastList=L;
-    el.innerHTML = subs + `<div class="exlh"><b>🔥 ${esc(zone.name)}</b><span class="meta">${T('{n} spots',{n:L.length})}${zone.vibe?' · '+esc(zone.vibe):''}</span></div>` + (L.map(p=>xrow({go:`pl|${p.id}`, e:PLACE_E[p.kind]||'🍽️', th:thumbAttr({id:p.id}), title:p.name,
+    el.innerHTML = subs + `<div class="exlh"><b>🔥 ${esc(zone.name)}</b><span class="meta">${T('{n} spots',{n:L.length})}${zone.vibe?' · '+esc(zone.vibe):''}</span></div>` + (L.map(p=>xrow({go:`pl|${p.id}`, e:placeE(p.kind,p.name,p.cuisine), th:thumbAttr({id:p.id}), title:p.name,
         sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc(p.kind||'')}`, d:p.mi!=null?p.mi+' mi':null})).join('')
       || `<p class="xempty">${S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
     exAfter(el, [], false); watchThumbs(); return;
@@ -5546,9 +5554,10 @@ function renderSearch(){
     scoutFaces(); return;
   }
   const words=fold(ql).split(/\s+/).filter(Boolean), hit=(...xs)=>{ const h=fold(xs.join(' ').toLowerCase()); return words.every(w=>h.includes(w)); };
-  const near=p=>km(ME_POS,p), grp=(t,rows,max=5)=>rows.length?`<div class="sgrp">${t}</div>${rows.slice(0,max).map(xrow).join('')}${rows.length>max?`<p class="meta" style="margin:4px 2px">${T('+{n} more: keep typing to narrow it down',{n:rows.length-max})}</p>`:''}`:'';
+  const near=p=>km(ME_POS,p), grp=(t,rows,max=5)=>{ if(SQ.all===t) max=60;
+    return rows.length?`<div class="sgrp">${t}</div>${rows.slice(0,max).map(xrow).join('')}${rows.length>max?`<button class="linkbtn" data-sall="${esc(t)}" style="margin:6px 2px;font-weight:700">${T('Show all {n}',{n:Math.min(rows.length,60)})} ›</button>`:''}`:''; };
   const places=[], evs=[], ppl=[], grps=[];
-  (PL.all||[]).forEach(([id,name,kind,lat,lng])=>{ if(hit(name,kind||'')) places.push({go:`pl|${id}`, e:PLACE_E[kind]||'🍽️', th:thumbAttr({id}), title:name, sub:esc(kind||''), k:near([lat,lng])}); });
+  (PL.all||[]).forEach(([id,name,kind,lat,lng])=>{ if(hit(name,kind||'')) places.push({go:`pl|${id}`, e:placeE(kind,name), th:thumbAttr({id}), title:name, sub:esc(kind||''), k:near([lat,lng])}); });
   (OD.data?.areas||[]).forEach(a=>{ if(a.name&&hit(a.name)) places.push({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name, sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:near(a.c)}); });
   (SG.data||[]).forEach(([id,kind,name,lat,lng,year])=>{ if(hit(name)) places.push({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name, sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:near([lat,lng])}); });
   const seenP=new Set(); places.sort((a,b)=>a.k-b.k);
@@ -5582,7 +5591,7 @@ function searchGo(v){
   if(t==='od') return mapGo('od',id);
 }
 $('#qIn').addEventListener('focus',openSearchView);
-$('#qIn').addEventListener('input',()=>{ $('[data-qclear]').hidden=!$('#qIn').value; clearTimeout(SQ.t); SQ.t=setTimeout(renderSearch,110); });
+$('#qIn').addEventListener('input',()=>{ SQ.all=null; $('[data-qclear]').hidden=!$('#qIn').value; clearTimeout(SQ.t); SQ.t=setTimeout(renderSearch,110); });
 $('#qForm').addEventListener('submit',e=>{ e.preventDefault(); const q=$('#qIn').value.trim(); if(!q) return;
   if(isQuestion(q)) return searchGo('scout|'+q); const first=$('#searchOut [data-xgo]:not([data-xgo^="scout"])'); if(first) first.click(); });
 
@@ -5609,7 +5618,7 @@ function renderYou(){
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
@@ -5629,7 +5638,8 @@ document.addEventListener('click',e=>{
     EXC.sub=d.exsub; if(EXC.k==='events'){ S.mapWhen=d.exsub; save(); renderMapChips(); renderMap(); } if(EXC.k==='food'||EXC.k==='night') EXC.list=null; return renderExCat(true); }
   if(d.exopen!==undefined){ S.foodOpen=!S.foodOpen; S.mapL.openonly=S.foodOpen; save(); refreshMapLayers(); return renderExCat(true); }
   if(d.xgo) return searchGo(d.xgo);
-  if(d.sq!==undefined){ $('#qIn').value=d.sq; return renderSearch(); }
+  if(d.sq!==undefined){ $('#qIn').value=d.sq; SQ.all=null; $('[data-qclear]').hidden=false; return renderSearch(); }
+  if(d.sall){ SQ.all=d.sall; return renderSearch(); }
   if(d.ystat) return d.ystat==='friends' ? (meetTab='friends', tab('meet')) : openQuests();
   if(d.yfriends!==undefined){ meetTab='friends'; return tab('meet'); }
   if(d.yedit){ showMeSec(d.yedit); return setTimeout(()=>$('#v-me').scrollTo({top:$('#meEdit').offsetTop-8,behavior:'smooth'}),60); }
