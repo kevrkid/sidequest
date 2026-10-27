@@ -1416,7 +1416,7 @@ S.coins ??= 50;
    and speaks in the same language. ---------- */
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
-  'Explore':'Explorar','Watch':'Ver','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
+  'Explore':'Explorar','Watch':'Ver','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Flare here':'Bengala aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
   'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
@@ -4911,7 +4911,7 @@ function initMap(){
   renderMapChips();
   map.on('moveend',redrawMapLayers);   // one handler, so the layers always redraw in priority order
   map.on('dragstart',()=>{ mapHint.armed=true; mapWantsRoom(); }); map.on('click',mapWantsRoom);
-  map.on('popupopen',popToDrawer); map.on('popupclose',popClosed); L.Popup.prototype.options.autoPan=false;   // touching the map = you want the map
+  map.on('popupopen',popToDrawer); map.on('popupclose',popClosed); map.on('contextmenu',mapHold); L.Popup.prototype.options.autoPan=false;   // touching the map = you want the map
   map.on('movestart zoomstart',()=>{ MAPMOVING=true; $('#map').classList.add('mapmoving'); });
   map.on('moveend zoomend',()=>{ MAPMOVING=false; $('#map').classList.remove('mapmoving'); });
   renderMap(); renderHotZones(); renderMarkets(); loadPlacesMap();
@@ -5215,7 +5215,7 @@ const DRW={at:'peek'};
 function drawerStops(){
   const d=$('#drawer'), H=d.offsetHeight, head=d.querySelector('.dgrab').offsetHeight+d.querySelector('.dhead').offsetHeight;
   let half=Math.round(H*.44);
-  if(POP.p){ const ph=$('#exPop').offsetHeight+28; half=Math.max(Math.round(H*.22),Math.min(H-head-ph,Math.round(H*.6))); }   // a pin's card: just its height
+  if(POP.p){ const ph=$('#exPop').offsetHeight+28; half=Math.max(Math.round(H*.22),Math.min(H-head-ph,Math.round(H*.78))); }   // a pin's card: just its height
   return {full:0, half, peek:Math.max(0,H-head)};
 }
 const WIDE = () => innerWidth>=900;   // a computer: the drawer is a panel down the left, always open
@@ -5296,14 +5296,14 @@ function tab(t, at){
 })();
 /* ---------- Explore: the drawer's first page. What's around right now; a chip turns the map and this list to one thing. ---------- */
 const svgI = (n, cls='') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
-const fmtMi = k => k==null ? '' : k<0.16 ? T('here') : `${(k*0.621).toFixed(k<16?1:0)} mi`;
+const fmtMi = k => k==null ? '' : k<0.16 ? T('Here') : `${(k*0.621).toFixed(k<16?1:0)} mi`;
 function renderHome(){
   renderGlance(); renderDock();
   if(!$('#exMain')) return;
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#exMore').innerHTML=hotRail()+happyRail();   // stories live in For you; plans and level in You
+  renderQuick(); renderTonight(); $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail();   // stories live in For you; plans and level in You
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
   $('#homeNext').innerHTML = next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
       const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
@@ -5317,7 +5317,7 @@ function renderGlance(){
   const now=Date.now(), end=new Date().setHours(28,0,0,0);
   const evs=EV.list.filter(e=>e.te>now&&e.ts<end&&e.lat).length, out=((AUTHED&&SV.v2?.out)||[]).length, live=liveStreams().length+(LIVE.on?1:0);
   const bits=[evs?T('<b>{n}</b> things on tonight',{n:evs}):'', out?T('<b>{n}</b> friends out',{n:out}):'', live?T('<b>{n}</b> live',{n:live}):'', HH.now?T('<b>{n}</b> happy hours',{n:HH.now}):''].filter(Boolean);
-  el.innerHTML = `<span>${bits.length?bits.slice(0,3).join(' · '):T('See what\'s around you')}</span>${svgI('chev','up')}`;
+  el.innerHTML = `<span>${bits.length?bits.slice(0,3).join(' · '):T('See what\'s around you')}</span>`;
   if(DRW.at==='peek') setDrawer();   // its height is part of the peek
 }
 function renderDock(){
@@ -5336,6 +5336,26 @@ function hotRail(){
 function askIdeas(){
   const h=new Date().getHours(), we=[0,5,6].includes(new Date().getDay());
   return [h<11?'Where should I get breakfast?':h<16?'Lunch spot near me?':'Plan my night', 'Something free to do tonight', HH.now?'Best happy hour near me?':'Where\'s good tacos open late?', we?'Plan my Saturday outdoors':'Live music this week?'].map(q=>T(q));
+}
+// Food & drink open right now, nearest first (fetched at most every 10 minutes).
+const OPENNEAR={list:null, at:0, busy:false};
+function openRail(){
+  if(!OPENNEAR.busy&&Date.now()-OPENNEAR.at>6e5){ OPENNEAR.busy=true;
+    fetch(`/api/places?cat=all&open=1&${nearParam()}&limit=12`).then(r=>r.json()).then(j=>{ OPENNEAR.list=j.places||[]; OPENNEAR.at=Date.now(); })
+      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=happyRail()+openRail()+hotRail()+weekendRail(); }); }
+  const L=(OPENNEAR.list||[]).slice(0,10); if(!L.length) return '';
+  PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];   // so a tap can fly to it
+  return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
+    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${PLACE_E[p.kind]||'🍽️'}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.status||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>`;
+}
+// The weekend's best fits, when it isn't the weekend yet (Mon-Thu), or next week's on the weekend.
+function weekendRail(){
+  const now=new Date(), dow=now.getDay(), aff=affinity();
+  const sat=new Date(now); sat.setHours(0,0,0,0); sat.setDate(sat.getDate()+((6-dow+7)%7||(dow===6?0:7)));
+  const from=dow>=1&&dow<=4?sat.getTime()-864e5*1:Date.now()+864e5*2, to=from+3*864e5;   // Fri-Sun, or the next few days
+  const L=EV.list.filter(e=>e.ts>=from&&e.ts<to&&e.lat&&km(ME_POS,[e.lat,e.lng])<40).map(e=>({e,s:scoreEvent(e,aff,{}).s})).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.e);
+  return L.length ? `<div class="tnhead"><b>📅 ${T(dow>=1&&dow<=4?'This weekend':'Coming up')}</b><button class="linkbtn" data-excat="events" data-exsubgo="${dow>=1&&dow<=4?'weekend':'week'}">${T('See all')} ›</button></div><div class="tnrail">${L.map(e=>
+    `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:''}>${CATS[e.cat]?.e||'🎫'}</span><span class="tnt"><b>${esc(e.title)}</b><span class="meta">${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}</span></span></button>`).join('')}</div>` : '';
 }
 function happyRail(){
   const L=(HH.list||[]).filter(p=>p.happy?.now).slice(0,10);
@@ -5374,7 +5394,6 @@ function exploreClear(){
   if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }
   EXC.k=null; EXC.list=null; delete $('#app').dataset.cat; refreshMapLayers(); renderMapChips(); renderHome();
 }
-const exHead = () => '';   // the picked chip (with its ✕) is the heading
 const exSubs = k => EX_SUBS[k] ? `<div class="subchips">${k==='food'||k==='night'?`<button class="tog ${S.foodOpen?'on':''}" data-exopen>● ${esc(T('Open now'))}</button>`:''}${EX_SUBS[k].map(([v,l])=>`<button data-exsub="${v}" class="${EXC.sub===v?'on':''}">${esc(T(l))}</button>`).join('')}</div>` : '';
 const xrow = ({go, e, th='', title, sub, d, attr=''}) => `<button class="xrow" ${go?`data-xgo="${esc(go)}"`:''} ${attr}><span class="xe thumb"${th}>${e}</span>
   <span class="grow"><b>${esc(title)}</b><span class="meta">${sub||''}</span></span>${d!=null?`<span class="xd">${esc(d)}</span>`:''}</button>`;
@@ -5524,7 +5543,7 @@ function renderYou(){
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-excat],[data-exsub],[data-exclose],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-fmgo],#glance');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
@@ -5540,7 +5559,6 @@ document.addEventListener('click',e=>{
   if(d.qmic!==undefined) return openScoutVoice();
   if(d.excat) return exploreCat(d.excat, d.exsubgo);
   if(d.exsub){ EXC.sub=d.exsub; if(EXC.k==='events'){ S.mapWhen=d.exsub; save(); renderMapChips(); renderMap(); } if(EXC.k==='food'||EXC.k==='night') EXC.list=null; return renderExCat(true); }
-  if(d.exclose!==undefined) return exploreClear();
   if(d.exopen!==undefined){ S.foodOpen=!S.foodOpen; S.mapL.openonly=S.foodOpen; save(); refreshMapLayers(); return renderExCat(true); }
   if(d.xgo) return searchGo(d.xgo);
   if(d.sq!==undefined){ $('#qIn').value=d.sq; return renderSearch(); }
@@ -5580,7 +5598,20 @@ function popClosed(e){
     $('#exPop').hidden=true; $('#exPop').replaceChildren(); delete $('#app').dataset.pop; renderHome();
     if(curTab==='home') setDrawer(EXC.k?'half':POP.at==='peek'||!POP.at?'peek':POP.at==='full'?'half':POP.at); POP.at=null; },60);   // back to the list it came from
 }
-document.addEventListener('click',e=>{ if(e.target.closest('[data-popclose]')) map?.closePopup(); });
+document.addEventListener('click',e=>{ if(e.target.closest('[data-popclose]')) map?.closePopup();
+  if(e.target.closest('[data-holdflare]')){ const sp=HOLD.spot; map?.closePopup(); if(needAccount('post a flare')||!sp) return; openCompose(); CF.place=spotOf(sp); refreshLoc('fl'); }
+  if(e.target.closest('[data-holdgo]')){ const sp=HOLD.spot; map?.closePopup(); if(sp) (PL.byId[sp.id]?focusPlace:focusSight)(sp.id); } });
+// Press and hold the map (right-click with a mouse): what's here, and do something here.
+const HOLD = {spot:null};
+function mapHold(e){
+  const ll=e.latlng, here=[ll.lat,ll.lng]; let best=null, bd=.15;   // the nearest place or sight within 150 m
+  (PL.all||[]).forEach(([id,name,kind,lat,lng])=>{ const d=km(here,[lat,lng]); if(d<bd){ bd=d; best={id,name,kind,lat,lng,e:PLACE_E[kind]||'📍'}; } });
+  (SG.data||[]).forEach(([id,kind,name,lat,lng])=>{ const d=km(here,[lat,lng]); if(d<bd){ bd=d; best={id,name,kind,lat,lng,e:SG_KIND[kind]?.[0]||'🏛️'}; } });
+  HOLD.spot=best;
+  L.popup().setLatLng(ll).setContent(`<b>📍 ${best?esc(T('Near {p}',{p:best.name})):T('This spot')}</b><div class="meta">${esc(fmtMi(km(ME_POS,here)))} ${T('from you')}</div>
+    <div class="btns" style="margin-top:10px">${best?`<button class="btn sm primary" data-holdflare>📣 ${T('Flare here')}</button><button class="btn sm" data-holdgo>${esc(best.e)} ${esc(best.name.slice(0,24))}</button>`:''}
+    <a class="btn sm" href="${mapsUrl(ll.lat,ll.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')} ↗</a></div>`).openOn(map);
+}
 new ResizeObserver(()=>{ if(POP.p&&DRW.at==='half') setDrawer('half'); }).observe($('#exPop'));
 function toast(html, cls='', actions=[], ms=5000){
   const el=document.createElement('div'); el.className='toast '+cls;

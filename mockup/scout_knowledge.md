@@ -30,6 +30,8 @@ Keep this file up to date when features change. Only describe things that exist 
   the map and open its card in the drawer. The picked chip shows a ✕: tap it again (or back) to go back.
 - Tapping any pin on the map opens its card in the drawer (hours, Menu, Directions, Check in, Save…), with a blue ring
   on the pin. ✕ or back closes it and returns to the list it came from.
+- Press and hold anywhere on the map (right-click on a computer): a card says what's there (the nearest place or
+  sight) with 📣 Flare here, that place, and Directions.
 - One line under the chips says what's on ("37 things on tonight · 2 friends out"); tap it for tonight's list.
 - Pulled up, the drawer shows: Up next (the next thing you're going to, with a countdown), Friends out now, Tonight
   near you, Busy right now (hot spots) and Happy hour now. Dragging or tapping the map moves the drawer out of the way.

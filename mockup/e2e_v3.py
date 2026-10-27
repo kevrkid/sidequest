@@ -97,8 +97,16 @@ with sync_playwright() as pw:
           and p.locator(".leaflet-popup.indrawer").count() == 1 and p.locator(".popring").count() == 1)
     p.screenshot(path=f"{OUT}/v3-02b-card.png")
     check("recent searches are remembered", p.evaluate("(S.recentQ||[])[0]") == "taco")
-    p.evaluate("goBack()"); p.wait_for_timeout(200)
-    check("back closes the card first, and the drawer goes back down", p.locator(".leaflet-popup").count() == 0 and p.locator("#exPop").is_hidden() and at()[1] == "peek")
+    p.evaluate("goBack()"); p.wait_for_timeout(500)
+    check("back closes the card first, and the drawer goes back down", p.locator(".leaflet-popup").count() == 0 and p.locator("#exPop").is_hidden() and at()[1] == "peek",
+          [p.locator(".leaflet-popup").count(), p.locator("#exPop").is_hidden(), at()])
+
+    # press and hold the map: what's here, flare here
+    p.evaluate("()=>{ map.setView([30.2592,-97.7389],17); map.fire('contextmenu',{latlng:L.latLng(30.2592,-97.7389)}); return 1 }"); p.wait_for_timeout(500)
+    check("press and hold the map: a card with what's near and Flare here", "Near" in p.inner_text("#exPop") and p.locator("#exPop [data-holdflare]").count() == 1, p.inner_text("#exPop")[:80])
+    p.click("#exPop [data-holdflare]"); p.wait_for_timeout(500)
+    check("…Flare here opens the composer with that place", p.locator("#sheetBg").is_visible() and p.evaluate("!!CF.place&&!!CF.place.name"))
+    p.evaluate("closeTopOverlay()")
 
     # dock: For you, Chats, You, ＋
     p.click("[data-dock='feed']"); p.wait_for_timeout(300)
@@ -126,8 +134,6 @@ with sync_playwright() as pw:
           p.eval_on_selector_all("#createBg [data-create]", "b=>b.map(x=>x.dataset.create)") == ["story", "post", "flare", "event", "group", "live"])
     p.click("[data-create='post']"); p.wait_for_timeout(500)
     check("Create → Post lands on the posts composer", at()[0] == "feed" and p.evaluate("FEED_MODE.m") == "posts" and p.locator("#wText").is_visible())
-    p.click("#meChip"); p.wait_for_timeout(200)
-    check("your picture (top left) opens You", at()[0] == "me")
     p.click("#logo"); p.wait_for_timeout(300)
     check("the name at the top goes back to the map", at() == ["home", "peek"])
 

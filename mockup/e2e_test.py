@@ -228,7 +228,7 @@ with sync_playwright() as pw:
     check("tapping a row flies to it on the map; its card (with Menu) opens in the drawer", p1.evaluate("DRW.at") == "half" and "Taco Test Trailer" in p1.locator("#exPop").inner_text())
     p1.click("#exPop [data-popclose]"); p1.wait_for_timeout(400)
     check("closing the card goes back to the list", p1.locator("#exCat .xrow").first.is_visible() and p1.evaluate("DRW.at") == "half")
-    p1.click("#exCat [data-exclose]")
+    p1.click("#mapChips .chip.on")      # the picked chip (✕) closes its list
     check("✕ puts the map back the way it was", p1.evaluate("!EXC.k && S.mapL.events"))
     check("✕ leaves the map calm: no food dots or hot spot zones until you ask", p1.evaluate("!S.mapL.food && !S.mapL.zones"))
     # map: dots + hot spot zones (the Layers switches)
@@ -304,7 +304,7 @@ with sync_playwright() as pw:
     p1.screenshot(path=f"{OUT}/72-map-sight.png")
     p1.evaluate("map.closePopup()"); p1.click("#mapChips [data-excat='sights']"); p1.wait_for_timeout(500)
     check("the Sights chip lists sights nearest the middle of the map", "Ferry Landing" in p1.locator("#exCat").inner_text() or "moonlight" in p1.locator("#exCat").inner_text().lower(), p1.locator("#exCat").inner_text()[:150])
-    p1.click("#exCat [data-exclose]"); p1.wait_for_timeout(200)
+    p1.click("#mapChips .chip.on"); p1.wait_for_timeout(200)      # the picked chip (✕) closes its list
     p1.click("[data-mlayers]"); p1.wait_for_timeout(300)
     p1.evaluate("""()=>{ const s=document.querySelector('#placesSheet'), r=s.getBoundingClientRect();
       const mk=(type,y)=>{ const t=new Touch({identifier:2,target:s,clientX:r.left+150,clientY:r.top+y}); s.dispatchEvent(new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true,cancelable:true})); };
