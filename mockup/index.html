@@ -1030,6 +1030,8 @@
   #app.v3 .tncard{align-items:flex-start}
   #exMain>#homeNext:empty+#homeTonight .tnhead:first-child,#exMain>div:first-child .tnhead:first-child{padding-top:8px}
   .pmain .favb{flex:none}
+  @media (min-width:900px){ #app.v3 #map{left:452px} }   /* the map starts beside the panel, so nothing hides under it */
+  @media (min-width:900px){ #app.v3 .me-chip.authed{display:none} #app.v3 .me-chip.authed+.logo,#app.v3 .logo{margin:0 auto 0 0} }
 </style>
 </head>
 <body>
@@ -1693,7 +1695,7 @@ function km(a,b){const R=6371,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1])
   const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
 function when(p){const n=Date.now(); if(p.start<=n) return `<span class="badge live">● Live till ${clock(p.end)}</span>`;
   const m=Math.round((p.start-n)/M); return `<span class="badge">🕒 ${m<60?`in ${m} min`:`at ${clock(p.start)}`}</span>`;}
-const visBadge = v => ({broadcast:'<span class="badge broadcast">🌐 Broadcast</span>',friends:'<span class="badge friends">👥 Friends</span>',party:'<span class="badge party">🎮 Party</span>'})[v]||'';
+const visBadge = v => ({broadcast:'',friends:'<span class="badge friends">👥 Friends</span>',party:'<span class="badge party">🎮 Party</span>'})[v]||'';
 const av = (h,cls='') => { const u=user(h)||{c:'#888'}, p=u.pic||''; if(u.frame&&/^[a-z]+$/.test(u.frame)) cls+=' fr-'+u.frame;
   if(p.startsWith('photo:')) return `<span class="av ${cls}" style="background:${u.c} url('/avatar/${encodeURIComponent(h)}.jpg?v=${encodeURIComponent(p.slice(6))}') center/cover" title="${esc(h)}"></span>`;
   if(p.startsWith('emoji:')) return `<span class="av emo ${cls}" style="background:${u.c}" title="${esc(h)}">${esc(p.slice(6))}</span>`;
@@ -4656,7 +4658,7 @@ function pingCard(p, compact){
   const a=user(p.u), downOn=p.downs.includes(S.me.h), mine=p.u===S.me.h;
   return `<div class="card">
     <div class="row">${av(p.u)}<div class="grow"><div class="handle">${esc(p.u)} ${isFriend(p.u)?'<span class="badge friends">friend</span>':''}${mine?'<span class="badge live">you</span>':''}</div>
-      <div class="meta">${a.t&&!mine?a.t+' · ':''}${S.me.astro&&a.z&&!mine?'✨ '+a.z+' · ':''}${a.i.slice(0,3).join(', ')}</div></div>${mine?'':`<button class="btn sm" data-more="post|${p.id}|${esc(p.u)}" aria-label="More options" style="padding:4px 9px">⋯</button>`}${p.group?`<span class="badge party">${esc(groupOf(p.group)?.e||'🏘️')} ${esc(groupOf(p.group)?.n||'Group')}</span>`:visBadge(p.vis)}</div>
+      <div class="meta">${a.i.slice(0,3).join(' · ')}</div></div>${mine?'':`<button class="btn sm" data-more="post|${p.id}|${esc(p.u)}" aria-label="More options" style="padding:4px 9px">⋯</button>`}${p.group?`<span class="badge party">${esc(groupOf(p.group)?.e||'🏘️')} ${esc(groupOf(p.group)?.n||'Group')}</span>`:visBadge(p.vis)}</div>
     <div class="ptext">${esc(p.t)}</div>
     <div class="where"><span class="badge">${KINDS[p.k].e} ${KINDS[p.k].l}</span>${p.v?`<button class="badge" data-spotping="${esc(p.id)}">📍 ${esc(where(p))} ›</button>`:`<span class="badge">📍 ${esc(where(p))}</span>`}${when(p)}</div>
     <div class="row"><div class="downs grow">${p.downs.slice(0,5).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:8px">${p.downs.length?p.downs.length+' down':'Be the first'}</span></div>
@@ -5276,7 +5278,7 @@ function setDrawer(at, off){
   const d=$('#drawer'); if(!d) return; const st=drawerStops();
   if(at) DRW.at=at;
   if(WIDE()){ DRW.at='full'; d.dataset.at=$('#app').dataset.at='full'; d.style.setProperty('--doff','0px'); $('#app').style.setProperty('--dvis','0px');
-    if(window.L){ L.Popup.prototype.options.autoPanPaddingTopLeft=[452,70]; L.Popup.prototype.options.autoPanPaddingBottomRight=[64,12]; } return; }
+    if(window.L){ L.Popup.prototype.options.autoPanPaddingTopLeft=[24,70]; L.Popup.prototype.options.autoPanPaddingBottomRight=[64,12]; } return; }
   d.dataset.at=DRW.at; $('#app').dataset.at=DRW.at;
   if(DRW.at!=='peek'&&$('#scoutBubble')?.classList.contains('nudge')) scoutNudgeHide();   // "Need help?" is only for the open map
   const y=off??st[DRW.at]; d.style.setProperty('--doff',y+'px');
@@ -5468,7 +5470,7 @@ function exAfter(el, pts, fresh){
   pts=(pts||[]).filter(p=>p&&isFinite(p[0])&&isFinite(p[1])).slice(0,15);
   if(!fresh||!map||!pts.length) return;
   const v=parseFloat(getComputedStyle($('#app')).getPropertyValue('--dvis'))||0;
-  map.flyToBounds(pts.length>1?pts:[pts[0],pts[0]],{paddingTopLeft:[WIDE()?470:24,90],paddingBottomRight:[WIDE()?70:24,v+24],maxZoom:16,duration:.5});
+  map.flyToBounds(pts.length>1?pts:[pts[0],pts[0]],{paddingTopLeft:[24,90],paddingBottomRight:[WIDE()?70:24,v+24],maxZoom:16,duration:.5});
 }
 async function renderExCat(fresh){
   const el=$('#exCat'); if(!el||!EXC.k) return; const k=EXC.k, seq=++EXC.seq;
@@ -5678,7 +5680,7 @@ function popToDrawer(e){
   if(at) POP.ring=L.marker(at,{interactive:false,zIndexOffset:-10,icon:L.divIcon({className:'',html:'<div class="popring"></div>',iconSize:[0,0]})}).addTo(map);
   setTimeout(()=>{ const ll=p.getLatLng?.(); if(!ll||!map) return; setDrawer('half');
     const v=parseFloat(getComputedStyle($('#app')).getPropertyValue('--dvis'))||0;
-    map.panInside(ll,{paddingTopLeft:[WIDE()?470:24,90],paddingBottomRight:[70,v+36]}); },60);
+    map.panInside(ll,{paddingTopLeft:[24,90],paddingBottomRight:[70,v+36]}); },60);
 }
 function popClosed(e){
   if(e.popup!==POP.p) return; e.popup._container?.classList.remove('indrawer'); POP.p=null;

@@ -50,7 +50,7 @@ Keep this file up to date when features change. Only describe things that exist 
 
 ## You (bottom bar)
 - Your picture and name, the Online/Offline switch, one line with your level, coins and day streak, your friend count,
-  then My plans, Saved, Quests & rewards, Invite friends, Share my location (Off = ghost mode, or With friends; also at
+  then My plans, Saved, Quests & rewards, Invite friends, On friends' maps (Off = ghost mode, or Sharing with friends; also at
   the top of the map's layers sheet; separate from Online, which is whether people see you as around), Edit profile, Settings & privacy, and Español. Edit profile opens four tabs: Profile,
   Personality (quiz + astrology), About you, Privacy (location precision, delay, your data, blocked people, sign out,
   delete account).
@@ -85,7 +85,7 @@ Keep this file up to date when features change. Only describe things that exist 
   save it, see it on the map, add it to their calendar or share it.
 - Story: a photo, a video up to 60 seconds, or text; lasts 24 hours. "Where was this?"
   tags a place you've been or one nearby; you can also tag an event, groups and people.
-- Flare: a "who's down?" post for right now (＋ → Flare). Event: something for a later date and time. Group: start a
+- Flare: a "who's down?" post for right now, asking who's free (＋ → Flare). Event: something for a later date and time. Group: start a
   community. Go live.
 
 ## Live
@@ -140,7 +140,7 @@ Keep this file up to date when features change. Only describe things that exist 
   In driving mode Scout says the gist out loud and shows one big "Start directions" button.
 - 🧭 Tour: a 20-second walk around the screen, offered once to new people and any time from the
   "Take the tour" chip in the Scout panel, or by asking "give me a tour". Next / Skip on each step.
-- 🎨 Customize: people can design how their assistant looks: pick parts, describe it in words, or
+- 🎨 Customize Scout: people can design how their assistant looks: pick parts, describe it in words, or
   use their own photo as the face (the photo stays on their phone).
 
 ## Food & drink (live)
@@ -204,8 +204,8 @@ Keep this file up to date when features change. Only describe things that exist 
   a reminder 2 hours before things you're going to. "Phone notifications" at the bottom of the inbox gives a heads-up
   while the app is open in the background.
 - Event details: tap any event (feed card, Details on its map card, Tonight near you in Explore) for the full page:
-  I'm going (with ❤️ save, 🔗 share and map buttons beside it), then Directions · Calendar · Tickets, then "With friends":
-  💌 Invite (sends friends a message with the link), 🗳️ Plan it (a group vote), 💬 Send; Eat after; 📍 Check in only
+  I'm going (with ❤️ save and 🔗 share beside it), then Directions · Calendar · Tickets, then "With friends":
+  💌 Invite (sends friends a message with the link), 🗳️ Plan it (a group vote), 💬 In a chat; Eat after; 📍 Check in only
   shows when you're there while it's on; who's going (friends first) and a chat for people going.
 - 🏆 Quests (You → Quests & rewards, or your level line on You): challenges like History buff (5 historical markers), Culture
   hound, Taco crawl, Touch grass, Live and loud, Night owl, Explorer (3 hot spots), Squad up, Light a flare,

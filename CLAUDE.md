@@ -62,11 +62,17 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   - **For you**: title + Happening | Posts (`#feedMode`, beside the title) + map/filter icons, one chip row (a 📅 chip cycles the time window,
     `data-fwhen`; `#feedWhen` is hidden), the meta line only when something narrows it, no live cards (the map's LIVE
     pill has them). "Scout is picking…" (never "Claude").
-  - **Event page** (`renderEventSheet`): one "I'm going" with ❤️ / 🔗 / map icon buttons (`.evmain`), Directions ·
-    Calendar · Tickets (`.evrow3`), "With friends" Invite · Plan it · Send (`.evfriends`), Eat after / menu; Check in only
-    when within 250 m while it's on; compact header without a photo (`.evhero.noimg`). "Interested" is only on feed cards.
+  - **Event page** (`renderEventSheet`): one "I'm going" with ❤️ / 🔗 icon buttons (`.evmain`), Directions ·
+    Calendar · Tickets (`.evrow3`), "With friends" Invite · Plan it · In a chat (`.evfriends`), Eat after / menu; Check in
+    only when within 250 m while it's on ("On now" never shows for time-TBA events); compact header without a photo
+    (`.evhero.noimg`). "Interested" is only on feed cards. Place cards: Directions (primary) · Menu · Call · ❤️ (`.pmain`).
+  - You shows the level/coins line only once there's something on it; the sharing row is "On friends' maps".
   - LIVE pill: small, top-left of the map (`.maplive`). Hot spot labels are "🔥 name · N open"; tapping a zone opens it
     in the drawer. Guests get one "Create account" in Chats → Messages. The Create sheet uses calm dark tiles.
+  - Small things: the chip row fades at its right edge until scrolled to the end; `placeE(kind,name,cuisine)` picks a
+    place's icon from what it serves (🍕 🌮 ☕ …); Explore puts "Open near you" first before 3 PM and "Tonight near you"
+    first after; search groups show 5 with "Show all" (`SQ.all`); the search box has a ✕ (`data-qclear`) and clears
+    when you leave search; sign-up sheets have a real ✕ (`data-onbclose`).
   - **Search page** before typing: Ask Scout (opens voice), Scout ideas by time of day (`askIdeas()`), recent, try.
   - Back (`closeTopOverlay`): sheet → map popup → chip list → lower the drawer. Scout's tour, targets (`SC_T`) and
     offline answers (`SC_FAQ`) point at the V3 places; `scout_knowledge.md` describes the V3 screen.

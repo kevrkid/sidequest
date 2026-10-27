@@ -29,8 +29,15 @@ a Flare button, a name menu with 9 items, an Online switch in the header) is gon
   with their chip or the layers button.
 - Scout's tour, its answers about where things are, and its built-in help all describe the new screen.
 
+## How it was built
+Four rounds of about an hour: build, then a hard review (screenshots of every screen, plus a separate reviewer who had
+never seen the app grading it against your goal), then fixes. Each round ended with the whole test suite green.
+
 ## How it was checked
-See the "Tests" section at the end (updated after the last round).
+- Every existing test suite was updated to walk the new screens the way a person would (the bottom bar, the search
+  box, the chips, cards in the drawer) and passes; a new `mockup/e2e_v3.py` covers the drawer, chips, search, cards,
+  press-and-hold, the bottom bar, You, the tour and the desktop layout, in Chrome and in WebKit (Safari's engine).
+- Final numbers are in the "Tests" section below.
 
 ## Decisions I made
 - **Built V3 on its own branch and folder** (`git worktree`), so V2 and the live site were never touched.
