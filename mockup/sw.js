@@ -1,6 +1,6 @@
 // Side Quest service worker (V2): the app shell opens instantly and still loads with no signal; everything live
 // (events, people, chats) always comes from the network. Only same-origin static files are ever cached.
-const CACHE = 'sq-shell-v3-6';
+const CACHE = 'sq-shell-v3-7';
 const SHELL = ['/', '/logo.png', '/icon-192.png', '/manifest.webmanifest', '/vendor/leaflet.js', '/vendor/leaflet.css'];
 
 self.addEventListener('install', e => {
