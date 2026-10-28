@@ -204,8 +204,14 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   screen = Report / Block. TURN comes from LiveKit (Cloud, or `deploy/livekit.yaml` self-hosted).
   **Action cameras / OBS** (`/api/live/ingress`): with LiveKit on, the Wi-Fi (RTMP) panel gives each
   streamer one permanent LiveKit Ingress address + key (id kept as `users[h].ingress`, key shown only to
-  them, "New key" rotates) publishing into `live-<h>` as `<h>~cam`; Go live lights up once the camera's
-  feed arrives (no phone camera needed). **YouTube / TikTok copy-out** (`/api/live/restream`): while live,
+  them, "New key" rotates) publishing into `live-<h>` as `<h>~cam`. Camera apps get one address
+  (`camAddr`: server + "/" + key; OBS gets the two apart). Go live works as soon as there's an address:
+  the announcement carries `ingest`, and the server holds it until LiveKit says the camera's picture is
+  arriving, then keeps it on the air itself while the phone sits in the camera app (`live_cam_tick`,
+  every 2.5 s) and tells viewers when the camera stops. Viewer passes only for streams on the air; the
+  streamer watches their own room for the camera preview. Bluetooth only identifies the camera (GoPro:
+  record/stop via Open GoPro BLE); the video always goes through the camera app's RTMP. Without LiveKit
+  the Wi-Fi/Bluetooth panels say camera streaming isn't set up (the demo signal is `SQ_DEMO` only). **YouTube / TikTok copy-out** (`/api/live/restream`): while live,
   the streamer pastes stream keys (kept in their browser only, passed straight to LiveKit, never stored on
   the server) and LiveKit RoomComposite Egress pushes the room to those RTMP addresses (billed per minute).
   Ending the stream stops the copy-out; a moderator stop also deletes the camera key. The status reply
@@ -688,7 +694,7 @@ cd mockup && ./start.sh                # app on http://localhost:8787
 ruby fetch_places.rb                   # download/resume food & drink places (slow links: just rerun)
 ruby test_hours.rb                     # opening-hours reader tests
 ruby test_api.rb                       # Anthropic API engine against a fake API (no key needed)
-ruby test_live.rb                      # live-video rules, camera ingest, copy-out vs a fake LiveKit (:8795)
+ruby test_live.rb                      # live-video rules, camera ingest, copy-out vs a fake LiveKit (:8795, 22 checks, ~45 s)
 ruby test_google.rb                    # Google Places details vs a fake Google API (own copy on :8794)
 ../deploy/google-places-setup.sh [login|<project>]  # gcloud: project, billing, Places API, Places-only key → ~/.sidequest-google.env,
                                        # $10 budget alert (project sidequest-512123). gcloud lives in ~/google-cloud-sdk and

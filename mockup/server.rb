@@ -814,11 +814,13 @@ def livekit_jwt(claims)
 end
 
 # A LiveKit access token: the streamer may only publish to their own room, viewers may only watch.
+# The streamer may also watch their own room: that is how an action camera's picture (LiveKit Ingress)
+# reaches the streamer's own screen, and how they count viewers.
 # Short-lived; LiveKit refreshes it for as long as the connection lasts.
 LIVEKIT_TOKEN_SECS = 600
 def livekit_token(identity, name, room, publish:)
   livekit_jwt(sub: identity, name: name, exp: Time.now.to_i + LIVEKIT_TOKEN_SECS,
-              video: { room: room, roomJoin: true, canPublish: publish, canSubscribe: !publish, canPublishData: false })
+              video: { room: room, roomJoin: true, canPublish: publish, canSubscribe: true, canPublishData: false })
 end
 
 # LiveKit's server API (Twirp: JSON over POST), signed with a one-minute admin token.
@@ -836,7 +838,9 @@ end
 # kept on the account so the camera's saved settings keep working; the key is shown only to its owner.
 def livekit_ingress(id)
   code, body = livekit_api('ListIngress', { ingress_id: id }, { ingressAdmin: true }, svc: 'Ingress')
-  code == 200 ? (body['items'] || []).first : nil
+  # nil only when LiveKit says it's gone: a hiccup must not hand the streamer a new key behind their back
+  raise "LiveKit didn't answer (#{body['msg'] || code}). Try again in a minute." unless code == 200
+  (body['items'] || []).first
 end
 
 def livekit_ingress_create(h)
@@ -929,7 +933,7 @@ LIVE_KILL_MS = 30 * 60 * 1000
 
 def live_now
   t = now_ms
-  LIVE[:lock].synchronize { LIVE[:by_h].values.select { |s| t - s['seen'] < LIVE_STALE_MS }.map(&:dup) }
+  LIVE[:lock].synchronize { LIVE[:by_h].values.select { |s| t - s['seen'] < LIVE_STALE_MS && (!s['ann'] || live_cam_on?(s, t)) }.map(&:dup) }
 end
 
 def live_owner(id)
@@ -942,27 +946,87 @@ end
 
 # A stream announcement from h's app goes out under h's own handle and LiveKit room, and with the spot
 # held back by the location delay: the server decides what viewers learn, not the phone.
-def live_announce(s, h)
+# A camera stream (s['ingest']: an action camera / OBS through LiveKit Ingress, no phone camera) goes out only
+# while the camera's picture is arriving; until then it's held (nil = don't relay it). `tab` is the streamer's
+# app, so viewers' requests still reach it; `cam` = the server re-announcing it (live_cam_tick), not the app.
+def live_announce(s, h, tab = nil, cam: false)
   t = now_ms
   id = s['id'].to_s[0, 40]
+  ingest = LIVEKIT && s['ingest'] == true
+  raw = JSON.parse(JSON.generate(s)) if ingest && !cam
   s['u'] = h
-  s['room'] = "live-#{h}" if s['room']
+  s['room'] = "live-#{h}" if s['room'] || ingest
   s['delay'] = s['delay'].to_i.clamp(0, 60)
   live_sanitize!(s)   # V2: checked title, no destination reveal during the delay
-  LIVE[:lock].synchronize do
-    s['startedAt'] = (LIVE[:started][id] ||= t)
-    LIVE[:by_h][h] = { 'h' => h, 'id' => id, 'title' => s['title'].to_s[0, 70], 'seen' => t, 'started' => s['startedAt'],
-                       'viewers' => s['viewers'].to_i, 'livekit' => !s['room'].nil? }
+  on_air = LIVE[:lock].synchronize do
+    old = LIVE[:by_h][h]
+    old = nil unless old && old['id'] == id
+    return nil if cam && !old   # ended meanwhile
+    e = { 'h' => h, 'id' => id, 'title' => s['title'].to_s[0, 70], 'seen' => t, 'started' => LIVE[:started][id] || t,
+          'viewers' => s['viewers'].to_i, 'livekit' => !s['room'].nil? }
+    if ingest
+      e.merge!('ann' => cam ? old['ann'] : raw, 'tab' => cam ? old['tab'] : tab.to_s[0, 20],
+               'phone' => cam ? old['phone'] : t, 'cam_at' => old && old['cam_at'], 'aired' => old && old['aired'])
+    end
+    LIVE[:by_h][h] = e
+    live = !ingest || live_cam_on?(e, t)
+    e['started'] = s['startedAt'] = (LIVE[:started][id] ||= t) if live
     if LIVE[:started].size > 200   # forget streams that are long over
       ids = LIVE[:by_h].values.map { |x| x['id'] }
       LIVE[:started].select! { |k, _| ids.include?(k) }
       LIVE[:places].select! { |k, _| ids.include?(k) }
     end
+    live
   end
   s['v'] = live_place(id, spot_ref(s['v']) || '', s['delay'])
-  LIVE[:lock].synchronize { (r = LIVE[:by_h][h]) && r['id'] == id && r['v'] = s['v'] }   # the public (delayed) spot, for Pulse
-  s
+  LIVE[:lock].synchronize { (r = LIVE[:by_h][h]) && r['id'] == id && r['v'] = s['v'] } if on_air   # the public (delayed) spot, for Pulse
+  on_air ? s : nil
 end
+
+# Action cameras: the streamer's phone usually sits in the camera's own app (Insta360, GoPro Quik, DJI Mimo)
+# while it streams, and a phone browser in the background stops re-announcing. So the server asks LiveKit
+# whether the camera's picture is arriving, keeps the stream on the air while it is (re-announcing it for
+# the app), ends it when the camera stops, and lets a "Go live" wait LIVE_CAM_WAIT_MS for the camera.
+LIVE_CAM_WAIT_MS = 10 * 60 * 1000
+def live_cam_on?(e, t = now_ms)
+  e['cam_at'] && t - e['cam_at'] < LIVE_STALE_MS
+end
+
+def live_cam_tick
+  t = now_ms
+  cams = LIVE[:lock].synchronize { LIVE[:by_h].values.select { |e| e['ann'] }.map(&:dup) }
+  cams.map { |e| Thread.new { live_cam_check(e, t) } }.each(&:join)   # one slow LiveKit answer doesn't hold up the rest
+end
+
+def live_cam_check(e, t)
+  h = e['h']
+  ing = store(write: false) { |d| live_killed?(d, h) ? nil : d['users'][h]&.dig('ingress') }
+  st = begin
+    ing && livekit_ingress(ing)&.dig('state', 'status')
+  rescue => x
+    warn "[live] camera check for @#{h}: #{x.message[0, 80]}"
+    return   # LiveKit unreachable: leave it as it is
+  end
+  publishing = st == 'ENDPOINT_PUBLISHING'
+  was, now_on = LIVE[:lock].synchronize do
+    c = LIVE[:by_h][h]
+    next [false, false] unless c && c['id'] == e['id']
+    c['cam_at'] = t if publishing
+    LIVE[:by_h].delete(h) if !live_cam_on?(c, t) && t - c['phone'] > LIVE_CAM_WAIT_MS   # gave up waiting
+    [c['aired'], c['aired'] = !!live_cam_on?(c, t)]
+  end
+  if now_on && (!was || t - e['phone'] > 2500)   # just came on, or the app isn't announcing: do it for them
+    s = live_announce(JSON.parse(JSON.generate(e['ann'])), h, cam: true) or return
+    RELAY[:lock].synchronize do
+      RELAY[:msgs] << { id: RELAY[:seq] += 1, at: Time.now.to_f,
+                        m: { 't' => 'stream', 's' => s, 'from' => e['tab'], 'mid' => SecureRandom.hex(6), 'by' => h } }
+      RELAY[:msgs].reject! { |x| x[:at] < Time.now.to_f - 30 }
+    end
+  elsif was && !now_on   # the camera stopped: tell viewers (it comes back if the camera does)
+    relay_push('t' => 'end', 'id' => e['id'])
+  end
+end
+Thread.new { loop { sleep 2.5; begin; live_cam_tick; rescue => x; warn "[live] camera tick: #{x.message[0, 120]}"; end } } if LIVEKIT
 
 # Where viewers may see the streamer: the spot they were at `delay` minutes ago, and nothing before that.
 def live_place(id, v, delay_min)
@@ -985,6 +1049,7 @@ def live_kill!(d, h)
   relay_push('t' => 'end', 'id' => s['id'], 'killed' => true) if s
   if LIVEKIT
     ing = d['users'][h]&.delete('ingress')   # the camera's key stops working; a new one can be made after the lockout
+    LIVE[:lock].synchronize { LIVE[:by_h].delete(h) }   # and the server stops keeping a camera stream on the air
     Thread.new { restream_stop(h); livekit_ingress_delete(ing) if ing }
   end
   livekit_stop(h) if LIVEKIT
@@ -1102,6 +1167,8 @@ rescue => e
 end
 
 def delete_user!(d, h)
+  ing = LIVEKIT && d['users'][h]&.dig('ingress')   # the camera key would keep streaming into live-<h>
+  Thread.new { livekit_ingress_delete(ing) } if ing
   d['users'].delete(h)
   scout_forget!(d, h)
   (d['plans'] || {}).delete(h)
@@ -1630,6 +1697,8 @@ def mount_app(server)
         raise Forbidden, "You can't watch this stream." if blocked_between(d, h).include?(host)
         raise Forbidden, 'This stream has ended.' if live_killed?(d, host)
       end
+      # only while they're on the air: a camera key streams into the room before "Go live" and after "End"
+      raise Forbidden, 'This stream has ended.' unless host == h || live_now.any? { |s| s['h'] == host }
       # Viewers join LiveKit anonymously, so nobody can read off the room who else is watching.
       { url: LIVEKIT_URL, room: "live-#{host}", token: livekit_token("v#{SecureRandom.hex(6)}", '', "live-#{host}", publish: false) }
     end
@@ -1638,7 +1707,8 @@ def mount_app(server)
   # ---- action-camera / OBS ingest: your own RTMP address and key ('get' makes one if needed, 'reset' replaces it)
   route(server, '/api/live/ingress') do |b, h|
     raise 'Live video relay is not set up.' unless LIVEKIT
-    limit!("ingress:#{h}", 240, 3600)
+    # the app checks the camera every few seconds while the studio is open; making or replacing a key is rarer
+    b['action'] == 'status' ? limit!("ingress-status:#{h}", 1500, 3600) : limit!("ingress:#{h}", 30, 3600)
     id = store(write: false) do |d|
       raise Forbidden, 'A moderator ended your stream. You can go live again in a little while.' if live_killed?(d, h)
       d['users'][h]['ingress']
@@ -2434,7 +2504,8 @@ def mount_routes(server)
         owner = live_owner(id.to_s[0, 40])
         next (res.status = 403; res.body = '{"error":"not your stream"}') if owner && owner != h
         next (res.status = 400; res.body = '{"error":"bad stream"}') if m['t'] == 'stream' && !m['s'].is_a?(Hash)
-        if m['t'] == 'stream' then live_announce(m['s'], h)
+        if m['t'] == 'stream'
+          next (res.body = '{"ok":true,"held":true}') unless live_announce(m['s'], h, m['from'])   # camera not sending yet
         else LIVE[:lock].synchronize { LIVE[:by_h].delete(h) if owner }
              Thread.new { restream_stop(h) } if owner && LIVEKIT
         end
