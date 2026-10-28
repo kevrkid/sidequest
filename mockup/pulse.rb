@@ -502,13 +502,19 @@ def pulse_view(p, sigs, now: Time.now, detail: false)
   out
 end
 
-def pulse_events_at(p, events, now)
-  t0, t1 = now.to_f, now.to_f + 6 * 3600
-  events.select do |e|
-    next false unless e['lat'] && e['geo_precise'] != false
+# Events with a real spot starting in the next 6 hours (or up to an hour ago), start times parsed once per request:
+# the night's pick checks ~250 places, and parsing every event's time for each one took seconds and stalled the server.
+def pulse_events_soon(events, now)
+  t0, t1 = now.to_f - 3600, now.to_f + 6 * 3600
+  events.map do |e|
+    next unless e['lat'] && e['geo_precise'] != false
     s = (Time.parse(e['start']).to_f rescue nil)
-    s && s.between?(t0 - 3600, t1) && Places.miles(e['lat'], e['lng'], p['lat'], p['lng']) * 1609.34 <= 60
-  end
+    e if s && s.between?(t0, t1)
+  end.compact
+end
+
+def pulse_events_at(p, soon)
+  soon.select { |e| Places.miles(e['lat'], e['lng'], p['lat'], p['lng']) * 1609.34 <= 60 }
 end
 
 # RSVPs are kept under "e:<uid>"
@@ -607,7 +613,7 @@ def mount_pulse(server)
     store(write: false) do |d|
       sigs = pulse_unblocked(d, h, pulse_signals(d).select { |s| s['pid'] == p['id'] })
       out = pulse_view(p, sigs, now: now, detail: true)
-      out[:events] = pulse_events_at(p, events, now).first(3).map { |e| e.slice('uid', 'title', 'start', 'category') }
+      out[:events] = pulse_events_at(p, pulse_events_soon(events, now)).first(3).map { |e| e.slice('uid', 'title', 'start', 'category') }
       out
     end
   end
@@ -645,6 +651,7 @@ def mount_pulse(server)
     max_km = (b['km'] || 6).to_f.clamp(0.5, 30)
     now = Time.now
     events = events_list
+    soon = pulse_events_soon(events, now)   # parsed once, not per candidate place
     store(write: false) do |d|
       sigs = pulse_signals(d).group_by { |s| s['pid'] }
       friends = h ? friends_of(d, h).to_a : []
@@ -662,7 +669,7 @@ def mount_pulse(server)
         # friends there: only what they already show (public stories/posts, flares, live) or opted-in check-ins
         here = (xs.select { |s| PULSE_PUBLIC.include?(s['k']) && s['vis'] != 'party' }.map { |s| s['u'] } & friends) |
                out_now.select { |f| f[:k] == 'place' && f[:id] == p['id'] }.map { |f| f[:h] }
-        evs = pulse_events_at(p, events, now).first(2).map do |e|
+        evs = pulse_events_at(p, soon).first(2).map do |e|
           st = (Time.parse(e['start']) rescue now)
           { title: e['title'][0, 50], when: st <= now ? 'on now' : st.strftime('at %-l:%M %p').sub(':00', ''),
             fits: (taste && (taste['event_types'] || []).to_h.key?(e['category'])) || false }

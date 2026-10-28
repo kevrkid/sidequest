@@ -358,7 +358,10 @@ Explore's `#exMore`). History in `data/pulse.json` (`SQ_PULSE_FILE`; counts per 
   distance; an author or place can't repeat at the top; blocks both ways).
 - The events service is never called inside the store lock (`events_list` before `store {}` in every Pulse route and the
   tick). Blocked people's signals are dropped from `/api/pulse`, `/place` and `/heat` too. `facts` "get there by" looks
-  only at the 3 hours before the peak.
+  only at the 3 hours before the peak. Event start times are parsed once per request (`pulse_events_soon`: next 6 h, precise
+  spot) and each place only checks distance (`pulse_events_at(p, soon)`): parsing every event per candidate made
+  `/api/pulse/pick` take ~3 s of CPU with ~500 real events, which (one Ruby thread at a time) stalled every other request for
+  ~8 s on each Explore open; now ~0.1 s.
 - Tests: `ruby test_pulse.rb` (41, no server), `ruby test_pulse_api.rb` (17, own copy on :8805, fake events :9917).
   New strings aren't in the `ES` table yet (they show in English).
 
