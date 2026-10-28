@@ -229,7 +229,18 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
 - **Me / profile**: four tabs (`showMeSec()`, `[data-mepane]`): Profile (preview + interests),
   Personality (quiz + astrology), About you, Privacy (location, delay, data, account). Interests, a 20-question 16-type personality quiz, full astrology (birth date +
   optional time + city → Sun, Moon, Rising, Mercury–Saturn, Chinese zodiac, computed on-device),
-  39 "about you" questions in 4 sections (Growing up, Life now, Friendship & values, Just for fun).
+  47 "about you" questions in 5 sections (🎵 Music & interests first, opened by default (`lifeOpen = 'taste'`); Growing
+  up, Life now, Friendship & values, Just for fun). **Pick-many** (`type:'many'`, 2026-10-27: music, artists, live music,
+  playing, teams, sports played, outdoors, hobbies, nights out, and grewUp / kidWas / satMorning / friendLang / groupSize
+  / texting / weekend, which were pick-one) say "Pick as many as you like" and have "＋ Add your own" (`data-lifeown`,
+  ≤30 chars, Enter or blur; a typed listed option picks it, e.g. "hip hop" → Hip-hop; own answers show as chips with ✕).
+  Old pick-one strings become lists on load and on restore from `/api/me`. `list:true` text answers (artists, languages,
+  food) are comma lists. **Matching** goes through `lifeOverlap(a, b, skip, split)` (normalised: case, accents,
+  punctuation; picks never split, written lists split on , ; /): `same()` / `both()` / `any()` in `matchPerson` score any
+  shared answer, own words included, with a reason ("Both have Bad Bunny on repeat"); reasons only ever show your own
+  words. Scout's setup interview handles pick-many (comma list → list, own words kept); its key filter now accepts
+  camelCase keys (it used to drop kidWas, grewUp…). `/api/profile` bounds `public` / `match`: 80 answers, 60 items, 200
+  chars. `e2e_about.py` (13).
   **Every answer has its own visibility**: Matching only (default, never shown) · Friends · Everyone ·
   Only me. Activity/location history (opt-in, venue-level only), export, delete account.
 - **Profiles of others**: match %, "what you have in common", Snapchat-style astrological

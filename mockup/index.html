@@ -943,9 +943,11 @@
   #v-me.editing .youhd,#v-me.editing #youStats,#v-me.editing #youList{display:none}
   #meBack{display:flex;align-items:center;gap:10px;margin:2px 0 0}
   #meBack button{font-weight:700;font-size:15px;color:var(--accent2);padding:8px 2px}
-  #v-me.editing #meTabs{position:sticky;top:0;z-index:5;margin-top:8px!important}
+  #v-me.editing #meTabs{position:sticky;top:0;z-index:5;margin-top:8px!important;   /* opaque: answers scroll under it */
+    background:linear-gradient(var(--panel2,#ffffff14),var(--panel2,#ffffff14)),var(--bg);box-shadow:0 -10px 0 var(--bg),0 8px 0 var(--bg)}
   .ylist .ygroup{padding:10px 14px 2px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   #youAv,#meTitle{cursor:pointer}
+  .q .lifeown{margin-top:8px;width:100%}
   #app.v3 #v-me .seg button,#app.v3 #v-meet .seg button,#app.v3 #v-feed .seg button{font-size:12.5px;padding:9px 4px}
   .ic.up{transform:rotate(-90deg)}
   #app.v3 .tnhead{padding:20px 2px 9px;font-size:17px;letter-spacing:-.3px}
@@ -1479,17 +1481,30 @@ const TYPES = {
   ISTP:['The Fixer','quietly good at anything hands-on'], ISFP:['The Artist','lives in the moment, beautifully'],
   ESTP:['The Daredevil','first one on the ice'], ESFP:['The Life of the Party','brings the energy and the snacks'],
 };
-const LIFE_SECS = [['kid','🧸 Growing up'],['now','🏠 Life now'],['values','🤝 Friendship & values'],['fun','🎉 Just for fun']];
+// About you. type 'many' = pick as many as you like, plus your own words ("＋ Add your own", `own` on the value list);
+// `list` text answers are comma lists ("Leon Bridges, Bad Bunny"). Both kinds match people on any shared item
+// (matchPerson → lifeOverlap), case and punctuation ignored.
+const LIFE_SECS = [['taste','🎵 Music & interests'],['kid','🧸 Growing up'],['now','🏠 Life now'],['values','🤝 Friendship & values'],['fun','🎉 Just for fun']];
 const LIFE = [
+  // music & interests
+  {sec:'taste', k:'music', q:'Music you love', type:'many', opts:['Country','Texas country & red dirt','Hip-hop','R&B','Rock','Indie','Alternative','Punk','Metal','Blues','Jazz','Soul & funk','EDM','House & techno','Latin','Tejano','Reggaeton','Pop','Folk','Americana','Bluegrass','Classical','Gospel','K-pop','Reggae','Singer-songwriter']},
+  {sec:'taste', k:'artists', q:'Artists on repeat', type:'text', list:true, max:160, ph:'e.g. Leon Bridges, Bad Bunny, Willie Nelson'},
+  {sec:'taste', k:'liveMusic', q:'How you like music live', type:'many', opts:['Big arena shows','Small clubs & dive bars','Festivals (ACL, SXSW…)','DJ nights & dancing','Honky-tonks & two-stepping','Open mics & jams','Jazz & listening rooms','Mostly headphones at home']},
+  {sec:'taste', k:'playMusic', q:'Do you play or make music?', type:'many', opts:['Guitar','Piano or keys','Drums','Bass','Sing','DJ','Make beats','Other instrument','Not musical']},
+  {sec:'taste', k:'sportsFollow', q:'Teams and sports you follow', type:'many', opts:['Longhorns','Austin FC','Texas State Bobcats','Cowboys','Texans','Spurs','Mavericks','Astros','Rangers','College football','Soccer','F1 & racing','UFC & boxing','Not into sports']},
+  {sec:'taste', k:'sportsPlay', q:'Sports and games you play', type:'many', opts:['Soccer','Basketball','Volleyball','Pickleball','Tennis','Softball','Flag football','Ultimate','Hockey','Running','Cycling','Climbing','Golf','Disc golf','Yoga','Gym','Swimming','Bowling','Pool & darts']},
+  {sec:'taste', k:'outdoorsy', q:'Outdoors', type:'many', opts:['Hiking','Swimming holes','Kayak & paddleboard','Lake days','Camping','Fishing','Mountain biking','Stargazing','Not outdoorsy']},
+  {sec:'taste', k:'hobbies', q:"Other things you're into", type:'many', opts:['Video games','Board games','Reading','Cooking','Baking','Photography','Art & making','Movies','Anime','Thrifting','Dancing','Volunteering','Trivia','Comedy','Theater','Coffee shops','Craft beer','Wine','Cocktails','Tech & startups','Fashion','Gardening','Cars','Writing','Podcasts']},
+  {sec:'taste', k:'nightsOut', q:'Best kind of night out', type:'many', opts:['Live music','Comedy','Dancing','Trivia','Karaoke','Bars & patios','Food trucks','Sports bar','Game night at home','Dinner with friends']},
   // growing up
   {sec:'kid', k:'hometown', q:'Where did you grow up?', type:'text', ph:'e.g. El Paso, TX'},
-  {sec:'kid', k:'grewUp', q:'What was it like?', type:'one', opts:['Big city','Suburbs','Small town','Country','Moved around']},
+  {sec:'kid', k:'grewUp', q:'What was it like?', type:'many', opts:['Big city','Suburbs','Small town','Country','Moved around']},
   {sec:'kid', k:'childhoodHome', q:'Growing up, you…', type:'one', opts:['Lived in one house','Moved a few times','Moved a lot','Were a military kid']},
   {sec:'kid', k:'siblings', q:'How many siblings?', type:'one', opts:['Only child','1','2','3','4+']},
   {sec:'kid', k:'birthOrder', q:'Birth order', type:'one', opts:['Oldest','Middle','Youngest','Only','Twin']},
-  {sec:'kid', k:'kidWas', q:'As a kid you were the…', type:'one', opts:['Class clown','Bookworm','Sporty one','Artsy one','Gamer','Outdoorsy one','Quiet one','Social butterfly']},
+  {sec:'kid', k:'kidWas', q:'As a kid you were the…', type:'many', opts:['Class clown','Bookworm','Sporty one','Artsy one','Gamer','Outdoorsy one','Quiet one','Social butterfly']},
   {sec:'kid', k:'kidActivities', q:'What were you into growing up?', type:'many', opts:['Sports team','Band or choir','Theater','Scouts','Robotics / STEM','Youth group','Dance','Video games','None of these']},
-  {sec:'kid', k:'satMorning', q:'Saturday mornings as a kid', type:'one', opts:['Cartoons','Practice or games','Chores','Church or temple','Sleeping in']},
+  {sec:'kid', k:'satMorning', q:'Saturday mornings as a kid', type:'many', opts:['Cartoons','Practice or games','Chores','Church or temple','Sleeping in']},
   {sec:'kid', k:'dreamJob', q:'Childhood dream job', type:'text', ph:'e.g. astronaut, vet, NBA player'},
   {sec:'kid', k:'firstConcert', q:'First concert', type:'text', ph:'e.g. Selena at the Astrodome'},
   // life now
@@ -1497,7 +1512,7 @@ const LIFE = [
   {sec:'now', k:'work', q:'What do you do?', type:'text', ph:'e.g. nurse, student, line cook, developer'},
   {sec:'now', k:'workStyle', q:'You and work', type:'one', opts:['Career-driven','Work to live','Figuring it out','Student','Retired']},
   {sec:'now', k:'school', q:'School', type:'text', ph:'e.g. UT, ACC, Texas State'},
-  {sec:'now', k:'languages', q:'Languages you speak', type:'text', ph:'e.g. English, Spanish'},
+  {sec:'now', k:'languages', q:'Languages you speak', type:'text', list:true, ph:'e.g. English, Spanish'},
   {sec:'now', k:'schedule', q:'Early bird or night owl?', type:'one', opts:['Early bird','Night owl','Depends on the day']},
   {sec:'now', k:'living', q:'You live with…', type:'one', opts:['Just me','Roommates','A partner','Family','Just me and my pets']},
   {sec:'now', k:'kids', q:'Kids', type:'one', opts:['No kids','Have kids','Want kids someday','Not for me','Rather not say']},
@@ -1511,15 +1526,14 @@ const LIFE = [
   // friendship & values
   {sec:'values', k:'goals', q:"What you're here for", type:'many', opts:['New friends','Workout buddies','Teammates','Gaming squad','Show buddies','Explore the city','Networking']},
   {sec:'values', k:'values', q:'What matters most in a friend?', type:'many', opts:['Loyalty','Humor','Honesty','Adventure','Reliability','Deep talks','Shared hobbies','Kindness']},
-  {sec:'values', k:'friendLang', q:'How you show up for friends', type:'one', opts:['Quality time','Doing things together','Encouraging words','Helping out','Little gifts']},
-  {sec:'values', k:'groupSize', q:'Best hangout size', type:'one', opts:['One-on-one','Small group','The bigger the better']},
+  {sec:'values', k:'friendLang', q:'How you show up for friends', type:'many', opts:['Quality time','Doing things together','Encouraging words','Helping out','Little gifts']},
+  {sec:'values', k:'groupSize', q:'Best hangout size', type:'many', opts:['One-on-one','Small group','The bigger the better']},
   {sec:'values', k:'planStyle', q:'When it comes to plans…', type:'one', opts:['I make the plans',"I'm down for whatever",'Last-minute is best']},
-  {sec:'values', k:'texting', q:'Texting style', type:'one', opts:['Instant replier','Hours later','Voice notes','Memes only']},
+  {sec:'values', k:'texting', q:'Texting style', type:'many', opts:['Instant replier','Hours later','Voice notes','Memes only']},
   {sec:'values', k:'conflict', q:'When something bugs you', type:'one', opts:['Talk it out right away','Need space first','Laugh it off','Let it go']},
   // just for fun
-  {sec:'fun', k:'music', q:'Music you love', type:'many', opts:['Country','Hip-hop','Rock','Indie','Blues','Jazz','EDM','Latin','Metal','Pop','Folk']},
-  {sec:'fun', k:'weekend', q:'Ideal Saturday', type:'one', opts:['Out till 2am','Up early, outdoors','Couch & games','Little of everything']},
-  {sec:'fun', k:'food', q:'Go-to food', type:'text', ph:'e.g. brisket, pho, breakfast tacos'},
+  {sec:'fun', k:'weekend', q:'Ideal Saturday', type:'many', opts:['Out till 2am','Up early, outdoors','Couch & games','Little of everything']},
+  {sec:'fun', k:'food', q:'Go-to food', type:'text', list:true, ph:'e.g. brisket, pho, breakfast tacos'},
   {sec:'fun', k:'superpower', q:'Pick a superpower', type:'one', opts:['Teleport','Fly','Read minds','Time travel','Invisibility']},
   {sec:'fun', k:'karaoke', q:'Karaoke song', type:'text', ph:"e.g. Friends in Low Places"},
   {sec:'fun', k:'hotTake', q:'Hot take', type:'text', ph:'e.g. queso > guac'},
@@ -1539,6 +1553,7 @@ const DEFAULT = () => ({
   friends:[], downs:[], myPings:[], skipped:[], nameIx:0
 });
 let S; try{ S = JSON.parse(localStorage.getItem(KEY)) || DEFAULT(); }catch(e){ S = DEFAULT(); }
+if(S.me?.p) LIFE.forEach(f=>{ if(f.type==='many'&&typeof S.me.p[f.k]==='string') S.me.p[f.k]=[S.me.p[f.k]]; });   // was pick-one: keep the answer
 S.coins ??= 50;
 /* ---------- language: English / Español. T('English text', {n}) gives the Spanish when the app is set to Spanish;
    static labels carry data-t (text) or data-tp (placeholder) and are swapped by applyLang(). Scout listens, thinks
@@ -1546,7 +1561,7 @@ S.coins ??= 50;
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
   'Explore':'Explorar','Watch':'Ver','Groups':'Grupos','✨ Everyone':'✨ Todos','👥 Friends':'👥 Amigos','📍 Near me':'📍 Cerca de mí','On till':'Hasta las','In a chat':'En un chat','1 member':'1 miembro',"On friends' maps":'En el mapa de amigos','Sharing':'Compartiendo',"Ask who's free right now":'Pregunta quién está libre ahora','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Hangout':'Quedada','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Hangout here':'Quedada aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
-  'Settings & privacy':'Ajustes y privacidad','Profile':'Perfil','About you':'Sobre ti','Privacy & account':'Privacidad y cuenta','{n} interests':'{n} intereses','Add interests':'Añade intereses','Take the quiz':'Haz el test','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
+  'Settings & privacy':'Ajustes y privacidad','Profile':'Perfil','About you':'Sobre ti','Privacy & account':'Privacidad y cuenta','{n} interests':'{n} intereses','Add interests':'Añade intereses','Take the quiz':'Haz el test','Pick as many as you like':'Elige todas las que quieras','＋ Add your own, then Enter':'＋ Añade la tuya y pulsa Intro','Separate with commas. Anyone who shares one is a match.':'Sepáralos con comas: si alguien comparte uno, hacen match.','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
   'Wave at people in Meet: when they wave back you can chat. Or bring your friends.':'Saluda a gente en Conocer: cuando te devuelvan el saludo podrán chatear. O trae a tus amigos.',
@@ -2063,6 +2078,14 @@ function exportData(){
 
 /* ---------- matching people ---------- */
 const placeParts = s => (s||'').toLowerCase().split(',').map(x=>x.trim().replace(/^texas$/,'tx')).filter(Boolean);
+// Answers two people share: a pick-one answer (old answers are still strings), several picks, their own words, or a
+// written comma list ("Leon Bridges, Bad Bunny").
+const lifeNorm = x => String(x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const lifeVals = (v, split) => (Array.isArray(v)?v:v?[v]:[]).flatMap(x=>split?String(x).split(/\s*[,;\/]\s*/):[String(x)]).map(x=>x.trim()).filter(Boolean);
+function lifeOverlap(a, b, skip, split){   // split: a written list ("Leon Bridges, Bad Bunny"); picks are never split
+  const theirs=new Set(lifeVals(b,split).map(lifeNorm)), seen=new Set();
+  return lifeVals(a,split).filter(x=>{ const n=lifeNorm(x); if(!n||seen.has(n)||!theirs.has(n)||(skip&&skip.test(x))) return false; seen.add(n); return true; });
+}
 function matchPerson(u){
   const me=matchProfile(), p=u.p||{}, r=[]; let s=0;
   const sh=(me.interests||[]).filter(x=>u.i.includes(x)); if(sh.length){ s+=1.5*sh.length; r.push(`Both into ${list(sh)}`); }
@@ -2074,17 +2097,29 @@ function matchPerson(u){
   if(me.hometown&&p.hometown){ const a=placeParts(me.hometown), b=placeParts(p.hometown);
     if(a[0]===b[0]){ s+=2.5; r.push(`You both grew up in ${p.hometown.split(',')[0]}`); }
     else if(a[1]&&a[1]===b[1]){ s+=1; r.push(a[1]==='tx'?'Both grew up in Texas':`Both from ${p.hometown.split(',')[1].trim()}`); } }
-  if(me.grewUp&&me.grewUp===p.grewUp&&me.grewUp!=='Moved around'){ s+=1; r.push(`Both ${me.grewUp.toLowerCase()} kids`); }
+  const gu=lifeOverlap(me.grewUp,p.grewUp,/Moved around/); if(gu.length){ s+=1; r.push(`Both ${gu[0].toLowerCase()} kids`); }
   if(me.birthOrder&&me.birthOrder===p.birthOrder){ s+=1; r.push(me.birthOrder==='Only'?'Both only children':me.birthOrder==='Twin'?'Both twins':`Both the ${me.birthOrder.toLowerCase()} sibling`); }
   else if(me.siblings&&me.siblings===p.siblings&&me.siblings!=='Only child'){ s+=.5; r.push(`Same number of siblings (${me.siblings})`); }
   if(me.inAustin==='New here'&&p.inAustin==='New here'){ s+=1.5; r.push('Both new to Austin'); }
-  const mu=(me.music||[]).filter(x=>(p.music||[]).includes(x)); if(mu.length){ s+=Math.min(2,mu.length); r.push(`Both love ${list(mu)}`); }
-  if(me.weekend&&me.weekend===p.weekend){ s+=1.5; r.push(`Same ideal Saturday: ${me.weekend.toLowerCase()}`); }
+  const mu=lifeOverlap(me.music,p.music); if(mu.length){ s+=Math.min(2,mu.length); r.push(`Both love ${list(mu.slice(0,3))}`); }
+  const wk=lifeOverlap(me.weekend,p.weekend); if(wk.length){ s+=1.5; r.push(`Same ideal Saturday: ${wk[0].toLowerCase()}`); }
+  // music & interests, your own words included (case and punctuation don't matter)
+  const any=(k,w,say,skip)=>{ const x=lifeOverlap(me[k],p[k],skip,LIFE.find(f=>f.k===k)?.list); if(x.length){ s+=w*Math.min(2,x.length); r.push(say(list(x.slice(0,3)))); } };
+  any('artists',1.5,x=>`Both have ${x} on repeat`);
+  any('liveMusic',.8,x=>`Both like live music: ${x.toLowerCase()}`,/headphones/i);
+  any('playMusic',.8,x=>`Both play: ${x.toLowerCase()}`,/Not musical/);
+  any('sportsFollow',1,x=>`Both follow ${x}`,/Not into/);
+  any('sportsPlay',1.2,x=>`Both play ${x.toLowerCase()}`);
+  any('outdoorsy',.8,x=>`Both into ${x.toLowerCase()}`,/Not outdoorsy/);
+  any('hobbies',1,x=>`Both into ${x.toLowerCase()}`);
+  any('nightsOut',1,x=>`Both up for ${x.toLowerCase()}`);
+  any('languages',.8,x=>`Both speak ${x}`,/^english$/i);
+  any('food',.6,x=>`Both love ${x.toLowerCase()}`);
   const go=(me.goals||[]).filter(x=>(p.goals||[]).includes(x)); if(go.length){ s+=1.5; r.push(`Both here for ${list(go).toLowerCase()}`); }
   const pet=(me.pets||[]).filter(x=>['Dog','Cat'].includes(x)&&(p.pets||[]).includes(x)); if(pet.length){ s+=1; r.push(`Both ${pet[0].toLowerCase()} people`); }
   if(me.drinks==='Sober'&&p.drinks==='Sober'){ s+=1.5; r.push('Both sober'); }
   // the deeper questions: same answer = a point toward clicking, with a reason you can read
-  const same = (k, w, say) => { if(me[k]&&p[k]&&me[k]===p[k]&&!/Rather not/.test(me[k])){ s+=w; r.push(say(me[k])); } };
+  const same = (k, w, say) => { const x=lifeOverlap(me[k],p[k],/Rather not/); if(x.length){ s+=w; r.push(say(x[0])); } };   // one answer or several
   same('kidWas',1,v=>`Both the ${v.replace(/^the /,'').toLowerCase()} as kids`);
   same('satMorning',.7,v=>`Same Saturday mornings growing up: ${v.toLowerCase()}`);
   same('childhoodHome',.8,v=>v==='Were a military kid'?'Both military kids':`Both ${v.toLowerCase()} growing up`);
@@ -2101,7 +2136,7 @@ function matchPerson(u){
   if(me.faith&&me.faith===p.faith&&me.faith!=='Rather not say'){ s+=.8; r.push(`Both ${me.faith.toLowerCase()}`); }
   if(me.politics&&me.politics===p.politics&&me.politics!=='Keep it light'){ s+=.6; r.push(me.politics==='Avoid it'?'Both happy to skip politics':'Both love a good politics talk'); }
   if(me.planStyle&&p.planStyle&&me.planStyle!==p.planStyle&&[me.planStyle,p.planStyle].includes('I make the plans')){ s+=.6; r.push('One of you plans, the other is down: good combo'); }
-  const both=(k,w,say)=>{ const x=(me[k]||[]).filter(v=>(p[k]||[]).includes(v)&&!/None|Eat anything/.test(v)); if(x.length){ s+=w*Math.min(2,x.length); r.push(say(x)); } };
+  const both=(k,w,say)=>{ const x=lifeOverlap(me[k],p[k],/None|Eat anything/); if(x.length){ s+=w*Math.min(2,x.length); r.push(say(x)); } };
   both('kidActivities',.7,x=>`Both did ${list(x).toLowerCase()} growing up`);
   both('values',.8,x=>`Both value ${list(x).toLowerCase()} in a friend`);
   both('diet',.8,x=>`Both ${list(x).toLowerCase()}`);
@@ -2178,7 +2213,7 @@ async function checkSession(){
     const pr=me.profile||{};
     if(!S.me.i.length&&pr.interests) S.me.i=pr.interests;
     if(!S.me.t&&pr.type) S.me.t=pr.type;
-    LIFE.forEach(f=>{ if(!hasVal(S.me.p[f.k])&&hasVal(pr[f.k])) S.me.p[f.k]=pr[f.k]; });
+    LIFE.forEach(f=>{ if(!hasVal(S.me.p[f.k])&&hasVal(pr[f.k])) S.me.p[f.k]=f.type==='many'?[].concat(pr[f.k]):pr[f.k]; });   // saved before it was pick-many: a list now
     save(); return true;
   }catch(e){ return false; }
 }
@@ -4951,16 +4986,18 @@ function renderMe(){
   const bl=SV.me?.blocks||[];
   $('#blockedList').innerHTML = bl.length ? `<div class="meta" style="margin-bottom:6px">Blocked</div>${bl.map(h=>`<div class="row" style="margin-bottom:6px"><span class="grow">@${esc(h)}</span><button class="btn sm" data-block="${esc(h)}" data-on="0">Unblock</button></div>`).join('')}` : '';
 }
-let lifeOpen = 'kid';
+let lifeOpen = 'taste';   // Music & interests first
 function renderLife(){
   $('#lifeCard').innerHTML = LIFE_SECS.map(([sec,title])=>{ const qs=LIFE.filter(f=>f.sec===sec), done=qs.filter(f=>hasVal(S.me.p[f.k])).length, open=lifeOpen===sec;
     return `<div class="card"><button class="row" data-lifesec="${sec}" style="width:100%;text-align:left"><b class="grow" style="font-size:15px">${title}</b>
         <span class="meta">${done}/${qs.length}</span><span class="meta" style="margin-left:8px">${open?'▾':'▸'}</span></button>
       <div class="bar" style="margin:8px 0 ${open?'10px':'0'}"><b style="width:${done/qs.length*100}%"></b></div>
-      ${open?qs.map(f=>{ const v=S.me.p[f.k];
-        const input = f.type==='text' ? `<input data-lifetext="${f.k}" value="${esc(v||'')}" placeholder="${esc(f.ph)}" maxlength="60" autocomplete="off">`
-          : `<div class="chips">${f.opts.map(o=>`<button class="ichip ${(f.type==='many'?(v||[]).includes(o):v===o)?'on':''}" data-life="${f.k}" data-opt="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
-        return `<div class="q"><div class="row"><b class="grow">${esc(f.q)}</b>${visBtn(f.k)}</div>${input}</div>`; }).join(''):''}</div>`; }).join('');
+      ${open?qs.map(f=>{ const v=S.me.p[f.k], many=f.type==='many', picked=many?[].concat(v||[]):[], own=picked.filter(x=>!f.opts.includes(x));
+        const input = f.type==='text' ? `<input data-lifetext="${f.k}" value="${esc(v||'')}" placeholder="${esc(f.ph)}" maxlength="${f.max||60}" autocomplete="off">`
+            + (f.list?`<div class="meta" style="margin-top:4px">${T('Separate with commas. Anyone who shares one is a match.')}</div>`:'')
+          : `<div class="chips">${[...f.opts,...own].map(o=>`<button class="ichip ${(many?picked.includes(o):v===o)?'on':''}" data-life="${f.k}" data-opt="${esc(o)}">${esc(o)}${own.includes(o)?' ✕':''}</button>`).join('')}</div>`
+            + (many?`<input class="lifeown" data-lifeown="${f.k}" placeholder="${esc(T('＋ Add your own, then Enter'))}" maxlength="30" autocomplete="off" enterkeyhint="done">`:'');
+        return `<div class="q"><div class="row"><b class="grow">${esc(f.q)}</b>${visBtn(f.k)}</div>${many?`<div class="meta" style="margin:-2px 0 6px">${T('Pick as many as you like')}</div>`:''}${input}</div>`; }).join(''):''}</div>`; }).join('');
 }
 function renderChartCard(){
   const el=$('#chartCard'); if(!el) return; const c=myChart();
@@ -6273,8 +6310,8 @@ document.addEventListener('click',e=>{
     toast(`🧬 You're <b>${S.me.t}, ${TYPES[S.me.t][0]}</b>. Your picks and matches just got sharper.`,'green',[{l:'See matches',cls:'primary',f:()=>{ meetTab='friends'; tab('meet'); }}]); }
   /* profile + data */
   else if(d.vis){ const k=d.vis; S.me.vis[k]=VIS_ORDER[(VIS_ORDER.indexOf(visOf(k))+1)%VIS_ORDER.length]; save(); renderAll(); }
-  else if(d.life){ const f=LIFE.find(x=>x.k===d.life), cur=S.me.p[f.k];
-    S.me.p[f.k] = f.type==='many' ? ((cur||[]).includes(d.opt)?cur.filter(x=>x!==d.opt):[...(cur||[]),d.opt]) : (cur===d.opt?null:d.opt);
+  else if(d.life){ const f=LIFE.find(x=>x.k===d.life), cur=f.type==='many'?[].concat(S.me.p[f.k]||[]):S.me.p[f.k];
+    S.me.p[f.k] = f.type==='many' ? (cur.includes(d.opt)?cur.filter(x=>x!==d.opt):[...cur,d.opt]) : (cur===d.opt?null:d.opt);
     save(); renderAll(); }
   else if(d.lvl){ S.me.astroLvl=S.me.astroLvl===d.lvl?null:d.lvl; save(); renderAll(); }
   else if(d.amatter){ S.me.astroMatter=S.me.astroMatter===d.amatter?null:d.amatter; save(); renderAll(); }
@@ -6503,7 +6540,11 @@ $('#bcityForm').onsubmit=async e=>{ e.preventDefault(); const q=$('#bcity').valu
     BPLACES=j.places; }catch(err){ $('#bcityOut').innerHTML=`<span class="meta">${esc(err.message)}</span>`; } };
 let BPLACES=[];
 document.addEventListener('change',e=>{
-  const k=e.target.dataset?.lifetext; if(k){ S.me.p[k]=e.target.value.trim().slice(0,60)||null; save(); renderProf(); renderFriendsTab(); schedule(); }
+  const k=e.target.dataset?.lifetext; if(k){ S.me.p[k]=e.target.value.trim().slice(0,LIFE.find(f=>f.k===k)?.max||60)||null; save(); renderProf(); renderFriendsTab(); schedule(); }
+  const ko=e.target.dataset?.lifeown, f=ko&&LIFE.find(x=>x.k===ko);   // "＋ Add your own" on a pick-many question
+  if(f){ const v=e.target.value.trim().replace(/\s+/g,' ').slice(0,30), cur=[].concat(S.me.p[ko]||[]);
+    if(v){ const hit=[...f.opts,...cur].find(o=>lifeNorm(o)===lifeNorm(v))||v;   // "hip hop" picks Hip-hop
+      if(!cur.includes(hit)&&cur.length<40) S.me.p[ko]=[...cur,hit]; save(); renderLife(); renderProf(); renderFriendsTab(); schedule(); } }
   if(e.target.id==='typePick'&&e.target.value){ S.me.t=e.target.value; save(); renderAll(); }
 });
 
@@ -7945,7 +7986,7 @@ function scoutOffToast(){ toast(`🧭 ${T('Scout is off.')}`,'',[{l:T('Turn on')
 function interviewNeeds(){
   return {interests:S.me.i, interest_options:INTERESTS,
     quiz:QUIZ.map((x,i)=>({i,text:x[0]})).filter(x=>S.me.ans?.[x.i]==null).slice(0,4),
-    life:LIFE.filter(x=>!S.me.p?.[x.k]).slice(0,4).map(x=>({k:x.k,q:x.q,opts:x.opts||[]}))};
+    life:LIFE.filter(x=>!hasVal(S.me.p?.[x.k])).slice(0,4).map(x=>({k:x.k,q:x.q,opts:x.opts||[],many:x.type==='many'}))};
 }
 function scoutInterview(){
   if(needAccount('set up your profile with Scout')) return;
@@ -7959,6 +8000,10 @@ function scoutProfile(p){   // what Scout heard, checked against the app's own l
   S.me.ans ||= {}; S.me.p ||= {};
   (p.quiz||[]).forEach(({i,v})=>{ if(QUIZ[i]&&v>=1&&v<=5){ S.me.ans[i]=v; got.push('q'); } });
   (p.life||[]).forEach(({k,v})=>{ const L=LIFE.find(x=>x.k===k); if(!L) return; v=String(v).trim().slice(0,200);
+    if(L.type==='many'){   // several picks; their own words kept too ("hip hop" → Hip-hop)
+      const cur=[].concat(S.me.p[k]||[]), add=v.split(/\s*[,;]\s*/).map(x=>x.trim().slice(0,30)).filter(Boolean)
+        .map(x=>L.opts.find(o=>lifeNorm(o)===lifeNorm(x))||x).filter(x=>!cur.includes(x));
+      if(add.length){ S.me.p[k]=[...cur,...add].slice(0,40); got.push(k); } return; }
     if(L.opts) v=L.opts.find(o=>o.toLowerCase()===v.toLowerCase()); if(v){ S.me.p[k]=v; got.push(k); } });
   if(!S.me.t&&QUIZ.every((_,i)=>S.me.ans[i]!=null)){ const sc=axisScores(); S.me.t=Object.entries(AXES).map(([k,a])=>sc[k]>=0?a[0]:a[1]).join(''); }
   if(got.length){ save(); renderAll(); }

@@ -77,7 +77,9 @@ end
 def scout_interview_prompt(iv)
   return '' unless iv.is_a?(Hash)
   quiz = Array(iv['quiz']).first(4).select { |x| x.is_a?(Hash) }.map { |x| { i: x['i'].to_i, statement: x['text'].to_s[0, 120] } }
-  life = Array(iv['life']).first(4).select { |x| x.is_a?(Hash) }.map { |x| { k: x['k'].to_s[/\A[a-z_]{1,30}\z/], q: x['q'].to_s[0, 120], options: Array(x['opts']).first(12).map { |o| o.to_s[0, 40] } }.compact }
+  # About-you keys are camelCase (kidWas, sportsPlay); `many` questions take several answers, the person's own words too
+  life = Array(iv['life']).first(4).select { |x| x.is_a?(Hash) && x['k'].to_s =~ /\A[A-Za-z_]{1,30}\z/ }
+                          .map { |x| { k: x['k'].to_s, q: x['q'].to_s[0, 120], options: Array(x['opts']).first(30).map { |o| o.to_s[0, 40] }, many: x['many'] == true } }
   have = Array(iv['interests']).first(30).map { |x| x.to_s[0, 30] }
   opts = Array(iv['interest_options']).first(40).map { |x| x.to_s[0, 30] }
   <<~I
@@ -87,8 +89,9 @@ def scout_interview_prompt(iv)
     Put everything you learned in `profile`: `interests` (from these options when one fits, else their own word, max 30
     letters: #{JSON.generate(opts)}; they already have #{JSON.generate(have)}), `quiz` items {i, v} where v is 1 (strongly
     disagree) to 5 (strongly agree) with the statement, and `life` items {k, v} (v must be one of the options when there
-    are options). Only record what they actually said. They can skip anything ("skip", "next", "rather not") and stop any
-    time; if they stop or nothing is left, set `profile.done` true, say they're all set and that they can talk to you any
+    are options; for a question with `many`, v can name several, separated by commas, and their own words are fine
+    too, a few words each). Only record what they actually said. They can skip anything ("skip", "next", "rather not")
+    and stop any time; if they stop or nothing is left, set `profile.done` true, say they're all set and that they can talk to you any
     time with the compass button. Answer their questions about the app or their account along the way, then carry on.
     Personality statements still open: #{JSON.generate(quiz)}
     About-you questions still open: #{JSON.generate(life)}
@@ -101,7 +104,7 @@ def scout_profile_clean(p)
     'interests' => Array(p['interests']).first(8).map { |x| x.to_s.strip[0, 30] }.reject(&:empty?),
     'quiz' => Array(p['quiz']).first(6).select { |x| x.is_a?(Hash) && x['i'].to_i.between?(0, 19) && x['v'].to_i.between?(1, 5) }
                 .map { |x| { 'i' => x['i'].to_i, 'v' => x['v'].to_i } },
-    'life' => Array(p['life']).first(6).select { |x| x.is_a?(Hash) && x['k'].to_s =~ /\A[a-z_]{1,30}\z/ && !x['v'].to_s.strip.empty? }
+    'life' => Array(p['life']).first(6).select { |x| x.is_a?(Hash) && x['k'].to_s =~ /\A[A-Za-z_]{1,30}\z/ && !x['v'].to_s.strip.empty? }
                 .map { |x| { 'k' => x['k'].to_s, 'v' => x['v'].to_s.strip[0, 200] } },
     'done' => p['done'] == true
   }

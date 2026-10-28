@@ -1853,9 +1853,19 @@ def mount_app(server)
   end
 
   # `public` is shown to everyone; `match` is only ever used by the matcher, never sent to other users.
+  # Profile answers: plain strings or lists of them (About you picks + your own words), bounded so one profile can't
+  # grow without limit: 80 answers, 60 items each, 200 characters a value.
+  clean_answers = lambda do |x|
+    return {} unless x.is_a?(Hash)
+    x.first(80).each_with_object({}) do |(k, v), o|
+      k = k.to_s[0, 40]
+      v = v.is_a?(Array) ? v.first(60).map { |i| i.to_s[0, 200] } : v.is_a?(Hash) ? nil : v.nil? ? nil : v.to_s[0, 200]
+      o[k] = v unless v.nil?
+    end
+  end
   route(server, '/api/profile') do |b, h|
     limit!("profile:#{h}", 120, 3600)
-    pub = b['public'].is_a?(Hash) ? b['public'] : {}
+    pub = clean_answers.(b['public'])
     text = pub.values.flatten.map(&:to_s).join(' | ')
     changed = store(write: false) { |d| d['users'][h]['public_text'] != text }
     moderate(text) if changed
@@ -1863,7 +1873,7 @@ def mount_app(server)
       u = d['users'][h]
       u['public'] = pub
       u['public_text'] = text
-      u['match'] = b['match'].is_a?(Hash) ? b['match'] : {}
+      u['match'] = clean_answers.(b['match'])
       u['c'] = b['c'].to_s[/\A#[0-9a-f]{6}\z/i] || u['c']
       if b.key?('pic') && !u['pic'].to_s.start_with?('photo:')   # a photo is changed through /api/me/photo
         e = b['pic'].to_s[/\Aemoji:([^\x00-\x7F]{1,8})\z/, 1]

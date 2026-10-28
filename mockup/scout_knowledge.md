@@ -133,11 +133,14 @@ Keep this file up to date when features change. Only describe things that exist 
 ## Me / profile
 - Tap You in the bottom bar, then Profile (or your picture). Upload a photo or pick an emoji avatar and a color at
   the top. Four pages, also tabs along the top of each: 👤 Profile (what others see + interests),
-  🧬 Personality (quiz + astrology), 📝 About you (39 questions), 🔒 Privacy (location precision,
+  🧬 Personality (quiz + astrology), 📝 About you (47 questions), 🔒 Privacy (location precision,
   broadcast delay, your data, blocked people, terms, sign out, delete account).
 - Interests; a 20-question personality quiz with 16 types; full astrology (birth date, optional
   time and city → Sun, Moon, Rising, Mercury to Saturn, Chinese zodiac, worked out on the phone,
-  never uploaded); 39 "about you" questions in 4 sections.
+  never uploaded); 47 "about you" questions in 5 sections, starting with 🎵 Music & interests (music you love,
+  artists on repeat, how you like music live, playing music, teams you follow, sports you play, outdoors, other things
+  you're into, best kind of night out). Most questions take as many answers as you like, and you can add your own
+  words ("＋ Add your own"). Matching counts any answer you share with someone, your own words and artists included.
 - Every answer has its own visibility tag: 🧠 Matching only (the default, never shown), 👥 Friends,
   🌐 Everyone, 🔒 Only me. Tap the tag to change it.
 - Activity and place history (opt-in, venue-level only), export your data, delete your account.
