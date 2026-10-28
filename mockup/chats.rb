@@ -199,12 +199,12 @@ def mount_chats(server)
   route(server, '/api/chat/new') do |b, h|
     limit!("chatnew:#{h}", 20, 3600)
     name = b['name'].to_s.gsub(/[[:cntrl:]]/, ' ').strip[0, 40]
+    raise Forbidden, 'Not posted: pick another name.' unless moderate(name)   # before the lock: Claude takes seconds
     store do |d|
       fr = friends_of(d, h)
       people = Array(b['members']).map(&:to_s).uniq.select { |x| fr.include?(x) && !blocked_between(d, h).include?(x) }.first(30)
       raise 'Pick at least 2 friends for a group chat.' if people.size < 2
       name = people.first(3).map { |x| "@#{x}" }.join(', ') if name.empty?
-      raise Forbidden, 'Not posted: pick another name.' unless moderate(name)
       id = SecureRandom.hex(5)
       (d['chats'] ||= {})[id] = { 'id' => id, 'name' => name, 'members' => [h] + people, 'by' => h, 'at' => now_ms }
       people.each { |x| notify!(d, x, 'dm', from: h, ref: "c:#{id}", text: "💬 @#{h} added you to #{name}") }
@@ -215,6 +215,8 @@ def mount_chats(server)
   # Rename, add friends, or leave. The last one out ends the chat.
   route(server, '/api/chat/edit') do |b, h|
     limit!("chatedit:#{h}", 60, 3600)
+    n = b['name'].to_s.gsub(/[[:cntrl:]]/, ' ').strip[0, 40] if b['name'] && !b['leave']
+    raise Forbidden, 'Not posted: pick another name.' if n && !n.empty? && !moderate(n)   # outside the lock
     store do |d|
       key, _, c = dm_thread!(d, h, b['id'])
       raise 'Not a group chat.' unless c
@@ -227,9 +229,7 @@ def mount_chats(server)
         next { ok: true, left: true }
       end
       if b['name']
-        n = b['name'].to_s.gsub(/[[:cntrl:]]/, ' ').strip[0, 40]
         raise 'Give it a name.' if n.empty?
-        raise Forbidden, 'Not posted: pick another name.' unless moderate(n)
         c['name'] = n
         (d['dms'][key] ||= []) << { 'id' => "m#{SecureRandom.hex(5)}", 'f' => h, 't' => "@#{h} named the chat #{n}", 'at' => now_ms, 'sys' => true }
       end
@@ -349,6 +349,8 @@ def mount_plans(server)
   # Vote (for as many options and times as work), lock one in (the organizer), say you're going, or add an option.
   route(server, '/api/hangout/act') do |b, h|
     limit!("hangoutact:#{h}", 400, 3600)
+    new_opt = b['do'] == 'add' ? plan_opt_clean(b['opt']) : nil
+    raise Forbidden, 'Not posted: please reword that.' if new_opt && !moderate(new_opt['name'])   # outside the lock
     store do |d|
       key, others, c = dm_thread!(d, h, b['id'])
       pl = c && c['plan'] or raise 'No plan in this chat.'
@@ -360,8 +362,7 @@ def mount_plans(server)
         v.include?(h) ? v.delete(h) : v << h
       when 'add'
         raise "It's already decided." if pl['status'] == 'set'
-        o = plan_opt_clean(b['opt']) or raise 'Name the option.'
-        raise Forbidden, 'Not posted: please reword that.' unless moderate(o['name'])
+        o = new_opt or raise 'Name the option.'
         raise 'That is plenty of options (6).' if pl['opts'].size >= 6
         o['votes'] = [h]
         pl['opts'] << o

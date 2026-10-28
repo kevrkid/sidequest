@@ -247,7 +247,9 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   `state_for` shows others `{}` for it (the owner still sees theirs), admin lists it (`unreviewed.profiles`), and
   `profile_recheck!` (v2.rb, every `SQ_PROFILE_RECHECK_S`, 300 s) checks it again: pass = shown, block = stays hidden and the
   owner gets one `mod` notification (`public_blocked`). Deleting an account also removes its ranking votes, bar-food reports
-  and ranking suggestions. Test: `ruby test_privacy.rb` (9, own copy on :8806 with moderation on and a fake Claude).
+  and ranking suggestions. Never call Claude (`moderate`, `run_claude`) inside `store {}`: every request waits on that lock;
+  `run_claude` logs `[claude] called inside the store lock` if it happens. Test: `ruby test_privacy.rb` (12, own copy on :8806
+  with moderation on and a fake Claude).
 - **Profiles of others**: match %, "what you have in common", Snapchat-style astrological
   compatibility card, their shared answers.
 - **Safety**: report/block on everything, Claude moderation of posts/captions/group names/public

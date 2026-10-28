@@ -205,6 +205,7 @@ API_EFFORT = { 'claude-haiku-5-5' => ENV['SQ_HAIKU_EFFORT'] || 'low',
 # show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
 # read the web (menus); pages it reads are untrusted, so only the structured answer comes back.
 def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
+  warn "[claude] called inside the store lock (every request waits): #{caller(1, 3).join(' < ')}" if STORE[:lock].owned?
   ENGINE == 'api' ? run_claude_api(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
                   : run_claude_cli(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
 end

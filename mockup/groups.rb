@@ -163,6 +163,13 @@ def mount_groups(server)
   # Admin tools, and removing your own post.
   route(server, '/api/group/admin') do |b, h|
     limit!("gadmin:#{h}", 200, 3600)
+    desc = b['d'].to_s.strip[0, 300] if b['do'] == 'settings' && b.key?('d')
+    rules = Array(b['rules']).map { |r| r.to_s.strip[0, 140] }.reject(&:empty?).first(10) if b['do'] == 'settings' && b.key?('rules')
+    if desc || rules   # only new words get checked, and outside the lock (Claude takes seconds)
+      old = store(write: false) { |d| (g = d['groups'][b['id'].to_s[0, 20]]) ? [g['d'].to_s, g['rules'] || []] : ['', []] }
+      raise Forbidden, 'Not saved: please reword that.' if desc && desc != old[0] && !moderate(desc)
+      raise Forbidden, 'Not saved: please reword the rules.' if rules && rules != old[1] && !moderate(rules.join(' · '))
+    end
     store do |d|
       g = group!(d, b['id'])
       admin = group_admin?(g, h) && group_member?(d, g, h)
@@ -212,15 +219,11 @@ def mount_groups(server)
       when 'settings'
         raise Forbidden, 'Only admins can change the group.' unless admin
         if b.key?('d')
-          desc = b['d'].to_s.strip[0, 300]
-          raise Forbidden, 'Not saved: please reword that.' unless desc == g['d'].to_s || moderate(desc)   # only new words get checked
           g['d'] = desc
         end
         g['priv'] = !!b['priv'] if b.key?('priv')
         g['e'] = b['e'].to_s[0, 4] if b['e'].to_s.size.between?(1, 4)
         if b.key?('rules')
-          rules = Array(b['rules']).map { |r| r.to_s.strip[0, 140] }.reject(&:empty?).first(10)
-          raise Forbidden, 'Not saved: please reword the rules.' unless rules == (g['rules'] || []) || moderate(rules.join(' · '))
           g['rules'] = rules
         end
         if b['cover'].to_s.start_with?('data:')

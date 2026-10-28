@@ -1,7 +1,8 @@
 # Privacy and safety fixes against a throwaway copy of the server with moderation ON and a fake Claude that can be
 # switched off (no internet, no real Claude): ruby test_privacy.rb
 # Chat photos / voice notes only for the people in the chat, moderation reads the whole text, profile answers that
-# couldn't be checked stay hidden until a re-check passes, and deleting an account takes its votes and reports along.
+# couldn't be checked stay hidden until a re-check passes, deleting an account takes its votes and reports along,
+# and no Claude check runs while the data lock is held (a slow one used to stall everyone).
 require 'webrick'; require 'json'; require 'net/http'; require 'uri'; require 'tmpdir'; require 'fileutils'
 
 PORT = 8806; EV_PORT = 9918
@@ -21,7 +22,7 @@ CHECKED = File.join(dir, 'checked.txt')         # one line per text Claude was s
 FAKE = File.join(dir, 'fake_claude')
 File.write(FAKE, "#!/usr/bin/env ruby\nrequire 'json'\npr = $stdin.read\nexit 1 if File.exist?(#{DOWN.inspect})\n" \
   "if (t = pr[/Text to check:\\n(\".*\")\\nGive a verdict/m, 1]) then t = JSON.parse(t)\n" \
-  "  File.open(#{CHECKED.inspect}, 'a') { |f| f.puts t.size }\n" \
+  "  File.open(#{CHECKED.inspect}, 'a') { |f| f.puts t.size }; sleep 3 if t.include?('SLOWWORD')\n" \
   "  bad = t.include?('BADWORD'); puts JSON.generate(type: 'result', structured_output: { verdict: bad ? 'block' : 'allow', reason: bad ? 'That word is not allowed here.' : 'ok' }, duration_ms: 1, total_cost_usd: 0); exit end\n" \
   "puts '{\"structured_output\":{\"say\":\"ok\",\"expression\":\"happy\",\"actions\":[]},\"duration_ms\":1,\"total_cost_usd\":0}'\n")
 File.chmod(0o755, FAKE)
@@ -143,6 +144,34 @@ t('deleting an account removes its bar-food reports and ranking suggestions') {
   had = before.dig('barfood', 'n1002', 'pv_dee') && before['rank_suggest'].to_a.any? { |s| s['h'] == 'pv_dee' }
   check(had && !after.dig('barfood', 'n1002').to_h.key?('pv_dee') && after['rank_suggest'].to_a.none? { |s| s['h'] == 'pv_dee' } && !after['users'].key?('pv_dee'),
         [had, after['barfood'], after['rank_suggest']])
+}
+
+t('chat names, plan options and group settings are still checked (now outside the lock)') {
+  _, g = pa.post('/api/chat/new', members: %w[pv_bo pv_cy], name: 'Crew')
+  c1, = pa.post('/api/chat/new', members: %w[pv_bo pv_cy], name: 'BADWORD crew')
+  c2, = pa.post('/api/chat/edit', id: g['with'], name: 'BADWORD crew')
+  c3, = pa.post('/api/chat/edit', id: g['with'], name: 'Good crew')
+  _, pl = pa.post('/api/hangout/new', title: 'Friday', opts: [{ k: 'idea', name: 'Tacos' }], members: %w[pv_bo])
+  c4, = pa.post('/api/hangout/act', id: pl['with'], do: 'add', opt: { k: 'idea', name: 'BADWORD bar' })
+  c5, = pa.post('/api/hangout/act', id: pl['with'], do: 'add', opt: { k: 'idea', name: 'Pizza' })
+  _, gr = pa.post('/api/group/create', n: 'Runners', d: 'We run', e: '🏃', cat: 'sports')
+  gid = gr.dig('group', 'id')
+  c6, = pa.post('/api/group/admin', id: gid, do: 'settings', d: 'BADWORD club')
+  c7, = pa.post('/api/group/admin', id: gid, do: 'settings', rules: ['be kind', 'BADWORD'])
+  c8, = pa.post('/api/group/admin', id: gid, do: 'settings', d: 'We run on Saturdays', rules: ['be kind'])
+  check(g['with'] && [c1, c2, c3, c4, c5, c6, c7, c8] == [403, 403, 200, 403, 200, 403, 403, 200], [g, pl, gr, [c1, c2, c3, c4, c5, c6, c7, c8]])
+}
+t('a slow Claude check no longer freezes everyone else') {
+  _, g = pa.post('/api/chat/new', members: %w[pv_bo pv_cy], name: 'Slow')
+  th = Thread.new { pa.post('/api/chat/edit', id: g['with'], name: 'SLOWWORD crew') }
+  sleep 0.6
+  t0 = Time.now; code, = pb.get('/api/state'); took = Time.now - t0
+  r, = th.value
+  check(code == 200 && took < 1.5 && r == 200, [code, took.round(2), r])
+}
+t('no Claude call was made while holding the data lock') {
+  hits = File.read(File.join($dir, 'server.log')).lines.grep(/called inside the store lock/)
+  check(hits.empty?, hits.first(3))
 }
 
 puts "\n#{$pass}/#{$pass + $fail} passed"
