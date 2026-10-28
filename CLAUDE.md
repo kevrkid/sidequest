@@ -798,6 +798,9 @@ SQ_BASE=http://localhost:8796 SQ_ADMIN_TOKEN=test python e2e_live.py <shot-dir>
                                        # on :8796 with SQ_DEMO=0 SQ_MODERATE=0 SQ_ADMIN_TOKEN=test
 ```
 
+e2e_v2.py and e2e_v3.py need real events (the events service on :8788, or `SQ_EVENTS_API` pointing at one); they stop at the
+start with a message if `/api/events` is empty. Without events they used to fail at random later steps, which looked like flakiness.
+
 Other Claude sessions often work here at the same time, each with a test server on its own port. Run
 the e2e tests against a copy of `mockup/` (empty `data/app.json`) on a spare port, and stop servers by
 PID or port, never `pkill -f "ruby server.rb"` (that kills everyone's).

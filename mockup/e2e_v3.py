@@ -10,6 +10,16 @@ import os, sys, json
 from playwright.sync_api import sync_playwright
 
 BASE = os.environ.get("SQ_BASE", "http://localhost:8787")
+
+def need_events(base):   # the suites open real events; with the events service down they fail at random later steps
+    import json as _j, urllib.request as _u
+    try:
+        n = len(_j.load(_u.urlopen(base + "/api/events", timeout=20)).get("events") or [])
+    except Exception as e:
+        n = 0
+    if not n:
+        sys.exit(f"No events from {base}/api/events: start the events service (~/claude/live/serve.sh, :8788) or point SQ_EVENTS_API at it.")
+need_events(BASE)
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/sq-v3"
 os.makedirs(OUT, exist_ok=True)
 results, errors = [], []
