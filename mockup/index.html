@@ -142,6 +142,7 @@
   .leaflet-tooltip.odlabel.water{color:#bfe9ff} .leaflet-tooltip.odlabel::before{display:none}
   .npin{display:grid;place-items:center;border-radius:50%;background:#1a1036;border:2px solid #b57bff;line-height:1}
   .npin.club{width:30px;height:30px;font-size:16px;box-shadow:0 0 14px #b57bffaa}
+  .npin.venue{width:26px;height:26px;font-size:14px;background:#2a1030;border-color:#ff5ea8;box-shadow:0 0 10px #ff5ea866}
   .npin.bar{width:22px;height:22px;font-size:11px;border-width:1.5px;border-color:#7a83a8;opacity:.85}
   .npin.club.many{width:36px;height:36px;position:relative} .npin.many b{position:absolute;right:-6px;top:-6px;min-width:18px;height:18px;border-radius:9px;
     background:#e9408a;color:#fff;font:800 11px/18px Inter,system-ui,sans-serif;text-align:center;padding:0 4px}
@@ -949,6 +950,8 @@
     background:linear-gradient(var(--panel2,#ffffff14),var(--panel2,#ffffff14)),var(--bg);box-shadow:0 -10px 0 var(--bg),0 8px 0 var(--bg)}
   .ylist .ygroup{padding:10px 14px 2px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   #youAv,#meTitle{cursor:pointer}
+  .sccancel{display:inline-flex;align-items:center;gap:4px;margin:6px auto 0;padding:7px 16px;border-radius:99px;font-weight:700;font-size:14px;
+    background:#ff453a22;color:#ff453a;border:1px solid #ff453a55} .sccancel[hidden]{display:none}
   .q .lifeown{margin-top:8px;width:100%}
   #app.v3 #v-me .seg button,#app.v3 #v-meet .seg button,#app.v3 #v-feed .seg button{font-size:12.5px;padding:9px 4px}
   .ic.up{transform:rotate(-90deg)}
@@ -1339,7 +1342,7 @@
       <button class="btn sm" data-sc="close" aria-label="Close">✕</button></div>
     <div id="scoutLog"></div>
     <div class="scvoice"><button class="bigmic" data-sc="mic" id="scMic" aria-label="Talk to Scout"><span class="scwrap" data-scface></span></button>
-      <div id="scMicL" class="scmicl">Tap to talk</div><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button>
+      <div id="scMicL" class="scmicl">Tap to talk</div><button class="sccancel" data-sc="cancel" id="scCancel" hidden>✕ <span data-t="Cancel">Cancel</span></button><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button>
       <div id="scFind" class="scfind"></div>
       <button class="sc-lens" data-sc="lens"><i>📷</i><span><b data-t="Live Translate">Live Translate</b><small data-t="Point your camera at a sign or menu">Point your camera at a sign or menu</small></span></button>
       <button class="sc-lens look" data-sc="identify"><i>🔍</i><span><b data-t="What is this?">What is this?</b><small data-t="Point at a building, landmark, storefront or dish">Point at a building, landmark, storefront or dish</small></span></button></div>
@@ -1563,7 +1566,7 @@ S.coins ??= 50;
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
   'Explore':'Explorar','Watch':'Ver','Groups':'Grupos','✨ Everyone':'✨ Todos','👥 Friends':'👥 Amigos','📍 Near me':'📍 Cerca de mí','On till':'Hasta las','In a chat':'En un chat','1 member':'1 miembro',"On friends' maps":'En el mapa de amigos','Sharing':'Compartiendo',"Ask who's free right now":'Pregunta quién está libre ahora','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Hangout':'Quedada','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Hangout here':'Quedada aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
-  'Settings & privacy':'Ajustes y privacidad','Gyms':'Gimnasios','Gym':'Gimnasio','Climbing gym':'Escalada','Yoga & pilates':'Yoga y pilates','Boxing & martial arts':'Boxeo y artes marciales','Spin studio':'Spinning','Dance studio':'Estudio de baile','Ice rink':'Pista de hielo','Rec center':'Centro recreativo','Chain':'Cadena','Closed now':'Cerrado ahora','Gyms & fitness':'Gimnasios y fitness','From OpenStreetMap. Check hours and day passes with them before you go.':'De OpenStreetMap. Confirma horarios y pases de día antes de ir.','Profile':'Perfil','About you':'Sobre ti','Privacy & account':'Privacidad y cuenta','{n} interests':'{n} intereses','Add interests':'Añade intereses','Take the quiz':'Haz el test','Pick as many as you like':'Elige todas las que quieras','＋ Add your own, then Enter':'＋ Añade la tuya y pulsa Intro','Separate with commas. Anyone who shares one is a match.':'Sepáralos con comas: si alguien comparte uno, hacen match.','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
+  'Settings & privacy':'Ajustes y privacidad','🍸 Full bar':'🍸 Bar completo','🍷 Beer & wine':'🍷 Cerveza y vino','🍺 Beer':'🍺 Cerveza','From Overture Maps; no hours listed, so check before you go.':'De Overture Maps; sin horario, confírmalo antes de ir.','From Texas alcohol license records; check hours before you go.':'De los registros de licencias de alcohol de Texas; confirma el horario antes de ir.','Hours from OpenStreetMap; may be out of date.':'Horario de OpenStreetMap; puede no estar al día.','🎤 Venues & shows':'🎤 Lugares y espectáculos','🎸 Music':'🎸 Música','😂 Comedy':'😂 Comedia','🍺 Breweries':'🍺 Cervecerías','🎳 Bowling & games':'🎳 Boliche y juegos','🎬 Movies':'🎬 Cine','🎭 Theater':'🎭 Teatro','Most of these don\'t list hours: check before you go.':'La mayoría no publica horario: confírmalo antes de ir.','🎤 Music, comedy, theater, movies, bowling':'🎤 Música, comedia, teatro, cine, boliche','🍸 Bars & breweries (street level)':'🍸 Bares y cervecerías (a nivel de calle)','Gyms':'Gimnasios','Gym':'Gimnasio','Climbing gym':'Escalada','Yoga & pilates':'Yoga y pilates','Boxing & martial arts':'Boxeo y artes marciales','Spin studio':'Spinning','Dance studio':'Estudio de baile','Ice rink':'Pista de hielo','Rec center':'Centro recreativo','Chain':'Cadena','Closed now':'Cerrado ahora','Gyms & fitness':'Gimnasios y fitness','From OpenStreetMap. Check hours and day passes with them before you go.':'De OpenStreetMap. Confirma horarios y pases de día antes de ir.','Profile':'Perfil','About you':'Sobre ti','Privacy & account':'Privacidad y cuenta','{n} interests':'{n} intereses','Add interests':'Añade intereses','Take the quiz':'Haz el test','Cancel':'Cancelar','Cancelled.':'Cancelado.','Cancelled. Tap to talk again.':'Cancelado. Toca para hablar otra vez.','Pick as many as you like':'Elige todas las que quieras','＋ Add your own, then Enter':'＋ Añade la tuya y pulsa Intro','Separate with commas. Anyone who shares one is a match.':'Sepáralos con comas: si alguien comparte uno, hacen match.','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
   'Wave at people in Meet: when they wave back you can chat. Or bring your friends.':'Saluda a gente en Conocer: cuando te devuelvan el saludo podrán chatear. O trae a tus amigos.',
@@ -2164,8 +2167,8 @@ async function askMatch(){
 /* ---------- shared server state: accounts, RSVPs, posts, groups ---------- */
 const SV = {on:false, users:[], rsvps:{}, posts:[], groups:[], members:{}, friends:{list:[],incoming:[],outgoing:[]}, me:null};
 let AUTHED = false;
-async function api(path, body){
-  const r=await fetch(path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+async function api(path, body, opts){
+  const r=await fetch(path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{}),signal:opts?.signal});
   const j=await r.json().catch(()=>({error:`Server error (${r.status})`}));
   if(r.status===401&&!/login|signup|delete/.test(path)){
     if(AUTHED){ AUTHED=false; ONB.mode='login'; ONB.step=1; ONB.h=S.me.h; renderOnb(); } else needAccount('do that'); }
@@ -2666,7 +2669,12 @@ const HOT_FALLBACK = {sixth:{id:'sixth',name:'6th Street'},rainey:{id:'rainey',n
   west6:{id:'west6',name:'West 6th'},soco:{id:'soco',name:'SoCo'},east:{id:'east',name:'East Austin'},domain:{id:'domain',name:'The Domain'},rroldtown:{id:'rroldtown',name:'Old Downtown Round Rock'}};
 const PL = {all:null, byId:{}, hot:null, layer:null, zones:null, canv:null, cores:{}, pulseT:null, fetched:null, lastList:[]};
 const nearParam = () => `lat=${ME_POS[0].toFixed(2)}&lng=${ME_POS[1].toFixed(2)}`;   // ~1 km, never exact GPS
-const PLACE_E = {restaurant:'🍽️','fast food':'🍔','food truck':'🚚','truck park':'🚚','food hall':'🍱',bakery:'🥐','ice cream':'🍦',cafe:'☕',bar:'🍸',pub:'🍺','beer garden':'🍻',club:'🪩'};
+const PLACE_E = {restaurant:'🍽️','fast food':'🍔','food truck':'🚚','truck park':'🚚','food hall':'🍱',bakery:'🥐','ice cream':'🍦',cafe:'☕',bar:'🍸',pub:'🍺','beer garden':'🍻',club:'🪩',
+  brewery:'🍺','music venue':'🎸','comedy club':'😂',theater:'🎭',cinema:'🎬',games:'🎳'};
+// Venues (music, comedy, theater, movies, bowling & arcades: from Overture Maps): their own pins on the Nightlife layer, never food dots
+const VENUE_KINDS = ['music venue','comedy club','theater','cinema','games'];
+const NOHOURS_SUBS = ['venues','music','comedy','theater','cinema','games','breweries'];   // Nightlife sub-chips where Open now doesn't filter
+const ALC_TXT = {full:'🍸 Full bar', 'beer & wine':'🍷 Beer & wine', beer:'🍺 Beer'};
 async function loadHotspots(){ const first=!PL.hot; try{ PL.hot=(await (await fetch('/api/places/hotspots')).json()).hotspots; }catch(e){}
   if(first&&PL.hot&&curTab==='home'&&!EXC.k&&!POP.p) renderHome();   // Explore's "Busy right now"
   return PL.hot; }
@@ -2836,7 +2844,7 @@ function renderPlacesLayer(){
   if(!S.mapL.food||!PL.all||z<13) return setLabels('food',[],[]);
   const b=map.getBounds().pad(.2), halos=[], cand=[];
   PL.all.forEach(([id,name,kind,lat,lng,w,pop])=>{   // already best-known first
-    if(NIGHT_KINDS.includes(kind)||!b.contains([lat,lng])) return; const st=placeState(w);   // bars and clubs are the Nightlife layer
+    if(NIGHT_KINDS.includes(kind)||VENUE_KINDS.includes(kind)||!b.contains([lat,lng])) return; const st=placeState(w);   // bars, clubs and venues are the Nightlife layer
     if(st!=='open'&&st!=='soon'&&(z<15||S.mapL.openonly)) return;   // closed / unknown-hours spots only up close (never with Open now only)
     cand.push({id,name,ll:[lat,lng],st,pop:pop||0,rank:(pop||0)+(st==='open'?15:st==='soon'?6:-25)});
   });
@@ -2941,7 +2949,7 @@ function marketPopup(m){
 }
 // Bars: does it serve food, and till when (from people who've been, its menu, or OpenStreetMap); anyone signed in
 // can say. Nothing shown is guessed: with no source it asks.
-const BAR_K = ['bar','pub','club','beer garden'];
+const BAR_K = ['bar','pub','club','beer garden','brewery'];
 const kitchenTxt = p => p.kitchen==='open' ? T('Kitchen open till {t}',{t:p.kitchen_at}) : p.kitchen==='always' ? T('Kitchen open 24 hours')
   : p.kitchen==='closed' ? (p.kitchen_at?T('Kitchen closed · opens {t}',{t:p.kitchen_at}):T('Kitchen closed')) : p.kitchen==='around' ? T('Kitchen closes around {t}',{t:p.kitchen_at}) : '';
 const barTag = p => !BAR_K.includes(p.kind) ? '' : p.food===true ? ` · 🍔 ${esc(p.kitchen==='open'?T('food till {t}',{t:p.kitchen_at}):p.kitchen==='closed'?T('kitchen closed'):p.kitchen==='around'?T('food till ~{t}',{t:p.kitchen_at}):T('food'))}`
@@ -2971,15 +2979,16 @@ async function placePopup(id, ll){
     if(FOOD_KINDS.test(p.kind||'restaurant')) menuWarm(p.id);
     pop.setContent(`<b>${PLACE_E[p.kind]||'🍽️'} ${esc(p.name)}</b><div class="meta">${esc([p.kind,(p.cuisine||[]).slice(0,3).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${p.mi!=null?` · ${p.mi} mi`:''}</div>
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}${p.sq_rating?` <span class="meta">⭐ <b>${p.sq_rating.avg}</b> ${T('on Side Quest')} (${p.sq_rating.n})</span>`:''}</div>
-      ${barFood(p)}
+      ${barFood(p)}${p.alcohol?`<div class="meta" style="margin:2px 0">${esc(T(ALC_TXT[p.alcohol]||''))}</div>`:''}
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
       <div id="pv_${esc(p.id)}"></div>
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
-        ${['bar','pub','beer garden','club'].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
+        ${/^https:\/\/(www\.)?instagram\.com\//.test(p.ig||'')?`<a class="btn sm" href="${esc(p.ig)}" target="_blank" rel="noopener">📸 Instagram ↗</a>`:''}
+        ${[...BAR_K,...VENUE_KINDS].includes(p.kind)?`<button class="btn sm" data-pafter="${esc(p.id)}" data-pname="${esc(p.name)}">🌙 ${T('Eat after')}</button>`:''}
         ${checkBtn('place',p.id,p.lat,p.lng)}<button class="btn sm" data-prate="${esc(p.id)}" data-pname="${esc(p.name)}">⭐ ${T('Rate')}</button></div>
       <div id="gp_${esc(p.id)}"></div>
-      <div class="meta" style="font-size:10px;margin-top:6px">Hours from OpenStreetMap; may be out of date.</div>`);
+      <div class="meta" style="font-size:10px;margin-top:6px">${p.src==='overture'?T('From Overture Maps; no hours listed, so check before you go.'):p.src==='tabc'?T('From Texas alcohol license records; check hours before you go.'):T('Hours from OpenStreetMap; may be out of date.')}</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
     window.Pulse?.card(p.id);   // the vibe check: how it is now, tonight's busy hours, proof (pulse.js)
     if(CFG.google) googleInfo(p.id,'id',null,{web:!!p.web,phone:!!p.phone});
@@ -3052,7 +3061,7 @@ async function googleInfo(id, by='id', qs=null, have={}){   // qs: look up by na
 // Menus (menus.rb): the full menu with prices, read from the place's own website or found on the web (online ordering,
 // menu sites, delivery apps), in one big readable sheet. The first look at a place takes a while; then it's kept.
 const MENU={};   // place id → menu, this visit
-const FOOD_KINDS=/restaurant|fast food|food truck|truck park|food hall|bakery|ice cream|cafe|bar|pub|beer garden|club/;
+const FOOD_KINDS=/^(restaurant|fast food|food truck|truck park|food hall|bakery|ice cream|cafe|bar|pub|beer garden|club|brewery)$/;   // whole kinds: "comedy club" isn't food
 const menuBtn = p => FOOD_KINDS.test(p.kind||'restaurant') ? `<button class="btn sm primary" data-pmenu="${esc(p.id)}" data-pname="${esc(p.name)}">🍽️ ${T('Menu')}</button>` : '';
 const telOf = s => String(s).split(/[;,]/)[0].replace(/[^\d+]/g,'');
 const hostOf = u => { try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return ''; } };
@@ -3282,12 +3291,12 @@ function sightTell(id){   // Scout tells the story out loud, like a tour guide
   openScoutVoice(true); scoutAsk(T('Tell me the story of {n}',{n:s.name}), true);
 }
 
-const NIGHT_KINDS=['club','bar','pub','beer garden'];
+const NIGHT_KINDS=['club','bar','pub','beer garden','brewery'];
 const NL={layer:null, g:{}, cells:new Set(), busy:false};
 function renderNightLayer(){
   if(!map) return;
   if(!NL.layer) NL.layer=L.layerGroup().addTo(map);
-  NL.layer.clearLayers(); if(!S.mapL.clubs&&!S.mapL.bars) return setLabels('night',[],[]);
+  NL.layer.clearLayers(); if(!S.mapL.clubs&&!S.mapL.bars&&!S.mapL.venues) return setLabels('night',[],[]);
   const z=map.getZoom(), b=map.getBounds().pad(.15), osmClubs=new Set(), bars=[], pins=[], names=[];
   const pin=(ll,cls,emoji,title,onClick)=>L.marker(ll,{zIndexOffset:cls.includes('club')?400:100,
     icon:L.divIcon({className:'',html:`<div class="npin ${cls}" title="${esc(title)}">${emoji}</div>`,iconSize:cls.includes('club')?[30,30]:[22,22]})}).on('click',onClick).addTo(NL.layer);
@@ -3298,6 +3307,11 @@ function renderNightLayer(){
     if(kind==='club'){ if(!S.mapL.clubs) return; osmClubs.add(id); clubs.push({id,ll:[lat,lng],cls:'club '+placeState(w),name,pop,go:()=>placePopup(id,[lat,lng])}); return; }
     if(z>=16&&S.mapL.bars&&(z>=17||pop>=25)){ const st=placeState(w); bars.push({id,ll:[lat,lng],st,name,pop,rank:pop+(st==='open'?15:0)}); }   // bars only at street level: there are hundreds
   });
+  // Venues: music, comedy, theater, movies, bowling & arcades, from zoom 13 (the best-known first, spaced out)
+  if(S.mapL.venues&&z>=13){ const vs=[]; (PL.all||[]).forEach(([id,name,kind,lat,lng,w,pop=0])=>{ if(VENUE_KINDS.includes(kind)&&b.contains([lat,lng])) vs.push({id,ll:[lat,lng],kind,name,pop}); });
+    spaced(vs.sort((a,c)=>c.pop-a.pop),z>=17?22:z>=15?30:40,'night').forEach(x=>{ const go=()=>placePopup(x.id,x.ll);
+      pin(x.ll,'venue','<span>'+PLACE_E[x.kind]+'</span>',x.name,go); pins.push({id:x.id,ll:x.ll,r:12});
+      if(z>=15) names.push({id:x.id,ll:x.ll,r:12,text:x.name,score:(x.pop||40)+8,cls:'night venue',go}); }); }
   spaced(bars.sort((a,c)=>c.rank-a.rank),z>=18?18:z>=17?26:34,'night').forEach(x=>{ const go=()=>placePopup(x.id,x.ll);
     pin(x.ll,'bar '+x.st,'🍸',x.name,go); pins.push({id:x.id,ll:x.ll,r:11});
     if(x.pop>=(z>=17?0:45)) names.push({id:x.id,ll:x.ll,r:11,text:x.name,score:x.pop+(x.st==='open'?5:0),cls:'night',go}); });
@@ -3396,7 +3410,7 @@ function focusPlace(id){
   if(/^gy/.test(id)) return focusGym(id);   // Scout lights up gyms with its place action
   const l=(PL.lastList||[]).find(p=>p.id===id), sc=SCT.placeInfo?.[id];
   const info=PL.byId[id]||(l&&[l.id,l.name,l.kind,l.lat,l.lng])||(sc&&[id,sc.name,'',sc.lat,sc.lng]);
-  if(!info) return; tab('map'); const lay=NIGHT_KINDS.includes(info[2])?(info[2]==='club'?'clubs':'bars'):'food'; if(!S.mapL[lay]){ S.mapL[lay]=true; refreshMapLayers(); }
+  if(!info) return; tab('map'); const lay=VENUE_KINDS.includes(info[2])?'venues':NIGHT_KINDS.includes(info[2])?(info[2]==='club'?'clubs':'bars'):'food'; if(!S.mapL[lay]){ S.mapL[lay]=true; refreshMapLayers(); }
   setTimeout(()=>{ map.setView([info[3],info[4]],17); renderPlacesLayer(); placePopup(id,[info[3],info[4]]); },120);
 }
 function showPlacesOnMap(){
@@ -5246,6 +5260,7 @@ function startLocating(ask){
 }
 function initMap(){
   map=L.map('map',{zoomControl:false,attributionControl:true}).setView([30.300,-97.738],12);
+  map.attributionControl.addAttribution('Places: OpenStreetMap, <a href="https://overturemaps.org" target="_blank" rel="noopener">Overture Maps</a>, TABC');
   baseTiles(map, $('#map'), true);
   meAcc=L.circle(ME_POS,{radius:ME_ACC||1,color:'#0a84ff',weight:1,opacity:.5,fillColor:'#0a84ff',fillOpacity:.12,interactive:false}).addTo(map);
   meMark=L.marker(ME_POS,{zIndexOffset:1000,icon:L.divIcon({className:'',html:'<div class="loc"></div>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map).bindTooltip('You');
@@ -5748,11 +5763,11 @@ const EX_CHIPS = [
   ['events','🎫','Events'], ['food','🍔','Food'], ['best','🏆','Best of'], ['friends','👥','Friends'], ['night','🍸','Nightlife'],
   ['zones','🔥','Hot spots'], ['outdoors','🌳','Outdoors'], ['gyms','🏋️','Gyms'], ['sights','🏛️','Sights'],
 ];
-const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1}, gyms:{gyms:1},
+const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1,venues:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1}, gyms:{gyms:1},
   sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}, find:{}};   // find: only its own pins
 const EX_SUBS = {
   food: [['all','Everything'],['happy','🍻 Happy hour'],['coffee','☕ Coffee'],['tacos','🌮 Tacos'],['bbq','🍖 BBQ'],['pizza','🍕 Pizza'],['burgers','🍔 Burgers'],['asian','🍜 Asian'],['trucks','🚚 Trucks'],['sweets','🍦 Sweets'],['late','🌙 Late night'],['early','🌅 Breakfast']],
-  night: [['bars','🍸 Bars'],['barfood','🍔 Bars with food'],['clubs','🪩 Clubs'],['late','🌙 Late eats']],
+  night: [['bars','🍸 Bars'],['barfood','🍔 Bars with food'],['clubs','🪩 Clubs'],['venues','🎤 Venues & shows'],['music','🎸 Music'],['comedy','😂 Comedy'],['breweries','🍺 Breweries'],['games','🎳 Bowling & games'],['cinema','🎬 Movies'],['theater','🎭 Theater'],['late','🌙 Late eats']],
   events: [['tonight','Tonight'],['weekend','This weekend'],['week','This week']],
   outdoors: [['all','Everything'],['green','🌳 Parks'],['water','💧 Lakes & rivers'],['trail','🚲 Trails']],
   gyms: [['all','Everything'],['gym','🏋️ Gyms'],['climbing','🧗 Climbing'],['yoga','🧘 Yoga & pilates'],['boxing','🥊 Boxing & martial arts'],['crossfit','🏋️ CrossFit'],['rink','🏒 Ice rinks'],['rec','🏀 Rec centers'],['dance','💃 Dance'],['cycling','🚴 Spin']],
@@ -5799,12 +5814,14 @@ async function renderExCat(fresh){
     if(EXC.sub==='happy'){ await loadHappy(); }
     else {
       const cats = k==='night'&&(EXC.sub==='bars'||EXC.sub==='barfood') ? ['bars'] : [EXC.sub];
-      try{ const lists=await Promise.all(cats.map(c=>fetch(`/api/places?${new URLSearchParams({cat:c,open:S.foodOpen?'1':''})}&${nearParam()}&limit=40`).then(r=>r.json())));
-        EXC.list=lists.flatMap(j=>j.places||[]); if(EXC.sub==='barfood') EXC.list=EXC.list.filter(p=>p.food===true); if(k==='food'&&EXC.sub==='all') EXC.list=EXC.list.filter(p=>!['bar','pub','club','beer garden','nightclub'].includes(p.kind)); PL.lastList=EXC.list; }
+      // venues and breweries mostly have no hours listed: Open now would hide them all, so it doesn't apply there
+      try{ const lists=await Promise.all(cats.map(c=>fetch(`/api/places?${new URLSearchParams({cat:c,open:S.foodOpen&&!NOHOURS_SUBS.includes(c)?'1':''})}&${nearParam()}&limit=40`).then(r=>r.json())));
+        EXC.list=lists.flatMap(j=>j.places||[]); if(EXC.sub==='barfood') EXC.list=EXC.list.filter(p=>p.food===true); if(k==='food'&&EXC.sub==='all') EXC.list=EXC.list.filter(p=>![...BAR_K,...VENUE_KINDS,'nightclub'].includes(p.kind)); PL.lastList=EXC.list; }
       catch(err){ if(seq===EXC.seq) el.innerHTML=head+`<p class="meta">${T('Couldn\'t load places.')} ${esc(err.message)}</p>`; return; }
     }
     if(seq!==EXC.seq) return;
-    const openT = EXC.sub==='happy' ? `<p class="meta exnote">${T('Happy hours from menus, on now first')}</p>` : '';
+    const openT = EXC.sub==='happy' ? `<p class="meta exnote">${T('Happy hours from menus, on now first')}</p>`
+      : NOHOURS_SUBS.includes(EXC.sub) ? `<p class="meta exnote">${T('Most of these don\'t list hours: check before you go.')}</p>` : '';
     if(EXC.sub==='happy') PL.lastList=HH.list||[];
     const rows = EXC.sub==='happy' ? (HH.list||[]).slice(0,40).map(p=>xrow({go:`pl|${p.id}`, e:'🍻', th:thumbAttr({id:p.id}), title:p.name, sub:`<span class="hhtag ${p.happy?.now?'now':''}">${esc(p.happy?.label||'')}</span> ${esc(p.happy?.deals||'')}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}))
       : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:placeE(p.kind,p.name,p.cuisine), th:thumbAttr({id:p.id}), title:p.name,
@@ -5903,7 +5920,10 @@ function renderSearch(){
   (OD.data?.areas||[]).forEach(a=>{ if(a.name&&hit(a.name)) places.push({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name, sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:near(a.c)}); });
   (GYM.list||[]).forEach(g=>{ const [e,l]=gymK(g); if(hit(g.name,l,g.kind==='gym'?'gym fitness workout':g.kind)) places.push({go:`gym|${g.id}`, e, title:g.name, sub:esc(T(l)), k:near([g.lat,g.lng])}); });
   (SG.data||[]).forEach(([id,kind,name,lat,lng,year])=>{ if(hit(name)) places.push({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name, sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:near([lat,lng])}); });
-  const seenP=new Set(); places.sort((a,b)=>a.k-b.k);
+  // whole-word matches first ("rink" → ice rinks before every "Drinks" place), nearest first within each
+  const wordStart = x => { const t=' '+fold(`${x.title} ${x.sub||''}`.toLowerCase()).replace(/[^a-z0-9]+/g,' '); return words.every(w=>t.includes(' '+w)); };
+  places.forEach(x=>x.ws=wordStart(x)?0:1);
+  const seenP=new Set(); places.sort((a,b)=>a.ws-b.ws||a.k-b.k);
   places.splice(0, places.length, ...places.filter(x=>{ const key=fold(x.title)+'|'+Math.round(x.k*5); if(seenP.has(key)) return false; seenP.add(key); return true; }));   // the same place listed twice (OSM has duplicates)
   places.forEach(x=>x.d=fmtMi(x.k));
   EV.list.forEach(x=>{ if(x.te>Date.now()&&hit(x.title,x.venue||'',CATS[x.cat]?.l||'',x.genre||'')) evs.push({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', title:x.title, sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}`, ts:x.ts}); });
@@ -5959,7 +5979,7 @@ const VENUE_SOUND = [[/elephant room|monks jazz|parker jazz|the townsend/i,['jaz
 const THEME_RE = {brewery:/brew|tap ?room/i, wine:/\bwine|\bvino\b|winery|enoteca/i, cocktail:/cocktail|lounge|speakeasy/i, sports:/sports|scoreboard|touchdown|halftime|tailgate/i,
   games:/arcade|barcade|billiard|pool hall|bowl|board game|darts|pinball|vigilante|punch bowl|cidercade/i, garden:/beer garden|biergarten/i, rooftop:/rooftop|\broof\b/i,
   dive:/\bdive\b|ice ?house|honky|saloon/i, irish:/irish|shamrock|celtic|dubliner|\bo'[a-z]/i, tiki:/\btiki\b|luau/i};
-const SF_FOODK=['restaurant','fast food','bakery','ice cream','food truck','food hall','truck park'], SF_DRINKK=['bar','pub','club','beer garden'];
+const SF_FOODK=['restaurant','fast food','bakery','ice cream','food truck','food hall','truck park'], SF_DRINKK=['bar','pub','club','beer garden','brewery'];
 const evText = e => `${e.title} ${e.description||''}`;
 const EV_HAS = {live:e=>e.cat==='live_music', dj:e=>/\bdjs?\b|dj set|turntabl|vinyl night/i.test(evText(e)), karaoke:e=>/karaoke/i.test(evText(e)),
   trivia:e=>/trivia|quiz night/i.test(evText(e)), comedy:e=>e.cat==='comedy'||/stand-?up|comedy|improv/i.test(e.title)};
@@ -7219,7 +7239,7 @@ const MAP_WHEN={tonight:'Tonight', weekend:'This weekend', week:'This week'};
    🗂 Layers sheet, plus quick picks that set several at once ---------- */
 const MAP_CATS=[
   {k:'events', e:'🎫', l:'Events', subs:[['events','🎫 Events on the map']]},
-  {k:'night', e:'🌙', l:'Night', subs:[['clubs','🪩 Clubs'],['bars','🍸 Bars (street level)']]},
+  {k:'night', e:'🌙', l:'Night', subs:[['clubs','🪩 Clubs'],['bars','🍸 Bars & breweries (street level)'],['venues','🎤 Music, comedy, theater, movies, bowling']]},
   {k:'zones', e:'🔥', l:'Hot spots & heat', always:true, subs:[['zones','🔥 Busy places and hot spots: always on']]},
   {k:'outdoors', e:'🌲', l:'Outdoors', subs:[['parks','🌳 Parks & nature'],['water','💧 Lakes & rivers'],['trails','🚲 Hike & bike trails'],['spots','🛶 Rentals, ramps & trailheads']]},
   {k:'friends', e:'👥', l:'Friends', subs:[['friendlocs','🧑‍🤝‍🧑 Friends sharing where they are'],['posts','📍 Hangouts'],['live','📺 Live streams'],['stories','📸 Stories']]},
@@ -7397,7 +7417,7 @@ function scoutEx(ex){
   document.querySelectorAll('.scface').forEach(s=>s.setAttribute('data-ex',SCT.ex));
 }
 function scoutTalking(on){
-  clearInterval(SCT.talkT); SCT.talkT=null;
+  clearInterval(SCT.talkT); SCT.talkT=null; setTimeout(()=>{ if($('#scCancel')) $('#scCancel').hidden=!scoutBusyNow(); });
   document.querySelectorAll('.scface').forEach(s=>{ s.classList.toggle('talk',on); s.classList.remove('open'); });
   if(on) SCT.talkT=setInterval(()=>document.querySelectorAll('.scface').forEach(s=>s.classList.toggle('open',Math.random()<.62)),140);
 }
@@ -7469,7 +7489,7 @@ function micBeep(up){
 // Driving mode stays hands-free: it sends at the first pause.
 function scoutListen(){
   if(SCT.listening) return scoutMicOff(true);
-  if(SCT.mic) return;   // still turning the last words into text
+  if(SCT.busy||SCT.hearing||SCT.mic) scoutCancel(true);   // misspoke? tapping again while it works throws that one away and listens again
   if(!SR&&!micRec()){ const m=S.lang==='es'?'Este navegador todavía no me escucha. Escribe abajo o prueba Chrome o Safari.':"This browser can't hear me talk yet. Type instead, or try Chrome or Safari.";
     if(!SCT.driving){ $('#scoutForm').hidden=false; $('#scTypeBtn').hidden=true; $('#scMicL').textContent=T("Voice isn't available in this browser, so type below."); }
     if(SCT.driving){ $('#dvSay').textContent=m; return scoutSpeak(m,true); } return toast('🎤 '+m,'orange'); }
@@ -7479,6 +7499,26 @@ function scoutListen(){
   const m=SCT.mic={send:true, want:true}; SCT.listening=true; scoutMicUi(); scoutEx('surprised');
   return micRec() ? listenRec(m) : listenSR(m);
 }
+/* Cancel, like Siri: ✕ Cancel, tapping the orb while Scout works, or saying "cancel" / "never mind" / "scratch that".
+   Stops whatever is going on: listening (what was heard is thrown away), turning speech into text, thinking (the
+   request is aborted and a late answer ignored), talking. quiet: about to listen again, so no "Cancelled" line. */
+const scoutBusyNow = () => !!(SCT.listening||SCT.hearing||SCT.busy||SCT.mic||SCT.talkT);
+function scoutCancel(quiet){
+  const m=SCT.mic;
+  if(m){ m.send=false; m.want=false; if(SCT.listening) micBeep(false); SCT.listening=false; try{ m.off?.(false); }catch(e){} }
+  SCT.mic=null; SCT.hearing=false; if(!SCT.driving) $('#scoutIn').value='';
+  if(SCT.busy){ try{ SCT.req?.abort(); }catch(e){} SCT.req=null; SCT.busy=false; }
+  scoutHush(); scoutTalking(false); track('scout_cancel');
+  if(!quiet) scoutCancelled(); else scoutMicUi();
+}
+function scoutCancelled(){
+  scoutEx('happy'); scoutMicUi();
+  if(SCT.driving) $('#dvSay').textContent=T('Cancelled.'); else if($('#scMicL')) $('#scMicL').textContent=T('Cancelled. Tap to talk again.');
+}
+// "cancel", "never mind", "forget it", "scratch that" said alone or to end what you said; "stop" / "no" only alone
+// ("where's the closest bus stop" is a question, not a cancel)
+const scoutSaidCancel = s => /^\W*(cancel|never ?mind|nevermind|forget (it|that)|scratch that|stop|no|nope|nothing|cancela|olv[ií]dalo|olvida eso|nada|para)\W*$/i.test(s)
+  || /\b(cancel( that)?|never ?mind|nevermind|forget (it|that)|scratch that|cancela( eso)?|olv[ií]dalo|olvida eso)\W*$/i.test(s);
 // Turn the mic off: send what was heard, or (closing Scout, switching to typing) don't. The screen shows it off at once.
 function scoutMicOff(send){
   const m=SCT.mic;
@@ -7492,6 +7532,7 @@ function micDone(m, said, err){
   if(SCT.mic!==m) return;
   SCT.mic=null; SCT.listening=false; scoutMicUi();
   if(!m.send){ if(said&&!SCT.driving) $('#scoutIn').value=said; return; }
+  if(said&&scoutSaidCancel(said)){ track('mic_cancel'); if(!SCT.driving) $('#scoutIn').value=''; return scoutCancelled(); }   // "…never mind": don't send it
   if(said){ track('mic_heard'); if(!SCT.driving) $('#scoutIn').value=''; return scoutAsk(said,true); }
   const [msg,code]=MIC_ERR[err]||["I didn't hear anything. Check the mic isn't muted and talk a little closer, or type below.",err?'other':'none'];
   track(code==='none'?'mic_none':'mic_err_'+code);
@@ -7595,6 +7636,7 @@ function scoutMicUi(){
   if($('#scTypeBtn')) $('#scTypeBtn').textContent=T($('#scoutForm').hidden?'⌨️ Type instead':'🎤 Talk instead');
   $('#driveView').classList.toggle('listening',SCT.listening);
   $('#dvHint').textContent = SCT.listening ? '🎙️ Listening… tap to stop' : SCT.busy ? '🧭 Thinking…' : '🎤 Tap anywhere to talk';
+  if($('#scCancel')) $('#scCancel').hidden=!scoutBusyNow();
   if(!SCT.listening&&SCT.ex==='surprised'&&!SCT.busy) scoutEx('happy');
 }
 
@@ -7677,6 +7719,7 @@ async function scoutAsk(q, byVoice){
     scoutLog('me',q); scoutLog('scout',T('Opening the camera translator. Point it at the text.')); renderScoutLog(); return openLens(); }
   if(/\b(what('?s| is) (this|that)( (building|place|statue|landmark|thing|mural|restaurant|dish))?|identify (this|that)|qu[eé] es (esto|eso))\b/i.test(q)&&q.length<60){   // "what is this?": the camera's Identify
     scoutLog('me',q); scoutLog('scout',T('Opening the camera. Point it at what you want to know about and tap the button.')); renderScoutLog(); return openLens('look'); }
+  const ctl=SCT.req=new AbortController();   // ✕ Cancel / a new tap aborts it
   scoutLog('me',q); SCT.busy=true; scoutEx('thinking'); renderScoutLog(); scoutMicUi(); $('#dvGo').hidden=true; scoutCardClose();
   if(SCT.driving) $('#dvSay').textContent='🧭 Thinking…';
   let r;
@@ -7687,10 +7730,11 @@ async function scoutAsk(q, byVoice){
     r=await api('/api/scout',{q, lang:S.lang, driving:SCT.driving, name:s.name, view:[...document.querySelectorAll('.view')].find(v=>!v.hidden)?.id.slice(2)||'home',
       near:[+ME_POS[0].toFixed(2), +ME_POS[1].toFixed(2)], targets:scoutTargets(), context:scoutContext(), history:s.log.slice(-7,-1).map(m=>({who:m.who==='me'?'user':'scout',text:m.text})),
       persona:s.persona||'auto', ptype:S.me.t||undefined, interview:SCT.interview?interviewNeeds():undefined,
-      here:S.scHere&&Date.now()-S.scHere.at<4*36e5?{id:S.scHere.id}:undefined});
+      here:S.scHere&&Date.now()-S.scHere.at<4*36e5?{id:S.scHere.id}:undefined}, {signal:ctl.signal});
     if(r.left!=null) SCT.left=r.left;
-  }catch(e){ r={say:/slow down/i.test(e.message)?"Whoa, you're asking faster than I can explore! Give me a few minutes.":"Hmm, I couldn't reach my compass. Try again in a moment!", expression:'confused', actions:[]}; }
-  SCT.busy=false; scoutLog('scout',r.say,r.plan||null); scoutEx(r.expression); scoutMicUi();
+  }catch(e){ if(SCT.req!==ctl||e.name==='AbortError') return; r={say:/slow down/i.test(e.message)?"Whoa, you're asking faster than I can explore! Give me a few minutes.":"Hmm, I couldn't reach my compass. Try again in a moment!", expression:'confused', actions:[]}; }
+  if(SCT.req!==ctl) return;   // cancelled while it was thinking: drop the answer
+  SCT.req=null; SCT.busy=false; scoutLog('scout',r.say,r.plan||null); scoutEx(r.expression); scoutMicUi();
   if(r.profile) scoutProfile(r.profile);
   if(r.persona&&SC_PERSONAS[r.persona]){ scS().persona=r.persona; save(); }
   if(r.order) setTimeout(()=>openRate(r.order.id, r.order.name, {dish:r.order.dish, stars:r.order.stars}), 900);
@@ -7991,7 +8035,10 @@ document.addEventListener('click',e=>{
   if(SCT.card&&!e.target.closest('#scoutTour')) scoutCardClose();
   if(!e.target.closest('#scoutRing,#scoutTag,[data-sc],[data-scq],[data-lk],#scoutBtn')&&!$('#scoutRing').hidden) scoutUnpoint();
   if(e.target.closest('#driveView')&&!e.target.closest('button,a')) return scoutListen();
-  if(e.target.closest('#scoutBtn')||e.target.closest('#scoutBubble.nudge')&&!e.target.closest('[data-scnudgex]')){ openScoutVoice(); return; }
+  if(e.target.closest('#scoutBtn')||e.target.closest('#scoutBubble.nudge')&&!e.target.closest('[data-scnudgex]')){   // the orb, like Siri: tap to talk,
+    if(!$('#scoutBg').hidden&&SCT.listening) return scoutMicOff(true);                                         // tap again when you're done,
+    if(!$('#scoutBg').hidden&&(SCT.busy||SCT.hearing||SCT.talkT)) return scoutCancel();                       // tap while it works to stop it
+    openScoutVoice(); return; }
   if(e.target.closest('[data-scnudgex]')){ scoutNudgeDismiss(); return; }
   if(e.target.closest('#scoutBubble')){ $('#scoutBubble').hidden=true; return; }
   const q=e.target.closest('[data-scq]'); if(q) return scoutAsk(q.dataset.scq);
@@ -8010,6 +8057,7 @@ document.addEventListener('click',e=>{
     api('/api/scout/forget',{what:a==='memall'?'all':'chat'}).then(()=>{ s.log=[]; save(); renderScoutLog(); scoutMemRender(); }).catch(err=>toast(esc(err.message),'orange')); }
   if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(!$('#lookBg').hidden) renderLook(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
   if(a==='mic') scoutListen();
+  if(a==='cancel') scoutCancel();
   if(a==='lens') openLens();
   if(a==='identify') openLens('look');
   if(a==='type'){ const f=$('#scoutForm'); f.hidden=!f.hidden; if(SCT.listening) scoutMicOff(false); scoutMicUi(); if(!f.hidden) $('#scoutIn').focus(); }

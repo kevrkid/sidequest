@@ -271,6 +271,14 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   Aoede, Kore, Charon in the 🎨 builder) using `SQ_GOOGLE_TTS_KEY`, a server key; cached, capped by
   `SQ_TTS_DAILY_CHARS`; falls back to the browser's voice. The first tap anywhere unlocks audio on phones. Personality: `mockup/scout_personality.md`;
   app knowledge: `mockup/scout_knowledge.md` (keep it current; never served). Spec: `SCOUT_PROMPT.md`.
+- **Scout on / off like Siri, and cancel** (2026-10-28): the orb taps to talk, taps again to send (`scoutMicOff(true)`), and a tap
+  while Scout listens-to-text / thinks / talks stops it (`scoutCancel()`). ✕ Cancel (`#scCancel`, `data-sc="cancel"`) shows only while
+  something is going on (`scoutBusyNow`: listening, hearing, busy, mic, talking). `scoutCancel(quiet)`: the mic off without sending
+  (what was heard is thrown away), `SCT.hearing` off, the request aborted (`SCT.req` AbortController; `api(path, body, {signal})`) and a
+  late answer ignored (`SCT.req !== ctl`), speech stopped; "Cancelled. Tap to talk again." Tapping the mic while it works =
+  `scoutCancel(true)` then listen again (misspoke? one tap). Spoken cancels (`scoutSaidCancel`, checked in `micDone` before sending):
+  cancel / never mind / forget it / scratch that (+ Spanish) alone or ending the sentence; stop / no / nope / nada only alone ("the
+  closest bus stop" still goes). Track `scout_cancel`, `mic_cancel`. Test: `e2e_scout_cancel.py` (17, /api/scout answered by the test).
 - **Scout is voice-first**: tapping Scout (or its bubble) opens the panel and starts listening; a big 🎤 is the main
   control, "⌨️ Type instead" shows the text box. Scout only talks when talked to: spoken questions get spoken answers,
   typed ones stay quiet unless 🔊 (`S.scout.voice`) is on; driving mode that switches itself on shows a toast instead
@@ -608,6 +616,35 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   venue / a park named in the title (our parks, sights, places; chains by exact name only), then OpenStreetMap's
   geocoder (1/s, answers must match house number + street or share a real word; cached in `data/geofix.json`).
   Still unknown → `geo_none`: the client drops lat/lng, so no pin, no distance, no Map button.
+- **More places from other open sources** (2026-10-27; `fetch_places.rb` merges them after OpenStreetMap, which wins where
+  both have a place). Area widened to San Marcos .. Georgetown, Lake Travis / Dripping Springs .. Taylor
+  (`SOUTH, NORTH, WEST, EAST = 29.80, 30.72, -98.15, -97.39`); `--blocks` downloads ~20 big 0.2° blocks (`blk_*.json`) when the
+  public Overpass servers time out on small tiles. **Overture Maps** (`fetch_overture.py`, Python + DuckDB, this Mac only:
+  `python3 -m venv ~/.sidequest-data && ~/.sidequest-data/bin/pip install duckdb`, then `~/.sidequest-data/bin/python
+  fetch_overture.py`): reads the latest release's places GeoParquet on S3 in place (~1 min), confidence ≥ 0.65, not closed,
+  food & drink + venues → `data/overture.json` (git-ignored). `merge_overture!`: `overture_kind` maps categories to our kinds
+  (new: `brewery` (breweries, wineries, distilleries; a drink kind, with bars everywhere) and venues `VENUE_KINDS` / `Places::VENUE`:
+  music venue, comedy club, theater, cinema, games (bowling, arcades, billiards, karaoke, escape rooms)), `overture_cuisine` from
+  the category name; drops non-places (candy stores, lottery, bingo), names that are addresses / the city (`NOT_A_NAME`),
+  "venues" that are schools, studios, festivals, plaques (`NOT_A_VENUE`) or performing groups without a building (`NOT_A_ROOM`
+  unless `ROOMISH`); chains by brand tag, by name prefix of a known brand (`brand_prefix?`) or the `NATIONAL` list (`AUSTIN` /
+  `TEXAS` / `KEEP` still win; cinemas and games keep their chains); matches ours by similar name within 150 m (`same_place?`) and
+  fills blanks (web, phone, address, `ig`); the same name at the same street address, or the same specific name within ~3 km
+  (non-chains), is one place. New places: id `o` + 11 hex, `src: 'overture'`, no hours. **TABC** (`fetch_tabc.rb`, stdlib):
+  active on-premise licenses (MB / N = full bar, BG = beer & wine, BE = beer) in Travis, Williamson, Hays from data.texas.gov,
+  geocoded by the US Census batch geocoder (cache `data/tabc_geo.json`) → `data/tabc.json` (both git-ignored). `merge_tabc!`:
+  a license near a place with a similar name (200 m) sets `alcohol`; unmatched ones are added only when the name says bar /
+  saloon / pub / cantina / icehouse / billiards… (`BARLIKE`, not `NOT_A_BAR` companies, hotels, stadiums, strip clubs; private
+  clubs never), "Restaurant & Bar" names as restaurants (`FOODISH`); id `t` + 11 hex, `src: 'tabc'`, names re-cased (`tabc_name`).
+  Result (Oct 27): ~10,000+ places (OSM ~2,650, Overture ~7,400, TABC ~200), ~1,400 marked with alcohol. **App**: venues are pink
+  pins on the Nightlife layer (`S.mapL.venues`, from zoom 13, spaced) and never food dots; Nightlife sub-chips venues / music /
+  comedy / breweries / games / cinema / theater (server cats in `Places::CATS`, `matches?`), where Open now doesn't filter
+  (`NOHOURS_SUBS`); cards show the alcohol line (`ALC_TXT`), Instagram, Eat after for breweries and venues, and where the place
+  came from; `FOOD_KINDS` is anchored (a "comedy club" has no Menu). Map credit: "Places: OpenStreetMap, Overture Maps, TABC".
+  Pulse: breweries use the beer-garden curve, venues an evening one; heat includes venues. Scout: `VENUE_Q` + `scout_cat`
+  (breweries, comedy, music, cinema, theater, games). `Places.for_map` is cached per file (~0.3 s to build). Refresh: `ruby
+  fetch_places.rb` (or `--blocks`), `~/.sidequest-data/bin/python fetch_overture.py`, `ruby fetch_tabc.rb`, then `ruby
+  fetch_places.rb --merge`. Tests: `ruby test_sources.rb` (19, no network), `e2e_venues.py` (11, needs the merged places).
 - **🏋️ Gyms** (2026-10-27; `fetch_gyms.rb` → `data/gyms.json`, `gyms.rb`: `Gyms` (loads the file, re-reads when it changes,
   `Hours.parse` weeks), `/api/gyms`, `GYM_Q` / `scout_gyms`): ~290 from OpenStreetMap, Round Rock to San Marcos (Outdoors' bbox):
   `leisure=fitness_centre|sports_centre|ice_rink|dance`, `amenity=dojo`, fitness `sport` halls. Dropped: no name, private

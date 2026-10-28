@@ -250,7 +250,8 @@ There is no database. Everything lives under `mockup/data/`:
 | `menus/<placeid>.json`, `menus/_tried.json` | Claude-read menus (14-day cache) | `menus.rb` | no |
 | `stats.json` | Daily analytics counters | `v2.rb` (flushed every minute) | no |
 | `vapid.json` | **VAPID private key** (mode 0600, made on first start) | `v2.rb` | no (secret) |
-| `places.json` (+ `places_tiles/`) | ~4,700 food and drink places | `fetch_places.rb` | json yes, tiles no |
+| `places.json` (+ `places_tiles/`) | ~10,000+ food & drink places, breweries and venues (OpenStreetMap + Overture Maps + TABC licenses), San Marcos to Georgetown | `fetch_places.rb` (merges the two below) | json yes, tiles no |
+| `overture.json`, `tabc.json`, `tabc_geo.json` | Raw Overture places; geocoded on-premise alcohol licenses (+ geocode cache) | `fetch_overture.py`, `fetch_tabc.rb` | no (inputs to the merge) |
 | `outdoors.json` | Parks, water, trails, rentals and ramps | `fetch_outdoors.rb` | yes |
 | `gyms.json` | Gyms, climbing, yoga, boxing, CrossFit, dance, ice rinks, rec centers | `fetch_gyms.rb` | yes |
 | `sights.json` (+ `sights_cache/`) | ~1,650 markers, landmarks, art | `fetch_sights.rb` | json yes, cache no |
@@ -630,7 +631,9 @@ None of them run on their own, except the weekly places refresh that `install.sh
 
 | Script | Fetches | Writes | When to run |
 |---|---|---|---|
-| `ruby fetch_places.rb` | OSM Overpass, 130 tiles (Round Rock to South Austin), resumable, 3 mirrors; drops national chains | `places.json` (+ `places_tiles/`) | Weekly (`--fresh`, server cron Mon 4:30 AM). `--merge` rebuilds from tiles after editing the chain lists. |
+| `ruby fetch_places.rb` (`--blocks` when Overpass is slow, `--merge` to rebuild) | OSM Overpass, ~460 tiles or ~20 blocks (San Marcos to Georgetown, Lake Travis to Taylor), resumable, 3 mirrors; drops national chains; then merges Overture + TABC (duplicates, chains and junk dropped) | `places.json` | Weekly (`--fresh`) |
+| `~/.sidequest-data/bin/python fetch_overture.py` | Overture Maps places (food & drink + venues) from the latest release on S3, via DuckDB (this Mac only; venv `~/.sidequest-data` with `duckdb`) | `overture.json` | Every month or two, then `--merge` |
+| `ruby fetch_tabc.rb` | Active on-premise TABC licenses (Travis, Williamson, Hays), geocoded with the US Census batch geocoder | `tabc.json` | Monthly, then `--merge` |
 | `ruby fetch_outdoors.rb` | OSM parks, greenbelts, lakes, rivers, trails, rentals, ramps, fishing, trailheads | `outdoors.json` | Rarely (seasonal) |
 | `ruby fetch_gyms.rb` | OSM gyms and fitness (private, kids' and non-gym sports places dropped) + rinks OSM lacks, geocoded | `gyms.json` | Every few months (under a minute) |
 | `ruby fetch_sights.rb` | Texas Historical Commission markers (Atlas), National Register, Wikipedia geosearch, OSM museums/art | `sights.json` (+ `sights_cache/`) | Rarely; ~15 minutes the first time. `--merge` rebuilds from the cache. |
@@ -700,6 +703,7 @@ ruby test_v2.rb         # V2 server features, chats, groups, stories, posts, pho
 ruby test_pulse.rb      # Pulse engine: forecasts, heat, vibe, facts, picks, media (41, no server)
 ruby test_pulse_api.rb  # Pulse routes incl. heat map, flares, live, remote reports refused (17, server on :8805)
 ruby test_gyms.rb       # gyms file + hours, Scout's nearest-gym lookup by kind (11, no server)
+ruby test_sources.rb    # Overture / TABC merge rules: kinds, chains, duplicates, junk, alcohol (19, no network)
 ```
 
 **Last run: 2026-10-27, on this checkout at `3165edd`, all ten passed** (hours: all; webpush 6/6; geofix 13/13; spots
@@ -721,6 +725,8 @@ SQ_BASE=… SQ_ADMIN_TOKEN=test python e2e_v2.py <shot-dir>     # V2 features (4
 SQ_BASE=… python e2e_rank.py <shot-dir>                        # Best of Austin (24; needs data/rankings.json)
 SQ_BASE=… python e2e_heat.py <shot-dir>                        # heat map + hot spots always on, vibe card, no Google button (9; real places)
 SQ_BASE=… python e2e_gyms.py <shot-dir>                        # Gyms chip, kinds, open now, card, check-in, search, layers (16; data/gyms.json)
+SQ_BASE=… python e2e_venues.py <shot-dir>                      # venues & breweries: Nightlife chip, pins, cards, alcohol, search, credit (11; merged places)
+SQ_BASE=… python e2e_scout_cancel.py <shot-dir>                # Scout cancel: ✕ button, orb tap, spoken "never mind", late answers ignored (17)
 SQ_DEMO=0 SQ_MODERATE=0 … python e2e_live.py <shot-dir>        # 1 streamer + 3 viewers (14)
 ```
 

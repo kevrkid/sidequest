@@ -1,5 +1,5 @@
-# Food & drink places from OpenStreetMap (data/places.json, written by fetch_places.rb), with
-# "open now" worked out in Austin time. Searched on the server so Scout and the app get small lists.
+# Food & drink places and venues (data/places.json, written by fetch_places.rb from OpenStreetMap, Overture Maps and
+# TABC licenses), with "open now" worked out in Austin time. Searched on the server so Scout and the app get small lists.
 require 'json'
 require_relative 'hours'
 require_relative 'popular'
@@ -7,7 +7,8 @@ require_relative 'popular'
 module Places
   FILE = ENV['SQ_PLACES_FILE'] || File.join(__dir__, 'data', 'places.json')
   FOOD = ['restaurant', 'fast food', 'food truck', 'truck park', 'food hall', 'bakery', 'ice cream', 'cafe'].freeze
-  DRINK = ['bar', 'pub', 'beer garden', 'club'].freeze
+  DRINK = ['bar', 'pub', 'beer garden', 'club', 'brewery'].freeze
+  VENUE = ['music venue', 'comedy club', 'theater', 'cinema', 'games'].freeze   # places to go out to that aren't food or drink
 
   # Austin's going-out hot spots: soft glowing zones on the map.
   HOTSPOTS = [
@@ -26,6 +27,9 @@ module Places
     'bars' => { label: 'Bars', e: '🍸' }, 'clubs' => { label: 'Clubs', e: '🪩' }, 'trucks' => { label: 'Food trucks', e: '🚚' }, 'latetrucks' => { label: 'Late-night food trucks', e: '🚚' }, 'coffee' => { label: 'Coffee', e: '☕' },
     'tacos' => { label: 'Tacos & Tex-Mex', e: '🌮' }, 'bbq' => { label: 'BBQ', e: '🍖' }, 'pizza' => { label: 'Pizza', e: '🍕' },
     'burgers' => { label: 'Burgers', e: '🍔' }, 'asian' => { label: 'Asian', e: '🍜' }, 'sweets' => { label: 'Sweets', e: '🍦' },
+    'breweries' => { label: 'Breweries & wineries', e: '🍺' }, 'venues' => { label: 'Venues & shows', e: '🎤' }, 'music' => { label: 'Music venues', e: '🎸' },
+    'comedy' => { label: 'Comedy', e: '😂' }, 'theater' => { label: 'Theater', e: '🎭' }, 'cinema' => { label: 'Movies', e: '🎬' },
+    'games' => { label: 'Bowling, arcades & billiards', e: '🎳' },
     'all' => { label: 'Food & drink', e: '🍽️' }
   }.freeze
   CUISINE = {
@@ -91,7 +95,12 @@ module Places
       FOOD.include?(kind) && kind != 'cafe' && open_at?(p['week'], (now % 1440 < 300 ? day - 1440 : day) + 1410)
     when 'early'  # open by 7 AM (today, or tomorrow once the morning has passed)
       (FOOD.include?(kind) || kind == 'cafe') && open_at?(p['week'], (now % 1440 < 600 ? day : day + 1440) % Hours::WEEK + 420)
-    when 'bars' then ['bar', 'pub', 'beer garden'].include?(kind)
+    when 'bars' then ['bar', 'pub', 'beer garden', 'brewery'].include?(kind)
+    when 'breweries' then kind == 'brewery'
+    when 'venues' then VENUE.include?(kind)
+    when 'music' then kind == 'music venue'
+    when 'comedy' then kind == 'comedy club'
+    when 'theater', 'cinema', 'games' then kind == cat
     when 'clubs' then kind == 'club'
     when 'trucks' then ['food truck', 'truck park'].include?(kind)
     when 'latetrucks' then matches?(p, 'trucks', now) && matches?(p, 'late', now)
@@ -144,13 +153,16 @@ module Places
     zone = zone_of(p)
     { id: p['id'], name: p['name'], kind: p['kind'], cuisine: p['cuisine'] || [], addr: p['addr'], lat: p['lat'], lng: p['lng'],
       web: p['web'], menu: p['menu'], phone: p['phone'], state: st[:state], status: label(st), closes: st[:state] == 'open' && !st[:always] ? Hours.clock(st[:until]) : nil,
-      mi: mi && mi.round(1), zone: zone && zone[:name], chain: p['chain'] }.compact
+      mi: mi && mi.round(1), zone: zone && zone[:name], chain: p['chain'], alcohol: p['alcohol'], ig: p['ig'], src: p['src'] }.compact
   end
 
   # Everything, compact, for the map dots (the app works out open/closed itself from `w`).
+  # Built once per places file / popularity scores (~10,000 places took ~0.35 s a request, blocking others meanwhile).
   def for_map
     d = data
-    { fetched: d[:fetched], places: d[:list].map { |p| [p['id'], p['name'], p['kind'], p['lat'], p['lng'], p['week'], Popular[p['id']]] } }
+    key = [d[:mtime], Popular.scores.object_id]
+    @map_cache = nil unless @map_cache && @map_cache[0] == key
+    (@map_cache ||= [key, { fetched: d[:fetched], places: d[:list].map { |p| [p['id'], p['name'], p['kind'], p['lat'], p['lng'], p['week'], Popular[p['id']]] } }])[1]
   end
 
   def hotspots

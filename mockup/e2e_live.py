@@ -37,7 +37,7 @@ def admin(body=None):
 def person(browser, h):
     """A brand-new account in its own browser, signed in, on Home."""
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, permissions=["camera", "microphone"])
-    ctx.route(lambda u: "fonts.g" in u or "tile.openstreetmap.org" in u, lambda r: r.abort())
+    ctx.route(lambda u: "fonts.g" in u or ("tile.openstreetmap.org" in u or "/img/ev" in u or not ("127.0.0.1" in u or "localhost" in u)), lambda r: r.abort())
     page = ctx.new_page()
     page.on("pageerror", lambda e: errors.append(f"{h}: {e}"))
     page.goto(BASE)

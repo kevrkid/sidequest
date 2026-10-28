@@ -495,6 +495,8 @@ end
 # "Recommend a local business in Hyde Park": asking for a place in a named area, food word or not
 BIZ_Q = /business(es)?|\bplaces?\b|\bspots?\b|\bshops?\b|\bstores?\b|somewhere|recommend|suggest|favou?rite|\bbest\b|\bgood\b|\blocal\b|hidden gems?|hang ?out|where should|check out|worth (going|trying|a visit)|go-to/i
 HAPPY_Q = /happy\s*hours?/i
+# Going out that isn't food or drink: venues from Overture (music, comedy, theater, movies, bowling, arcades) and breweries
+VENUE_Q = /\b(brewer(y|ies)|winer(y|ies)|distiller(y|ies)|comedy (club|show)s?|stand-?up|music venues?|concert halls?|venues?|movies?|cinemas?|movie theat(er|re)s?|theat(er|re)s?|plays?|musicals?|bowling|arcades?|billiards|pool hall|karaoke|escape rooms?)\b/i
 DISH_Q = /\bwhere\b.{0,30}\b(get|find|eat|buy|have|has|serves?|order)\b|\bwho (has|serves|makes|sells)\b|\b(best|good|cheap(est)?)\b.{0,40}\b(in town|near( me)?|around( here)?|nearby)\b/i
 def scout_places(q, near)
   # "best X" / "where should I…": the Best of Austin list for it (rankings.rb)
@@ -513,7 +515,7 @@ def scout_places(q, near)
   end
   area = Areas.find(q)
   zone = Places::HOTSPOTS.find { |z| q =~ /#{Regexp.escape(z[:name].sub(/\AThe |Old Downtown /, ''))}|\b#{z[:id]}\b/i }
-  return [[], nil] unless q =~ FOOD_Q || zone || (area && q =~ BIZ_Q)
+  return [[], nil] unless q =~ FOOD_Q || q =~ VENUE_Q || zone || (area && q =~ BIZ_Q)
   zone_named = zone && q =~ /#{Regexp.escape(zone[:name].sub(/\AThe |Old Downtown /, ''))}/i   # "east" alone shouldn't beat "East Cesar Chavez"
   if area && !zone_named && q !~ /\bafter\b|lets? out/i   # a neighborhood or town: its best-known spots, not just the nearest
     cat = scout_cat(q)
@@ -523,7 +525,7 @@ def scout_places(q, near)
     list.each { |p| near ? p[:mi] = Places.miles(near[0], near[1], p[:lat], p[:lng]).round(1) : p.delete(:mi) }
     what = cat ? Places::CATS[cat][:label].downcase : 'food & drink spots'
     note = "These are the best-known #{what} in #{area['name']}, most popular first (known: 0-100, from how many people read about them and Austin's " \
-           'favorites; chain: a chain). Lead with local favorites. The app only has food & drink places, sights, parks and gyms: if they asked for ' \
+           'favorites; chain: a chain). Lead with local favorites. The app has food & drink places, breweries, venues (music, comedy, theater, movies, bowling & arcades), sights, parks and gyms: if they asked for ' \
            'another kind of business (shops, services), say so, then suggest one or two from memory and say it is from memory.'
     note = "No #{what} found in #{area['name']} in the places data. Say so, and suggest from memory (say it is from memory)." if list.empty?
     return [list, note]
@@ -550,7 +552,9 @@ rescue => e
 end
 
 def scout_cat(q)
-  { /food trucks?|trailers?|truck park/i => 'trucks', /late[- ]night|munchies|after (the )?bars?/i => 'late', /breakfast|early|morning|kolache/i => 'early', /\bclubs?\b|dancing/i => 'clubs',
+  { /brewer(y|ies)|winer(y|ies)|distiller(y|ies)|cidery/i => 'breweries', /comedy|stand-?up/i => 'comedy', /music venues?|concert halls?/i => 'music',
+    /movies?|cinemas?|movie theat/i => 'cinema', /theat(er|re)s?\b|\bplays?\b|musicals?|broadway/i => 'theater', /bowling|arcades?|billiards|pool hall|karaoke|escape rooms?/i => 'games',
+    /food trucks?|trailers?|truck park/i => 'trucks', /late[- ]night|munchies|after (the )?bars?/i => 'late', /breakfast|early|morning|kolache/i => 'early', /\bclubs?\b|dancing/i => 'clubs',
           /\bbars?\b|\bpub\b|drinks?|beer|cocktail|wine|brewery/i => 'bars', /coffee|cafe|espresso|latte/i => 'coffee',
           /tacos?|tex-?mex|mexican|burrito/i => 'tacos', /bbq|barbecue|brisket/i => 'bbq', /pizza/i => 'pizza', /burger/i => 'burgers',
           /sushi|ramen|pho|noodle|thai|chinese|asian|korean|indian/i => 'asian', /dessert|ice cream|donut|sweet|bakery/i => 'sweets' }

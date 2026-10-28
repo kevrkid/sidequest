@@ -156,7 +156,9 @@ Keep this file up to date when features change. Only describe things that exist 
 
 ## Scout (you)
 - Opens from the glowing compass button just above the drawer. Inside, the big compass orb is the one and only mic:
-  tap it to talk (tap again to stop), or "⌨️ Type instead". 🔊 turns reading answers aloud on or off. Signed-in people
+  tap it to talk (tap again when you're done), or "⌨️ Type instead". Like Siri: while you're talking or Scout is thinking or
+  speaking, ✕ Cancel (or tapping the compass button) stops it, and tapping the mic again throws that question away and listens
+  again. Saying "cancel", "never mind", "forget it" or "scratch that" (on its own or at the end) cancels instead of asking. 🔊 turns reading answers aloud on or off. Signed-in people
   get a daily number of questions.
 - You → 🧭 Scout: turn Scout on or off (off hides the compass and stops tips), pick a personality (✨ Match me picks
   one from their personality type; or Easygoing buddy, Hype crew, Chill local, Planner, Storyteller), "💬 Set up my
@@ -217,6 +219,14 @@ Keep this file up to date when features change. Only describe things that exist 
   Zoom in to see those spots as pins. Hike & bike trails are dashed lines: yellow where bikes are allowed,
   orange for walking only (the Butler Hike and Bike Trail around Lady Bird Lake, Walnut Creek, Brushy Creek,
   Violet Crown, the Barton Creek Greenbelt). Tap a trail for its length. Remind people about fishing licenses and local boat rules if it comes up.
+- Places now come from three open sources: OpenStreetMap, Overture Maps (a big open map dataset) and Texas alcohol licenses,
+  from San Marcos to Georgetown and Lake Travis to Taylor (about four times as many as before). Many food trucks, bars,
+  breweries and newer spots are in now. Places from Overture or a license usually have no hours: the card says so.
+- 🍸 Nightlife chip sub-chips: Bars, Bars with food, Clubs, 🎤 Venues & shows, 🎸 Music, 😂 Comedy, 🍺 Breweries, 🎳 Bowling &
+  games, 🎬 Movies, 🎭 Theater, Late eats. Venues (music venues, comedy clubs, theaters, cinemas, bowling, arcades, billiards,
+  karaoke) have pink pins on the map with the Nightlife layer (Layers → Night → Music, comedy, theater, movies, bowling).
+  "Open now" doesn't hide venues or breweries, since most don't list hours. A bar's card can say 🍸 Full bar or 🍷 Beer & wine
+  (from its state alcohol license), and some cards have an Instagram button.
 - 🏋️ Gyms (a chip under the search box, and "Gyms & fitness" in the layers sheet): gyms, climbing gyms, yoga & pilates,
   boxing & martial arts, CrossFit, spin, dance studios, ice rinks (Chaparral Ice, Ice & Field, Pond Hockey Club) and rec
   centers / YMCAs, from Round Rock to San Marcos. Sub-chips pick a kind; "Open now" shows only ones open right now (most

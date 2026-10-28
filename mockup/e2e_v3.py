@@ -45,7 +45,7 @@ DRAG = """([sel,y1,y2,steps,ms])=>new Promise(ok=>{ try{ new Touch({identifier:1
 def user(browser, w=390, h=844):
     ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=2, has_touch=True,
                               geolocation={"latitude": 30.2671, "longitude": -97.7395}, permissions=["geolocation"])
-    ctx.route(lambda u: "fonts.googleapis.com" in u or "fonts.gstatic.com" in u, lambda r: r.abort())
+    ctx.route(lambda u: "fonts.googleapis.com" in u or "fonts.gstatic.com" in u or ("tile.openstreetmap.org" in u or "/img/ev" in u or not ("127.0.0.1" in u or "localhost" in u)), lambda r: r.abort())
     pg = ctx.new_page()
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.goto(BASE, wait_until="load")

@@ -333,7 +333,7 @@ end
 # written to data/stats.json once a minute so it never slows the app down.
 TRACK_EVENTS = %w[open home_next home_tonight event_open event_share event_save event_invite event_chat notif_open
                   quests_open checkin quest_done saved_open invite_copy share_open sight_open sight_tell plan_save
-                  scout_ask map_open search feed_open signup_ref push_on search_open
+                  scout_ask scout_cancel mic_cancel map_open search feed_open signup_ref push_on search_open chip_gyms
                   chip_food chip_events chip_night chip_outdoors chip_sights chip_friends chip_zones chip_find find media_open
                   lens_open look_open menu_open mic_on mic_heard mic_none mic_err_audio mic_err_network mic_err_lang mic_err_service mic_err_denied mic_err_stuck mic_err_hear mic_err_other].freeze
 STATS_FILE = File.join(__dir__, 'data', 'stats.json')

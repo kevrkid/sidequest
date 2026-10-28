@@ -99,8 +99,8 @@ def new_user(browser, label):
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2,
                               geolocation={"latitude": 30.2671, "longitude": -97.7395}, permissions=["geolocation"])
     # don't wait on the internet: skip web fonts, and answer map tiles with a blank local image
-    ctx.route(lambda u: "fonts.googleapis.com" in u or "fonts.gstatic.com" in u, lambda r: r.abort())
-    ctx.route(lambda u: "tile.openstreetmap.org" in u, lambda r: r.fulfill(status=200, content_type="image/png", body=BLANK_TILE))
+    ctx.route(lambda u: "fonts.googleapis.com" in u or "fonts.gstatic.com" in u or ("tile.openstreetmap.org" in u or "/img/ev" in u or not ("127.0.0.1" in u or "localhost" in u)), lambda r: r.abort())
+    ctx.route(lambda u: ("tile.openstreetmap.org" in u or "/img/ev" in u or not ("127.0.0.1" in u or "localhost" in u)), lambda r: r.fulfill(status=200, content_type="image/png", body=BLANK_TILE))
     page = ctx.new_page()
     page.on("pageerror", lambda e: errors.append(f"{label}: {e}"))
     page.on("response", lambda r: r.status >= 400 and errors.append(f"{label} {r.status} {r.request.method} {r.url.replace(BASE, '')}"))

@@ -70,7 +70,10 @@ module Pulse
       case kind
       when 'club' then DAY_X[:club][nd] * bump(h, 0.5, 1.6)
       when 'bar', 'pub' then DAY_X[:night][nd] * (bump(h, 23, 2.2) + 0.35 * bump(h, 18, 1.5))
-      when 'beer garden' then DAY_X[:night][nd] * (bump(h, 20, 2.5) + (wkend ? 0.6 * bump(h, 15, 2) : 0))
+      when 'beer garden', 'brewery' then DAY_X[:night][nd] * (bump(h, 20, 2.5) + (wkend ? 0.6 * bump(h, 15, 2) : 0))
+      when 'music venue', 'comedy club', 'theater' then DAY_X[:night][nd] * bump(h, 21, 1.6)   # shows: the evening, Fri/Sat most
+      when 'cinema' then DAY_X[:food][day] * (bump(h, 19.5, 2) + (wkend ? 0.5 * bump(h, 14, 2) : 0))
+      when 'games' then DAY_X[:night][nd] * (bump(h, 20, 2.5) + (wkend ? 0.5 * bump(h, 15, 2) : 0))
       when 'cafe' then DAY_X[:cafe][day] * (bump(h, 9, 1.6) + 0.35 * bump(h, 14, 2))
       when 'bakery' then DAY_X[:cafe][day] * bump(h, 9, 2)
       when 'ice cream' then DAY_X[:food][day] * bump(h, 19, 2.5)
@@ -449,13 +452,13 @@ def pulse_heat(lat, lng, r_km, sigs_by, now = Time.now)
   key = [(lat * 100).round, (lng * 100).round, r_km.round(1), minute]
   usual = PULSE_HEAT[:lock].synchronize { PULSE_HEAT[:cache][key] }
   b = Pulse.hour_of_week(now)
-  kinds = Places::DRINK + Places::FOOD
+  kinds = Places::DRINK + Places::FOOD + Places::VENUE
   unless usual
     usual = Places.data[:list].map do |p|
       next unless kinds.include?(p['kind']) && Places.miles(lat, lng, p['lat'], p['lng']) * 1.609 <= r_km
       next if Pulse.open_in_bin?(p['week'], b) == false
       level = pulse_fc(p)[b]
-      next if level < 0.3
+      next if level < 0.1
       { id: p['id'], name: p['name'], kind: p['kind'], lat: p['lat'], lng: p['lng'], level: level.round(2),
         key: Pulse.level_of(level)[1], live: false }
     end.compact
@@ -472,7 +475,12 @@ def pulse_heat(lat, lng, r_km, sigs_by, now = Time.now)
       key: v[:key], live: true, hot: v[:hot], people: v[:people] >= PULSE_MIN_PEOPLE ? v[:people] : nil }
   end.compact
   ids = live.map { |x| x[:id] }
-  rows = live.sort_by { |x| -x[:level] } + usual.reject { |x| ids.include?(x[:id]) }.sort_by { |x| -x[:level] }
+  # Hot areas always show: everything at 0.3+ (lively), and when that's thin (1:30 AM on a Tuesday) the busiest of what's
+  # open anyway, down to 0.1, up to 25 places, so the map still shows where it's hottest right now.
+  rest = usual.reject { |x| ids.include?(x[:id]) }.sort_by { |x| -x[:level] }
+  hot = rest.take_while { |x| x[:level] >= 0.3 }
+  hot += rest.drop(hot.size).first(25 - hot.size) if hot.size < 25
+  rows = live.sort_by { |x| -x[:level] } + hot
   { places: rows.first(150), at: (now.to_f * 1000).to_i }
 end
 
@@ -647,7 +655,7 @@ def mount_pulse(server)
     lng = Float(b['lng']) rescue -97.7431
     want = Pulse::WANT.key?(b['want']) ? b['want'] : nil
     hours = b['hours'].to_i.then { |x| x.zero? ? 3 : x.clamp(1, 6) }
-    kinds = { 'bars' => %w[bar pub beer\ garden], 'clubs' => %w[club], 'food' => Places::FOOD }[b['kind']] || (Places::DRINK + Places::FOOD)
+    kinds = { 'bars' => %w[bar pub beer\ garden brewery], 'clubs' => %w[club], 'food' => Places::FOOD }[b['kind']] || (Places::DRINK + Places::FOOD)
     max_km = (b['km'] || 6).to_f.clamp(0.5, 30)
     now = Time.now
     events = events_list

@@ -154,7 +154,9 @@ t('the heat map: live places first, then what the hour usually brings; guests ok
   live = r['places'].take_while { |x| x['live'] }
   check(live.any? { |x| x['id'] == BAR }, r['places'].first(5))
   check(r['places'].drop(live.size).none? { |x| x['live'] }, 'live rows must come first')
-  check(r['places'].all? { |x| x['level'] >= 0.3 || x['live'] } && r['places'].all? { |x| x['lat'] && x['lng'] && x['key'] }, r['places'].first(3))
+  usual = r['places'].reject { |x| x['live'] }
+  check(usual.all? { |x| x['level'] >= 0.1 } && r['places'].all? { |x| x['lat'] && x['lng'] && x['key'] }, r['places'].first(3))
+  check(usual.none? { |x| x['level'] < 0.3 } || usual.count { |x| x['level'] >= 0.3 } < 25, 'quiet places only top up a thin map')   # hot areas always show
   check(r['places'].none? { |x| x.key?('u') || x.to_s.include?('cy_p') }, 'no handles in the heat map')
   "#{r['places'].size} places, #{live.size} live"
 end

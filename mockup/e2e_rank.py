@@ -31,6 +31,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     for vw in (390, 360):
         ctx = b.new_context(viewport={"width": vw, "height": 844}, device_scale_factor=2, geolocation={"latitude": 30.2672, "longitude": -97.7431}, permissions=["geolocation"])
+        ctx.route(lambda u: ("tile.openstreetmap.org" in u or "/img/ev" in u or not ("127.0.0.1" in u or "localhost" in u)), lambda r: r.abort())   # nothing from other sites: map tiles, event posters (slow sites stall the load event)
         pg = ctx.new_page()
         pg.on("pageerror", lambda e: errors.append(str(e)))
         pg.on("console", lambda m: m.type == "error" and "Failed to load resource" not in m.text and errors.append(m.text))
