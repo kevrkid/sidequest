@@ -155,13 +155,21 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Find friends by email / phone (2026-10-28, `contacts.rb`)**: You → Privacy → "Find friends" links your email /
+  phone (`/api/contact/set`); the server keeps only an HMAC of each (key in `data/contact_key`, made once, 0600, never
+  deployed over: push.sh skips data/) plus a masked copy for your own screen, in `u['contact']` (never in `state_for`).
+  Findable only with "Let people find me by email or phone" on (`find`, off by default). `/api/contact/match` takes up
+  to 300 contacts ({emails, phones}), 10 calls/hour, answers handles + contact positions; blocks hide both ways.
+  Friends search runs it for an exact email / number; Social → Friends → "Find friends from contacts" uses the
+  Contact Picker where the browser has one (Android Chrome), else pasting. Not verified yet (no email / SMS service).
+  `test_contacts.rb` (11).
 - **UI cleanup (2026-10-28)**: event cards show only "I'm going" + ⋯; the event page shows I'm going · Tickets · ❤️ ·
   share · ⋯. Everything else (calendar, map, directions, eat after, menu, venue info, stories, invite, plan it, send in a
   chat, link) is in `openEvMenu(id, 'more'|'share')` (#actSheet `.actrow` rows that reuse the old data-* actions; a
   capture listener closes the menu first; long-press / right-click a card opens it). Create = Post (→ Story or Post),
   Plan (`openCompose`, its Now/Later switch replaced Hangout/Event), Group, Go live. The `--siri` gradient is only on +
-  and Scout; primary buttons and Sign up use `--tint`. You: one "Your profile" row (its page keeps the 4 tabs), Online
-  is a small pill, rows use line icons (`i-user`, `i-cal`…). Map: parks/water off by default (`S.calmV4`), heat about
+  and Scout (owner, 2026-10-28: Siri gradient back on primary buttons, Sign up and chips; Online switch big again;
+  Profile / Personality / About you / Privacy back as their own rows). You rows use line icons (`i-user`, `i-cal`…). Map: parks/water off by default (`S.calmV4`), heat about
   half as strong (still always on), credits behind an ⓘ, Scout stays bottom middle. Full pages hide the logo and grab bar.
 - **Event emoji**: always `evE(event)`, never `CATS[e.cat].e`: sports and pickup events show their sport from the title
   (`SPORT_E`, first match wins: 🏀 🏈 ⚽ 🏐 🎾 🥎 🏒 🏊 🏃 …), anything else its category emoji (🏟️ when no sport matches).

@@ -937,9 +937,7 @@
   .youhd{display:flex;align-items:center;gap:14px;margin:6px 0 4px}
   .youhd #youAv .av{width:64px;height:64px;font-size:26px}
   .youhd h2{margin:0;font-size:22px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .youhd .pres{flex:none;padding:6px 12px;gap:7px;font-size:13px;font-weight:700;background:transparent;border:1px solid var(--hair);color:var(--text)}
-  .youhd .pres .trk{display:none} .youhd .pres::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px #30d15833}
-  .youhd .pres.off::before{background:var(--muted);box-shadow:none} .youhd .pres.off{color:var(--muted)}
+  .youhd .pres{flex:none}
   #youStats{display:flex;gap:8px;margin:12px 0 4px;overflow-x:auto;scrollbar-width:none}
   #youStats button{flex:1;min-width:84px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:10px 12px;border-radius:14px;background:#161e40;border:1px solid #ffffff12;text-align:left}
   #youStats b{font-size:18px} #youStats span{font-size:11.5px;color:var(--muted);font-weight:600}
@@ -1161,6 +1159,7 @@
   <symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></symbol>
   <symbol id="i-half" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
 </defs></svg>
     <section class="view" id="v-map">
@@ -1293,6 +1292,8 @@
         <div class="seg" id="delaySeg" style="margin-top:6px"><button data-v="0">None</button><button data-v="15">15 min</button><button data-v="30">30 min</button></div>
         <p class="meta" style="margin:12px 0 0">🛡️ You're only ever <b id="privHandle"></b>. Real names, phone numbers and exact GPS are never shown to other users.</p>
       </div>
+      <h3 data-t="Find friends">Find friends</h3>
+      <div class="card" id="contactCard"></div>
 
       <h3>Your data</h3>
       <div class="card" id="dataCard"></div>
@@ -1828,7 +1829,17 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'Back':'Atrás', 'Plan':'Plan', "Ask who's free now, or plan something later":'Pregunta quién está libre ahora o planea algo para después',
+  'Map credits':'Créditos del mapa', 'Find friends':'Encontrar amigos', 'Find friends from contacts':'Encontrar amigos en tus contactos',
+  'By email or phone number':'Por correo o número de teléfono', 'Email':'Correo', 'Phone':'Teléfono', 'Linked':'Vinculado', 'Unlink':'Desvincular',
+  'Link your email or phone so friends who have it can find you. Nobody ever sees them.':'Vincula tu correo o teléfono para que tus amigos que lo tengan te encuentren. Nadie los ve nunca.',
+  'Let people find me by email or phone':'Dejar que me encuentren por correo o teléfono', 'Off: nobody can find you this way, even with your email or number.':'Apagado: nadie te encuentra así, aunque tenga tu correo o número.',
+  'Make an account to find friends by email or phone.':'Crea una cuenta para encontrar amigos por correo o teléfono.', 'Saved.':'Guardado.',
+  'Only people who chose to be found by their email or phone show up. Your contacts are checked once and not kept.':'Solo aparecen quienes eligieron ser encontrados por correo o teléfono. Tus contactos se revisan una vez y no se guardan.',
+  'Choose contacts':'Elegir contactos', 'Or paste emails or phone numbers':'O pega correos o teléfonos', 'Paste emails or phone numbers, one per line':'Pega correos o teléfonos, uno por línea',
+  'Check':'Revisar', 'Checking…':'Revisando…', 'On Side Quest':'En Side Quest', 'None of them are findable on Side Quest yet. Invite them!':'Ninguno se puede encontrar en Side Quest todavía. ¡Invítalos!',
+  'Nobody findable with that email or number. They may not have linked it, or keep it private.':'Nadie con ese correo o número. Quizá no lo vinculó o lo mantiene privado.',
+  'Type an email or phone number first.':'Escribe primero un correo o teléfono.', 'Paste at least one email or phone number.':'Pega al menos un correo o teléfono.',
+  '🔎 Find people by name, interest, email or phone…':'🔎 Busca personas por nombre, interés, correo o teléfono…', 'Back':'Atrás', 'Plan':'Plan', "Ask who's free now, or plan something later":'Pregunta quién está libre ahora o planea algo para después',
   'A photo, video or thought: for 24 hours or on your profile':'Una foto, video o idea: por 24 horas o en tu perfil', 'Gone in 24 hours · tag the place, event, people':'Desaparece en 24 horas · etiqueta el lugar, evento, personas',
   'Stays on your profile':'Se queda en tu perfil',
   // Pulse (pulse.js)
@@ -4353,7 +4364,7 @@ function deckHit(x, q){
   if(x.k==='group') return qHit(q, it.n, it.d, CATS[it.cat]?.l);
   return qHit(q, it.t, it.u, where(it));
 }
-const MEET_PH = {swipe:'🔎 Search people, events, groups, hangouts…', friends:'🔎 Find people by name or interest…', msgs:'🔎 Search chats…', groups:'🔎 Search groups…'};
+const MEET_PH = {swipe:'🔎 Search people, events, groups, hangouts…', friends:'🔎 Find people by name, interest, email or phone…', msgs:'🔎 Search chats…', groups:'🔎 Search groups…'};
 function renderMeet(){
   const body=$('#meetBody'); if(!body) return;
   $('#v-meet').classList.toggle('inthread', meetTab==='msgs'&&!!DM.open);   // an open chat gets the whole drawer
@@ -5079,6 +5090,12 @@ function friendsHtml(){
         ${isFriend(u.h)?msgBtn(u.h):addBtn(u.h)}</div>
       ${r.length?`<ul class="why-list">${r.slice(0,4).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="meta" style="margin:6px 0 0">Answer a few more "About you" questions to see why.</p>'}
       ${opener?`<p style="margin:8px 0 0;font-style:italic;color:#dfe3ff">💡 ${esc(opener)}</p>`:''}</div>`).join('');
+  if(q&&looksContact(q)){   // an exact email / phone: ask the server (only people who let themselves be found)
+    contactSearch(q); const hits=CT.hits[q];
+    const rows=hits==null?`<p class="meta">${T('Checking…')}</p>`:hits.length?hits.map(f=>`<div class="card row">${av(f.h)}<div class="grow"><button class="handle" data-profile="${esc(f.h)}" style="text-align:left">@${esc(f.h)}</button></div>${f.friend?`<span class="badge friends">${T('friend')}</span>`:addBtn(f.h)}</div>`).join('')
+      :`<p class="meta">${T('Nobody findable with that email or number. They may not have linked it, or keep it private.')}</p>`;
+    return `<label class="lbl" style="margin-top:0">${T('People')}</label><div id="peopleFound">${rows}</div>`;
+  }
   if(q){   // searching: everyone on Side Quest who matches, best match first
     const found=people().filter(u=>u.h!==S.me.h&&!isFriend(u.h)&&qHit(q,userHay(u))).map(matchPerson).sort((a,b)=>
       (fold(b.u.h).startsWith(fold(q)))-(fold(a.u.h).startsWith(fold(q)))||b.s-a.s).slice(0,30);
@@ -5088,9 +5105,72 @@ function friendsHtml(){
     return `<label class="lbl" style="margin-top:0">Your friends</label><div id="friendList">${friends}</div>
       <label class="lbl" style="margin-top:18px">People</label><div id="peopleFound">${rows||`<p class="meta">Nobody matches “${esc(q)}”. Try part of a name or an interest.</p>`}</div>`;
   }
-  return `<label class="lbl" style="margin-top:0">Your friends</label><div id="friendList">${friends}</div>
+  return `<button class="ylist" data-ctfinder style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:0 0 14px;text-align:left;font-weight:650">
+      <span class="yi" style="background:#0a84ff;width:32px;height:32px;border-radius:10px;display:grid;place-items:center">${svgI('users')}</span><span class="grow">${T('Find friends from contacts')}<div class="meta" style="font-weight:500">${T('By email or phone number')}</div></span>${svgI('chev')}</button>
+    <label class="lbl" style="margin-top:0">Your friends</label><div id="friendList">${friends}</div>
     <label class="lbl" style="margin-top:18px">People you'd probably click with</label><div id="suggestList">${suggest}</div>`;
 }
+
+// Find friends by email / phone (contacts.rb): link your own, opt in to being found, match a friend's exact address
+// or your phone's contacts. The server keeps only hashes; you see your own masked ("k•••@gmail.com").
+const CT={me:null, hits:{}};
+async function loadContact(){ if(!AUTHED) return renderContactCard(); try{ CT.me=await api('/api/contact',null,{method:'GET'}); }catch(e){} renderContactCard(); }
+function renderContactCard(){
+  const el=$('#contactCard'); if(!el) return; const m=CT.me||{};
+  if(!AUTHED){ el.innerHTML=`<p class="meta" style="margin:0">${T('Make an account to find friends by email or phone.')}</p>`; return; }
+  el.innerHTML=`<p class="meta" style="margin:0 0 10px">${T('Link your email or phone so friends who have it can find you. Nobody ever sees them.')}</p>
+    <label class="meta" style="font-weight:700">${T('Email')}</label><input id="ctEmail" type="email" autocomplete="email" placeholder="${esc(m.email||'you@example.com')}" style="margin:4px 0 10px">
+    <label class="meta" style="font-weight:700">${T('Phone')}</label><input id="ctPhone" type="tel" autocomplete="tel" placeholder="${esc(m.phone||'512 555 0123')}" style="margin:4px 0 6px">
+    ${m.email||m.phone?`<p class="meta" style="margin:0 0 6px">${T('Linked')}: ${esc([m.email,m.phone].filter(Boolean).join(' · '))} <button class="linkbtn" data-ctunlink>${T('Unlink')}</button></p>`:''}
+    <div class="row" style="margin:10px 0"><div class="grow"><b>${T('Let people find me by email or phone')}</b><div class="meta">${T('Off: nobody can find you this way, even with your email or number.')}</div></div>
+      <button class="toggle ${m.find?'on':''}" data-ctfind aria-pressed="${!!m.find}" aria-label="${T('Let people find me by email or phone')}"></button></div>
+    <div class="btns"><button class="btn sm primary" data-ctsave>${T('Save')}</button><button class="btn sm" data-ctfinder>📇 ${T('Find friends from contacts')}</button></div>`;
+}
+async function saveContact(body){
+  try{ CT.me=await api('/api/contact/set',body); renderContactCard(); toast(T('Saved.'),'green',[],1800); }catch(e){ toast(esc(e.message),'orange'); }
+}
+// Pick contacts (Android Chrome has a contact picker; iPhones don't let websites open contacts, so paste them instead).
+const canPickContacts = () => !!(navigator.contacts&&navigator.contacts.select);
+function openContactFinder(){
+  if(needAccount('find friends from your contacts')) return;
+  $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📇 ${T('Find friends from contacts')}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <p class="meta">${T('Only people who chose to be found by their email or phone show up. Your contacts are checked once and not kept.')}</p>
+    ${canPickContacts()?`<button class="btn primary" data-ctpick style="width:100%;margin:6px 0 12px">${T('Choose contacts')}</button>`:''}
+    <label class="meta" style="font-weight:700">${canPickContacts()?T('Or paste emails or phone numbers'):T('Paste emails or phone numbers, one per line')}</label>
+    <textarea id="ctPaste" rows="5" placeholder="friend@example.com&#10;512 555 0123" style="margin-top:4px"></textarea>
+    <button class="btn sm" data-ctcheck style="margin-top:8px">${T('Check')}</button>
+    <div id="ctFound" style="margin-top:12px"></div>`;
+  $('#actBg').hidden=false;
+}
+async function matchContacts(list){   // list: [{name, emails:[], phones:[]}]
+  const out=$('#ctFound'); if(out) out.innerHTML=`<p class="meta">${T('Checking…')}</p>`;
+  try{
+    const j=await api('/api/contact/match',{contacts:list.map(c=>({emails:c.emails||[],phones:c.phones||[]}))});
+    if(!out) return j;
+    out.innerHTML = j.found.length ? `<label class="lbl" style="margin-top:0">${T('On Side Quest')}</label>`+j.found.map(f=>{ const nm=list[f.i[0]]?.name;
+        return `<div class="card row">${av(f.h)}<div class="grow"><button class="handle" data-profile="${esc(f.h)}" style="text-align:left">@${esc(f.h)}</button>${nm?`<div class="meta">${esc(nm)}</div>`:''}</div>${f.friend?`<span class="badge friends">${T('friend')}</span>`:addBtn(f.h)}</div>`; }).join('')
+      : `<p class="meta">${T("None of them are findable on Side Quest yet. Invite them!")}</p><button class="btn sm" data-menu="invite">💌 ${T('Invite friends')}</button>`;
+    return j;
+  }catch(e){ if(out) out.innerHTML=`<p class="meta" style="color:var(--accent)">${esc(e.message)}</p>`; }
+}
+const parsePasted = t => t.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).slice(0,300).map(x=>/@/.test(x)?{emails:[x]}:{phones:[x]});
+// Friends search: an exact email or phone finds that person (if they let people find them)
+const looksContact = q => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(q) || q.replace(/\D/g,'').length>=10&&/^[\d\s()+.-]+$/.test(q);
+async function contactSearch(q){
+  if(CT.hits[q]!==undefined||!AUTHED) return; CT.hits[q]=null;
+  try{ const j=await api('/api/contact/match',{contacts:parsePasted(q)}); CT.hits[q]=j.found; }catch(e){ CT.hits[q]=[]; }
+  if(meetQ===q) renderMeet();
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-ctsave],[data-ctfind],[data-ctunlink],[data-ctfinder],[data-ctpick],[data-ctcheck]'); if(!b) return; const d=b.dataset;
+  if(d.ctsave!==undefined){ const em=$('#ctEmail').value.trim(), ph=$('#ctPhone').value.trim(); if(!em&&!ph) return toast(T('Type an email or phone number first.'),'orange');
+    return saveContact({...(em?{email:em}:{}), ...(ph?{phone:ph}:{})}); }
+  if(d.ctfind!==undefined) return saveContact({find:!(CT.me&&CT.me.find)});
+  if(d.ctunlink!==undefined) return saveContact({email:'',phone:'',find:false});
+  if(d.ctfinder!==undefined) return openContactFinder();
+  if(d.ctcheck!==undefined){ const l=parsePasted($('#ctPaste').value); if(!l.length) return toast(T('Paste at least one email or phone number.'),'orange'); return matchContacts(l); }
+  if(d.ctpick!==undefined) navigator.contacts.select(['name','email','tel'],{multiple:true}).then(cs=>{ if(cs&&cs.length) matchContacts(cs.map(c=>({name:(c.name||[])[0]||'',emails:c.email||[],phones:c.tel||[]}))); }).catch(()=>{});
+});
 
 let meSec='profile';
 // The profile is split into four tabs; only one shows at a time. V3: each opens as its own page from the top of You
@@ -5101,6 +5181,7 @@ function showMeSec(sec){
   document.querySelectorAll('#meTabs button').forEach(b=>b.classList.toggle('on',b.dataset.mesec===sec));
   document.querySelectorAll('[data-mepane]').forEach(p=>p.hidden=p.dataset.mepane!==sec);
   if(sec==='profile') renderFavs();
+  if(sec==='settings') loadContact();
   if(!$('#v-me').hidden&&!was) $('#v-me').scrollTop=0;
 }
 function youHub(){   // back to You's own page (the list)
@@ -6310,8 +6391,10 @@ function renderYou(){
   const lifeDone=LIFE.filter(f=>hasVal(S.me.p?.[f.k])).length, nInt=(S.me.i||[]).length;
   $('#youList').innerHTML = [
     // your profile first: each opens straight to its own page
-    // one row for your profile; its page has tabs for Profile · Personality · About you · Privacy
-    row('data-yedit="profile"','user','#0a84ff',T('Your profile'),[nInt?T('{n} interests',{n:nInt}):T('Add interests'),S.me.t||'',lifeDone?`${lifeDone}/${LIFE.length}`:''].filter(Boolean).join(' · ')),
+    // your profile first, each its own row (owner, 2026-10-28: easy to reach)
+    row('data-yedit="profile"','user','#0a84ff',T('Profile'),nInt?T('{n} interests',{n:nInt}):T('Add interests')),
+    row('data-yedit="personality"','spark','#bf5af2',T('Personality'),S.me.t?S.me.t:T('Take the quiz')),
+    row('data-yedit="about"','edit','#ff9f0a',T('About you'),`${lifeDone}/${LIFE.length}`),
     row('data-yedit="settings"','lock','#30d158',T('Privacy & account')),
     `<div class="ygroup">${T('More')}</div>`,
     row('data-menu="plans"','cal','#ff9f0a',T('My plans'),plans||''),
