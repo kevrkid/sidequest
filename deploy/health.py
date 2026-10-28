@@ -66,10 +66,12 @@ service("events", "sidequest-events", "http://127.0.0.1:8788/health", lambda j: 
 
 # the scraper runs every 6 h: nothing new in 13 h means it's stuck or failing
 try:
-    fin = get("http://127.0.0.1:8788/health").get("last_run", {}).get("finished")
-    age = (datetime.now(timezone.utc) - datetime.fromisoformat(fin)).total_seconds() / 3600 if fin else None
-    if age is None or age > 13:
-        problems.append(f"Event scraper last finished {f'{age:.0f} h ago' if age else 'never'} (runs every 6 h)")
+    run = get("http://127.0.0.1:8788/health").get("last_run") or {}   # in memory: a restart starts a fresh scrape
+    hours = lambda t: (datetime.now(timezone.utc) - datetime.fromisoformat(t)).total_seconds() / 3600 if t else None
+    fin, began = hours(run.get("finished")), hours(run.get("started"))
+    running = began is not None and (fin is None or began < fin) and began < 2
+    if not running and (fin is None or fin > 13):
+        problems.append(f"Event scraper last finished {f'{fin:.0f} h ago' if fin is not None else 'never'} (runs every 6 h)")
 except Exception:
     pass  # the service check above already says so
 
