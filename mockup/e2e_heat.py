@@ -33,8 +33,16 @@ with sync_playwright() as pw:
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.on("console", lambda m: m.type == "error" and "Failed to load resource" not in m.text and errors.append(m.text))
     pg.goto(BASE, wait_until="load"); pg.wait_for_timeout(2500)
+    try:   # guests get the welcome sheet once /api/state is back, which takes longer on a freshly started server
+        pg.wait_for_function("()=>ONB.step==='welcome' && !document.querySelector('#onbBg').hidden", timeout=15000)
+    except Exception:
+        pass
     pg.evaluate("()=>{ const o=document.querySelector('#onbBg'); if(o) o.hidden=true; S.toured=true; return 1 }")
     pg.evaluate("()=>{ tab('map'); map.setView([30.2675,-97.7405],14); }"); pg.wait_for_timeout(2500)
+    try:   # a freshly started server builds its place and forecast caches on the first ask: give it up to 20 s more
+        pg.wait_for_function(f"()=>{{ try {{ const s=({HEAT_STATE})(); return s.rows>0 && s.drawn>0 && s.pane }} catch(e) {{ return false }} }}", timeout=20000)
+    except Exception:
+        pass   # the check below reports what was there
 
     st = pg.evaluate(HEAT_STATE)
     check("heat map loads for a guest and draws glows", st["rows"] > 0 and st["drawn"] > 0 and st["pane"], st)
