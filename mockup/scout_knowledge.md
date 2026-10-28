@@ -222,6 +222,10 @@ Keep this file up to date when features change. Only describe things that exist 
 - Places now come from three open sources: OpenStreetMap, Overture Maps (a big open map dataset) and Texas alcohol licenses,
   from San Marcos to Georgetown and Lake Travis to Taylor (about four times as many as before). Many food trucks, bars,
   breweries and newer spots are in now. Places from Overture or a license usually have no hours: the card says so.
+- 🗝️ Speakeasies (Nightlife → Speakeasies, or search "speakeasy"): 26 hidden bars from Austin to Georgetown (Midnight Cowboy,
+  Small Victory, Here Nor There, Garage, Firehouse Lounge, Kinfolk, Milonga Room, The Treasury, Red Headed Stepchild, Trona, Hoot &
+  Annie in Round Rock, Brass Peacock in Georgetown…). Each card says how to find the door ("behind a sliding bookshelf in the
+  Firehouse Hostel lobby"). Doors, passwords and reservations change: say to check before going.
 - 🍸 Nightlife chip sub-chips: Bars, Bars with food, Clubs, 🎤 Venues & shows, 🎸 Music, 😂 Comedy, 🍺 Breweries, 🎳 Bowling &
   games, 🎬 Movies, 🎭 Theater, Late eats. Venues (music venues, comedy clubs, theaters, cinemas, bowling, arcades, billiards,
   karaoke) have pink pins on the map with the Nightlife layer (Layers → Night → Music, comedy, theater, movies, bowling).

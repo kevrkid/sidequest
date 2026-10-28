@@ -29,7 +29,7 @@ module Places
     'burgers' => { label: 'Burgers', e: '🍔' }, 'asian' => { label: 'Asian', e: '🍜' }, 'sweets' => { label: 'Sweets', e: '🍦' },
     'breweries' => { label: 'Breweries & wineries', e: '🍺' }, 'venues' => { label: 'Venues & shows', e: '🎤' }, 'music' => { label: 'Music venues', e: '🎸' },
     'comedy' => { label: 'Comedy', e: '😂' }, 'theater' => { label: 'Theater', e: '🎭' }, 'cinema' => { label: 'Movies', e: '🎬' },
-    'games' => { label: 'Bowling, arcades & billiards', e: '🎳' },
+    'games' => { label: 'Bowling, arcades & billiards', e: '🎳' }, 'speakeasies' => { label: 'Speakeasies & hidden bars', e: '🗝️' },
     'all' => { label: 'Food & drink', e: '🍽️' }
   }.freeze
   CUISINE = {
@@ -97,6 +97,7 @@ module Places
       (FOOD.include?(kind) || kind == 'cafe') && open_at?(p['week'], (now % 1440 < 600 ? day : day + 1440) % Hours::WEEK + 420)
     when 'bars' then ['bar', 'pub', 'beer garden', 'brewery'].include?(kind)
     when 'breweries' then kind == 'brewery'
+    when 'speakeasies' then !!p['speakeasy']
     when 'venues' then VENUE.include?(kind)
     when 'music' then kind == 'music venue'
     when 'comedy' then kind == 'comedy club'
@@ -153,7 +154,7 @@ module Places
     zone = zone_of(p)
     { id: p['id'], name: p['name'], kind: p['kind'], cuisine: p['cuisine'] || [], addr: p['addr'], lat: p['lat'], lng: p['lng'],
       web: p['web'], menu: p['menu'], phone: p['phone'], state: st[:state], status: label(st), closes: st[:state] == 'open' && !st[:always] ? Hours.clock(st[:until]) : nil,
-      mi: mi && mi.round(1), zone: zone && zone[:name], chain: p['chain'], alcohol: p['alcohol'], ig: p['ig'], src: p['src'] }.compact
+      mi: mi && mi.round(1), zone: zone && zone[:name], chain: p['chain'], alcohol: p['alcohol'], ig: p['ig'], src: p['src'], speakeasy: p['speakeasy'] }.compact
   end
 
   # Everything, compact, for the map dots (the app works out open/closed itself from `w`).

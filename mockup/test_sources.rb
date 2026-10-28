@@ -71,5 +71,18 @@ check('company names, private clubs and cut-off names are not added',
       !places.values.any? { |p| p['name'] =~ /Cabana|Headliners|Yacht/ } && tst['private clubs not added'] == 1, tst)
 check('license names read like names', tabc_name("JUANA MARIA'S TEXICAN CAFE #2") == "Juana Maria's Texican Cafe" && tabc_name('BAR ATX, LLC') == 'Bar ATX')
 
+sp = [{ 'name' => 'Mohawk', 'addr' => '912 Red River St, Austin', 'how' => 'Upstairs', 'lat' => 30.27, 'lng' => -97.7359 },
+      { 'name' => 'Kinfolk Lounge & Library', 'addr' => '303 Red River St, Austin', 'how' => 'Cellar under Moonshine', 'lat' => 30.26371, 'lng' => -97.73811 },
+      { 'name' => 'Brass Peacock', 'addr' => '113 E 8th St, Georgetown', 'how' => 'Ask the host stand', 'lat' => 30.63666, 'lng' => -97.67686 },
+      { 'name' => 'Nowhere Yet', 'addr' => 'x', 'how' => 'y' }]
+places['k1'] = { 'id' => 'k1', 'name' => 'Kinfolk Cocktail Lounge & Spirits Library', 'kind' => 'bar', 'lat' => 30.26372, 'lng' => -97.73812 }
+sst = merge_speakeasies!(places, sp)
+check('a speakeasy we have is marked with how to find the door', places['n1']['speakeasy'] == 'Upstairs' && places['k1']['speakeasy'] == 'Cellar under Moonshine', [places['n1'], places['k1']])
+check('...even when the names differ ("Kinfolk Lounge & Library")', places.values.count { |p| p['name'] =~ /Kinfolk/ } == 1)
+bp = places.values.find { |p| p['name'] == 'Brass Peacock' }
+check('a speakeasy nobody has is added as a bar (s… id, curated)', bp && bp['kind'] == 'bar' && bp['src'] == 'curated' && bp['id'] =~ /\As[0-9a-f]{11}\z/ && bp['speakeasy'], bp)
+check('no position, not added', sst['no position'] == 1 && !places.values.any? { |p| p['name'] == 'Nowhere Yet' }, sst)
+check('names spelled wrong at the source are put back', demojibake('Bachi De CuÃ±ados') == 'Bachi De Cuñados' && demojibake('Mezcalería Tobalá') == 'Mezcalería Tobalá' && demojibake("Frida’s") == "Frida’s")
+
 puts "\n#{$pass} passed, #{$fail} failed"
 exit($fail.zero? ? 0 : 1)

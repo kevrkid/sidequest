@@ -1,0 +1,242 @@
+{
+  "checked": "2026-10-28",
+  "note": "Hand-kept list of speakeasies and hidden bars, Austin to Georgetown, from the guides in sources (Infatuation, Time Out, Austinot, OpenTable, Community Impact). Positions from the US Census geocoder.",
+  "speakeasies": [
+    {
+      "name": "The Treasury",
+      "addr": "1016 E 6th St, Austin",
+      "how": "Down the stairs behind Shangri-La, in a tiny bank-vault room",
+      "lat": 30.265069,
+      "lng": -97.732316,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin"
+      ]
+    },
+    {
+      "name": "Small Victory",
+      "addr": "108 E 7th St, Austin",
+      "how": "Up a short flight of stairs inside a downtown parking garage, through a small red door",
+      "lat": 30.268977,
+      "lng": -97.742288,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Midnight Cowboy",
+      "addr": "313 E 6th St, Austin",
+      "how": "A former brothel behind an unmarked door: buzz with your reservation name",
+      "lat": 30.267286,
+      "lng": -97.740223,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Here Nor There",
+      "addr": "612 Brazos St, Austin",
+      "how": "A basement off a gated alley next to The Driskill; the door code comes from its app",
+      "lat": 30.267854,
+      "lng": -97.74146,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Bar Hacienda",
+      "addr": "70 Rainey St, Austin",
+      "how": "In the basement under Tiger Lily on Rainey",
+      "lat": 30.258698,
+      "lng": -97.738892,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Daisy Lounge",
+      "addr": "5701 W Slaughter Ln, Austin",
+      "how": "Look for the painted daisy on the facade; a library-style room inside",
+      "lat": 30.200881,
+      "lng": -97.866968,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Milonga Room",
+      "addr": "1201 E 6th St, Austin",
+      "how": "Under Buenos Aires Café, through the red door in the alley (password)",
+      "lat": 30.264329,
+      "lng": -97.730492,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Eden Cocktail Room",
+      "addr": "214 E 6th St, Austin",
+      "how": "A small bar in the alley behind Dirty Sixth: find the purple door",
+      "lat": 30.267685,
+      "lng": -97.741235,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Garage",
+      "addr": "503 Colorado St, Austin",
+      "how": "Inside a working parking garage: follow the neon cocktail sign",
+      "lat": 30.267532,
+      "lng": -97.744381,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Kinfolk Lounge & Library",
+      "addr": "303 Red River St, Austin",
+      "how": "A 20-seat spirits library in the 1850s stone cellar under Moonshine Grill",
+      "lat": 30.263713,
+      "lng": -97.738115,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Trona",
+      "addr": "1812 E 12th St, Austin",
+      "how": "Behind a metal gate in an alley off 12th & Chicon: ring when the light is green",
+      "lat": 30.273734,
+      "lng": -97.720723,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Techo Mezcaleria & Agave Bar",
+      "addr": "2201 Manor Rd, Austin",
+      "how": "Upstairs, through the side patio of School House Pub",
+      "lat": 30.284236,
+      "lng": -97.719027,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin"
+      ]
+    },
+    {
+      "name": "The Lucky Duck",
+      "addr": "1300 E 6th St, Austin",
+      "how": "Upstairs through a wooden gate behind the patio; weekends",
+      "lat": 30.264079,
+      "lng": -97.729445,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Firehouse Lounge",
+      "addr": "605 Brazos St, Austin",
+      "how": "Behind a sliding bookshelf in the lobby of the Firehouse Hostel",
+      "lat": 30.267753,
+      "lng": -97.741358,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin",
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin",
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Mezcalería Tobalá",
+      "addr": "1816 E 6th St, Austin",
+      "how": "A tiny mezcal room upstairs above Whisler's; Thu–Sat",
+      "lat": 30.262029,
+      "lng": -97.723311,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Red Headed Stepchild",
+      "addr": "119 E 5th St, Austin",
+      "how": "Behind a fake \"Floppy Disk Repair Co.\" front; the password changes monthly",
+      "lat": 30.266987,
+      "lng": -97.742906,
+      "sources": [
+        "https://www.theinfatuation.com/austin/guides/best-speakeasies-secret-bars-austin"
+      ]
+    },
+    {
+      "name": "Powder Room",
+      "addr": "301 W 5th St, Austin",
+      "how": "A luxury lounge with a no-phones rule (lockboxes at the door)",
+      "lat": 30.267759,
+      "lng": -97.745628,
+      "sources": [
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "DuMont's Down Low",
+      "addr": "214 W 4th St, Austin",
+      "how": "A brick basement down a narrow stairwell",
+      "lat": 30.26668,
+      "lng": -97.744986,
+      "sources": [
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Tiki Tatsu-Ya",
+      "addr": "1300 S Lamar Blvd, Austin",
+      "how": "An unmarked entrance into a two-story tiki ship",
+      "lat": 30.253765,
+      "lng": -97.762976,
+      "sources": [
+        "https://austinot.com/best-speakeasies-austin"
+      ]
+    },
+    {
+      "name": "Barrel O' Fun",
+      "addr": "1911 Aldrich St, Austin",
+      "how": "A carnival-themed bar hidden inside the Alamo Drafthouse at Mueller",
+      "lat": 30.298357,
+      "lng": -97.704844,
+      "sources": [
+        "https://www.timeout.com/austin/bars/the-best-hidden-bars-and-speakeasies-in-austin"
+      ]
+    },
+    {
+      "name": "Hoot & Annie",
+      "addr": "113 W Main St, Round Rock",
+      "how": "Round Rock's speakeasy on Main Street; dress up",
+      "lat": 30.508423,
+      "lng": -97.679124,
+      "sources": [
+        "https://www.opentable.com/cuisine/best-speakeasy-restaurants-austin-tx-round-rock"
+      ]
+    },
+    {
+      "name": "Brass Peacock",
+      "addr": "113 E 8th St, Georgetown",
+      "how": "A 1933 bar under City Post Chophouse: ask the host stand for the hint",
+      "lat": 30.636662,
+      "lng": -97.676861,
+      "sources": [
+        "https://communityimpact.com/austin/georgetown/business/2025/01/07/brass-peacock-speakeasy-now-open-in-georgetown"
+      ]
+    }
+  ]
+}

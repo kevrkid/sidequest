@@ -251,7 +251,8 @@ There is no database. Everything lives under `mockup/data/`:
 | `stats.json` | Daily analytics counters | `v2.rb` (flushed every minute) | no |
 | `vapid.json` | **VAPID private key** (mode 0600, made on first start) | `v2.rb` | no (secret) |
 | `places.json` (+ `places_tiles/`) | ~10,000+ food & drink places, breweries and venues (OpenStreetMap + Overture Maps + TABC licenses), San Marcos to Georgetown | `fetch_places.rb` (merges the two below) | json yes, tiles no |
-| `overture.json`, `tabc.json`, `tabc_geo.json` | Raw Overture places; geocoded on-premise alcohol licenses (+ geocode cache) | `fetch_overture.py`, `fetch_tabc.rb` | no (inputs to the merge) |
+| `overture.json`, `tabc.json`, `tabc_geo.json` | Raw Overture places; geocoded on-premise alcohol licenses (+ geocode cache) | `fetch_overture.py`, `fetch_tabc.rb` | no (inputs to the merge; `push.sh` ships the first two so the server's weekly refresh keeps them) |
+| `speakeasies.json` | 22 speakeasies Austin to Georgetown with how to find the door and sources (hand-kept) | by hand | yes |
 | `outdoors.json` | Parks, water, trails, rentals and ramps | `fetch_outdoors.rb` | yes |
 | `gyms.json` | Gyms, climbing, yoga, boxing, CrossFit, dance, ice rinks, rec centers | `fetch_gyms.rb` | yes |
 | `sights.json` (+ `sights_cache/`) | ~1,650 markers, landmarks, art | `fetch_sights.rb` | json yes, cache no |

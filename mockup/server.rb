@@ -496,7 +496,7 @@ end
 BIZ_Q = /business(es)?|\bplaces?\b|\bspots?\b|\bshops?\b|\bstores?\b|somewhere|recommend|suggest|favou?rite|\bbest\b|\bgood\b|\blocal\b|hidden gems?|hang ?out|where should|check out|worth (going|trying|a visit)|go-to/i
 HAPPY_Q = /happy\s*hours?/i
 # Going out that isn't food or drink: venues from Overture (music, comedy, theater, movies, bowling, arcades) and breweries
-VENUE_Q = /\b(brewer(y|ies)|winer(y|ies)|distiller(y|ies)|comedy (club|show)s?|stand-?up|music venues?|concert halls?|venues?|movies?|cinemas?|movie theat(er|re)s?|theat(er|re)s?|plays?|musicals?|bowling|arcades?|billiards|pool hall|karaoke|escape rooms?)\b/i
+VENUE_Q = /\b(speak ?eas(y|ies)|hidden bars?|secret bars?|brewer(y|ies)|winer(y|ies)|distiller(y|ies)|comedy (club|show)s?|stand-?up|music venues?|concert halls?|venues?|movies?|cinemas?|movie theat(er|re)s?|theat(er|re)s?|plays?|musicals?|bowling|arcades?|billiards|pool hall|karaoke|escape rooms?)\b/i
 DISH_Q = /\bwhere\b.{0,30}\b(get|find|eat|buy|have|has|serves?|order)\b|\bwho (has|serves|makes|sells)\b|\b(best|good|cheap(est)?)\b.{0,40}\b(in town|near( me)?|around( here)?|nearby)\b/i
 def scout_places(q, near)
   # "best X" / "where should I…": the Best of Austin list for it (rankings.rb)
@@ -552,7 +552,7 @@ rescue => e
 end
 
 def scout_cat(q)
-  { /brewer(y|ies)|winer(y|ies)|distiller(y|ies)|cidery/i => 'breweries', /comedy|stand-?up/i => 'comedy', /music venues?|concert halls?/i => 'music',
+  { /speak ?eas(y|ies)|hidden bars?|secret bars?|password bar/i => 'speakeasies', /brewer(y|ies)|winer(y|ies)|distiller(y|ies)|cidery/i => 'breweries', /comedy|stand-?up/i => 'comedy', /music venues?|concert halls?/i => 'music',
     /movies?|cinemas?|movie theat/i => 'cinema', /theat(er|re)s?\b|\bplays?\b|musicals?|broadway/i => 'theater', /bowling|arcades?|billiards|pool hall|karaoke|escape rooms?/i => 'games',
     /food trucks?|trailers?|truck park/i => 'trucks', /late[- ]night|munchies|after (the )?bars?/i => 'late', /breakfast|early|morning|kolache/i => 'early', /\bclubs?\b|dancing/i => 'clubs',
           /\bbars?\b|\bpub\b|drinks?|beer|cocktail|wine|brewery/i => 'bars', /coffee|cafe|espresso|latte/i => 'coffee',
@@ -1525,7 +1525,7 @@ def mount_app(server)
     limit!("places:#{client_ip(req)}", 600, 3600)
     qy = req.query
     near = qy['lat'] && qy['lng'] ? [qy['lat'].to_f.round(2), qy['lng'].to_f.round(2)] : nil   # ~1 km: never exact GPS
-    cat = qy['cat'].to_s[/\A[a-z]{2,10}\z/]
+    cat = qy['cat'].to_s[/\A[a-z]{2,14}\z/]   # ("speakeasies" is 11)
     rows = Places.search(cat: cat, q: qy['q'].to_s[0, 60], near: near, zone: qy['zone'].to_s[0, 20],
                          open_only: qy['open'] == '1', limit: qy['limit'] ? qy['limit'].to_i.clamp(1, 80) : 40)
     if rows.any? { |r| BAR_KINDS.include?(r[:kind]) }   # bars say whether they serve food, and till when

@@ -644,7 +644,16 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   Pulse: breweries use the beer-garden curve, venues an evening one; heat includes venues. Scout: `VENUE_Q` + `scout_cat`
   (breweries, comedy, music, cinema, theater, games). `Places.for_map` is cached per file (~0.3 s to build). Refresh: `ruby
   fetch_places.rb` (or `--blocks`), `~/.sidequest-data/bin/python fetch_overture.py`, `ruby fetch_tabc.rb`, then `ruby
-  fetch_places.rb --merge`. Tests: `ruby test_sources.rb` (19, no network), `e2e_venues.py` (11, needs the merged places).
+  fetch_places.rb --merge`. Tests: `ruby test_sources.rb` (24, no network), `e2e_venues.py` (14, needs the merged places).
+  **Speakeasies** (2026-10-28): hand-kept `data/speakeasies.json` (22 from The Infatuation, Time Out, Austinot, OpenTable, Community
+  Impact, Austin to Georgetown; name, address, `how` to find the door, sources; positions from the Census geocoder, stored).
+  `merge_speakeasies!` marks ours (similar name within 150 m, or the same distinctive first word within 80 m) with `speakeasy`
+  = how, or adds a bar (id `s`…, `src: 'curated'`); Overture's own `speakeasy` category is marked too (26 in all). Server cat
+  `speakeasies`; Nightlife sub-chip 🗝️ Speakeasies (no Open now filter), the note under each row (`barTag`) and on the card;
+  search "speakeasy / hidden bar" offers the list; Scout `speakeasies` cat. `/api/places` cat names may be up to 14 letters.
+  `demojibake` repairs source names that are UTF-8 read as Windows-1252 ("CuÃ±ados"). `deploy/push.sh` also ships
+  `speakeasies.json`, `overture.json`, `tabc.json`: the server's weekly `fetch_places.rb --fresh` merges them (without them it
+  would drop ~7,400 places).
 - **🏋️ Gyms** (2026-10-27; `fetch_gyms.rb` → `data/gyms.json`, `gyms.rb`: `Gyms` (loads the file, re-reads when it changes,
   `Hours.parse` weeks), `/api/gyms`, `GYM_Q` / `scout_gyms`): ~290 from OpenStreetMap, Round Rock to San Marcos (Outdoors' bbox):
   `leisure=fitness_centre|sports_centre|ice_rink|dance`, `amenity=dojo`, fitness `sport` halls. Dropped: no name, private

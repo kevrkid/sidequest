@@ -126,6 +126,7 @@ end
 # ---- more places from other open sources, merged after OpenStreetMap (which wins where both have a place) ----
 OVERTURE_FILE = File.join(ROOT, 'data', 'overture.json')   # fetch_overture.py
 TABC_FILE = File.join(ROOT, 'data', 'tabc.json')           # fetch_tabc.rb
+SPEAK_FILE = File.join(ROOT, 'data', 'speakeasies.json')   # hand-kept, from the guides it cites (Austin to Georgetown)
 VENUE_KINDS = ['music venue', 'comedy club', 'theater', 'cinema', 'games'].freeze
 
 # Overture category → our kind (nil = not a place to go: candy stores, lottery, bingo...).
@@ -202,6 +203,15 @@ def brand_prefix?(name, brands)
   n.size >= 5 && brands.any? { |b| b.size >= 5 && n.start_with?(b) }
 end
 
+# A few source names are UTF-8 read as Windows-1252 ("CuÃ±ados"): put them back ("Cuñados") when that's what they are.
+def demojibake(s)
+  return s unless s =~ /[ÃÂ][\u0080-\u00ff]|â€/
+  t = s.encode('Windows-1252').force_encoding('UTF-8')
+  t.valid_encoding? ? t : s
+rescue EncodingError
+  s
+end
+
 def merge_overture!(places, ov, brands)
   require 'digest'
   st = Hash.new(0)
@@ -227,9 +237,9 @@ def merge_overture!(places, ov, brands)
       { 'web' => o['web'], 'phone' => o['phone'], 'addr' => o['addr'], 'ig' => o['ig'] }.each { |k, v| p[k] ||= v if v }   # fill blanks only
       next
     end
-    p = { 'id' => "o#{Digest::SHA1.hexdigest(o['id'])[0, 11]}", 'name' => o['name'][0, 80], 'kind' => kind, 'cuisine' => overture_cuisine(o['cat']),
+    p = { 'id' => "o#{Digest::SHA1.hexdigest(o['id'])[0, 11]}", 'name' => demojibake(o['name'])[0, 80], 'kind' => kind, 'cuisine' => overture_cuisine(o['cat']),
           'lat' => o['lat'].round(5), 'lng' => o['lng'].round(5), 'addr' => o['addr'], 'web' => o['web'], 'phone' => o['phone'], 'ig' => o['ig'],
-          'chain' => chain, 'src' => 'overture' }.reject { |_, v| v.nil? || v == [] }
+          'chain' => chain, 'src' => 'overture', 'speakeasy' => (o['cat'] == 'speakeasy' ? 'A speakeasy' : nil) }.reject { |_, v| v.nil? || v == [] }
     places[p['id']] = p
     g[[(p['lat'] * 200).floor, (p['lng'] * 200).floor]] << p   # so a second Overture copy of it is caught too
     (by_name[nn] ||= []) << p
@@ -247,6 +257,29 @@ def tabc_name(n)
   return n unless n == n.upcase
   n.downcase.split(/(\s+|-|\/)/).map { |w| w =~ /\A(of|and|the|at|on|in|a)\z/ ? w : w.sub(/\A(\w)/) { Regexp.last_match(1).upcase } }.join
    .sub(/\A(\w)/) { Regexp.last_match(1).upcase }.gsub(/\b(Atx|Tx|Bbq|Usa)\b/, &:upcase).gsub(/'S\b/, "'s")
+end
+
+# Speakeasies (data/speakeasies.json): mark the place we have (similar name within 150 m) with how to find the door,
+# or add it as a bar. id `s` + 11 hex, src 'curated'.
+def merge_speakeasies!(places, list)
+  require 'digest'
+  st = Hash.new(0)
+  g = place_grid(places)
+  list.each do |s|
+    next st['no position'] += 1 unless s['lat'] && s['lng']
+    w1 = ->(n) { n.to_s.downcase.sub(/\Athe /, '')[/[a-z0-9']+/].to_s }   # "Kinfolk Lounge & Library" = "Kinfolk Cocktail Lounge & Spirits Library"
+    if (p = nearby(g, s['lat'], s['lng']).find { |x| same_place?(x, s['name'], s['lat'], s['lng']) ||
+                                                   (w1.(x['name']).size >= 5 && w1.(x['name']) == w1.(s['name']) && miles(x['lat'], x['lng'], s['lat'], s['lng']) * 1609.34 <= 80) })
+      p['speakeasy'] = s['how']; p['kind'] = 'bar' unless %w[bar pub club].include?(p['kind'])
+      next st['marked'] += 1
+    end
+    p = { 'id' => "s#{Digest::SHA1.hexdigest(s['name'] + s['addr'].to_s)[0, 11]}", 'name' => s['name'], 'kind' => 'bar', 'lat' => s['lat'].round(5),
+          'lng' => s['lng'].round(5), 'addr' => s['addr'], 'speakeasy' => s['how'], 'src' => 'curated' }
+    places[p['id']] = p
+    g[[(p['lat'] * 200).floor, (p['lng'] * 200).floor]] << p
+    st['added'] += 1
+  end
+  st
 end
 
 def merge_tabc!(places, lic, brands)
@@ -340,6 +373,7 @@ raw.each { |e| (p = place_of(e, brands)) ? places[p['id']] = p : (dropped += 1 i
 osm_n = places.size
 ov_stats = ovr ? merge_overture!(places, ovr['places'], brands) : nil
 tabc_stats = (t = (JSON.parse(File.read(TABC_FILE)) rescue nil)) ? merge_tabc!(places, t['licenses'], brands) : nil
+speak_stats = (sk = (JSON.parse(File.read(SPEAK_FILE)) rescue nil)) ? merge_speakeasies!(places, sk['speakeasies']) : nil
 list = places.values.sort_by { |p| p['name'].downcase }
 sources = ['OpenStreetMap contributors (ODbL)']
 sources << "Overture Maps Foundation (#{ovr['release']})" if ovr
@@ -352,6 +386,7 @@ puts "\n#{done}/#{tiles.size} tiles · #{list.size} places · #{with_hours} with
 puts list.group_by { |p| p['kind'] }.map { |k, v| "#{k} #{v.size}" }.sort.join(' · ')
 puts "#{list.count { |p| !p['chain'] }} local · #{list.count { |p| p['chain'] == 'texas' }} Texas chains · #{list.count { |p| p['chain'] == 'national' }} popular national chains kept · #{dropped} other national chains left out"
 puts "OpenStreetMap #{osm_n}" + (ov_stats ? " · Overture: #{ov_stats.map { |k, v| "#{k} #{v}" }.join(', ')}" : ' · no data/overture.json (run fetch_overture.py)') +
-     (tabc_stats ? " · TABC: #{tabc_stats.map { |k, v| "#{k} #{v}" }.join(', ')}" : '')
+     (tabc_stats ? " · TABC: #{tabc_stats.map { |k, v| "#{k} #{v}" }.join(', ')}" : '') +
+     (speak_stats ? " · speakeasies: #{speak_stats.map { |k, v| "#{k} #{v}" }.join(', ')}" : '')
 puts done < tiles.size ? 'Some tiles are missing: run again to finish.' : "Saved #{OUT}"
 end
