@@ -244,7 +244,8 @@ sights.each do |s|
   sc = [sc, 12].min if s['name'] =~ /, (Williamson County, |Austin, )?Texas\z|\A(Hyde Park|Arboretum|Harris Branch|Woodlawn|Clarksville Historic District) \(Austin/
   scores[s['id']] = [[sc.round, 100].min, 1].max
 end
-KIND_ADJ = { 'food hall' => 10, 'truck park' => 10, 'beer garden' => 6, 'club' => 6, 'food truck' => 2, 'fast food' => -6 }.freeze
+KIND_ADJ = { 'food hall' => 10, 'truck park' => 10, 'beer garden' => 6, 'club' => 6, 'music venue' => 6, 'comedy club' => 6, 'brewery' => 4,
+             'theater' => 4, 'cinema' => 2, 'food truck' => 2, 'fast food' => -6 }.freeze
 places.each do |p|
   n = norm(p['name'])
   sc = 14 + (KIND_ADJ[p['kind']] || 0)
@@ -256,6 +257,7 @@ places.each do |p|
   sc -= 14 if p['chain'] == 'national'   # every corner has one; they show up close in
   sc += 10 + lv.(p['id']) * 10 if title_of[p['id']]
   sc += 40 if ICONS.any? { |i| n == i || n.start_with?("#{i} ") }
+  sc += 6 if p['speakeasy']   # hand-picked from the city's best-of lists
   scores[p['id']] = [[sc.round, 100].min, 1].max
 end
 
