@@ -758,6 +758,7 @@ DATA_FILE = File.join(ROOT, 'data', 'app.json')
 DEMO_HANDLES = %w[nitro_nate cue_ball_cass aerial_ash mesquite_mo zilker_zoe slapshot_sam lowkey_lu riff_raff_rae]
 RESERVED = DEMO_HANDLES + %w[admin root support sidequest moderator help staff official]
 HANDLE_RE = /\A[a-z0-9_]{3,20}\z/
+HEALTH_FILE = File.join(__dir__, 'data', 'health.json')   # written by deploy/health.sh (cron, every 5 minutes)
 STORE = { lock: Mutex.new, d: (JSON.parse(File.read(DATA_FILE)) rescue nil) || {} }
 %w[users sessions rsvps groups members friends dms].each { |k| STORE[:d][k] ||= {} }
 %w[posts stories freqs reports feedback].each { |k| STORE[:d][k] ||= [] }
@@ -2226,6 +2227,7 @@ def mount_app(server)
                                  budget: SCOUT_BUDGET, daily_limit: SCOUT_DAILY, paused: !!d['scout_paused'],
                                  over_budget: (d['scout'] || {}).dig(Time.now.strftime('%Y-%m-%d'), 'usd').to_f >= SCOUT_BUDGET },
                         live: live_now.sort_by { |s| -s['started'] }, livekit: LIVEKIT,
+                        health: (JSON.parse(File.read(HEALTH_FILE)) rescue nil),   # deploy/health.sh, every 5 min on the server
                         live_stopped: (d['live_kills'] || {}).select { |_h, at| at > now_ms - LIVE_KILL_MS }.map { |hh, at| { h: hh, at: at } })
         end
       else
@@ -2235,10 +2237,13 @@ def mount_app(server)
           when 'remove'
             coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values,
                      'evchat' => (d['ev_chat'] || {}).values.flatten, 'wall' => d['wall'] || [],
-                     'gpost' => (d['gposts'] || {}).values.flatten, 'pic' => [] }[b['kind']] or raise 'bad kind'
+                     'gpost' => (d['gposts'] || {}).values.flatten, 'pic' => [], 'profile' => [] }[b['kind']] or raise 'bad kind'
             if b['kind'] == 'pic'
               u = d['users'][b['id']] or raise 'not found'
               u.delete('pic'); u.delete('pic_unreviewed'); File.delete(File.join(AVATAR_DIR, "#{b['id']}.jpg")) rescue nil
+            elsif b['kind'] == 'profile'   # held profile answers: cleared (their matching-only answers stay)
+              u = d['users'][b['id']] or raise 'not found'
+              u['public'] = {}; u['public_text'] = ''; u.delete('public_unreviewed'); u.delete('public_blocked')
             else
               (coll.find { |x| x['id'] == b['id'] } or raise 'not found')['removed'] = true
             end
@@ -2246,9 +2251,13 @@ def mount_app(server)
           when 'approve'
             coll = { 'post' => d['posts'], 'story' => d['stories'], 'group' => d['groups'].values,
                      'evchat' => (d['ev_chat'] || {}).values.flatten, 'wall' => d['wall'] || [],
-                     'gpost' => (d['gposts'] || {}).values.flatten, 'pic' => [] }[b['kind']] or raise 'bad kind'
-            b['kind'] == 'pic' ? (d['users'][b['id']] or raise 'not found').delete('pic_unreviewed')
-                               : (coll.find { |x| x['id'] == b['id'] } or raise 'not found').delete('unreviewed')
+                     'gpost' => (d['gposts'] || {}).values.flatten, 'pic' => [], 'profile' => [] }[b['kind']] or raise 'bad kind'
+            if %w[pic profile].include?(b['kind'])
+              u = d['users'][b['id']] or raise 'not found'
+              b['kind'] == 'pic' ? u.delete('pic_unreviewed') : (u.delete('public_unreviewed'); u.delete('public_blocked'))
+            else
+              (coll.find { |x| x['id'] == b['id'] } or raise 'not found').delete('unreviewed')
+            end
           when 'ban', 'unban'
             u = d['users'][b['h']] or raise 'no such user'
             u['banned'] = b['action'] == 'ban'

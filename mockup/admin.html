@@ -45,7 +45,10 @@ async function load(){
     const open = d.reports.filter(r=>r.status==='open');
     let g=null; try{ const r=await fetch('/api/admin/growth',{headers:{'X-Admin-Token':TOK}}); if(r.ok) g=await r.json(); }catch(e){}
     const max=g?Math.max(1,...g.dau):1;
-    $('#out').innerHTML = `<div class="stats">${Object.entries(d.stats).map(([k,v])=>`<div class="stat"><b>${v}</b><span class="meta">${k.replace('_',' ')}</span></div>`).join('')}</div>
+    const hp = d.health, hOld = hp && Date.now()/1000 - hp.at > 20*60;
+    $('#out').innerHTML = `${hp&&(hp.problems.length||hOld)?`<div class="card" style="border:1px solid #ff5d5d;background:rgba(255,93,93,.08)"><b>⚠️ Server health</b> · checked ${when(hp.at*1000)}${hOld?' (the check itself has stopped running)':''}
+        ${hp.problems.map(p=>`<div>${esc(p)}</div>`).join('')}</div>`:hp?`<p class="meta">✅ Server healthy · checked ${when(hp.at*1000)}</p>`:''}
+      <div class="stats">${Object.entries(d.stats).map(([k,v])=>`<div class="stat"><b>${v}</b><span class="meta">${k.replace('_',' ')}</span></div>`).join('')}</div>
       ${g?`<h2>📈 Growth (last 14 days)</h2>
       <div class="stats"><div class="stat"><b>${g.dau.at(-1)}</b><span class="meta">active today</span></div><div class="stat"><b>${g.wau}</b><span class="meta">active this week</span></div>
         <div class="stat"><b>${g.retention7==null?'–':g.retention7+'%'}</b><span class="meta">came back in week 2${g.cohort?` (of ${g.cohort})`:''}</span></div>
@@ -85,7 +88,9 @@ async function load(){
         ${act('Looks fine',{action:'approve',kind:'gpost',id:x.id},'good')}${act('Remove',{action:'remove',kind:'gpost',id:x.id},'bad')}${act('Ban @'+esc(x.u),{action:'ban',h:x.u},'bad')}</div>`).join('')}
       ${(d.unreviewed.pics||[]).map(x=>`<div class="card row"><div class="grow"><b>Profile picture</b> of @${esc(x.h)}<img src="/avatar/${encodeURIComponent(x.h)}.jpg?v=${encodeURIComponent(x.pic)}" alt=""></div>
         ${act('Looks fine',{action:'approve',kind:'pic',id:x.h},'good')}${act('Remove',{action:'remove',kind:'pic',id:x.h},'bad')}${act('Ban @'+esc(x.h),{action:'ban',h:x.h},'bad')}</div>`).join('')}
-      ${d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length+(d.unreviewed.evchat||[]).length+(d.unreviewed.wall||[]).length+(d.unreviewed.gposts||[]).length+(d.unreviewed.pics||[]).length?'':'<p class="meta">All clear.</p>'}
+      ${(d.unreviewed.profiles||[]).map(x=>`<div class="card row"><div class="grow"><b>Profile answers</b> of @${esc(x.h)} <span class="meta">(couldn't be checked; hidden from others until a re-check or you)</span><div>${esc(x.t)}</div></div>
+        ${act('Looks fine',{action:'approve',kind:'profile',id:x.h},'good')}${act('Clear them',{action:'remove',kind:'profile',id:x.h},'bad')}${act('Ban @'+esc(x.h),{action:'ban',h:x.h},'bad')}</div>`).join('')}
+      ${(d.unreviewed.profiles||[]).length+d.unreviewed.stories.length+d.unreviewed.posts.length+d.unreviewed.groups.length+(d.unreviewed.evchat||[]).length+(d.unreviewed.wall||[]).length+(d.unreviewed.gposts||[]).length+(d.unreviewed.pics||[]).length?'':'<p class="meta">All clear.</p>'}
       ${(d.photo_blocks||[]).length?`<h2>🛡️ Photos taken down automatically</h2>${d.photo_blocks.map(x=>`<div class="card"><b>${esc(x.kind)}</b> by @${esc(x.u)} · ${when(x.at)}<div class="meta">${esc(x.reason)}</div></div>`).join('')}`:''}
       <h2>🧭 Scout usage</h2>
       ${d.scout?`<div class="card row"><div class="grow"><b>${d.scout.paused?'Paused by you':d.scout.over_budget?"Paused: today's budget is used up":'Running'}</b>

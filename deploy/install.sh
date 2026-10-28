@@ -31,8 +31,9 @@ systemctl enable --now sidequest-events sidequest
 systemctl restart sidequest-events sidequest
 # Food & drink places from OpenStreetMap: first download now (resumable), then a fresh copy every Monday 4:30 AM.
 [ -f /opt/sidequest/app/data/places.json ] || su -s /bin/sh sidequest -c 'cd /opt/sidequest/app && ruby fetch_places.rb' || echo ">>> Places download incomplete; run it again later"
-( crontab -l 2>/dev/null | grep -v -e sidequest/deploy/backup.sh -e fetch_places.rb || true   # set -e: an empty list must not end the subshell
+( crontab -l 2>/dev/null | grep -v -e sidequest/deploy/backup.sh -e fetch_places.rb -e sidequest/deploy/health.py || true   # set -e: an empty list must not end the subshell
   echo "15 4 * * * /opt/sidequest/deploy/backup.sh"
+  echo "*/5 * * * * /usr/bin/python3 /opt/sidequest/deploy/health.py"
   echo "30 4 * * 1 su -s /bin/sh sidequest -c 'cd /opt/sidequest/app && ruby fetch_places.rb --fresh' >/var/log/sidequest-places.log 2>&1" ) | crontab -
 # Live video on this box (optional; the other choice is LiveKit Cloud, which needs nothing here).
 if grep -q '^SQ_LIVEKIT_SELFHOST=1' /etc/sidequest/env; then

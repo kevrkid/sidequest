@@ -812,7 +812,10 @@ spot zones, Scout finding tacos), back + swipe-back. **Stop the server and reset
 before and after test runs** (the server keeps data in memory and will overwrite file edits).
 
 Deployment kit: `deploy/` (systemd units, Caddyfile for `sidequest.cc.middlematter.com`,
-`install.sh`, `push.sh`, nightly `backup.sh`, `env.example`). Launch checklist: `mockup/LAUNCH.md`.
+`install.sh`, `push.sh`, nightly `backup.sh`, `env.example`). `backup.sh` (4:15 AM, 14 days in `/var/backups/sidequest`) takes the
+events database as a checked SQLite snapshot. `health.py` (cron every 5 min, root): restarts a service that stops answering for
+2 checks in a row, and flags the public site down, the scraper quiet 13 h+, disk 85%+, no backup in 26 h, places.json under 5,000;
+problems go to `journalctl -t sidequest-health` and `app/data/health.json`, shown as a banner on /admin (`--dry` = check only). Launch checklist: `mockup/LAUNCH.md`.
 
 ## Conventions and constraints
 
