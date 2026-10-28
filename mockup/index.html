@@ -939,6 +939,13 @@
   .ylist .yi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
   .ylist .grow{min-width:0} .ylist .meta{font-weight:600}
   .ylist .ic{width:16px;height:16px;color:#5d6690}
+  /* You → Profile / Personality / About you / Privacy open as their own page (no scrolling past the hub to find them) */
+  #v-me.editing .youhd,#v-me.editing #youStats,#v-me.editing #youList{display:none}
+  #meBack{display:flex;align-items:center;gap:10px;margin:2px 0 0}
+  #meBack button{font-weight:700;font-size:15px;color:var(--accent2);padding:8px 2px}
+  #v-me.editing #meTabs{position:sticky;top:0;z-index:5;margin-top:8px!important}
+  .ylist .ygroup{padding:10px 14px 2px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  #youAv,#meTitle{cursor:pointer}
   #app.v3 #v-me .seg button,#app.v3 #v-meet .seg button,#app.v3 #v-feed .seg button{font-size:12.5px;padding:9px 4px}
   .ic.up{transform:rotate(-90deg)}
   #app.v3 .tnhead{padding:20px 2px 9px;font-size:17px;letter-spacing:-.3px}
@@ -1188,6 +1195,7 @@
       <div id="youStats"></div>
       <div class="ylist" id="youList"></div>
       <div id="meEdit" hidden>
+      <div id="meBack"><button type="button" data-youhub>‹ <span data-t="You">You</span></button></div>
       <div class="seg" id="meTabs" style="margin:16px 0 14px"><button type="button" data-mesec="profile" class="on">👤 Profile</button><button type="button" data-mesec="personality">🧬 Personality</button>
         <button type="button" data-mesec="about">📝 About you</button><button type="button" data-mesec="settings">🔒 Privacy</button></div>
       <div data-mepane="profile">
@@ -1538,7 +1546,7 @@ S.coins ??= 50;
 S.lang ??= /^es/i.test(navigator.language||'') ? 'es' : 'en';
 const ES = {
   'Explore':'Explorar','Watch':'Ver','Groups':'Grupos','✨ Everyone':'✨ Todos','👥 Friends':'👥 Amigos','📍 Near me':'📍 Cerca de mí','On till':'Hasta las','In a chat':'En un chat','1 member':'1 miembro',"On friends' maps":'En el mapa de amigos','Sharing':'Compartiendo',"Ask who's free right now":'Pregunta quién está libre ahora','Show all {n}':'Ver los {n}','Tomorrow':'Mañana','Plan it':'Planéalo','Story':'Historia','Post':'Publicación','Hangout':'Quedada','Event':'Evento','Group':'Grupo','Go live':'Transmitir en vivo','A photo or video for 24 hours · tag the place, event, people':'Una foto o video por 24 horas · etiqueta el lugar, evento, gente','A photo or thought that stays on your profile':'Una foto o idea que se queda en tu perfil','"Who\'s down?" right now':'"¿Quién se apunta?" ahora mismo','Plan something later':'Planea algo para después','Start a community':'Empieza una comunidad','Stream from your phone':'Transmite desde tu teléfono','Happening':'Pasando','Posts':'Publicaciones','Chats are for friends':'Los chats son para amigos','Make a free account to message friends, start group chats and plan things together.':'Crea una cuenta gratis para escribir a tus amigos, abrir chats de grupo y hacer planes juntos.','Create account':'Crear cuenta','Share my location':'Compartir mi ubicación','Off':'Apagado','{n} spots':'{n} lugares','{n} streaming':'{n} en vivo','Events':'Eventos','time TBA':'hora por confirmar','With friends':'Con amigos','Tickets':'Entradas','Open near you':'Abierto cerca','Coming up':'Próximamente','Near {p}':'Cerca de {p}','This spot':'Este lugar','from you':'de ti','Hangout here':'Quedada aquí','Directions':'Cómo llegar','Today':'Hoy','Weekend':'Fin de semana','7 days':'7 días','30 days':'30 días','Messages':'Mensajes','Location sharing':'Compartir ubicación','On':'Activado','Ghost':'Fantasma','Edit profile':'Editar perfil',
-  'Settings & privacy':'Ajustes y privacidad','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
+  'Settings & privacy':'Ajustes y privacidad','Profile':'Perfil','About you':'Sobre ti','Privacy & account':'Privacidad y cuenta','{n} interests':'{n} intereses','Add interests':'Añade intereses','Take the quiz':'Haz el test','{n}-day streak':'racha de {n} días','{n} friends':'{n} amigos','Scout is picking…':'Scout está eligiendo…','Or tap the mic and just talk':'O toca el micrófono y habla','Create':'Crear','+ more':'+ más','Where should I get breakfast?':'¿Dónde desayuno?','Lunch spot near me?':'¿Dónde como cerca?','Plan my night':'Planea mi noche',
   'Something free to do tonight':'Algo gratis para hacer esta noche','Best happy hour near me?':'¿El mejor happy hour cerca?',"Where's good tacos open late?":'¿Dónde hay buenos tacos abiertos tarde?',
   'Plan my Saturday outdoors':'Planea mi sábado al aire libre','Live music this week?':'¿Música en vivo esta semana?','No chats yet':'Aún no hay chats','Meet people':'Conocer gente',
   'Wave at people in Meet: when they wave back you can chat. Or bring your friends.':'Saluda a gente en Conocer: cuando te devuelvan el saludo podrán chatear. O trae a tus amigos.',
@@ -4908,12 +4916,18 @@ function friendsHtml(){
 }
 
 let meSec='profile';
-function showMeSec(sec){   // the profile is split into four tabs; only one shows at a time
-  meSec=sec; $('#meEdit').hidden=false;   // V3: they sit behind You → Edit profile / Settings
+// The profile is split into four tabs; only one shows at a time. V3: each opens as its own page from the top of You
+// (Profile, Personality, About you, Privacy rows, or tapping your picture), with "‹ You" and the tabs on top.
+function showMeSec(sec){
+  const was=$('#v-me').classList.contains('editing');
+  meSec=sec; $('#meEdit').hidden=false; $('#v-me').classList.add('editing');
   document.querySelectorAll('#meTabs button').forEach(b=>b.classList.toggle('on',b.dataset.mesec===sec));
   document.querySelectorAll('[data-mepane]').forEach(p=>p.hidden=p.dataset.mepane!==sec);
   if(sec==='profile') renderFavs();
-  if(!$('#v-me').hidden&&$('#meEdit').offsetTop) $('#v-me').scrollTop=Math.min($('#v-me').scrollTop,$('#meEdit').offsetTop-8);
+  if(!$('#v-me').hidden&&!was) $('#v-me').scrollTop=0;
+}
+function youHub(){   // back to You's own page (the list)
+  $('#v-me').classList.remove('editing'); $('#meEdit').hidden=true; renderYou(); $('#v-me').scrollTop=0;
 }
 function renderMe(){
   $('#meTitle').textContent='@'+S.me.h; $('#privHandle').textContent='@'+S.me.h;
@@ -5354,6 +5368,7 @@ function closeTopOverlay(){
   if(!$('#scoutBg').hidden){ closeSheetBg($('#scoutBg')); return true; }
   const open=OVERLAYS.map(id=>$('#'+id)).filter(el=>el&&!el.hidden);
   if(!open.length){   // V3: then the map's popup, the chip's list, and a raised drawer, in that order
+    if(curTab==='me'&&$('#v-me').classList.contains('editing')){ youHub(); return true; }   // a profile page → You
     if(curTab==='home'&&map?._popup&&map.hasLayer(map._popup)){ map.closePopup(); return true; }
     if(curTab==='home'&&EXC.k){ exploreClear(); return true; }
     if(curTab==='home'&&DRW.at!=='peek'){ setDrawer('peek'); return true; }
@@ -6091,7 +6106,14 @@ function renderYou(){
   const fresh=!(v.coins||v.day_streak>0||(v.level||1)>1);
   $('#youStats').innerHTML = guest ? '' : (fresh?'':`<button data-ystat="quests">🏆 ${esc(T('Lv {n}',{n:v.level||1}))} · 🪙 ${v.coins||0} · 🔥 ${esc(T('{n}-day streak',{n:v.day_streak||0}))}</button>`)+`<button data-ystat="friends">👥 ${esc(T('{n} friends',{n:nFr}))}</button>`;
   const row=(attr,e,bg,l,meta='')=>`<button ${attr}><span class="yi" style="background:${bg}">${e}</span><span class="grow">${esc(l)}</span>${meta?`<span class="meta">${esc(String(meta))}</span>`:''}${svgI('chev')}</button>`;
+  const lifeDone=LIFE.filter(f=>hasVal(S.me.p?.[f.k])).length, nInt=(S.me.i||[]).length;
   $('#youList').innerHTML = [
+    // your profile first: each opens straight to its own page
+    row('data-yedit="profile"','👤','#64d2ff26',T('Profile'),nInt?T('{n} interests',{n:nInt}):T('Add interests')),
+    row('data-yedit="personality"','🧬','#bf5af226',T('Personality'),S.me.t?S.me.t:T('Take the quiz')),
+    row('data-yedit="about"','📝','#ff9f0a26',T('About you'),`${lifeDone}/${LIFE.length}`),
+    row('data-yedit="settings"','🔒','#30d15826',T('Privacy & account')),
+    `<div class="ygroup">${T('More')}</div>`,
     row('data-menu="plans"','📅','#ff9a3c26',T('My plans'),plans||''),
     row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
     guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
@@ -6099,21 +6121,19 @@ function renderYou(){
     row('data-yscout','🧭','#ff9f0a26',T('Scout'),scoutOn()?T(SC_PERSONAS[scoutPersona()][1]):T('Off')),
     row('data-yloc','📍','#30d15826',T('Location'),T({on:'On',off:'Off',blocked:'Blocked',ask:'Tap to turn on'}[locState()])),
     guest?'':row('data-yshare','📍','#2ec5ff26',T("On friends' maps"),fmOn()?T('Sharing'):T('Off')),
-    row('data-yedit="profile"','✏️','#ffffff14',T('Edit profile')),
-    row('data-yedit="settings"','🔒','#ffffff14',T('Settings & privacy')),
     row('data-ytheme','🌗','#bf5af226',T('Appearance'),T({light:'Light',dark:'Dark'}[S.theme]||'Auto')),
     row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-yshare],[data-yloc],[data-yscout],[data-ytheme],[data-fmgo],#glance');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-youhub],[data-yshare],[data-yloc],[data-yscout],[data-ytheme],[data-fmgo],#glance,#youAv,#meTitle');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create') return $('#createBg').hidden=false;
     if(k==='home') return curTab==='home' ? setDrawer(DRW.at==='peek'?'half':'peek') : tab('home', 'half');
     if(k==='me'&&!AUTHED&&location.protocol.startsWith('http')){ tab('me'); ONB.mode='signup'; ONB.step=1; return renderOnb(); }
     if(k==='meet'&&curTab!=='meet'){ meetTab='msgs'; DM.open=null; loadThreads().then(()=>{ if(curTab==='meet') renderMeet(); }); }
-    if(k==='me') $('#meEdit').hidden=true;   // You opens on the hub; Edit profile shows the rest
+    if(k==='me'){ youHub(); if(curTab==='me') return; }   // You opens on its list; tapping You on a profile page goes back to it
     if(k===curTab){ $('#v-'+k)?.scrollTo({top:0,behavior:'smooth'}); return; }
     return tab(k);
   }
@@ -6129,7 +6149,9 @@ document.addEventListener('click',e=>{
   if(d.sall){ SQ.all=d.sall; return renderSearch(); }
   if(d.ystat) return d.ystat==='friends' ? (meetTab='friends', tab('meet')) : openQuests();
   if(d.yfriends!==undefined){ meetTab='friends'; return tab('meet'); }
-  if(d.yedit){ showMeSec(d.yedit); return setTimeout(()=>$('#v-me').scrollTo({top:$('#meEdit').offsetTop-8,behavior:'smooth'}),60); }
+  if(d.yedit) return showMeSec(d.yedit);
+  if(d.youhub!==undefined) return youHub();
+  if(t.id==='youAv'||t.id==='meTitle'){ if(AUTHED||!location.protocol.startsWith('http')) showMeSec('profile'); return; }   // your picture / name → your profile
   if(d.ytheme!==undefined){ S.theme={auto:'light',light:'dark'}[S.theme||'auto']||'auto'; save(); applyTheme(); return renderYou(); }   // Auto → Light → Dark
   if(d.yshare!==undefined){ $('#placesBg').hidden=true; return openShareSheet(); }
   if(d.yscout!==undefined) return openLook();
@@ -7750,7 +7772,7 @@ function scoutPoint(id,label,hold){
   if(view==='home'&&$('#drawer main').contains($(sel))){ if(EXC.k) exploreClear(); if(DRW.at==='peek') setDrawer('half'); }
   setTimeout(()=>{
     const el=$(sel), pane=el?.closest('[data-mepane]'); if(pane?.hidden) showMeSec(pane.dataset.mepane);
-    if(el?.closest('#meEdit')&&$('#meEdit').hidden) $('#meEdit').hidden=false;   // V3: profile tabs sit behind Edit profile
+    if(el?.closest('#meEdit')&&$('#meEdit').hidden) showMeSec(meSec||'profile');   // V3: the profile pages open from You
     if(!el||!el.offsetParent) return;
     if(el.closest('.view,.sheet,.tnrail,.mapchips,#youList')&&!el.closest('.dhead')) el.scrollIntoView({block:'center',inline:'center',behavior:'smooth'});
     else { const mc=el.closest('.mapchips'); mc?.scrollTo({left:mc===el?0:Math.max(0,el.offsetLeft-mc.clientWidth/2+el.offsetWidth/2),behavior:'smooth'}); } scoutBeep();

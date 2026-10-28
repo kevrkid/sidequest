@@ -37,7 +37,7 @@ def wait_until(fn, secs=20):
 
 
 def me_sec(page, sec):
-    """The profile is split into tabs: profile, personality, about, settings (V3: behind You → Edit profile)."""
+    """The profile is split into tabs: profile, personality, about, settings (V3: pages opened from the top of You)."""
     if page.locator("#meTabs").is_hidden():
         page.click("#youList [data-yedit='profile']")
     if page.locator(f"[data-mepane='{sec}']").is_hidden():

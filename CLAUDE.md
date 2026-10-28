@@ -72,9 +72,13 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   - **Chats** = the old Meet screen (`#v-meet`), tabs Messages · Friends · Groups · Meet (swipe), Messages first
     (`meetTab='msgs'`); an open chat takes the whole drawer (`.inthread`). Dock badge = unread + friend requests.
   - **You** (`#v-me`, `renderYou`): picture, Online switch (`#presBtn` moved here), one level/coins/streak line and a
-    friends count (`#youStats`), a list (My plans, Saved, Quests & rewards, Invite, Location sharing, Edit profile,
-    Settings & privacy, Español; `data-menu` / `data-quick` / `data-yedit` / `data-yshare`). The old four profile tabs
-    sit in `#meEdit`, hidden until Edit profile / Settings (or any `showMeSec()`); the dock's You hides them again.
+    friends count (`#youStats`), a list that starts with your profile (2026-10-27: 👤 Profile · 🧬 Personality ·
+    📝 About you · 🔒 Privacy & account, `data-yedit="<pane>"`, each with a hint: interests, type or "Take the quiz",
+    n/39, then "More": My plans, Saved, Quests & rewards, Invite, Scout, Location, On friends' maps, Appearance, Español;
+    `data-menu` / `data-quick` / `data-yshare`). Each profile row (and tapping your picture `#youAv` or name `#meTitle`)
+    opens that pane as its own page: `showMeSec(sec)` adds `.editing` to `#v-me` (hides the header, stats and list),
+    shows `#meEdit` with "‹ You" (`#meBack`, `data-youhub`) and the four tabs sticky on top, scrolled to the top.
+    `youHub()` goes back: ‹ You, the back button / swipe (`closeTopOverlay`), or the dock's You.
     The name menu (`#meMenu`) is gone; `data-menu` still works anywhere.
   - **For you**: title + Happening | Posts (`#feedMode`, beside the title) + map/filter icons, one chip row (a 📅 chip cycles the time window,
     `data-fwhen`; `#feedWhen` is hidden), the meta line only when something narrows it, no live cards (the map's LIVE

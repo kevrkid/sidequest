@@ -74,10 +74,12 @@ Keep this file up to date when features change. Only describe things that exist 
 
 ## You (bottom bar)
 - Your picture and name, the Online/Offline switch, one line with your level, coins and day streak, your friend count,
-  then My plans, Saved, Quests & rewards, Invite friends, On friends' maps (Off = ghost mode, or Sharing with friends; also at
-  the top of the map's layers sheet; separate from Online, which is whether people see you as around), Edit profile, Settings & privacy, and Español. Edit profile opens four tabs: Profile,
-  Personality (quiz + astrology), About you, Privacy (location precision, delay, your data, blocked people, sign out,
-  delete account).
+  then your profile right at the top: 👤 Profile, 🧬 Personality, 📝 About you and 🔒 Privacy & account, each opening
+  straight to its own page (tapping your picture or name opens Profile; ‹ You or back returns). Under "More": My plans,
+  Saved, Quests & rewards, Invite friends, Scout, Location, On friends' maps (Off = ghost mode, or Sharing with friends;
+  also at the top of the map's layers sheet; separate from Online, which is whether people see you as around),
+  Appearance and Español. Privacy & account has location precision, delay, your data, blocked people, sign out and
+  delete account.
 - Online = friends and Meet see you as around and your location dot stays live; Offline = nobody sees you as active
   and the app stops using your location.
 
@@ -129,8 +131,8 @@ Keep this file up to date when features change. Only describe things that exist 
 - Video works on mobile data and with lots of viewers once the app's video relay is turned on.
 
 ## Me / profile
-- Tap You in the bottom bar, then Edit profile. Upload a photo or pick an emoji avatar and a color at
-  the top. Four tabs: 👤 Profile (what others see + interests),
+- Tap You in the bottom bar, then Profile (or your picture). Upload a photo or pick an emoji avatar and a color at
+  the top. Four pages, also tabs along the top of each: 👤 Profile (what others see + interests),
   🧬 Personality (quiz + astrology), 📝 About you (39 questions), 🔒 Privacy (location precision,
   broadcast delay, your data, blocked people, terms, sign out, delete account).
 - Interests; a 20-question personality quiz with 16 types; full astrology (birth date, optional
