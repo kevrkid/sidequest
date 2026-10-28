@@ -1393,6 +1393,18 @@ Object.entries(CATS).forEach(([k,v])=>{ if(!KINDS[k]) KINDS[k]=v; });   // flare
 const KIND_CAT = {pool:'games', hockey:'pickup', music:'live_music', outdoors:'outdoors', games:'games', chill:'community', food:'food_drink'};
 const catOfKind = k => CATS[k] ? k : KIND_CAT[k] || null;
 const catOf = p => catOfKind(p.k) || 'other';
+// Sports events show their sport (from the title), not the generic stadium; first match wins, so softball before baseball.
+const SPORT_E = [[/pickleball|ping ?pong|table tennis/,'🏓'], [/tennis/,'🎾'], [/softball/,'🥎'], [/baseball|round rock express|\bmlb\b/,'⚾'],
+  [/volleyball/,'🏐'], [/basketball|\bspurs\b|\bnba\b|wnba/,'🏀'], [/football|\bnfl\b/,'🏈'], [/soccer|socc|futsal|\bfc\b|\bmls\b|futbol|fútbol/,'⚽'],
+  [/hockey|texas stars/,'🏒'], [/rugby|gilgronis/,'🏉'], [/lacrosse/,'🥍'], [/cricket/,'🏏'], [/disc golf|frisbee/,'🥏'], [/golf/,'⛳'],
+  [/grand prix|formula|\bf1\b|nascar|indycar|motogp|racing|motocross/,'🏎️'], [/swim|diving/,'🏊'], [/equestrian|horse/,'🏇'],
+  [/rodeo|bull ?riding/,'🤠'], [/boxing|\bmma\b|\bufc\b|kickbox/,'🥊'], [/wrestl|sumo/,'🤼'], [/cycl|\bbike\b|criterium/,'🚴'],
+  [/\b\d+k\b|marathon|\brun\b|running|triathlon|track|cross country/,'🏃'], [/climb|boulder/,'🧗'], [/bowling/,'🎳'],
+  [/skate|roller derby/,'🛼'], [/yoga/,'🧘'], [/dance/,'💃'], [/badminton/,'🏸'], [/\b\d+ ?v ?\d+\b/,'⚽'],
+  [/sprint/,'🏃'], [/hike|ruck/,'🥾'], [/board game|board bash|euchre|game night/,'🎲'], [/esports|e-sports|pinball|smash bros/,'🎮']];
+const evE = e => { if(!e) return '🎫';
+  if(e.cat==='sports'||e.cat==='pickup'){ const t=String(e.title||'').toLowerCase(), m=SPORT_E.find(([re])=>re.test(t)); if(m) return m[1]; }
+  return CATS[e.cat]?.e||'🎫'; };
 const INTEREST_CATS = {'live shows':['live_music','comedy','theater'], music:['live_music'], concerts:['live_music'], blues:['live_music'],
   comedy:['comedy'], theater:['theater'], sports:['sports'], 'pickup games':['pickup'], hockey:['sports','pickup'], soccer:['pickup','sports'],
   basketball:['pickup','sports'], pickleball:['pickup'], running:['pickup','outdoors'], climbing:['outdoors','pickup'], swimming:['outdoors'],
@@ -2597,7 +2609,7 @@ function addToCalendar(id){ const e=EV.byId[id]; if(!e) return;
 function eventCard(e, r=[]){
   const mine=myRsvp(e.id), go=goingList(e), link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null;
   return `<div class="card evcard" data-evopen="${e.id}">
-    <div class="row" style="align-items:flex-start"><span class="cat thumb"${e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span><div class="grow"><b style="font-size:15px">${esc(e.title)}</b>
+    <div class="row" style="align-items:flex-start"><span class="cat thumb"${e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${evE(e)}</span><div class="grow"><b style="font-size:15px">${esc(e.title)}</b>
       <div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.city&&e.city!=='Austin'?', '+esc(e.city):''}${e.price?' · '+esc(e.price):''}</div></div></div>
     ${r.length?`<div class="meta" style="margin-top:8px;color:#cfd5f5">✨ ${esc(r.slice(0,3).join(' · '))}</div>`:''}
     <div class="row" style="margin-top:10px"><div class="downs grow">${go.slice(0,4).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:${go.length?8:0}px">${go.length?`${go.length} going`:CATS[e.cat].l}</span></div>
@@ -2631,7 +2643,7 @@ function renderFeed(){
     ?`<div class="kicker" style="margin-top:4px">🏘️ A group you might like</div>${groupCard(x.it,false)}`:liveCard(x.it);
   $('#feedStories').innerHTML = !feedQ&&!feedFocus&&FEED_MODE.m==='foryou' ? storyRail() : '';   // stories first, Instagram-style
   $('#feedList').innerHTML = (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
-      ${plans.slice(0,4).map(e=>`<div class="row" style="margin:6px 0"><span>${CATS[e.cat].e}</span><span class="grow"><b>${esc(e.title)}</b> <span class="meta">${fmtWhen(e.ts,e.tba)}</span></span>
+      ${plans.slice(0,4).map(e=>`<div class="row" style="margin:6px 0"><span>${evE(e)}</span><span class="grow"><b>${esc(e.title)}</b> <span class="meta">${fmtWhen(e.ts,e.tba)}</span></span>
       ${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')}</div>`:'')
     + items.slice(0,feedN).map((x,i)=>card(x)+(i%4===2&&WL.top[(i-2)/4]&&!feedQ&&!feedFocus?wallCard(WL.top[(i-2)/4]):'')).join('')
     + (items.length>feedN?`<button class="btn" data-fmore style="width:100%;margin-bottom:12px">Show more (${items.length-feedN})</button>`:'')
@@ -3424,7 +3436,7 @@ function showPlacesOnMap(){
 /* ---------- Plans: your schedule (events you're going to) + itineraries Scout builds, saved to your account ---------- */
 // A stop points at an event, flare or place; events and flares are looked up live so times and spots stay current.
 function planStop(it){
-  if(it.kind==='event'){ const e=EV.byId[it.ref]; return {e:e?CATS[e.cat]?.e||'🎫':'🎫', name:e?.title||it.name, where:e?.venue, ll:e?.lat?[e.lat,e.lng]:null, map:()=>focusOnMap(it.ref)}; }
+  if(it.kind==='event'){ const e=EV.byId[it.ref]; return {e:e?evE(e):'🎫', name:e?.title||it.name, where:e?.venue, ll:e?.lat?[e.lat,e.lng]:null, map:()=>focusOnMap(it.ref)}; }
   if(it.kind==='flare'){ const p=allPings().find(x=>x.id===it.ref); return {e:'📍', name:p?.t||it.name, where:p&&where(p), ll:p&&p.v?pos(p):null, map:()=>focusOnMap(it.ref)}; }
   if(it.kind==='place'){ const k=PL.byId[it.ref]?.[2]; return {e:PLACE_E[k]||'🍽️', name:it.name, ll:it.lat!=null?[it.lat,it.lng]:null, map:()=>{ tab('map'); focusPlace(it.ref); }}; }
   return {e:'📝', name:it.name||it.note, ll:null};
@@ -3478,7 +3490,7 @@ function openPlans(){
     <label class="lbl" style="margin-top:16px">${T('Saved itineraries')}</label>
     ${saved.length?saved.map(p=>planCard(p,{key:p.id, del:p.id})).join(''):`<p class="meta">${T('None yet. Ask Scout to plan something, then tap Save.')}</p>`}
     <label class="lbl" style="margin-top:16px">${T('Going to')}</label>
-    ${going.length?going.map(e=>`<div class="pstop"><span class="ptime">${esc(fmtWhen(e.ts,e.tba))}</span><span class="pdot thumb"${e.geo_precise&&e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng}):''}>${CATS[e.cat]?.e||'🎫'}</span>
+    ${going.length?going.map(e=>`<div class="pstop"><span class="ptime">${esc(fmtWhen(e.ts,e.tba))}</span><span class="pdot thumb"${e.geo_precise&&e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng}):''}>${evE(e)}</span>
         <div class="grow"><b>${esc(e.title)}</b>${e.venue?`<div class="meta">${esc(e.venue)}</div>`:''}</div>${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')
       :`<p class="meta">${T('Nothing yet. Tap "I\'m going" on an event and it shows up here.')}</p>`}
     <button class="btn" style="margin-top:16px;width:100%" data-quick="favs">❤️ ${T('My favorites')} ${(SV.v2?.saves||[]).length?`(${SV.v2.saves.length})`:''}</button>`;
@@ -3606,7 +3618,7 @@ const storyLiked = st => st.liked ?? S.likedStories?.includes(st.id);
 const storyLikes = st => (typeof st.likes==='number' ? st.likes : 0) + (st.liked===undefined&&storyLiked(st) ? 1 : 0);
 function reelItem(st, k){
   const e=st.event&&EV.byId[st.event], mins=Math.max(1,Math.round((Date.now()-st.created)/M)), img=safeImg(st.img), vid=safeVid(st.vid);
-  const tags=[...(e?[`<button data-stev="${e.id}">${CATS[e.cat].e} ${esc(e.title.slice(0,34))}</button>`]:[]),
+  const tags=[...(e?[`<button data-stev="${e.id}">${evE(e)} ${esc(e.title.slice(0,34))}</button>`]:[]),
     ...(st.groups||[]).map(groupOf).filter(Boolean).map(g=>`<button data-stgroup="${g.id}">${esc(g.e||'🏘️')} ${esc(g.n)}</button>`),
     ...(st.people||[]).map(h=>`<button data-stperson="${esc(h)}">@${esc(h)}</button>`)];
   const liked=storyLiked(st), n=storyLikes(st), mine=st.u===S.me.h;
@@ -3694,7 +3706,7 @@ function spotsNow(){   // events on now (or starting within the hour) close by: 
   const now=Date.now();
   return EV.list.filter(e=>e.lat&&e.venue&&e.ts<now+36e5&&(e.te||e.ts+3*36e5)>now&&km(ME_POS,[e.lat,e.lng])<2)
     .sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).filter((e,i,a)=>a.findIndex(y=>y.venue===e.venue)===i).slice(0,4)   // one row per venue
-    .map(e=>({name:e.venue,lat:e.lat,lng:e.lng,e:CATS[e.cat]?.e||'🎉',kind:e.title.slice(0,40),addr:'',event:e.id,km:km(ME_POS,[e.lat,e.lng])}));
+    .map(e=>({name:e.venue,lat:e.lat,lng:e.lng,e:evE(e),kind:e.title.slice(0,40),addr:'',event:e.id,km:km(ME_POS,[e.lat,e.lng])}));
 }
 function openPlacePicker(cur, cb, opt={}){
   Object.assign(PP,{cb, cur, q:'', res:[], busy:false, any:null, photo:opt.photo||null, noLoc:false});
@@ -3840,7 +3852,7 @@ function openSpot(x, looked){
     <h3>📸 Stories here <span class="meta">· last 24 hours</span></h3>
     ${st.length?`<div class="spgrid">${st.map(tile).join('')}</div>`:'<p class="meta">No stories here yet today. Be the first.</p>'}
     ${fl.length?`<h3>📣 Hangouts here</h3>${fl.map(p=>`<button class="pprow" data-spping="${esc(p.id)}"><span class="ppe">${KINDS[p.k]?.e||'📣'}</span><span class="grow"><b>${esc(p.t)}</b><small>@${esc(p.u)} · ${p.start<=now?'happening now':'at '+clock(p.start)} · ${p.downs.length} down</small></span></button>`).join('')}`:''}
-    ${ev.length?`<h3>🎟️ Coming up here</h3>${ev.map(e=>`<button class="pprow" data-spev="${esc(e.id)}"><span class="ppe">${CATS[e.cat]?.e||'🎉'}</span><span class="grow"><b>${esc(e.title)}</b><small>${esc(fmtWhen(e.ts))}</small></span></button>`).join('')}`:''}`;
+    ${ev.length?`<h3>🎟️ Coming up here</h3>${ev.map(e=>`<button class="pprow" data-spev="${esc(e.id)}"><span class="ppe">${evE(e)}</span><span class="grow"><b>${esc(e.title)}</b><small>${esc(fmtWhen(e.ts))}</small></span></button>`).join('')}`:''}`;
   if(!looked){ $('#spotBg').hidden=false; $('#spotSheet').scrollTop=0; track('spot_open'); }
 }
 // The place a story, flare or stream was tagged with, as a spot.
@@ -3994,8 +4006,8 @@ const SC = {};
 function openStoryComposer(preset={}){
   if(SC.vidUrl) URL.revokeObjectURL(SC.vidUrl);
   Object.assign(SC,{img:null,imgOrig:null,layers:[],vid:null,vidUrl:'',bg:0,emoji:'✨',cap:'',event:'',place:null,groups:[],people:[],where:'near',vis:'everyone',q:'',poll:null},preset);
-  if(SC.event){ SC.where='event'; SC.emoji=CATS[EV.byId[SC.event]?.cat]?.e||'✨'; }
-  if(SC.event&&!SC.place){ const e=EV.byId[SC.event]; if(e?.lat&&e.venue) SC.place={name:e.venue,lat:e.lat,lng:e.lng,e:CATS[e.cat]?.e||'🎉',kind:'Event venue'}; }
+  if(SC.event){ SC.where='event'; SC.emoji=evE(EV.byId[SC.event]); }
+  if(SC.event&&!SC.place){ const e=EV.byId[SC.event]; if(e?.lat&&e.venue) SC.place={name:e.venue,lat:e.lat,lng:e.lng,e:evE(e),kind:'Event venue'}; }
   SC.photoSpots=[]; renderStorySheet(); $('#storyBg').hidden=false;
   freshFix().then(()=>spotsNear()).then(()=>refreshLoc('sc'));   // suggestions from where you are now
 }
@@ -4022,7 +4034,7 @@ function renderStorySheet(){
     ${SC.vid?'<p class="meta" style="text-align:center;margin:6px 0 0">🎬 Video · up to 60 seconds</p>':''}
     <input id="scCap" maxlength="140" placeholder="Say something…" value="${esc(SC.cap)}" style="margin-top:10px" autocomplete="off">
     <label class="lbl">📍 Tag an event</label><select id="scEvent"><option value="">No event</option>${evs.map(e=>
-      `<option value="${e.id}" ${SC.event===e.id?'selected':''}>${CATS[e.cat].e} ${esc(e.title.slice(0,40))}${e.venue?' · '+esc(e.venue):''}</option>`).join('')}</select>
+      `<option value="${e.id}" ${SC.event===e.id?'selected':''}>${evE(e)} ${esc(e.title.slice(0,40))}${e.venue?' · '+esc(e.venue):''}</option>`).join('')}</select>
     <label class="lbl">📍 Where was this?</label><div id="loc-sc">${locFieldHtml('sc')}</div>
     <label class="lbl">📊 ${T('Poll sticker')}</label>${SC.poll?`<div class="scpoll"><input id="scPollQ" maxlength="80" placeholder="${T('Ask something, e.g. Who’s coming?')}" value="${esc(SC.poll.q)}" autocomplete="off">
       <div class="row" style="gap:6px"><input id="scPollA" maxlength="24" value="${esc(SC.poll.opts[0])}" autocomplete="off"><input id="scPollB" maxlength="24" value="${esc(SC.poll.opts[1])}" autocomplete="off"></div>
@@ -4274,7 +4286,7 @@ function deckCard(x, cls){
       ${(()=>{ const ac=S.me.astro&&astroCompat(myChart(),chartOf(u)); return ac?`<div class="meta" style="margin-top:8px">✨ ${ac.pct}% astro match · ${ac.rows.map(r=>r.e+' '+r.name).slice(0,3).join(' · ')}</div>`:''; })()}
       <button class="btn sm" data-profile="${esc(u.h)}" style="margin-top:12px">View full profile & compatibility</button>`; }
   if(x.k==='event'){ const e=x.it, go=goingList(e), link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null;
-    hero=`<div class="mhero" style="background:${secBg(e.cat)}"><span style="font-size:76px;filter:drop-shadow(0 6px 14px #0006)">${CATS[e.cat].e}</span>${badge}<span class="mpct">${x.pct}% for you</span></div>`;
+    hero=`<div class="mhero" style="background:${secBg(e.cat)}"><span style="font-size:76px;filter:drop-shadow(0 6px 14px #0006)">${evE(e)}</span>${badge}<span class="mpct">${x.pct}% for you</span></div>`;
     body=`<b style="font-size:20px;line-height:1.25">${esc(e.title)}</b><div class="meta" style="margin-top:4px">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.city&&e.city!=='Austin'?', '+esc(e.city):''}${e.price?' · '+esc(e.price):''}</div>
       ${why(x.r)}<div class="row" style="margin-top:10px"><div class="downs grow">${go.slice(0,5).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:8px">${go.length?go.length+' going':CATS[e.cat].l}</span></div>
       ${link?`<a class="btn sm" href="${esc(link)}" target="_blank" rel="noopener">Info ↗</a>`:''}</div>`; }
@@ -4618,7 +4630,7 @@ document.addEventListener('input',e=>{ const id=e.target.id; if(!SC.poll) return
   if(id==='scPollQ') SC.poll.q=e.target.value; if(id==='scPollA') SC.poll.opts[0]=e.target.value; if(id==='scPollB') SC.poll.opts[1]=e.target.value; });
 document.addEventListener('click',e=>{   // 💬 Send on an event, a story or a place page
   const b=e.target.closest('[data-evsend],[data-stsend],[data-spsend]'); if(!b) return; const d=b.dataset;
-  if(d.evsend){ const ev=EV.byId[d.evsend]; if(ev) sendToChat({k:'event',id:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:CATS[ev.cat]?.e||'🎟️'}); }
+  if(d.evsend){ const ev=EV.byId[d.evsend]; if(ev) sendToChat({k:'event',id:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:evE(ev)}); }
   else if(d.stsend!==undefined){ const st=SVW.list[+d.stsend]; if(st) sendToChat({k:'story',id:st.id,name:`@${st.u}'s story`,sub:(st.caption||storyPlace(st)||'').slice(0,80),e:'📸',...(safeImg(st.img)?{img:safeImg(st.img)}:{})}); }
   else if(d.spsend!==undefined&&SPOT.x){ const x=SPOT.x; sendToChat({k:'place',id:x.id||'',name:x.name,sub:x.kind||x.addr||'',e:x.e||'📍',lat:x.lat,lng:x.lng}); }
 });
@@ -4683,7 +4695,7 @@ function renderPlanSheet(){
     <label class="lbl">${T('Options to vote on')}</label>
     ${PLN.opts.map((o,i)=>`<div class="pprow" style="cursor:default"><span class="ppe">${esc(o.e||'💡')}</span><span class="grow"><b>${esc(o.name)}</b>${o.sub?`<small>${esc(o.sub)}</small>`:''}</span><button class="btn sm" data-plrm="${i}">✕</button></div>`).join('')}
     ${PLN.adding==='idea'?`<div class="row" style="gap:6px;margin-top:6px"><input id="plIdea" maxlength="80" placeholder="${T('e.g. Tacos then karaoke')}" autocomplete="off"><button class="btn sm primary" data-pladdidea>${T('Add')}</button></div>`
-      :PLN.adding==='event'?`<input id="plEvQ" placeholder="${T('Search events…')}" autocomplete="off" style="margin-top:6px">${evs.map(e=>`<button class="pprow" data-pladdev="${esc(e.id)}"><span class="ppe">${CATS[e.cat]?.e||'🎟️'}</span><span class="grow"><b>${esc(e.title)}</b><small>${esc([fmtWhen(e.ts),e.venue].filter(Boolean).join(' · '))}</small></span></button>`).join('')}`:''}
+      :PLN.adding==='event'?`<input id="plEvQ" placeholder="${T('Search events…')}" autocomplete="off" style="margin-top:6px">${evs.map(e=>`<button class="pprow" data-pladdev="${esc(e.id)}"><span class="ppe">${evE(e)}</span><span class="grow"><b>${esc(e.title)}</b><small>${esc([fmtWhen(e.ts),e.venue].filter(Boolean).join(' · '))}</small></span></button>`).join('')}`:''}
     ${PLN.opts.length<6?`<div class="btns" style="margin-top:6px"><button class="btn sm" data-pladd="event">🎟️ ${T('Event')}</button><button class="btn sm" data-pladd="place">📍 ${T('Place')}</button><button class="btn sm" data-pladd="idea">💡 ${T('Idea')}</button></div>`:''}
     <label class="lbl">${T('When? (optional, people vote on these too)')}</label>
     ${PLN.times.map((t,i)=>`<input type="datetime-local" data-pltime="${i}" value="${esc(t)}" style="margin-bottom:6px">`).join('')}
@@ -4735,7 +4747,7 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('#chatSheet [data-pladd],#chatSheet [data-plrm],#chatSheet [data-pladdidea],#chatSheet [data-pladdev],#chatSheet [data-pladdtime],#chatSheet [data-plpick],#chatSheet [data-plcreate],#planCard button,[data-dmplan],[data-evplan],[data-spplan]');
   if(!b) return; const d=b.dataset; e.stopPropagation();
   if(d.dmplan!==undefined) return openPlanSheet();
-  if(d.evplan){ const ev=EV.byId[d.evplan]; return ev&&openPlanSheet({k:'event',ref:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:CATS[ev.cat]?.e||'🎟️',at:ev.ts,lat:ev.lat,lng:ev.lng}); }
+  if(d.evplan){ const ev=EV.byId[d.evplan]; return ev&&openPlanSheet({k:'event',ref:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:evE(ev),at:ev.ts,lat:ev.lat,lng:ev.lng}); }
   if(d.spplan!==undefined&&SPOT.x){ const x=SPOT.x; $('#spotBg').hidden=true; return openPlanSheet({k:'place',ref:x.id||'',name:x.name,sub:x.kind||x.addr||'',e:x.e||'📍',lat:x.lat,lng:x.lng}); }
   if(b.closest('#planCard')){
     if(d.plvote){ const [k,v]=d.plvote.split('|'); return planAct(k==='t'?{do:'vote',time:+v}:{do:'vote',opt:v}); }
@@ -4753,7 +4765,7 @@ document.addEventListener('click',async e=>{
   if(d.pladd){ PLN.adding=PLN.adding===d.pladd?'':d.pladd; return renderPlanSheet(); }
   if(d.plrm!==undefined){ PLN.opts.splice(+d.plrm,1); return renderPlanSheet(); }
   if(d.pladdidea!==undefined){ const v=($('#plIdea')?.value||'').trim(); if(v) PLN.opts.push({k:'idea',name:v.slice(0,80),e:'💡'}); PLN.adding=''; return renderPlanSheet(); }
-  if(d.pladdev){ const ev=EV.byId[d.pladdev]; if(ev) PLN.opts.push({k:'event',ref:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:CATS[ev.cat]?.e||'🎟️',at:ev.ts,lat:ev.lat,lng:ev.lng}); PLN.adding=''; return renderPlanSheet(); }
+  if(d.pladdev){ const ev=EV.byId[d.pladdev]; if(ev) PLN.opts.push({k:'event',ref:ev.id,name:ev.title.slice(0,80),sub:[fmtWhen(ev.ts),ev.venue].filter(Boolean).join(' · ').slice(0,80),e:evE(ev),at:ev.ts,lat:ev.lat,lng:ev.lng}); PLN.adding=''; return renderPlanSheet(); }
   if(d.pladdtime!==undefined){ PLN.times.push(''); return renderPlanSheet(); }
   if(d.plpick){ PLN.pick=PLN.pick.includes(d.plpick)?PLN.pick.filter(x=>x!==d.plpick):[...PLN.pick,d.plpick]; return renderPlanSheet(); }
   if(d.plcreate!==undefined){ if(!PLN.title.trim()) return toast('Name the plan first, e.g. Saturday night.','orange');
@@ -5303,7 +5315,7 @@ function renderEventPins(){
   const keep=spaced(all,mapFilter==='feed'?0:z>=17?0:z>=16?22:z>=14?30:38,'events'), names=[];
   keep.forEach(({e,ll,more,rank:rk})=>{
     const going=myRsvp(e.id)==='going';
-    const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ev ${going?'going':''}"><i>${CATS[e.cat].e}</i>${more>1?`<b class="more">+${more}</b>`:''}</div>`,
+    const m=L.marker(ll,{icon:L.divIcon({className:'',html:`<div class="pin ev ${going?'going':''}"><i>${evE(e)}</i>${more>1?`<b class="more">+${more}</b>`:''}</div>`,
       iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-28]})}).addTo(evLayer);
     m.bindPopup(()=>`${/^https:\/\//.test(e.image||'')?`<div class="popimg" style="background-image:url('${esc(evImg(e.image))}')"></div>`:''}<b class="poptitle">${esc(e.title)}</b><div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.price?' · '+esc(e.price):''}</div>
       ${e.geo_precise?'':'<div class="meta">📍 Approximate (city-level) location</div>'}<div id="evph_${e.id}"></div>
@@ -5677,7 +5689,7 @@ function renderHome(){
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
   $('#homeNext').innerHTML = next ? (()=>{ const mins=Math.round((next.ts-Date.now())/6e4), fr=goingList(next).filter(isFriend);
       const when=next.tba?fmtWhen(next.ts,true):mins<=0?T('On now'):mins<60?T('in {n} min',{n:mins}):mins<24*60?T('in {n} h',{n:Math.round(mins/60)}):fmtWhen(next.ts,next.tba);
-      return `<div class="next upnext" data-evopen="${next.id}"><span style="font-size:20px">${CATS[next.cat].e}</span><div class="grow"><div class="meta">${T('Up next')} · <b style="color:var(--accent)">${esc(when)}</b></div><b>${esc(next.title)}</b>
+      return `<div class="next upnext" data-evopen="${next.id}"><span style="font-size:20px">${evE(next)}</span><div class="grow"><div class="meta">${T('Up next')} · <b style="color:var(--accent)">${esc(when)}</b></div><b>${esc(next.title)}</b>
       <div class="meta">${next.venue?esc(next.venue):''}${fr.length?` · 👥 ${esc(fr.slice(0,2).map(x=>'@'+x).join(', '))}${fr.length>2?' +'+(fr.length-2):''}`:''}</div></div>
       ${next.geo_precise?`<a class="btn sm" href="${mapsUrl(next.lat,next.lng)}" target="_blank" rel="noopener">${T('Go')} ↗</a>`:next.lat?`<button class="btn sm" data-map="${next.id}">Map</button>`:''}</div>`; })() : '';
 }
@@ -5724,7 +5736,7 @@ function weekendRail(){
   const from=midweek?day0+(5-dow)*864e5:day0+864e5, to=from+(midweek?3:7)*864e5;
   const L=EV.list.filter(e=>e.ts>=from&&e.ts<to&&e.lat&&km(ME_POS,[e.lat,e.lng])<40).map(e=>({e,s:scoreEvent(e,aff,{}).s})).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.e);
   return L.length ? `<div class="tnhead"><b>📅 ${T(dow>=1&&dow<=4?'This weekend':'Coming up')}</b><button class="linkbtn" data-excat="events" data-exsubgo="${dow>=1&&dow<=4?'weekend':'week'}">${T('See all')} ›</button></div><div class="tnrail">${L.map(e=>
-    `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:''}>${CATS[e.cat]?.e||'🎫'}</span><span class="tnt"><b>${esc(e.title)}</b><span class="meta">${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}</span></span></button>`).join('')}</div>` : '';
+    `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:''}>${evE(e)}</span><span class="tnt"><b>${esc(e.title)}</b><span class="meta">${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}</span></span></button>`).join('')}</div>` : '';
 }
 function happyRail(){
   const L=(HH.list||[]).filter(p=>p.happy?.now).slice(0,10);
@@ -5837,7 +5849,7 @@ async function renderExCat(fresh){
     const list=EV.list.filter(x=>x.te>now&&x.ts<until&&x.lat).map(x=>({x, s:scoreEvent(x,aff,{})?.s ?? 0, d:km(ME_POS,[x.lat,x.lng])})).filter(x=>x.d<60)
       .sort((a,b)=>EXC.sub==='tonight'?a.d-b.d:a.x.ts-b.x.ts||b.s-a.s).slice(0,60);
     el.innerHTML = head + (list.map(({x,d})=>{ const fr=goingList(x).filter(isFriend).length;
-      return xrow({go:`evmap|${x.id}`, e:CATS[x.cat]?.e||'🎫', th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
+      return xrow({go:`evmap|${x.id}`, e:evE(x), th:/^https:\/\//.test(x.image||'')?` style="background-image:url('${esc(evImg(x.image))}')"`:'', title:x.title,
         sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}${fr?` · 👥 ${fr}`:''}`, d:fmtMi(d)}); }).join('') || `<p class="xempty">${T('Nothing listed for then yet.')}</p>`);
     exAfter(el, list.map(({x})=>[x.lat,x.lng]), fresh); return;
   }
@@ -5929,7 +5941,7 @@ function renderSearch(){
   const seenP=new Set(); places.sort((a,b)=>a.ws-b.ws||a.k-b.k);
   places.splice(0, places.length, ...places.filter(x=>{ const key=fold(x.title)+'|'+Math.round(x.k*5); if(seenP.has(key)) return false; seenP.add(key); return true; }));   // the same place listed twice (OSM has duplicates)
   places.forEach(x=>x.d=fmtMi(x.k));
-  EV.list.forEach(x=>{ if(x.te>Date.now()&&hit(x.title,x.venue||'',CATS[x.cat]?.l||'',x.genre||'')) evs.push({go:`ev|${x.id}`, e:CATS[x.cat]?.e||'🎫', title:x.title, sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}`, ts:x.ts}); });
+  EV.list.forEach(x=>{ if(x.te>Date.now()&&hit(x.title,x.venue||'',CATS[x.cat]?.l||'',x.genre||'')) evs.push({go:`ev|${x.id}`, e:evE(x), title:x.title, sub:`${esc(fmtWhen(x.ts,x.tba))}${x.venue?' · '+esc(x.venue):''}`, ts:x.ts}); });
   evs.sort((a,b)=>a.ts-b.ts);
   people().forEach(u=>{ if(u.h!==S.me.h&&hit(u.h,(u.i||[]).join(' '))) ppl.push({go:`u|${u.h}`, e:av(u.h), title:'@'+u.h, sub:esc((u.i||[]).slice(0,3).join(' · '))}); });
   allGroups().forEach(g=>{ if(hit(g.n,g.d||'',CATS[g.cat]?.l||'')) grps.push({go:`g|${g.id}`, e:esc(g.e||'🏘️'), title:g.n, sub:gCount(g)===1?T('1 member'):`${gCount(g)} ${T('members')}`}); });
@@ -6062,8 +6074,8 @@ async function renderFind(el, seq, fresh){
   let rows='', pins=[];
   if(r.ev){
     rows=r.list.map(e=>{ const s=evSound(e).map(g=>SF_MUSIC.find(x=>x[0]===g)).filter(Boolean).slice(0,2).map(([,em,l])=>`${em} ${T(l)}`).join(' · ');
-      pins.push({ll:[e.lat,e.lng], e:CATS[e.cat]?.e||'🎫', go:`evmap|${e.id}`});
-      return xrow({go:`evmap|${e.id}`, e:CATS[e.cat]?.e||'🎫', th:/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:'', title:e.title,
+      pins.push({ll:[e.lat,e.lng], e:evE(e), go:`evmap|${e.id}`});
+      return xrow({go:`evmap|${e.id}`, e:evE(e), th:/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:'', title:e.title,
         sub:`${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}${s?` · <span class="sfsound">${esc(s)}</span>`:''}${isFree(e)?` · <b style="color:var(--good)">${T('Free')}</b>`:''}`, d:fmtMi(km(ME_POS,[e.lat,e.lng]))}); }).join('');
   } else if(r.list){
     const tonight=new Date().setHours(28,0,0,0), on={};   // what's on at each place tonight: what's playing, the night's theme
@@ -6073,7 +6085,7 @@ async function renderFind(el, seq, fresh){
       const th=SF_THEME.filter(([k,,l])=>k!=='trucks'&&plTheme(p,k)&&l.toLowerCase()!==p[2]).map(([,em,l])=>`${em} ${T(l)}`)[0];
       pins.push({ll:[p[3],p[4]], e:placeE(p[2],p[1]), go:`pl|${p[0]}`});
       return xrow({go:`pl|${p[0]}`, e:placeE(p[2],p[1]), th:thumbAttr({id:p[0]}), title:p[1],
-        sub:`<span class="pst ${st}" style="font-size:11px;padding:1px 7px">${esc(T({open:'Open',soon:'Opens soon',closed:'Closed',unknown:'Hours unknown'}[st]))}</span> ${esc([T(p[2]||''),th].filter(Boolean).join(' · '))}${e?`<br><span class="sfsound">${s||CATS[e.cat]?.e||'🎫'} ${esc(T('Tonight'))}: ${esc(e.title)}</span>`:''}`, d:fmtMi(d)}); }).join('');
+        sub:`<span class="pst ${st}" style="font-size:11px;padding:1px 7px">${esc(T({open:'Open',soon:'Opens soon',closed:'Closed',unknown:'Hours unknown'}[st]))}</span> ${esc([T(p[2]||''),th].filter(Boolean).join(' · '))}${e?`<br><span class="sfsound">${s||evE(e)} ${esc(T('Tonight'))}: ${esc(e.title)}</span>`:''}`, d:fmtMi(d)}); }).join('');
   }
   const empty = !sfOn() ? `<p class="xempty">${T('Pick where you\'re going and what you want there.')}</p>`
     : r.list==null ? `<p class="skel">${T('Finding spots…')}</p>`
@@ -6157,10 +6169,10 @@ function scoutPickFrom(r, mode){
   const f=sfState(), tonight=new Date().setHours(28,0,0,0), on={};
   EV.list.forEach(e=>{ if(e.te>Date.now()&&e.ts<tonight&&e.lat&&r.ar.in([e.lat,e.lng])){ const vp=venuePlace(e); if(vp) on[vp[0]]=e; } });
   const items = r.ev
-    ? r.list.map(e=>({kind:'ev', id:e.id, name:e.title, sub:`${fmtWhen(e.ts,e.tba)}${e.venue?' · '+e.venue:''}`, ll:[e.lat,e.lng], e:CATS[e.cat]?.e||'🎫', p:venuePlace(e),
+    ? r.list.map(e=>({kind:'ev', id:e.id, name:e.title, sub:`${fmtWhen(e.ts,e.tba)}${e.venue?' · '+e.venue:''}`, ll:[e.lat,e.lng], e:evE(e), p:venuePlace(e),
         s:-Math.max(0,(e.ts-Date.now())/36e5)*2-km(r.ar.c,[e.lat,e.lng])*4+(isFree(e)?4:0)+(/^https:/.test(e.image||'')?2:0)}))
     : r.list.map(({p,d})=>{ const st=placeState(p[5]), ev=on[p[0]];
-        return {kind:'pl', id:p[0], name:p[1], p, ll:[p[3],p[4]], e:placeE(p[2],p[1]), sub:[T(p[2]||''), st==='open'?T('Open now'):'', ev?`${CATS[ev.cat]?.e||'🎫'} ${ev.title}`:''].filter(Boolean).join(' · '),
+        return {kind:'pl', id:p[0], name:p[1], p, ll:[p[3],p[4]], e:placeE(p[2],p[1]), sub:[T(p[2]||''), st==='open'?T('Open now'):'', ev?`${evE(ev)} ${ev.title}`:''].filter(Boolean).join(' · '),
           s:(p[6]||40)+(st==='open'?25:st==='soon'?8:st==='closed'?-35:-10)+(ev?12:0)-d*6}; });
   items.sort((a,b)=>b.s-a.s);
   if(mode!=='few') return items.slice(0,1);
@@ -7204,7 +7216,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
 
   if(e.target.id==='scEvent'){ SC.event=e.target.value; const ev=EV.byId[SC.event];
-    if(ev){ SC.emoji=CATS[ev.cat].e; SC.where='event'; } else if(SC.where==='event') SC.where='near'; renderStorySheet(); }
+    if(ev){ SC.emoji=evE(ev); SC.where='event'; } else if(SC.where==='event') SC.where='near'; renderStorySheet(); }
 });
 $('#storyFile').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
   if(/^video\//.test(f.type)||/\.(mov|mp4|m4v|webm)$/i.test(f.name)){
@@ -7331,7 +7343,7 @@ function mapSearch(q){
   (OD.data?.areas||[]).forEach(a=>{ if(hit(a.name)) res.push(['od',a.id,{green:'🌲',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌲',a.name,{green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]]); });
   (PL.all||[]).forEach(([id,name,kind])=>{ if(hit(name)) res.push(['pl',id,PLACE_E[kind]||'🍽️',name,kind]); });
   (SG.data||[]).forEach(([id,kind,name,,,year])=>{ if(hit(name)) res.push(['sg',id,SG_KIND[kind]?.[0]||'🏛️',name,`${SG_KIND[kind]?.[1]||'Sight'}${year?' · '+year:''}`]); });
-  EV.list.forEach(e=>{ if(e.lat&&e.te>Date.now()&&hit(e.title+' '+(e.venue||''))) res.push(['ev',e.id,CATS[e.cat]?.e||'🎫',e.title,`${fmtWhen(e.ts,e.tba)}${e.venue?' · '+e.venue:''}`]); });
+  EV.list.forEach(e=>{ if(e.lat&&e.te>Date.now()&&hit(e.title+' '+(e.venue||''))) res.push(['ev',e.id,evE(e),e.title,`${fmtWhen(e.ts,e.tba)}${e.venue?' · '+e.venue:''}`]); });
   out.innerHTML=res.slice(0,15).map(([t,id,e,n,m])=>`<button class="prow" data-mgo="${t}|${esc(id)}" style="width:100%;text-align:left"><span class="cat thumb" style="width:44px;height:44px;font-size:18px"${t==='pl'?thumbAttr({id}):''}>${e}</span>
     <div class="grow"><b>${esc(n)}</b><div class="meta">${esc(m||'')}</div></div></button>`).join('') || `<p class="meta">${T('Nothing on the map by that name.')}</p>`;
 }
@@ -8268,8 +8280,8 @@ function renderEventSheet(e){
   const desc=(e.description||'').trim(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
   const saved=isSaved('event',e.id), soon=e.ts>now?Math.round((e.ts-now)/6e4):null;
   const near=e.lat&&ME_FIX&&km(ME_POS,[e.lat,e.lng])<.25;   // check in only where it makes sense
-  $('#evSheet').innerHTML=`<div class="evhero thumb ${/^https:\/\//.test(e.image||'')?'':'noimg'}" ${hero}><span>${CATS[e.cat].e}</span><button class="xbtn evx" data-v2close="evBg" aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="kicker" style="margin-top:12px">${CATS[e.cat].e} ${esc(CATS[e.cat].l)}${on?` · <span class="pst open">${T('On now')}</span>`:soon!=null&&soon<180?` · ${T('starts in {n}',{n:soon<60?soon+' min':Math.round(soon/60)+' h'})}`:''}</div>
+  $('#evSheet').innerHTML=`<div class="evhero thumb ${/^https:\/\//.test(e.image||'')?'':'noimg'}" ${hero}><span>${evE(e)}</span><button class="xbtn evx" data-v2close="evBg" aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="kicker" style="margin-top:12px">${evE(e)} ${esc(CATS[e.cat].l)}${on?` · <span class="pst open">${T('On now')}</span>`:soon!=null&&soon<180?` · ${T('starts in {n}',{n:soon<60?soon+' min':Math.round(soon/60)+' h'})}`:''}</div>
     <h2 class="evtitle">${esc(e.title)}</h2>
     <div class="meta">🗓 ${fmtWhen(e.ts,e.tba)}${e.tba?' · '+T('time TBA'):e.te&&e.te-e.ts<12*36e5?'–'+clock(e.te):''}${e.price?` · ${esc(e.price)}`:''}</div>
     ${e.venue?`<div class="meta">📍 ${esc(e.venue)}${e.city?', '+esc(e.city):''}${e.geo_precise?'':` · ${T('approximate location')}`}</div>`:''}
@@ -8301,7 +8313,7 @@ function renderEventSheet(e){
       :`<p class="meta">${T('Be the first. Tap "I\'m going" and your friends will see it.')}</p>`}
     <div id="evph_${e.id}"></div>
     ${(()=>{ const sim=EV.list.filter(x=>x.id!==e.id&&x.cat===e.cat&&x.te>now&&x.ts<now+14*864e5&&x.title!==e.title).sort((a,b)=>a.ts-b.ts).slice(0,4);
-      return sim.length?`<label class="lbl">${T('More like this')}</label><div class="tnrail">${sim.map(x=>`<button class="tncard" data-evopen="${x.id}"><span class="cat thumb">${CATS[x.cat].e}</span>
+      return sim.length?`<label class="lbl">${T('More like this')}</label><div class="tnrail">${sim.map(x=>`<button class="tncard" data-evopen="${x.id}"><span class="cat thumb">${evE(x)}</span>
         <span class="tnt"><b>${esc(x.title)}</b><span class="meta">${fmtWhen(x.ts,x.tba)}${x.venue?' · '+esc(x.venue):''}</span></span></button>`).join('')}</div>`:''; })()}
     <label class="lbl">💬 ${T('Talk about it')}</label>
     <div id="evChat" class="evchat"><p class="meta">${AUTHED?T('Loading…'):T('Make a free account to see who\'s talking and join in.')}</p></div>
@@ -8495,7 +8507,7 @@ function renderTonight(){
       <span class="tnt"><b>@${esc(o.h)}</b><span class="meta">📍 ${esc(o.name)} · ${agoT(o.at)}</span></span></button>`).join('')}</div>`:'';
   el.innerHTML=(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>🎫 ${T('Tonight near you')}</b><button class="linkbtn" data-excat="events">${T('See all')} ›</button></div>
     <div class="tnrail">${evs.map(e=>{ const fr=goingList(e).filter(isFriend).length;
-      return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${CATS[e.cat].e}</span>
+      return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${evE(e)}</span>
         <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'');
 }
 

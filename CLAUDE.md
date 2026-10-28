@@ -155,6 +155,8 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Event emoji**: always `evE(event)`, never `CATS[e.cat].e`: sports and pickup events show their sport from the title
+  (`SPORT_E`, first match wins: 🏀 🏈 ⚽ 🏐 🎾 🥎 🏒 🏊 🏃 …), anything else its category emoji (🏟️ when no sport matches).
 - **Map layers**: `MAP_CATS` (events, night, zones, outdoors, friends, food, sights) are the Layers sheet's groups; in V3
   the chips under the search box are `EX_CHIPS` (one category at a time, see V3 layout). The layers button (right side) opens the Layers sheet: quick picks
   (`MAP_PRESETS`: Night out, Outdoors day, Friends, Everything, Clear), each category with its own switches
