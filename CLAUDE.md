@@ -155,6 +155,14 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **UI cleanup (2026-10-28)**: event cards show only "I'm going" + ⋯; the event page shows I'm going · Tickets · ❤️ ·
+  share · ⋯. Everything else (calendar, map, directions, eat after, menu, venue info, stories, invite, plan it, send in a
+  chat, link) is in `openEvMenu(id, 'more'|'share')` (#actSheet `.actrow` rows that reuse the old data-* actions; a
+  capture listener closes the menu first; long-press / right-click a card opens it). Create = Post (→ Story or Post),
+  Plan (`openCompose`, its Now/Later switch replaced Hangout/Event), Group, Go live. The `--siri` gradient is only on +
+  and Scout; primary buttons and Sign up use `--tint`. You: one "Your profile" row (its page keeps the 4 tabs), Online
+  is a small pill, rows use line icons (`i-user`, `i-cal`…). Map: parks/water off by default (`S.calmV4`), heat about
+  half as strong (still always on), credits behind an ⓘ, Scout stays bottom middle. Full pages hide the logo and grab bar.
 - **Event emoji**: always `evE(event)`, never `CATS[e.cat].e`: sports and pickup events show their sport from the title
   (`SPORT_E`, first match wins: 🏀 🏈 ⚽ 🏐 🎾 🥎 🏒 🏊 🏃 …), anything else its category emoji (🏟️ when no sport matches).
 - **Map layers**: `MAP_CATS` (events, night, zones, outdoors, friends, food, sights) are the Layers sheet's groups; in V3

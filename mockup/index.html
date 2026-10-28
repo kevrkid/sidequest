@@ -805,6 +805,11 @@
   #app.v3 #map .leaflet-bottom{bottom:var(--dvis);transition:bottom .34s cubic-bezier(.2,.9,.25,1)}
   #app.v3 #map .leaflet-control-attribution{font-size:9px;background:#070b18aa;color:#8a93ba;border-radius:6px 0 0 0}
   #app.v3 #map .leaflet-control-attribution a{color:#a7b0d6}
+  /* map credits fold into a small ⓘ (like Apple Maps' Legal); tap to read them */
+  #app.v3 #map .leaflet-control-attribution:not(.open){width:22px;height:22px;padding:0;margin:0 8px 8px 0;border-radius:50%;overflow:hidden;color:transparent;cursor:pointer;background:#0d1226b3}
+  #app.v3 #map .leaflet-control-attribution:not(.open)>*{display:none}
+  #app.v3 #map .leaflet-control-attribution:not(.open)::before{content:'i';display:grid;place-items:center;width:22px;height:22px;color:#c9d0ee;font:italic 700 12px Georgia,serif}
+  #app.v3 #map .leaflet-control-attribution.open{margin:0 8px 8px 0;border-radius:8px;max-width:calc(100vw - 24px)}
   /* top: you (left), the name (middle), notifications (right) — all floating on the map */
   #app.v3 header{position:absolute;top:0;left:0;right:0;z-index:520;display:flex;align-items:center;gap:10px;
     padding:calc(8px + env(safe-area-inset-top,0px)) 12px 18px;background:linear-gradient(#070b18d9,#070b1866 60%,#070b1800);pointer-events:none}
@@ -932,7 +937,9 @@
   .youhd{display:flex;align-items:center;gap:14px;margin:6px 0 4px}
   .youhd #youAv .av{width:64px;height:64px;font-size:26px}
   .youhd h2{margin:0;font-size:22px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .youhd .pres{flex:none}
+  .youhd .pres{flex:none;padding:6px 12px;gap:7px;font-size:13px;font-weight:700;background:transparent;border:1px solid var(--hair);color:var(--text)}
+  .youhd .pres .trk{display:none} .youhd .pres::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px #30d15833}
+  .youhd .pres.off::before{background:var(--muted);box-shadow:none} .youhd .pres.off{color:var(--muted)}
   #youStats{display:flex;gap:8px;margin:12px 0 4px;overflow-x:auto;scrollbar-width:none}
   #youStats button{flex:1;min-width:84px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:10px 12px;border-radius:14px;background:#161e40;border:1px solid #ffffff12;text-align:left}
   #youStats b{font-size:18px} #youStats span{font-size:11.5px;color:var(--muted);font-weight:600}
@@ -942,12 +949,21 @@
   .ylist .yi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
   .ylist .grow{min-width:0} .ylist .meta{font-weight:600}
   .ylist .ic{width:16px;height:16px;color:#5d6690}
+  .ylist .yi .ic{width:18px;height:18px;color:#fff}
   /* You → Profile / Personality / About you / Privacy open as their own page (no scrolling past the hub to find them) */
   #v-me.editing .youhd,#v-me.editing #youStats,#v-me.editing #youList{display:none}
   #meBack{display:flex;align-items:center;gap:10px;margin:2px 0 0}
   #meBack button{font-weight:700;font-size:15px;color:var(--accent2);padding:8px 2px}
   #v-me.editing #meTabs{position:sticky;top:0;z-index:5;margin-top:8px!important;   /* opaque: answers scroll under it */
     background:linear-gradient(var(--panel2,#ffffff14),var(--panel2,#ffffff14)),var(--bg);box-shadow:0 -10px 0 var(--bg),0 8px 0 var(--bg)}
+  /* Apple-style action list: the event ⋯ / share menu and Create → Post */
+  .actlist{margin-top:12px;border-radius:16px;overflow:hidden;background:var(--panel2,#ffffff12);border:1px solid var(--hair)}
+  .actrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;text-align:left;font-weight:600;font-size:16px;color:var(--text);text-decoration:none;
+    background:none;border:0;border-top:1px solid var(--line);cursor:pointer}
+  .actrow:first-child{border-top:0} .actrow:active{background:var(--line)}
+  .actrow .ai{width:24px;text-align:center;font-size:18px;flex:none} .actrow small{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-top:2px}
+  .evmain .btn{white-space:nowrap;min-width:0} .evmain .btn[data-rsvp]{flex:1.6} .evmain .iconbtn{flex:none}
+  .evmorebtn{min-width:38px;font-weight:800;letter-spacing:1px}
   .ylist .ygroup{padding:10px 14px 2px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   #youAv,#meTitle{cursor:pointer}
   .sccancel{display:inline-flex;align-items:center;gap:4px;margin:6px auto 0;padding:7px 16px;border-radius:99px;font-weight:700;font-size:14px;
@@ -1015,6 +1031,10 @@
     #app.v3[data-at=full] header{background:#0b1024;border-bottom:1px solid #ffffff10;padding-bottom:9px}
     #app.v3[data-at=full] .mapctl,#app.v3[data-at=full] #map .leaflet-control-attribution,#app.v3[data-at=full] .maphint{visibility:hidden}
     #app.v3[data-at=full] #drawer{border-radius:0;border-top-color:transparent;box-shadow:none}
+    /* one header: a full page has its own large title, so the logo steps aside (bell and Sign up stay), and the grab bar
+       only shows on Explore (the page header still drags it down) */
+    #app.v3[data-at=full]:not([data-tab=home]) .logo{visibility:hidden}
+    #app.v3[data-at=full]:not([data-tab=home]) #drawer .dgrab{height:8px} #app.v3[data-at=full]:not([data-tab=home]) #drawer .dgrab i{opacity:0}
   }
   /* chips: the picked one carries the ✕; no extra heading */
   #drawer .mapchips .chip.on::after{content:"✕";margin-left:7px;font-size:11px;opacity:.6}
@@ -1044,6 +1064,7 @@
   #app.v3[data-pop] .qbar{display:none}
   /* text that fits */
   .srail button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .srail button{width:74px;background:none!important;border:0!important;box-shadow:none!important;padding:0}   /* "Your story" fits, no box behind the circle */
   .xrow b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25}
   #youStats{flex-wrap:wrap} #youStats button{flex:none;min-width:0;flex-direction:row;align-items:center;padding:8px 12px;border-radius:99px;font-weight:700;font-size:13px}
   .xhead{display:flex;align-items:center;gap:10px} .xhead b{font-size:19px;flex:1}
@@ -1066,6 +1087,7 @@
   #app.v3 .maplive .livepill{padding:6px 10px;font-size:12px}
   #app.v3:has(.me-chip:not(.authed)) .maplive{top:calc(env(safe-area-inset-top,0px) + 66px)}
   @media (max-width:899px){ #app.v3[data-at=full] .maplive{visibility:hidden} }
+  .maplive:empty{display:none}   /* no one streaming: the empty glass box showed as a dash in the corner */
   .subchips button.tog{order:99} .subchips{display:flex}
   .subchips button.tog.on{background:#1a2246;border-color:var(--good);color:#bff5dc}
   .subchips button.tog.on::before{content:"✓ "}
@@ -1129,6 +1151,16 @@
   <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></symbol>
  <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9h-1"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 16v5M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-half" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
 </defs></svg>
     <section class="view" id="v-map">
@@ -1187,9 +1219,9 @@
 
     <section class="view" id="v-meet" hidden>
       <div class="row"><h2 class="grow" data-t="Social">Social</h2><button class="btn sm" data-meetfilter>⚙️ Sort & filter</button></div>
-      <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="msgs">💬 <span data-t="Messages">Messages</span> <span class="badge live" id="dmPill" hidden></span></button>
-        <button type="button" data-mt="friends">👥 <span data-t="Friends">Friends</span> <span class="badge live" id="frPill" hidden></span></button>
-        <button type="button" data-mt="groups">🏘️ <span data-t="Groups">Groups</span></button><button type="button" data-mt="swipe" class="on">👋 <span data-t="Meet">Meet</span></button></div>
+      <div class="seg" id="meetTabs" style="margin:6px 0 12px"><button type="button" data-mt="msgs"><span data-t="Messages">Messages</span> <span class="badge live" id="dmPill" hidden></span></button>
+        <button type="button" data-mt="friends"><span data-t="Friends">Friends</span> <span class="badge live" id="frPill" hidden></span></button>
+        <button type="button" data-mt="groups"><span data-t="Groups">Groups</span></button><button type="button" data-mt="swipe" class="on"><span data-t="Meet">Meet</span></button></div>
       <input id="meetQ" type="search" autocomplete="off" style="margin:0 0 12px">
       <div id="meetBody"></div>
     </section>
@@ -1203,8 +1235,8 @@
       <div class="ylist" id="youList"></div>
       <div id="meEdit" hidden>
       <div id="meBack"><button type="button" data-youhub>‹ <span data-t="You">You</span></button></div>
-      <div class="seg" id="meTabs" style="margin:16px 0 14px"><button type="button" data-mesec="profile" class="on">👤 Profile</button><button type="button" data-mesec="personality">🧬 Personality</button>
-        <button type="button" data-mesec="about">📝 About you</button><button type="button" data-mesec="settings">🔒 Privacy</button></div>
+      <div class="seg" id="meTabs" style="margin:16px 0 14px"><button type="button" data-mesec="profile" class="on" data-t="Profile">Profile</button><button type="button" data-mesec="personality" data-t="Personality">Personality</button>
+        <button type="button" data-mesec="about" data-t="About you">About you</button><button type="button" data-mesec="settings" data-t="Privacy">Privacy</button></div>
       <div data-mepane="profile">
       <div class="card" id="picCard"></div>
       <div class="card" id="profCard"></div>
@@ -1304,14 +1336,18 @@
 
   <div class="sheet-bg" id="createBg" hidden><div class="sheet">
     <div class="xhead"><b>✨ <span data-t="Create">Create</span></b><button class="xbtn" data-cclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
-    <div class="create-grid">
-      <button data-create="story" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Story">Story</b><span data-t="A photo or video for 24 hours · tag the place, event, people">A photo or video for 24 hours · tag the place, event, people</span></button>
-      <button data-create="post" style="background:linear-gradient(145deg,#00a8ff,#3a47d5)"><i>📝</i><b data-t="Post">Post</b><span data-t="A photo or thought that stays on your profile">A photo or thought that stays on your profile</span></button>
-      <button data-create="flare" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Hangout">Hangout</b><span data-t="Ask who's free right now">Ask who's free right now</span></button>
-      <button data-create="event" style="background:linear-gradient(145deg,#8e2de2,#e9408a)"><i>📅</i><b data-t="Event">Event</b><span data-t="Plan something later">Plan something later</span></button>
+    <div class="create-grid" id="createMain">
+      <button data-create="share" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Post">Post</b><span data-t="A photo, video or thought: for 24 hours or on your profile">A photo, video or thought: for 24 hours or on your profile</span></button>
+      <button data-create="plan" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Plan">Plan</b><span data-t="Ask who's free now, or plan something later">Ask who's free now, or plan something later</span></button>
       <button data-create="group" style="background:linear-gradient(145deg,#0f9b8e,#3ee08f)"><i>🏘️</i><b data-t="Group">Group</b><span data-t="Start a community">Start a community</span></button>
       <button data-create="live" style="background:linear-gradient(145deg,#ff416c,#ff9a3c)"><i>📺</i><b data-t="Go live">Go live</b><span data-t="Stream from your phone">Stream from your phone</span></button>
-    </div></div></div>
+    </div>
+    <div class="actlist" id="createShare" hidden>
+      <button class="actrow" data-create="story"><span class="ai">📸</span><span class="grow"><b data-t="Story">Story</b><small data-t="Gone in 24 hours · tag the place, event, people">Gone in 24 hours · tag the place, event, people</small></span></button>
+      <button class="actrow" data-create="post"><span class="ai">📝</span><span class="grow"><b data-t="Post">Post</b><small data-t="Stays on your profile">Stays on your profile</small></span></button>
+      <button class="actrow" data-createback><span class="ai">‹</span><span class="grow" data-t="Back">Back</span></button>
+    </div>
+    </div></div>
   <div class="sheet-bg" id="actBg" hidden style="z-index:950"><div class="sheet" id="actSheet"></div></div>
   <div class="sheet-bg" id="searchBg" hidden><div class="sheet" id="searchSheet"></div></div>
   <div class="sheet-bg" id="groupsBg" hidden><div class="sheet" id="groupsSheet"></div></div>
@@ -1789,6 +1825,12 @@ const ES = {
   "See what's near you and check in when you arrive. It stays on your phone unless you share it.":'Ve lo que hay cerca y regístrate al llegar. Se queda en tu teléfono a menos que la compartas.',
   "You're at <b>{n}</b>":'Estás en <b>{n}</b>', "Couldn't find where you are. Step outside or try again in a moment.":'No pudimos ubicarte. Sal al aire libre o inténtalo en un momento.',
   'Find a spot':'Encuentra un lugar', 'Where':'Dónde', 'What':'Qué', 'Music':'Música', 'Vibe':'Ambiente', 'When':'Cuándo', 'Near me':'Cerca de mí', 'This map area':'Esta zona del mapa', 'More areas':'Más zonas', 'Neighborhood or town':'Barrio o pueblo', 'Drinks':'Bebidas', 'Live music':'Música en vivo', 'DJ':'DJ', 'Karaoke':'Karaoke', 'Trivia':'Trivia', 'Comedy':'Comedia', 'Free':'Gratis', 'Open late':'Abierto tarde', 'Jazz':'Jazz', 'Blues':'Blues', 'Country':'Country', 'Rock':'Rock', 'Hip-hop & R&B':'Hip-hop y R&B', 'Latin':'Latina', 'Electronic & dance':'Electrónica y baile', 'Indie & songwriter':'Indie y cantautores', 'Punk & metal':'Punk y metal', 'Soul & funk':'Soul y funk', 'Pop & covers':'Pop y covers', 'Classical':'Clásica', 'Brewery':'Cervecería', 'Wine bar':'Bar de vinos', 'Cocktail lounge':'Coctelería', 'Sports bar':'Bar deportivo', 'Games & arcade':'Juegos y arcade', 'Beer garden':'Jardín cervecero', 'Rooftop':'Azotea', 'Dive & honky-tonk':'Cantina y honky-tonk', 'Irish pub':'Pub irlandés', 'Tiki':'Tiki', 'Pick what you want there':'Elige qué quieres ahí', 'Clear':'Borrar', 'Pick where you\'re going and what you want there.':'Elige a dónde vas y qué quieres ahí.', 'Nothing listed that fits all of that. Try fewer picks or another area.':'No hay nada que cumpla todo eso. Prueba con menos opciones u otra zona.', 'Music comes from the listing, or what the room is known for.':'La música viene del anuncio o de lo que suele tocar el lugar.', 'Open':'Abierto', 'Opens soon':'Abre pronto', 'Closed':'Cerrado', 'Hours unknown':'Horario desconocido', 'restaurant':'restaurante', 'fast food':'comida rápida', 'cafe':'café', 'bakery':'panadería', 'ice cream':'helados', 'food truck':'food truck', 'club':'club', 'food hall':'food hall', 'truck park':'parque de food trucks', 'beer garden':'jardín cervecero', 'Shared around town':'Compartido en la ciudad', 'Photos and videos people share at places and events show up here.':'Aquí salen las fotos y videos que la gente comparte en lugares y eventos.', 'Share one':'Comparte uno', 'Find my spot':'Encuentra mi lugar', 'One spot':'Un lugar', 'A few stops':'Varias paradas', 'Say the vibe, or tap what you want:':'Dime el ambiente, o toca lo que quieres:', 'Plan my stops':'Planea mis paradas', 'Your night, a short walk apart':'Tu noche, a pocos pasos', "Scout's pick":'La elección de Scout', '{n} min walk':'{n} min a pie', 'Walk it':'Ir caminando', 'Another pick':'Otra opción', 'Try this: {list}. All a short walk apart.':'Prueba esto: {list}. Todo a pocos pasos.', 'Try {name}.':'Prueba {name}.', "Here's a little route for that, a short walk apart.":'Aquí tienes una ruta corta para eso.', "Here's my pick for that, and everything else that fits.":'Esta es mi elección, y todo lo demás que encaja.', 'Appearance':'Apariencia', 'Light':'Claro', 'Dark':'Oscuro', 'Auto':'Automático', 'Tap it to see how it moves.':'Tócalo para ver cómo se mueve.', 'Pick its name and voice.':'Elige su nombre y su voz.', 'Customize':'Personalizar', 'Later':'Luego', 'Kitchen open till {t}':'Cocina abierta hasta las {t}', 'Kitchen open 24 hours':'Cocina abierta 24 horas', 'Kitchen closed · opens {t}':'Cocina cerrada · abre a las {t}', 'Kitchen closed':'Cocina cerrada', 'Kitchen closes around {t}':'La cocina cierra como a las {t}', 'food till {t}':'comida hasta las {t}', 'kitchen closed':'cocina cerrada', 'food till ~{t}':'comida hasta ~{t}', 'food':'comida', 'drinks only':'solo bebidas', "from people who've been":'según gente que ha ido', 'from its menu':'según su menú', 'from OpenStreetMap':'según OpenStreetMap', 'Serves food':'Sirve comida', 'Drinks only':'Solo bebidas', 'Serves food? Not known yet':'¿Sirve comida? Aún no se sabe', 'Been there? Tell us':'¿Has ido? Cuéntanos', 'Not right? Tell us':'¿No es así? Cuéntanos', 'Does it serve food?':'¿Sirve comida?', 'Yes':'Sí', 'When does the kitchen close?':'¿A qué hora cierra la cocina?', 'Not sure':'No sé', 'Thanks! That helps everyone.':'¡Gracias! Eso ayuda a todos.', 'midnight':'medianoche', '🍔 Bars with food':'🍔 Bares con comida', 'No bars here are known to serve food yet. Open a bar and tell us if it does.':'Aún no sabemos de bares con comida aquí. Abre un bar y cuéntanos si sirve.', 'Filters':'Filtros', 'Done':'Listo', '{n} found':'{n} encontrados',
+  // the event menu and You list (2026-10-28 cleanup)
+  'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
+  'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
+  'Map credits':'Créditos del mapa', 'Back':'Atrás', 'Plan':'Plan', "Ask who's free now, or plan something later":'Pregunta quién está libre ahora o planea algo para después',
+  'A photo, video or thought: for 24 hours or on your profile':'Una foto, video o idea: por 24 horas o en tu perfil', 'Gone in 24 hours · tag the place, event, people':'Desaparece en 24 horas · etiqueta el lugar, evento, personas',
+  'Stays on your profile':'Se queda en tu perfil',
   // Pulse (pulse.js)
   'A little activity here lately':'Un poco de movimiento aquí últimamente','Checking the vibe…':'Viendo el ambiente…','Closed right now':'Cerrado ahora','Finding your spot…':'Buscando tu lugar…','Forecast from':'Pronóstico según','How busy it usually gets today':'Qué tan lleno suele estar hoy','Lots going on here right now':'Mucho movimiento aquí ahora','Nothing open that fits. Try another vibe.':'Nada abierto que encaje. Prueba otro ambiente.',"One spot that stays good, so you're not bar hopping all night.":'Un lugar que sigue bien, para no andar de bar en bar toda la noche.','Plan B':'Plan B','Rising right now':'Subiendo ahora','Said by people there {t}':'Lo dijo gente que está ahí {t}','See it before you go':'Míralo antes de ir','Thanks! People deciding where to go will see it.':'¡Gracias! Lo verá la gente que está decidiendo a dónde ir.','Vibe check':'Ambiente',"What it's usually like now":'Cómo suele estar a esta hora',"You're here: how is it right now?":'Estás aquí: ¿cómo está ahora?','live from check-ins, posts and streams':'en vivo con check-ins, publicaciones y transmisiones','{n} people here on Side Quest now':'{n} personas aquí en Side Quest ahora','Your move tonight':'Tu plan para esta noche','Your move now':'Tu plan para ahora','Dead':'Muerto','Quiet':'Tranquilo','Chill':'Relajado','Lively':'Animado','Busy':'Lleno','Packed':'A reventar','😌 Chill':'😌 Relajado','🔥 Lively':'🔥 Animado','🪩 Party':'🪩 Fiesta','🍸 Drinks':'🍸 Tragos','🍽️ Food':'🍽️ Comida','Line':'Fila','Cover':'Cover','Dancing':'Baile','Patio':'Patio','Sports on':'Deportes en la tele','Loud':'Ruidoso',
 };
@@ -2612,12 +2654,9 @@ function eventCard(e, r=[]){
     <div class="row" style="align-items:flex-start"><span class="cat thumb"${e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${evE(e)}</span><div class="grow"><b style="font-size:15px">${esc(e.title)}</b>
       <div class="meta">${fmtWhen(e.ts,e.tba)}${e.venue?' · '+esc(e.venue):''}${e.city&&e.city!=='Austin'?', '+esc(e.city):''}${e.price?' · '+esc(e.price):''}</div></div></div>
     ${r.length?`<div class="meta" style="margin-top:8px;color:#cfd5f5">✨ ${esc(r.slice(0,3).join(' · '))}</div>`:''}
-    <div class="row" style="margin-top:10px"><div class="downs grow">${go.slice(0,4).map(h=>av(h,'sm')).join('')}<span class="meta" style="margin-left:${go.length?8:0}px">${go.length?`${go.length} going`:CATS[e.cat].l}</span></div>
-      <div class="btns"><button class="btn sm ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?"✓ Going":"I'm going"}</button>
-        <button class="btn sm ${mine==='interested'?'blue':''}" data-rsvp="${e.id}" data-st="interested" title="Interested">☆</button>
-        <button class="btn sm" data-cal="${e.id}" title="Add to calendar" aria-label="Add to calendar">📅</button>
-        ${(()=>{ const n=allStories().filter(x=>x.event===e.id).length; return n?`<button class="btn sm" data-stevent="${e.id}" style="border-color:#ff3b5c88">📸 ${n}</button>`:''; })()}
-        ${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}${link?`<a class="btn sm" href="${esc(link)}" target="_blank" rel="noopener">↗</a>`:''}</div></div>
+    <div class="row" style="margin-top:10px"><div class="downs grow">${go.slice(0,4).map(h=>av(h,'sm')).join('')}${go.length?`<span class="meta" style="margin-left:8px">${T('{n} going',{n:go.length})}</span>`:''}</div>
+      <div class="btns"><button class="btn sm ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?T('✓ Going'):T("I'm going")}</button>
+        <button class="btn sm evmorebtn" data-evmenu="${e.id}" aria-label="${T('More options')}" title="${T('More options')}">⋯</button></div></div>
   </div>`;
 }
 const personCard = m => `<div class="card nudge"><div class="kicker">👋 Someone you might click with</div>
@@ -3377,9 +3416,9 @@ async function renderHotZones(){
   const named=map.getZoom()>=15, names=[];   // downtown's zones sit close together: names only up close
   PL.hot.forEach(z=>{   // the label sits on the zone's top edge so it never covers the spots inside
     const a=zoneActivity(z), lv=a.level, quiet=lv<.12, busy=lv>=.6;
-    if(!quiet) L.circle([z.lat,z.lng],{radius:z.r,interactive:false,className:'hotglow',color:'#ff7a18',weight:busy?18:12,opacity:busy?.16:.1,fill:false}).addTo(PL.zones);
-    const zone=L.circle([z.lat,z.lng],{radius:z.r,className:'hotzone'+(quiet?' quiet':busy?' busy':''),color:'#ff7a18',weight:1+lv*2,opacity:.18+lv*.72,
-      fillColor:'#ff7a18',fillOpacity:.015+lv*.22,dashArray:quiet?'3 7':null}).on('click',()=>exploreCat('zones',z.id)).addTo(PL.zones);
+    if(!quiet) L.circle([z.lat,z.lng],{radius:z.r,interactive:false,className:'hotglow',color:'#ff7a18',weight:busy?14:9,opacity:busy?.08:.05,fill:false}).addTo(PL.zones);
+    const zone=L.circle([z.lat,z.lng],{radius:z.r,className:'hotzone'+(quiet?' quiet':busy?' busy':''),color:'#ff7a18',weight:1+lv,opacity:.12+lv*.4,
+      fillColor:'#ff7a18',fillOpacity:.01+lv*.11,dashArray:quiet?'3 7':null}).on('click',()=>exploreCat('zones',z.id)).addTo(PL.zones);
     zone.hotId=z.id; zone.hotName=z.name; zone.level=lv; if(!named) return;
     const bits=[a.open&&T('{n} open',{n:a.open}), a.ev&&(a.ev===1?T('1 event'):T('{n} events',{n:a.ev})), a.live&&`📺 ${a.live}`].filter(Boolean).join(' · ');
     names.push({id:'hz'+z.id,ll:[z.lat+z.r/111320,z.lng],alts:[[z.lat,z.lng],[z.lat-z.r/111320,z.lng]],center:true,over:true,max:60,score:150+lv*50,cls:'hot hotlabel'+(quiet?' quiet':''),go:()=>exploreCat('zones',z.id),
@@ -3414,7 +3453,7 @@ function renderHeat(){
   const rows=HEAT.rows.slice(0,n);
   rows.slice().reverse().forEach(p=>   // the hottest drawn last, on top
     L.circleMarker([p.lat,p.lng],{renderer:HEAT.canv,interactive:false,stroke:false,radius:base*(.7+p.level*.9)*(p.live?1.3:1),
-      fillColor:heatColor(p.level),fillOpacity:Math.min(.9,.22+p.level*.55)}).addTo(HEAT.layer));
+      fillColor:heatColor(p.level),fillOpacity:Math.min(.6,.12+p.level*.35)}).addTo(HEAT.layer));
   if(z<13) return;
   rows.filter(p=>p.hot||(p.live&&p.level>=.45)||(!p.live&&p.level>=.7)).slice(0,z>=15?16:8).forEach(p=>
     L.marker([p.lat,p.lng],{zIndexOffset:300,title:p.name,icon:L.divIcon({className:'',iconSize:[26,26],
@@ -4905,6 +4944,37 @@ document.addEventListener('click',async e=>{
 
 /* ---------- report, block, feedback ---------- */
 const REASONS = ['Spam or scam','Harassment','Hate or violence','Sexual content','Unsafe meetup','Fake account','Something else'];
+// One menu for an event's secondary actions (the card's ⋯, the event page's ⋯ and its share button). Each row reuses the
+// same data-* action as the old buttons, so the existing handlers do the work; a capture listener closes the menu first.
+function openEvMenu(id, which='more'){
+  const e=EV.byId[id]; if(!e) return;
+  const mine=myRsvp(e.id), link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null, inSheet=V2S.evOpen===e.id&&!$('#evBg').hidden;
+  const nst=allStories().filter(x=>x.event===e.id).length, vp=venuePlace(e);
+  const row=(attrs,ico,label,tag='button')=>`<${tag} class="actrow" ${attrs}><span class="ai">${ico}</span><span class="grow">${label}</span></${tag}>`;
+  const rows = which==='share' ? [
+      row(`data-evsend="${e.id}"`,'💬',T('Send in a chat')),
+      row(`data-evinvite="${e.id}"`,'💌',T('Invite friends')),
+      row(`data-evplan="${e.id}"`,'🗳️',T('Plan it with friends')),
+      row(`data-evshare="${e.id}"`,'🔗',T('Share link')),
+    ] : [
+      inSheet?'':row(`data-rsvp="${e.id}" data-st="interested"`,mine==='interested'?'★':'☆',mine==='interested'?T('Interested ✓'):T('Interested')),
+      e.geo_precise?row(`href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener"`,'🧭',T('Directions'),'a'):'',
+      row(`data-cal="${e.id}"`,'📅',T('Add to calendar')),
+      e.lat?row(`data-evmap="${e.id}"`,'🗺️',T('Show on map')):'',
+      !inSheet&&link?row(`href="${esc(link)}" target="_blank" rel="noopener"`,'🎟',T('Tickets'),'a'):'',
+      nst?row(`data-stevent="${e.id}"`,'📸',T('Stories ({n})',{n:nst})):'',
+      e.geo_precise&&e.te?row(`data-paftev="${e.id}"`,'🌙',T('Eat after')):'',
+      vp&&FOOD_KINDS.test(vp[2]||'')?row(`data-pmenu="${esc(vp[0])}" data-pname="${esc(vp[1])}"`,'🍽️',T('Menu')):'',
+      inSheet&&CFG.google&&e.venue&&e.geo_precise?row(`data-evvenue="${e.id}"`,'🏢',T('Venue phone & hours')):'',
+      inSheet?'':row(`data-evshare="${e.id}"`,'↗️',T('Share')),
+    ];
+  $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:17px">${esc(e.title.slice(0,60))}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="actlist">${rows.filter(Boolean).join('')}</div>`;
+  $('#actBg').hidden=false;
+}
+document.addEventListener('click',e=>{ if(e.target.closest('#actSheet .actrow')) $('#actBg').hidden=true; },true);   // close first; the row's own action may open another sheet
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-evmenu]'); if(b){ e.stopPropagation(); openEvMenu(b.dataset.evmenu, b.dataset.which||'more'); } },true);
+document.addEventListener('contextmenu',e=>{ const c=e.target.closest('.evcard[data-evopen]'); if(c){ e.preventDefault(); openEvMenu(c.dataset.evopen.startsWith('e:')?c.dataset.evopen:'e:'+c.dataset.evopen); } });   // long-press / right-click a card
 function openActions(kind, id, author){
   const blocked=(SV.me?.blocks||[]).includes(author), mine=author===S.me.h, demo=isDemoUser(author);
   $('#actSheet').innerHTML = `<div class="row"><b class="grow" style="font-size:18px">${kind==='user'?'@'+esc(author):'Options'}</b><button class="xbtn" data-actclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
@@ -5276,6 +5346,8 @@ function startLocating(ask){
 function initMap(){
   map=L.map('map',{zoomControl:false,attributionControl:true}).setView([30.300,-97.738],12);
   map.attributionControl.addAttribution('Places: OpenStreetMap, <a href="https://overturemaps.org" target="_blank" rel="noopener">Overture Maps</a>, TABC');
+  { const ac=map.attributionControl.getContainer(); ac.setAttribute('role','button'); ac.setAttribute('aria-label','Map credits');
+    L.DomEvent.disableClickPropagation(ac); ac.addEventListener('click',e=>{ if(!e.target.closest('a')) ac.classList.toggle('open'); }); }
   baseTiles(map, $('#map'), true);
   meAcc=L.circle(ME_POS,{radius:ME_ACC||1,color:'#0a84ff',weight:1,opacity:.5,fillColor:'#0a84ff',fillOpacity:.12,interactive:false}).addTo(map);
   meMark=L.marker(ME_POS,{zIndexOffset:1000,icon:L.divIcon({className:'',html:'<div class="loc"></div>',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map).bindTooltip('You');
@@ -6234,31 +6306,30 @@ function renderYou(){
   const nFr=(SV.friends?.list||[]).length||S.friends.length, plans=EV.list.filter(e=>myRsvp(e.id)&&e.te>Date.now()).length+(SV.plans||[]).length;
   const fresh=!(v.coins||v.day_streak>0||(v.level||1)>1);
   $('#youStats').innerHTML = guest ? '' : (fresh?'':`<button data-ystat="quests">🏆 ${esc(T('Lv {n}',{n:v.level||1}))} · 🪙 ${v.coins||0} · 🔥 ${esc(T('{n}-day streak',{n:v.day_streak||0}))}</button>`)+`<button data-ystat="friends">👥 ${esc(T('{n} friends',{n:nFr}))}</button>`;
-  const row=(attr,e,bg,l,meta='')=>`<button ${attr}><span class="yi" style="background:${bg}">${e}</span><span class="grow">${esc(l)}</span>${meta?`<span class="meta">${esc(String(meta))}</span>`:''}${svgI('chev')}</button>`;
+  const row=(attr,ic,bg,l,meta='')=>`<button ${attr}><span class="yi" style="background:${bg}">${svgI(ic)}</span><span class="grow">${esc(l)}</span>${meta?`<span class="meta">${esc(String(meta))}</span>`:''}${svgI('chev')}</button>`;
   const lifeDone=LIFE.filter(f=>hasVal(S.me.p?.[f.k])).length, nInt=(S.me.i||[]).length;
   $('#youList').innerHTML = [
     // your profile first: each opens straight to its own page
-    row('data-yedit="profile"','👤','#64d2ff26',T('Profile'),nInt?T('{n} interests',{n:nInt}):T('Add interests')),
-    row('data-yedit="personality"','🧬','#bf5af226',T('Personality'),S.me.t?S.me.t:T('Take the quiz')),
-    row('data-yedit="about"','📝','#ff9f0a26',T('About you'),`${lifeDone}/${LIFE.length}`),
-    row('data-yedit="settings"','🔒','#30d15826',T('Privacy & account')),
+    // one row for your profile; its page has tabs for Profile · Personality · About you · Privacy
+    row('data-yedit="profile"','user','#0a84ff',T('Your profile'),[nInt?T('{n} interests',{n:nInt}):T('Add interests'),S.me.t||'',lifeDone?`${lifeDone}/${LIFE.length}`:''].filter(Boolean).join(' · ')),
+    row('data-yedit="settings"','lock','#30d158',T('Privacy & account')),
     `<div class="ygroup">${T('More')}</div>`,
-    row('data-menu="plans"','📅','#ff9a3c26',T('My plans'),plans||''),
-    row('data-quick="favs"','❤️','#ff5c8a26',T('Saved')),
-    guest?'':row('data-menu="quests"','🏆','#ffd16626',T('Quests & rewards')),
-    row('data-menu="invite"','💌','#b57bff26',T('Invite friends')),
-    row('data-yscout','🧭','#ff9f0a26',T('Scout'),scoutOn()?T(SC_PERSONAS[scoutPersona()][1]):T('Off')),
-    row('data-yloc','📍','#30d15826',T('Location'),T({on:'On',off:'Off',blocked:'Blocked',ask:'Tap to turn on'}[locState()])),
-    guest?'':row('data-yshare','📍','#2ec5ff26',T("On friends' maps"),fmOn()?T('Sharing'):T('Off')),
-    row('data-ytheme','🌗','#bf5af226',T('Appearance'),T({light:'Light',dark:'Dark'}[S.theme]||'Auto')),
-    row('data-menu="lang"','🌐','#3ddc9726',S.lang==='es'?'English':'Español'),
+    row('data-menu="plans"','cal','#ff9f0a',T('My plans'),plans||''),
+    row('data-quick="favs"','heart','#ff375f',T('Saved')),
+    guest?'':row('data-menu="quests"','trophy','#ffb020',T('Quests & rewards')),
+    row('data-menu="invite"','mail','#bf5af2',T('Invite friends')),
+    row('data-yscout','compass','#ff9f0a',T('Scout'),scoutOn()?T(SC_PERSONAS[scoutPersona()][1]):T('Off')),
+    row('data-yloc','locate','#30d158',T('Location'),T({on:'On',off:'Off',blocked:'Blocked',ask:'Tap to turn on'}[locState()])),
+    guest?'':row('data-yshare','users','#0a84ff',T("On friends' maps"),fmOn()?T('Sharing'):T('Off')),
+    row('data-ytheme','half','#5e5ce6',T('Appearance'),T({light:'Light',dark:'Dark'}[S.theme]||'Auto')),
+    row('data-menu="lang"','globe','#30b0c7',S.lang==='es'?'English':'Español'),
   ].join('');
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-youhub],[data-yshare],[data-yloc],[data-yscout],[data-ytheme],[data-fmgo],#glance,#youAv,#meTitle');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
-    if(k==='create') return $('#createBg').hidden=false;
+    if(k==='create'){ $('#createShare').hidden=true; $('#createMain').hidden=false; return $('#createBg').hidden=false; }
     if(k==='home') return curTab==='home' ? setDrawer(DRW.at==='peek'?'half':'peek') : tab('home', 'half');
     if(k==='me'&&!AUTHED&&location.protocol.startsWith('http')){ tab('me'); ONB.mode='signup'; ONB.step=1; return renderOnb(); }
     if(k==='meet'&&curTab!=='meet'){ meetTab='msgs'; DM.open=null; loadThreads().then(()=>{ if(curTab==='meet') renderMeet(); }); }
@@ -6551,8 +6622,11 @@ document.addEventListener('click',e=>{
     if(go==='live'){ LIVE.mode='list'; tab('live'); }
     if(go==='friends'){ meetTab='friends'; tab('meet'); renderMeet(); }
     if(go==='food') openPlaces({cat:'all'}); }
-  else if(d.cclose!==undefined) $('#createBg').hidden=true;
-  else if(d.create){ $('#createBg').hidden=true; const c=d.create;
+  else if(d.cclose!==undefined){ $('#createBg').hidden=true; $('#createShare').hidden=true; $('#createMain').hidden=false; }
+  else if(d.createback!==undefined){ $('#createShare').hidden=true; $('#createMain').hidden=false; }
+  else if(d.create==='share'){ $('#createMain').hidden=true; $('#createShare').hidden=false; }   // Post asks: for 24 hours (story) or to keep (post)
+  else if(d.create){ $('#createBg').hidden=true; $('#createShare').hidden=true; $('#createMain').hidden=false; const c=d.create;
+    if(c==='plan') openCompose();   // one composer: its Now / Later switch covers the old Hangout and Event
     if(c==='story') openStoryComposer();
     if(c==='post'){ if(needAccount('post')) return; tab('feed'); setFeedMode('posts'); setTimeout(()=>$('#wText')?.focus(),350); }
     if(c==='flare') openCompose();
@@ -8277,7 +8351,8 @@ function renderEventSheet(e){
   const inter=Object.entries(SV.rsvps[e.id]||{}).filter(([h,st])=>st==='interested'&&h!==S.me.h).length;
   const link=/^https?:/.test(e.ticket_url||e.url||'')?(e.ticket_url||e.url):null, now=Date.now(), on=!e.tba&&e.ts-36e5<now&&now<e.te+36e5;
   const hero=/^https:\/\//.test(e.image||'')?`style="background-image:url('${esc(evImg(e.image,960))}')"`:(e.venue&&e.lat?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):'');
-  const desc=(e.description||'').trim(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
+  const desc=(()=>{ const d=(e.description||'').trim(), t=e.title.trim(), n=x=>x.toLowerCase().replace(/[^a-z0-9]+/g,'');   // many listings repeat the title as the description
+    if(n(d)===n(t)) return ''; return d.toLowerCase().startsWith(t.toLowerCase()) ? d.slice(t.length).replace(/^[\s:·|,.–—-]+/,'') : d; })(), short=desc.length>280?desc.slice(0,260).replace(/\s+\S*$/,'')+'…':desc;
   const saved=isSaved('event',e.id), soon=e.ts>now?Math.round((e.ts-now)/6e4):null;
   const near=e.lat&&ME_FIX&&km(ME_POS,[e.lat,e.lng])<.25;   // check in only where it makes sense
   $('#evSheet').innerHTML=`<div class="evhero thumb ${/^https:\/\//.test(e.image||'')?'':'noimg'}" ${hero}><span>${evE(e)}</span><button class="xbtn evx" data-v2close="evBg" aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
@@ -8287,23 +8362,14 @@ function renderEventSheet(e){
     ${e.venue?`<div class="meta">📍 ${esc(e.venue)}${e.city?', '+esc(e.city):''}${e.geo_precise?'':` · ${T('approximate location')}`}</div>`:''}
     <div class="evmain">
       <button class="btn ${mine==='going'?'down-on':'primary'}" data-rsvp="${e.id}" data-st="going">${mine==='going'?T('✓ Going'):T("I'm going")}</button>
+      ${link?`<a class="btn evtix" href="${esc(link)}" target="_blank" rel="noopener">${T('Tickets')}</a>`:''}
       <button class="iconbtn ${saved?'fav':''}" data-v2save="event|${esc(e.id)}|${esc(e.title.slice(0,90))}" aria-pressed="${saved}" aria-label="${T('Favorite')}" title="${T('Favorite')}">${saved?'❤️':'🤍'}</button>
-      <button class="iconbtn" data-evshare="${e.id}" aria-label="${T('Share')}" title="${T('Share')}">🔗</button>
+      <button class="iconbtn" data-evmenu="${e.id}" data-which="share" aria-label="${T('Share')}" title="${T('Share')}"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg></button>
+      <button class="iconbtn" data-evmenu="${e.id}" aria-label="${T('More options')}" title="${T('More options')}">⋯</button>
     </div>
-    <div class="evrow3">
-      ${e.geo_precise?`<a class="btn" href="${mapsUrl(e.lat,e.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>`:''}
-      <button class="btn" data-cal="${e.id}">📅 ${T('Calendar')}</button>
-      ${link?`<a class="btn" href="${esc(link)}" target="_blank" rel="noopener">🎟 ${T('Tickets')}</a>`:''}
-    </div>
-    <div class="evfriends"><span class="meta">${T('With friends')}</span>
-      <button class="ichip" data-evinvite="${e.id}">💌 ${T('Invite')}</button><button class="ichip" data-evplan="${e.id}">🗳️ ${T('Plan it')}</button><button class="ichip" data-evsend="${e.id}">💬 ${T('In a chat')}</button></div>
-    <div class="btns" style="margin-top:8px">
-      ${on&&e.geo_precise&&near?`<button class="btn sm primary" data-checkin2="event|${e.id}">📍 ${T('Check in')}</button>`:''}
-      ${e.geo_precise&&e.te?`<button class="btn sm" data-paftev="${e.id}">🌙 ${T('Eat after')}</button>`:''}
-      ${(vp=>vp?menuBtn({id:vp[0],name:vp[1],kind:vp[2]}):'')(venuePlace(e))}
-      ${CFG.google&&e.venue&&e.geo_precise?`<button class="btn sm" data-evvenue="${e.id}">🏢 ${T('Venue phone & hours')}</button>`:''}
-    </div><div id="gp_ev_${e.id}"></div>
-    ${desc?`<p class="evdesc" id="evDesc">${esc(short)}${short!==desc?` <button class="linkbtn" data-evmore="${e.id}">${T('More')}</button>`:''}</p>`:''}
+    ${on&&e.geo_precise&&near?`<div class="btns" style="margin-top:8px"><button class="btn sm primary" data-checkin2="event|${e.id}">📍 ${T('Check in')}</button></div>`:''}
+    <div id="gp_ev_${e.id}"></div>
+    ${desc?`<p class="evdesc" id="evDesc" data-full="${esc(desc)}">${esc(short)}${short!==desc?` <button class="linkbtn" data-evmore="${e.id}">${T('More')}</button>`:''}</p>`:''}
     <label class="lbl">${T("Who's going")}</label>
     ${go.length||inter?`<div class="evwho">
       ${fr.length?`<div class="row" style="gap:6px;flex-wrap:wrap">${fr.slice(0,8).map(h=>`<button class="evperson" data-profile="${esc(h)}">${av(h,'sm')}<span>@${esc(h)}</span></button>`).join('')}</div>
@@ -8521,7 +8587,7 @@ document.addEventListener('click',e=>{
   if(d.pushtoggle!==undefined) return togglePush();
   if(d.evinvite) return openInvite(d.evinvite);
   if(d.evshare){ const ev=EV.byId[d.evshare]; if(ev){ track('event_share'); shareLink(`${location.origin}/e/${ev.uid}`, ev.title, `${ev.title} · ${fmtWhen(ev.ts,ev.tba)}${ev.venue?' · '+ev.venue:''}`); } return; }
-  if(d.evmore){ const ev=EV.byId[d.evmore], el=$('#evDesc'); if(ev&&el) el.textContent=ev.description; return; }
+  if(d.evmore){ const ev=EV.byId[d.evmore], el=$('#evDesc'); if(ev&&el) el.textContent=el.dataset.full||ev.description; return; }
   if(d.evmap){ $('#evBg').hidden=true; return focusOnMap(d.evmap); }
   if(d.v2save){ const [k,id,...nm]=d.v2save.split('|'); return toggleSave(k,id,nm.join('|')); }
   if(d.checkin2){ const [k,id,lat,lng]=d.checkin2.split('|'); if(k==='event'){ const ev=EV.byId[id]; return ev&&checkInAt('event',id,ev.lat,ev.lng); } return checkInAt(k,id,+lat,+lng); }
@@ -8551,6 +8617,7 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostnam
 $('#betaTag').hidden=!CFG.beta;
 if(S.exPrev){ S.mapL={...S.mapL,...S.exPrev}; S.exPrev=null; }   // a category chip left on last time
 if(!S.v3map){ S.v3map=true; Object.assign(S.mapL,{zones:false,food:false,clubs:false,bars:false,trails:false,spots:false,landmarks:false,markers:false,art:false,stories:false}); syncMapL(); }   // V3 starts calm: what's happening; the chips add the rest
+if(!S.calmV4){ S.calmV4=true; Object.assign(S.mapL,{parks:false,water:false}); syncMapL(); }   // 2026-10-28: parks and rivers are in Layers, not on by default
 renderAll(); tab('home','peek'); if(S.online&&!S.locOff) startLocating(false);
 // Never asked yet: one nudge (the browser's own question must come from a tap)
 setTimeout(()=>{ if(navigator.webdriver||S.locAsked||S.locOff||!navigator.geolocation) return;

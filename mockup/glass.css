@@ -7,6 +7,7 @@
   /* iOS system colours on a deeper black */
   --bg:#04050b; --text:#f5f6fb; --muted:#9a9fb5; --accent:#ff9f0a; --accent2:#64d2ff; --good:#30d158; --party:#bf5af2;
   --siri:linear-gradient(115deg,#ff9f0a 0%,#ff375f 26%,#bf5af2 52%,#5e5ce6 70%,#0a84ff 84%,#64d2ff 100%);
+  --tint:#ff375f;   /* one solid colour for the main action; the --siri gradient is kept for + and Scout only */
   --siri-c:conic-gradient(from var(--sa,0deg),#ff2d95,#b04bff,#3d7bff,#00d4ff,#3ddc97,#ffb020,#ff2d95);
   /* glass: a tint, a rim, a highlight along the top edge, a reflection, a shadow */
   --g-tint:rgba(22,24,36,.48); --g-tint2:rgba(30,33,48,.58); --g-fill:rgba(255,255,255,.075); --g-fill2:rgba(255,255,255,.12);
@@ -36,8 +37,7 @@ body:has(#app.v3){background:#04050b}
 }
 #app.v3 .logo{padding:6px 14px 6px 7px;font-weight:700;letter-spacing:-.2px}
 #app.v3 .mapctl button{border-radius:50%}
-#app.v3 .mapctl button.on{color:#fff;border-color:transparent;
-  background:var(--g-sheen),linear-gradient(var(--g-tint),var(--g-tint)) padding-box,var(--siri) border-box;border:1.5px solid transparent}
+#app.v3 .mapctl button.on{color:#fff;border:1.5px solid var(--tint);background:var(--g-sheen),linear-gradient(var(--g-tint),var(--g-tint))}
 #app.v3 .bell:active,#app.v3 .mapctl button:active,#app.v3 .logo:active{transform:scale(.92)}
 #app.v3 header{background:linear-gradient(rgba(4,5,11,.62),rgba(4,5,11,.18) 62%,rgba(4,5,11,0))}
 
@@ -119,8 +119,7 @@ body:has(#app.v3){background:#04050b}
 #app.v3 .btn{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.22);border-radius:14px}
 #app.v3 .btn.sm{border-radius:12px}
-#app.v3 .btn.primary{background:var(--siri);background-size:150% 150%;color:#fff;border-color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.25);
-  box-shadow:0 8px 20px -8px rgba(255,55,95,.8),inset 0 1px 0 rgba(255,255,255,.45)}
+#app.v3 .btn.primary{background:var(--tint);color:#fff;border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
 #app.v3 .btn:active,#app.v3 .chip:active{transform:scale(.96)}
 #app.v3 .xbtn,#app.v3 .iconbtn{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.25);color:#fff}
@@ -152,9 +151,8 @@ body:has(#app.v3){background:#04050b}
 #app.v3 #createBg .create-grid button i{background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.3);border-radius:15px}
 #app.v3 .subchips button.tog.on{background:rgba(48,209,88,.18);border-color:rgba(48,209,88,.7);color:#c9f7d6}
 #app.v3 .mnudge{background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.18)}
-/* "Sign up" and the You tab's account button: the Siri gradient */
-#app.v3 .me-chip:not(.authed){background:var(--siri)!important;background-size:150% 150%!important;color:#fff!important;border:0;
-  box-shadow:0 8px 20px -8px rgba(255,55,95,.8),inset 0 1px 0 rgba(255,255,255,.45)!important;animation:glass-drift 8s ease-in-out infinite}
+/* "Sign up" and the You tab's account button: the solid tint */
+#app.v3 .me-chip:not(.authed){background:var(--tint)!important;color:#fff!important;border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)!important}
 /* a full-screen page: the top bar is glass, not navy */
 @media (max-width:899px){
   #app.v3[data-at=full] header{background:rgba(12,13,20,.72);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);border-bottom:1px solid rgba(255,255,255,.08)}
@@ -222,12 +220,12 @@ body:has(#app.v3[data-theme=light]){background:#eef0f7}
 #app.v3[data-theme=light] #drawer .dgrab i{background:rgba(0,0,0,.2)}
 #app.v3[data-theme=light] .qbar{background:rgba(118,118,128,.12);border-color:rgba(0,0,0,.04);box-shadow:inset 0 1px 2px rgba(0,0,0,.06)}
 #app.v3[data-theme=light] .qbar:focus-within{background:linear-gradient(#fff,#fff) padding-box,var(--siri) border-box}
-#app.v3[data-theme=light] .qbar input{color:#0b0c14}
+#app.v3[data-theme=light] .qbar input{color:#0b0c14;background:none;border:0;box-shadow:none}   /* not the light-theme field fill: it showed as a box inside the search bar */
 #app.v3[data-theme=light] #drawer .mapchips .chip,#app.v3[data-theme=light] .chip,#app.v3[data-theme=light] .subchips button,#app.v3[data-theme=light] .sfalist button{
   background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.55));border:1px solid rgba(0,0,0,.06);color:#1c1d26;
   box-shadow:inset 0 1px 0 #fff,0 2px 8px -3px rgba(40,48,90,.18)}
 #app.v3[data-theme=light] #drawer .mapchips .chip.on,#app.v3[data-theme=light] .chip.on,#app.v3[data-theme=light] .subchips button.on,#app.v3[data-theme=light] .sfalist button.on{
-  background:var(--siri);color:#fff;border-color:transparent;box-shadow:0 6px 16px -6px rgba(191,90,242,.7),inset 0 1px 0 rgba(255,255,255,.5)}
+  background:#1c1d26;color:#fff;border-color:transparent;box-shadow:none}
 #app.v3[data-theme=light] .subchips button.tog.on{background:rgba(40,167,69,.16);border-color:rgba(40,167,69,.6);color:#156b2c}
 #app.v3[data-theme=light] .glance,#app.v3[data-theme=light] .glance b{color:#1c1d26}
 #app.v3[data-theme=light] #dock::before{background:var(--g-sheen),rgba(255,255,255,.55);box-shadow:var(--g-spec),0 14px 36px -10px rgba(40,48,90,.35)}
@@ -251,7 +249,7 @@ body:has(#app.v3[data-theme=light]){background:#eef0f7}
 #app.v3[data-theme=light] .seg button{color:#3c3c43}
 #app.v3[data-theme=light] .seg button.on{background:#fff;color:#0b0c14;box-shadow:0 3px 8px -2px rgba(0,0,0,.15)}
 #app.v3[data-theme=light] .btn{background:linear-gradient(180deg,#fff,rgba(255,255,255,.7));border:1px solid rgba(0,0,0,.07);color:#0b0c14;box-shadow:inset 0 1px 0 #fff,0 2px 6px -2px rgba(40,48,90,.18)}
-#app.v3[data-theme=light] .btn.primary{background:var(--siri);color:#fff;border-color:transparent}
+#app.v3[data-theme=light] .btn.primary{background:var(--tint);color:#fff;border-color:transparent;box-shadow:none}
 #app.v3[data-theme=light] .xbtn,#app.v3[data-theme=light] .iconbtn{background:linear-gradient(180deg,#fff,rgba(255,255,255,.7));border:1px solid rgba(0,0,0,.07);color:#1c1d26}
 #app.v3[data-theme=light] .linkbtn{color:#007aff}
 #app.v3[data-theme=light] .toggle{background:rgba(120,120,128,.18);border-color:transparent} #app.v3[data-theme=light] .toggle::after{background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2)}
