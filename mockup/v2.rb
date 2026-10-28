@@ -180,6 +180,9 @@ def checkin_target(k, id)
     tags = []
     tags << 'tacos' if "#{p['cuisine']} #{p['name']}" =~ /taco|mexican|tex-mex|tex_mex|burrito/i
     { name: p['name'], lat: p['lat'], lng: p['lng'], tags: tags }
+  when 'gym'
+    g = Gyms.find(id) or return nil
+    { name: g['name'], lat: g['lat'], lng: g['lng'], tags: %w[fitness] + (g['kind'] == 'rink' ? %w[hockey] : []) }
   when 'area'
     a = outdoor_areas.find { |x| x['id'] == id } or return nil
     { name: a['name'], lat: a['c'][0], lng: a['c'][1], tags: %w[outdoors] }
@@ -548,7 +551,7 @@ def mount_v2(server)
   route(server, '/api/checkin') do |b, h|
     limit!("checkin:#{h}", 40, 86_400)
     k = b['k'].to_s; id = b['id'].to_s
-    raise 'Nothing to check in at.' unless %w[sight place area event].include?(k) && id =~ CHECKIN_RE
+    raise 'Nothing to check in at.' unless %w[sight place area event gym].include?(k) && id =~ CHECKIN_RE
     tgt = checkin_target(k, id) or raise "That spot isn't in Side Quest."
     if tgt[:ev]   # an event counts while it's on (an hour either side)
       s = (Time.parse(tgt[:ev]['start']).to_f * 1000 rescue 0); e = (Time.parse(tgt[:ev]['end'].to_s).to_f * 1000 rescue s + 4 * 3_600_000)

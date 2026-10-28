@@ -605,6 +605,21 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   venue / a park named in the title (our parks, sights, places; chains by exact name only), then OpenStreetMap's
   geocoder (1/s, answers must match house number + street or share a real word; cached in `data/geofix.json`).
   Still unknown → `geo_none`: the client drops lat/lng, so no pin, no distance, no Map button.
+- **🏋️ Gyms** (2026-10-27; `fetch_gyms.rb` → `data/gyms.json`, `gyms.rb`: `Gyms` (loads the file, re-reads when it changes,
+  `Hours.parse` weeks), `/api/gyms`, `GYM_Q` / `scout_gyms`): ~290 from OpenStreetMap, Round Rock to San Marcos (Outdoors' bbox):
+  `leisure=fitness_centre|sports_centre|ice_rink|dance`, `amenity=dojo`, fitness `sport` halls. Dropped: no name, private
+  (`access`, apartments / hotels / offices / schools by name, AMLI, Camden…), never-gyms (pools, tennis, courts, golf, shooting,
+  country clubs, kids' gymnastics: `NEVER`), ballfield complexes (sports centres need a gym-ish name or a fitness sport). Kinds
+  (`kind_of`): gym, climbing, yoga (+ pilates, barre), boxing (+ martial arts, dojo), crossfit, cycling (spin), dance, rink, rec
+  (rec / community / activity centers, YMCA). `chain` for the big brands. Same name within ~120 m = one. `EXTRA` adds rinks
+  OpenStreetMap lacks (Chaparral Ice, geocoded from its address by Nominatim each run). Rerun to refresh (under a minute;
+  counts vary a little by Overpass mirror). **App**: 🏋️ Gyms chip (`EX_CHIPS`, layer `gyms`, sub-chips by kind, its own Open now
+  `S.gymOpen`, off at first because ~70% have no hours), pins from zoom 12 (`renderGyms`, `.gympin`, green ring = open), card
+  `gymPopup` (kind, chain, distance, status, address, Directions, Website, Call, Check in), search (`gym|id` → `focusGym`), Layers
+  "Gyms & fitness" (`MAP_CATS`, last). **Check-ins**: kind `gym` (`checkin_target`, tags fitness (+ hockey for rinks)).
+  **Scout**: gym questions (`GYM_Q`: gym, workout, yoga, climbing, boxing, rink, stick and puck…) get the 8 nearest (`scout_gyms`,
+  narrowed by kind) as places it can light up / give directions to (`focusPlace` sends `gy…` ids to `focusGym`). `deploy/push.sh`
+  ships `gyms.json`. Tests: `ruby test_gyms.rb` (11, `test_gyms.json`), `e2e_gyms.py` (16, needs data/gyms.json).
 - **Farmers markets** (`fetch_markets.rb` → `data/markets.json`, `/api/markets`): a hand-kept list checked against
   each market's listing (Oct 2026). Today's / this weekend's markets show from zoom 9 with big glowing 🧺 pins and
   their hours (`fmSoon`); otherwise ordinary pins from zoom 13. Layer key `markets` under Food.

@@ -217,6 +217,12 @@ Keep this file up to date when features change. Only describe things that exist 
   Zoom in to see those spots as pins. Hike & bike trails are dashed lines: yellow where bikes are allowed,
   orange for walking only (the Butler Hike and Bike Trail around Lady Bird Lake, Walnut Creek, Brushy Creek,
   Violet Crown, the Barton Creek Greenbelt). Tap a trail for its length. Remind people about fishing licenses and local boat rules if it comes up.
+- 🏋️ Gyms (a chip under the search box, and "Gyms & fitness" in the layers sheet): gyms, climbing gyms, yoga & pilates,
+  boxing & martial arts, CrossFit, spin, dance studios, ice rinks (Chaparral Ice, Ice & Field, Pond Hockey Club) and rec
+  centers / YMCAs, from Round Rock to San Marcos. Sub-chips pick a kind; "Open now" shows only ones open right now (most
+  gyms have no hours listed, so it's off at first). Tap one for its card: hours if known, Directions, Website, Call, and
+  Check in (it counts for quests). Search finds them too ("climbing", "yoga", "rink"). Prices, classes and day passes
+  aren't in the app: point people to the gym's website.
 - Hot spots glow orange on the map: 6th Street, Rainey Street, Red River, West 6th, SoCo, East
   Austin, The Domain, Old Downtown Round Rock. Tap one (or the 🔥 Hot spots chip) for what's open there.
 - The heat map is always on, whatever chip or layers are picked: soft glows where food & drink places are busy. Where

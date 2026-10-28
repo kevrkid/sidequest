@@ -43,6 +43,7 @@ require_relative 'spots'   # "Add location" when posting: every place we know, n
 require_relative 'scout_mind'   # Scout's memory of each person, its personalities, the setup interview, ratings
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 require_relative 'pulse'   # V3: vibe check, busy forecasts, trends, the one right place tonight, media worth watching
+require_relative 'gyms'    # 🏋️ gyms, climbing, yoga, boxing, rinks, rec centers (data/gyms.json from fetch_gyms.rb)
 
 PORT    = (ENV['PORT'] || 8787).to_i
 LAN_PORT = (ENV['SQ_LAN_PORT'] || 8443).to_i
@@ -522,8 +523,8 @@ def scout_places(q, near)
     list.each { |p| near ? p[:mi] = Places.miles(near[0], near[1], p[:lat], p[:lng]).round(1) : p.delete(:mi) }
     what = cat ? Places::CATS[cat][:label].downcase : 'food & drink spots'
     note = "These are the best-known #{what} in #{area['name']}, most popular first (known: 0-100, from how many people read about them and Austin's " \
-           'favorites; chain: a chain). Lead with local favorites. The app only has food & drink places, sights and parks: if they asked for ' \
-           'another kind of business (shops, services, gyms), say so, then suggest one or two from memory and say it is from memory.'
+           'favorites; chain: a chain). Lead with local favorites. The app only has food & drink places, sights, parks and gyms: if they asked for ' \
+           'another kind of business (shops, services), say so, then suggest one or two from memory and say it is from memory.'
     note = "No #{what} found in #{area['name']} in the places data. Say so, and suggest from memory (say it is from memory)." if list.empty?
     return [list, note]
   end
@@ -2382,6 +2383,7 @@ def mount_routes(server)
     smart ||= planning || !!interview
     ginfo = scout_google(q, near)
     sights, sights_named = q =~ SIGHT_Q || planning && q =~ /sight|histor|tour|museum|landmark|tourist/i ? Sights.search(q, near: near, limit: planning ? 8 : 6) : [[], false]
+    gyms = q =~ GYM_Q ? scout_gyms(q, near) : []   # lit up / directions like a place (the app opens the gym's card)
     model = smart ? SCOUT_SMART_MODEL : SCOUT_MODEL
     # What they've enjoyed before (their own RSVPs, saves, check-ins), and for recommendations the coming week's
     # events that fit it, added to what Scout may suggest and act on.
@@ -2407,6 +2409,7 @@ def mount_routes(server)
         #{places_note ? "About the food & drink list: #{places_note}" : ''}
         #{places.any? ? "Food & drink places near the user (OpenStreetMap; hours may be out of date). Use a `place` action with the id to light one up on the map. Only mention details that are here; you don't have menus or prices, so offer the menu link or website instead:\n#{JSON.generate(places.map { |p| p.slice(:id, :name, :kind, :cuisine, :status, :at_close, :walk, :mi, :zone, :addr, :chain, :known).merge(menu_link: !!p[:menu], website: !!p[:web]) })}" : ''}
         #{sights.any? ? "Sights & history #{sights_named ? 'matching what they asked about' : 'near the user'} (Texas Historical Commission marker text, National Register listings, Wikipedia summaries; true facts to tell from). Tell the story in a lively way, in 2-4 sentences (1-2 in driving mode), mention a fun detail, and use a `sight` action with the id to show it on the map. If these don't cover what they asked, answer from your own knowledge and say it's from memory:\n#{JSON.generate(sights.map { |x| { id: x['id'], name: x['name'], kind: x['kind'], what: x['what'], year: x['year'] || x['listed'], addr: x['addr'], mi: near ? (Sights.km(near[0], near[1], x['lat'], x['lng']) * 0.621).round(1) : nil, text: x['text'].to_s[0, 700], marker: x['src'] == 'thc' }.compact })}" : ''}
+        #{gyms.any? ? "Gyms & fitness near the user (OpenStreetMap; hours may be missing or out of date; mi = miles away). Use a `place` action with the id to light one up on the map, or `directions`. Only mention details that are here (no prices or class times; suggest the website):\n#{JSON.generate(gyms)}" : ''}
         #{ginfo.any? ? "Google info for the place(s) the user asked about (live from Google just now; the top match is usually the one they mean):\n#{JSON.generate(ginfo)}" : ''}
         #{planning ? "The user wants a plan. Fill `plan`: a short title, `day` (e.g. \"Tonight\", \"Saturday\"), and 2-6 stops in time order. Each stop's `ref` must be an `id` from the events, flares, food & drink places or sights above (nothing else; a sightseeing day mixes sights with food); `at` is local 24-hour HH:MM; `note` is one short line (why, or a tip). Leave time to walk or drive between stops and fit opening hours. In `say`, sum it up in 1-2 sentences and invite them to save it." : ''}
         #{taste ? "What this user has enjoyed before, from their own RSVPs, saves and check-ins in the app (scores: bigger = more, recent counts more): #{JSON.generate(taste)}. When you recommend or plan, lead with things like these and with their interests, and say why in a few words (\"you liked the last comedy night at Cap City\"). Events with `fits` were picked for their taste. Mix in one new thing when it suits their interests. Don't recite this list or bring it up unless they're asking what to do." : ''}
@@ -2423,6 +2426,7 @@ def mount_routes(server)
       next { say: "Hmm, my compass is spinning and I can't think straight right now. Try me again in a minute!",
              expression: 'confused', actions: [], left: SCOUT_DAILY - used, fallback: true }
     end
+    places += gyms
     acts = scout_actions(out['actions'], driving: driving, targets: targets, places: places, ctx: ctx,
                          food_ids: Places::CATS.keys + Places::HOTSPOTS.map { |z| z[:id] }, sights: sights)
     left = scout_bill!(h, usd)
@@ -2563,7 +2567,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s); mount_gyms(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

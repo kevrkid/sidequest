@@ -252,6 +252,7 @@ There is no database. Everything lives under `mockup/data/`:
 | `vapid.json` | **VAPID private key** (mode 0600, made on first start) | `v2.rb` | no (secret) |
 | `places.json` (+ `places_tiles/`) | ~4,700 food and drink places | `fetch_places.rb` | json yes, tiles no |
 | `outdoors.json` | Parks, water, trails, rentals and ramps | `fetch_outdoors.rb` | yes |
+| `gyms.json` | Gyms, climbing, yoga, boxing, CrossFit, dance, ice rinks, rec centers | `fetch_gyms.rb` | yes |
 | `sights.json` (+ `sights_cache/`) | ~1,650 markers, landmarks, art | `fetch_sights.rb` | json yes, cache no |
 | `areas.json` | ~60 neighborhoods and towns | `fetch_areas.rb` | yes |
 | `markets.json` | Farmers markets (hand-kept) | `fetch_markets.rb` | yes |
@@ -555,6 +556,7 @@ without one. All routes return `{error}` with a 4xx status on failure.
 | GET | `/api/places/happy` | guest | Happy hours from the menus already read |
 | GET | `/api/dishes` | guest | Dish search across menus already read |
 | GET | `/api/areas`, `/api/markets`, `/api/outdoors` | guest | Areas, farmers markets, parks/water/trails |
+| GET | `/api/gyms` | guest | Gyms, climbing, yoga, boxing, CrossFit, dance, ice rinks, rec centers (`data/gyms.json`, with weekly hours) |
 | GET | `/api/sights`, `/api/sight` | guest | Sight dots; one sight's story |
 | GET | `/api/spots` | guest | "Add location" search |
 | GET | `/api/geocode` | guest | Nominatim lookup (1/s, cached) |
@@ -630,6 +632,7 @@ None of them run on their own, except the weekly places refresh that `install.sh
 |---|---|---|---|
 | `ruby fetch_places.rb` | OSM Overpass, 130 tiles (Round Rock to South Austin), resumable, 3 mirrors; drops national chains | `places.json` (+ `places_tiles/`) | Weekly (`--fresh`, server cron Mon 4:30 AM). `--merge` rebuilds from tiles after editing the chain lists. |
 | `ruby fetch_outdoors.rb` | OSM parks, greenbelts, lakes, rivers, trails, rentals, ramps, fishing, trailheads | `outdoors.json` | Rarely (seasonal) |
+| `ruby fetch_gyms.rb` | OSM gyms and fitness (private, kids' and non-gym sports places dropped) + rinks OSM lacks, geocoded | `gyms.json` | Every few months (under a minute) |
 | `ruby fetch_sights.rb` | Texas Historical Commission markers (Atlas), National Register, Wikipedia geosearch, OSM museums/art | `sights.json` (+ `sights_cache/`) | Rarely; ~15 minutes the first time. `--merge` rebuilds from the cache. |
 | `ruby fetch_areas.rb` | Nominatim outlines for ~60 neighborhoods, streets and towns | `areas.json` | When the area list changes |
 | `ruby fetch_markets.rb` | Hand-kept farmers-market list, geocoded | `markets.json` | Each season (recheck the hours) |
@@ -696,6 +699,7 @@ ruby test_live.rb       # live safety, LiveKit ingress/egress vs fake LiveKit, s
 ruby test_v2.rb         # V2 server features, chats, groups, stories, posts, photos, live, server on :8799 (64)
 ruby test_pulse.rb      # Pulse engine: forecasts, heat, vibe, facts, picks, media (41, no server)
 ruby test_pulse_api.rb  # Pulse routes incl. heat map, flares, live, remote reports refused (17, server on :8805)
+ruby test_gyms.rb       # gyms file + hours, Scout's nearest-gym lookup by kind (11, no server)
 ```
 
 **Last run: 2026-10-27, on this checkout at `3165edd`, all ten passed** (hours: all; webpush 6/6; geofix 13/13; spots
@@ -716,6 +720,7 @@ SQ_BASE=http://localhost:8796 python e2e_v3.py <shot-dir>     # drawer, chips, s
 SQ_BASE=… SQ_ADMIN_TOKEN=test python e2e_v2.py <shot-dir>     # V2 features (41)
 SQ_BASE=… python e2e_rank.py <shot-dir>                        # Best of Austin (24; needs data/rankings.json)
 SQ_BASE=… python e2e_heat.py <shot-dir>                        # heat map + hot spots always on, vibe card, no Google button (9; real places)
+SQ_BASE=… python e2e_gyms.py <shot-dir>                        # Gyms chip, kinds, open now, card, check-in, search, layers (16; data/gyms.json)
 SQ_DEMO=0 SQ_MODERATE=0 … python e2e_live.py <shot-dir>        # 1 streamer + 3 viewers (14)
 ```
 
