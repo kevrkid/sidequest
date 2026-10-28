@@ -244,12 +244,13 @@ def mount_chats(server)
     end
   end
 
-  # Photos and voice notes: random ids, handed only to the people in the chat; unsent ones are deleted.
+  # Photos and voice notes: random ids, served only to the people in the chat (and a voice note to its uploader
+  # before it's sent); unsent ones are deleted. A signed-in stranger with the link gets a 404.
   { '/dm-img' => [/\A\/dm-img\/(i[0-9a-f]{16}\.jpg)\z/, 'image/jpeg'], '/dm-aud' => [/\A\/dm-aud\/(a[0-9a-f]{16}\.(webm|m4a|aac|mp3|ogg))\z/, nil] }.each do |path, (re, type)|
     server.mount_proc(path) do |req, res|
       name = req.path[re, 1]
       file = name && File.join(DM_DIR, name)
-      next res.status = 404 unless file && File.file?(file) && session_user(req)
+      next res.status = 404 unless file && File.file?(file) && dm_media_ok?(session_user(req), "#{path}/#{name}", name)
       res['Content-Type'] = type || DM_AUDIO.key(File.extname(name)[1..]) || 'application/octet-stream'
       res['Cache-Control'] = 'private, max-age=86400'
       res['Accept-Ranges'] = 'bytes'
@@ -265,6 +266,19 @@ def mount_chats(server)
       else
         res.body = File.binread(file)
       end
+    end
+  end
+end
+
+# Is h in a chat that has this photo / voice note? Thread "a|b" = those two; "c:<id>" = that group chat's members now.
+def dm_media_ok?(h, url, name)
+  return false unless h
+  return true if MEDIA[:lock].synchronize { MEDIA[:pending][name]&.dig('h') == h }
+  STORE[:lock].synchronize do
+    d = STORE[:d]
+    (d['dms'] || {}).any? do |key, msgs|
+      who = key.start_with?('c:') ? Array(d.dig('chats', key[2..], 'members')) : key.split('|')
+      who.include?(h) && msgs.any? { |m| m['img'] == url || m['aud'] == url }
     end
   end
 end

@@ -1117,6 +1117,7 @@ def state_for(d, h)
     users: d['users'].values.reject { |u| hidden.include?(u['h']) }.map do |u|
       u.slice('h', 'c', 'pic', 'public', 'joined').merge('online' => u['status'] != 'offline' && PRESENCE[u['h']].to_i > t - ONLINE_MS,
                                                          'frame' => frame_of(d, u['h'])).compact
+       .tap { |x| x['public'] = {} if u['public_unreviewed'] && u['h'] != h }   # not checked yet: others don't see it
     end,
     rsvps: d['rsvps'].transform_values { |m| m.reject { |who, _| hidden.include?(who) } }.reject { |_k, m| m.empty? },
     members: d['members'].to_h do |gid, m|
@@ -1161,8 +1162,12 @@ def moderate(text)
   raise Forbidden, 'Please leave out phone numbers and emails; swap contact details privately.' if
     text =~ /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}/ || text =~ /[\w.+-]+@[\w-]+\.[\w.]+/
   return true unless MODERATE
-  out, = run_claude("Text to check:\n#{JSON.generate(text[0, 600])}\nGive a verdict and a reason of one short, kind sentence (under 20 words) the writer will see.", MOD_SCHEMA, system: MOD_SYSTEM, model: SCREEN_MODEL, timeout: 25)
-  raise Forbidden, "Not posted: #{out['reason']}" if out['verdict'] == 'block'
+  parts = text.scan(/.{1,4000}/m)   # the whole text, not just its start (posts are up to 2,200; profiles longer)
+  return false if parts.size > 6     # too long to check here: held for a person
+  parts.each do |part|
+    out, = run_claude("Text to check:\n#{JSON.generate(part)}\nGive a verdict and a reason of one short, kind sentence (under 20 words) the writer will see.", MOD_SCHEMA, system: MOD_SYSTEM, model: SCREEN_MODEL, timeout: 25)
+    raise Forbidden, "Not posted: #{out['reason']}" if out['verdict'] == 'block'
+  end
   true
 rescue Forbidden
   raise
@@ -1178,6 +1183,9 @@ def delete_user!(d, h)
   scout_forget!(d, h)
   (d['plans'] || {}).delete(h)
   (d['google_ids'] || {}).delete_if { |_sub, x| x == h }
+  (d['rank_votes'] || {}).each_value { |l| l.each_value { |v| v.delete(h) } }   # would count again if someone took the handle
+  (d['barfood'] || {}).each_value { |v| v.delete(h) }
+  (d['rank_suggest'] || []).reject! { |s| s['h'] == h }
   File.delete(File.join(AVATAR_DIR, "#{h}.jpg")) rescue nil
   d['sessions'].delete_if { |_k, s| s['h'] == h }
   d['posts'].reject! { |p| p['u'] == h }
@@ -1873,11 +1881,12 @@ def mount_app(server)
     pub = clean_answers.(b['public'])
     text = pub.values.flatten.map(&:to_s).join(' | ')
     changed = store(write: false) { |d| d['users'][h]['public_text'] != text }
-    moderate(text) if changed
+    reviewed = changed ? moderate(text) : true   # Claude unreachable: false, so it's held back (not shown unchecked)
     store do |d|
       u = d['users'][h]
       u['public'] = pub
       u['public_text'] = text
+      (reviewed ? u.delete('public_unreviewed') : u['public_unreviewed'] = true) if changed   # profile_recheck! (v2.rb) tries again
       u['match'] = clean_answers.(b['match'])
       u['c'] = b['c'].to_s[/\A#[0-9a-f]{6}\z/i] || u['c']
       if b.key?('pic') && !u['pic'].to_s.start_with?('photo:')   # a photo is changed through /api/me/photo
@@ -2206,7 +2215,8 @@ def mount_app(server)
                                       evchat: (d['ev_chat'] || {}).flat_map { |ev, l| l.select { |m| m['unreviewed'] && !m['removed'] }.map { |m| m.merge('ev' => ev) } },
                                       wall: (d['wall'] || []).select { |p| p['unreviewed'] && !p['removed'] }.map { |p| p.slice('id', 'u', 't', 'img', 'at', 'vis') },
                                       gposts: (d['gposts'] || {}).flat_map { |gid, l| l.select { |p| p['unreviewed'] && !p['removed'] }.map { |p| p.slice('id', 'u', 't', 'img', 'at').merge('g' => gid) } },
-                                      pics: d['users'].values.select { |u| u['pic_unreviewed'] && u['pic'].to_s.start_with?('photo:') }.map { |u| { 'h' => u['h'], 'pic' => u['pic'] } } },
+                                      pics: d['users'].values.select { |u| u['pic_unreviewed'] && u['pic'].to_s.start_with?('photo:') }.map { |u| { 'h' => u['h'], 'pic' => u['pic'] } },
+                                      profiles: d['users'].values.select { |u| u['public_unreviewed'] }.map { |u| { 'h' => u['h'], 't' => u['public_text'].to_s[0, 600] } } },
                         photo_blocks: (d['photo_blocks'] || []).last(30).reverse, photo_screen: photo_screen?,
                         stats: { users: d['users'].size, posts: d['posts'].size, stories: d['stories'].size,
                                  groups: d['groups'].size, open_reports: d['reports'].count { |r| r['status'] == 'open' } },

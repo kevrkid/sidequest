@@ -508,7 +508,31 @@ def v2_background
       tonight_push! rescue warn("[v2] tonight: #{$!.message}") if Time.now.hour == 17
     end
   end
+  Thread.new { loop { sleep PROFILE_RECHECK_S; profile_recheck! rescue warn("[v2] profile recheck: #{$!.message}") } }
   at_exit { stats_flush rescue nil }
+end
+
+# Profile text saved while Claude couldn't be reached is hidden from others (state_for) until it's checked here.
+# A block keeps it hidden and tells the owner; the admin page lists what's still waiting.
+PROFILE_RECHECK_S = [ENV.fetch('SQ_PROFILE_RECHECK_S', '300').to_i, 1].max
+def profile_recheck!
+  waiting = store(write: false) { |d| d['users'].values.select { |u| u['public_unreviewed'] }.map { |u| [u['h'], u['public_text'].to_s] } }
+  waiting.first(10).each do |h, text|
+    ok = begin
+      moderate(text) ? :pass : nil
+    rescue Forbidden => e
+      e.message
+    end
+    next unless ok
+    store do |d|
+      u = d['users'][h]
+      next unless u && u['public_text'].to_s == text   # changed meanwhile: that save checks it
+      if ok == :pass then u.delete('public_unreviewed')
+      else notify!(d, h, 'mod', text: "🛡️ Your public profile answers stay hidden: #{ok.sub(/\ANot posted: /, '')}") unless u['public_blocked'] == text
+           u['public_blocked'] = text
+      end
+    end
+  end
 end
 
 # ---------------------------------------------------------------------------------------------

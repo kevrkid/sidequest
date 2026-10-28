@@ -243,10 +243,15 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   chars. `e2e_about.py` (13).
   **Every answer has its own visibility**: Matching only (default, never shown) · Friends · Everyone ·
   Only me. Activity/location history (opt-in, venue-level only), export, delete account.
+- **Held profile answers** (2026-10-28): public profile text saved while Claude can't be reached gets `public_unreviewed`;
+  `state_for` shows others `{}` for it (the owner still sees theirs), admin lists it (`unreviewed.profiles`), and
+  `profile_recheck!` (v2.rb, every `SQ_PROFILE_RECHECK_S`, 300 s) checks it again: pass = shown, block = stays hidden and the
+  owner gets one `mod` notification (`public_blocked`). Deleting an account also removes its ranking votes, bar-food reports
+  and ranking suggestions. Test: `ruby test_privacy.rb` (9, own copy on :8806 with moderation on and a fake Claude).
 - **Profiles of others**: match %, "what you have in common", Snapchat-style astrological
   compatibility card, their shared answers.
 - **Safety**: report/block on everything, Claude moderation of posts/captions/group names/public
-  profile text, phone/email filter, admin page (`/admin`), 18+ and Terms acceptance at sign-up,
+  profile text (the whole text, in 4,000-character parts, up to 6; longer is held), phone/email filter, admin page (`/admin`), 18+ and Terms acceptance at sign-up,
   rate limits, invite codes in beta.
 - **Scout** (round button riding on the drawer's top edge, left; also the 🎤 in the search box): an animated guide that answers how-to and "what's the move" questions,
   points at buttons (ring + label) and pulses spots on the map, talks via the browser's own speech
@@ -506,7 +511,9 @@ in `data/vapid.json` (secret, 0600, git-ignored; back it up with the data or eve
   cards (`card {k: event|place|story|flare}`) from 💬 Send on event sheets, place pages and stories (`sendToChat`).
   Seen = `d['dm_read'][h][thread]` (POST `/api/dm/read`); typing is memory-only (`DM_TYPING`, 6 s). Thread poll 3 s
   redraws only `#thread` (`renderThreadMsgs`). Notification kind `dm` (mutable), push → `/?dm=<thread>`.
-  Media files need a signed-in cookie. Tests in test_v2.rb ("chat: …", 9).
+  Media files are served only to the people in that chat now (`dm_media_ok?`: a member of a thread holding that
+  `/dm-img/` / `/dm-aud/` url; group chats by current members, so leaving ends it; a voice note to its uploader before it's
+  sent); anyone else gets 404. Tests in test_v2.rb ("chat: …", 9) and test_privacy.rb.
 - **🏘️ Group pages, Facebook-Groups-style** (`groups.rb`; client "A group's page"): cover photo, 🌐/🔒, Join / Ask to
   join / Requested, Invite (a `group` card into chats), rules, tabs Posts · Events · Chat · Members · ⚙️ Manage.
   Wall `d['gposts'][gid]`: text + photo (`/group-img/`, private groups' photos to members only), 📊 polls (2-6, one
