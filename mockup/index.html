@@ -1114,6 +1114,17 @@
   #drawer .mapchips{gap:6px}
   #app.v3 .me-chip.authed{display:grid;visibility:hidden;width:44px}   /* keeps the name centred for everyone */
   #app.v3 .me-chip.authed+.logo{margin-left:auto}
+  /* Online / Offline next to the logo on the map (owner, 2026-10-28): the pair sits centred */
+  #app.v3 .prestop{display:flex;align-items:center;gap:7px;height:34px;padding:0 6px 0 11px;margin:0 auto 0 -2px;border-radius:99px;flex:none;
+    font-weight:750;font-size:12.5px;color:var(--text);background:var(--g-sheen),var(--g-tint,#10162cf2);border:1px solid var(--g-rim,var(--hair));
+    box-shadow:var(--g-spec,none),var(--g-shadow,0 6px 16px #0007);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+  #app.v3 .prestop[hidden]{display:none}
+  #app.v3 .logo:has(+ .prestop:not([hidden])){margin-right:0}
+  #app.v3 .prestop .mtrk{position:relative;width:34px;height:20px;border-radius:99px;background:var(--good);transition:background .2s}
+  #app.v3 .prestop .mtrk i{position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0006;transition:left .2s}
+  #app.v3 .prestop.off{color:var(--muted)} #app.v3 .prestop.off .mtrk{background:#8e8e9a66} #app.v3 .prestop.off .mtrk i{left:2px}
+  #app.v3 .prestop:active{transform:scale(.95)}
+  @media (max-width:899px){ #app.v3[data-at=full]:not([data-tab=home]) .prestop{visibility:hidden} }
   #app.v3:has(#onbBg:not([hidden])) .me-chip{visibility:hidden}
   #onb .ichip{text-transform:capitalize}
   #app.v3 .tncard .tnt b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25}
@@ -1172,6 +1183,7 @@
   <header>
     <button class="me-chip" id="meChip" title="You" aria-label="You"><span class="av" id="meAv"></span><span id="meHandle"></span><span class="caret" hidden>▾</span></button>
     <button class="logo" id="logo" title="Side Quest"><img class="gem" src="/logo.png" alt="" width="22" height="22"><span id="appname">Side Quest</span><small id="betaTag" hidden>beta</small></button>
+    <button class="prestop" id="presTop" role="switch" aria-checked="true" hidden><span id="presTopLbl">Online</span><span class="mtrk"><i></i></span></button>
     <button class="homebtn" id="homeBtn" title="Back" aria-label="Back" hidden>‹</button>
     <div class="hr"><button class="bell" id="bellBtn" data-bell aria-label="Notifications" title="Notifications" hidden><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg><b id="bellN"></b></button>
       <div class="memenu" id="meMenu" role="menu" hidden><div class="mmhead" id="meMenuHead"></div></div></div>
@@ -1829,7 +1841,8 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'Find friends':'Encontrar amigos', 'Find friends from contacts':'Encontrar amigos en tus contactos',
+  'Map credits':'Créditos del mapa',
+  'You show as online. Tap to go offline.':'Apareces en línea. Toca para desconectarte.', 'You show as offline. Tap to go online.':'Apareces desconectado. Toca para conectarte.', 'Find friends':'Encontrar amigos', 'Find friends from contacts':'Encontrar amigos en tus contactos',
   'By email or phone number':'Por correo o número de teléfono', 'Email':'Correo', 'Phone':'Teléfono', 'Linked':'Vinculado', 'Unlink':'Desvincular',
   'Link your email or phone so friends who have it can find you. Nobody ever sees them.':'Vincula tu correo o teléfono para que tus amigos que lo tengan te encuentren. Nadie los ve nunca.',
   'Let people find me by email or phone':'Dejar que me encuentren por correo o teléfono', 'Off: nobody can find you this way, even with your email or number.':'Apagado: nadie te encuentra así, aunque tenga tu correo o número.',
@@ -5030,6 +5043,8 @@ function renderHeader(){
   $('#meHandle').textContent=guest?T('Sign up'):'@'+S.me.h;   // sign-in is one tap further, on the same sheet
   $('#meChip .caret').hidden=guest; $('#meChip').classList.toggle('authed',!guest); $('#meMenuHead').textContent='@'+S.me.h;
   const on=!guest&&S.online; $('#meChip').classList.toggle('online',on); renderDock?.(); $('#presBtn').classList.toggle('off',!on); $('#presLbl').textContent=on?T('Online'):T('Offline'); $('#presBtn').setAttribute('aria-checked',on);
+  $('#presTop').hidden=guest; $('#presTop').classList.toggle('off',!on); $('#presTopLbl').textContent=on?T('Online'):T('Offline'); $('#presTop').setAttribute('aria-checked',on);
+  $('#presTop').title=on?T('You show as online. Tap to go offline.'):T('You show as offline. Tap to go online.');
   $('#presBtn').title = guest ? 'Sign up to show friends you\'re around' : on ? 'You show as online. Tap to go offline.' : 'You show as offline. Tap to go online.'; $('#appname').textContent=NAMES[S.nameIx]; document.title=NAMES[S.nameIx]; }
 
 function pingCard(p, compact){
@@ -6590,6 +6605,7 @@ document.addEventListener('click',e=>{
   else if(d.cal){ map?.closePopup(); addToCalendar(d.cal); }
   else if(d.paftev){ map?.closePopup(); openAfter({ev:d.paftev}); }
 
+  else if(b.id==='presTop') setOnline(!S.online);
   else if(b.id==='presBtn'){ if(PRES.swiped){ PRES.swiped=false; return; } setOnline(!S.online); }
   else if(d.preview){ previewAs=d.preview; renderProf(); }
   else if(d.collect){ S.collect[d.collect]=!S.collect[d.collect]; save(); renderAll(); }

@@ -155,6 +155,8 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Online / Offline next to the logo (2026-10-28)**: `#presTop` in the header beside the logo (signed in only; hidden on
+  full pages with the logo), same `setOnline` as You's `#presBtn`, both kept in step by the render that labels them.
 - **Find friends by email / phone (2026-10-28, `contacts.rb`)**: You → Privacy → "Find friends" links your email /
   phone (`/api/contact/set`); the server keeps only an HMAC of each (key in `data/contact_key`, made once, 0600, never
   deployed over: push.sh skips data/) plus a masked copy for your own screen, in `u['contact']` (never in `state_for`).
