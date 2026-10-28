@@ -38,6 +38,26 @@ const ago = (at) => { const m=Math.max(1,Math.round((Date.now()-at)/6e4)); retur
 const night = () => { const h=new Date().getHours(); return h>=17||h<4; };
 const safeBg = (bg) => /^(linear-gradient\([#0-9a-f(),.% a-z-]+\)|#[0-9a-f]{3,8})$/i.test(bg||'') ? bg : 'linear-gradient(145deg,#3a1c71,#d76d77)';
 const tileBg = (m) => m.img ? `background-image:url('${esc(m.img)}')` : `background:${safeBg(m.bg)}`;
+// The server writes facts and reasons in English; in Spanish these patterns put them into Spanish (times stay "9 PM").
+const DAY_ES = {Monday:'lunes',Tuesday:'martes',Wednesday:'miércoles',Thursday:'jueves',Friday:'viernes',Saturday:'sábado',Sunday:'domingo'};
+const LV_ES = {Quiet:'Tranquilo',Chill:'Relajado',Lively:'Animado',Busy:'Lleno',Packed:'A reventar'};
+const ES_PAT = [
+  [/^Busiest (.+)–(.+)$/, (m,a,b)=>`Más lleno de ${a} a ${b}`],
+  [/^Get there by (.+) to beat the crowd$/, (m,t)=>`Llega antes de las ${t} para evitar la multitud`],
+  [/^Quietest around (.+)$/, (m,t)=>`Más tranquilo hacia las ${t}`],
+  [/^Last call ~(.+)$/, (m,t)=>`Última ronda ~${t}`],
+  [/^(\d+) visits seen here$/, (m,n)=>`${n} visitas vistas aquí`],
+  [/^what places like this are usually like$/, ()=>'cómo suelen estar los lugares así'],
+  [/^(Way|Much) busier than a usual (\w+)( night)?$/, (m,w,d,n)=>`${w==='Way'?'Muchísimo':'Mucho'} más lleno que un ${DAY_ES[d]||d}${n?' por la noche':''} normal`],
+  [/^(.+) (are|is) there$/, (m,who,v)=>`${who} ${v==='are'?'están':'está'} ahí`],
+  [/^(\S+) (Quiet|Chill|Lively|Busy|Packed) now( \(usually\))?$/, (m,e,l,u)=>`${e} ${LV_ES[l]} ahora${u?' (normalmente)':''}`],
+  [/^Stays (?:\w+ )?good your whole night$/, ()=>'Sigue bien toda tu noche'],
+  [/^Good for (\d+) hours$/, (m,n)=>`Bien por ${n} horas`],
+  [/^Your kind of place$/, ()=>'Tu tipo de lugar'],
+  [/^Right here$/, ()=>'Aquí mismo'],
+  [/^(\d+) min walk$/, (m,n)=>`${n} min a pie`],
+];
+const tx = (s) => { if(S.lang!=='es'||typeof s!=='string') return s; for(const [re,f] of ES_PAT){ const m=s.match(re); if(m) return f(...m); } return s; };
 const H12 = (h) => h===0?'12a':h<12?h+'a':h===12?'12p':(h-12)+'p';
 
 function sureText(v){
@@ -73,13 +93,13 @@ function cardHtml(j){
   const facts=[f.peak, f.arrive, f.last_call, f.quiet].filter(Boolean);
   const ev=(j.events||[]).map(e=>`🎶 ${e.title}`);
   return `<div class="pvhead"><div class="pvh"><span class="pve">${v.e}</span><div><div class="pvl">${T('Vibe check')}: ${esc(T(v.label))}</div><div class="pvs">${esc(sureText(v))}</div></div></div>
-    ${v.hot?`<div class="pvhot">📈 ${esc(v.hot)}</div>`:''}
+    ${v.hot?`<div class="pvhot">📈 ${esc(tx(v.hot))}</div>`:''}
     ${v.words?.length?`<div class="pvwords">${v.words.map(w=>`<span>${esc(T(w))}</span>`).join('')}</div>`:''}</div>
     ${proofHtml(j.proof)}
     ${bars(f)}
-    ${facts.length||ev.length?`<ul class="pvfacts">${[...ev,...facts].map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${facts.length||ev.length?`<ul class="pvfacts">${[...ev,...facts].map(x=>`<li>${esc(tx(x))}</li>`).join('')}</ul>`:''}
     ${askHtml(j)}
-    <div class="pvsrc">${esc(T('Forecast from'))} ${esc(f.based_on||'')}${v.sure!=='usual'?' · '+esc(T('live from check-ins, posts and streams')):''}</div>`;
+    <div class="pvsrc">${esc(T('Forecast from'))} ${esc(tx(f.based_on||''))}${v.sure!=='usual'?' · '+esc(T('live from check-ins, posts and streams')):''}</div>`;
 }
 
 // The vibe check box on a place card (placePopup leaves a <div id="pv_<id>"> for it).
@@ -130,12 +150,12 @@ function rail(){
     <div class="puwant">${wants.map(([k,l])=>`<button data-puwant="${k}" class="${want()===k?'on':''}">${T(l)}</button>`).join('')}
       ${kinds.map(([k,l])=>`<button data-pukind="${k}" class="${kindNow()===k?'on':''}">${T(l)}</button>`).join('')}</div>
     ${p?`<button class="pupick" data-xgo="pl|${esc(p.id)}"><span class="pue">${KIND_E[p.kind]||'🍽️'}</span><span class="grow"><b>${esc(p.name)}</b>
-        <div class="puwhy">${p.why.slice(0,4).map(esc).join(' · ')}</div></span></button>
-      ${b?`<button class="puplanb" data-xgo="pl|${esc(b.id)}">🅱️ <span><b>${T('Plan B')}:</b> ${esc(b.name)} · ${esc(b.why.find(x=>/walk|Right here|mi$/.test(x))||'')} · ${b.vibe.e} ${esc(T(b.vibe.label))}</span></button>`:''}`
+        <div class="puwhy">${p.why.slice(0,4).map(x=>esc(tx(x))).join(' · ')}</div></span></button>
+      ${b?`<button class="puplanb" data-xgo="pl|${esc(b.id)}">🅱️ <span><b>${T('Plan B')}:</b> ${esc(b.name)} · ${esc(tx(b.why.find(x=>/walk|Right here|mi$/.test(x))||''))} · ${b.vibe.e} ${esc(T(b.vibe.label))}</span></button>`:''}`
       : `<p class="meta skel">${PU.pick?T('Nothing open that fits. Try another vibe.'):T('Finding your spot…')}</p>`}</div>`;
   const hot=(PU.near?.trending||[]).slice(0,8);
   const rising=hot.length?`<div class="tnhead"><b>📈 ${T('Rising right now')}</b></div><div class="tnrail">${hot.map(x=>
-    `<button class="tncard" data-xgo="pl|${esc(x.id)}" style="width:190px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">${x.vibe.e}</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${esc(x.vibe.hot||T(x.vibe.label))}</span></span></button>`).join('')}</div>`:'';
+    `<button class="tncard" data-xgo="pl|${esc(x.id)}" style="width:190px"><span class="cat thumb" style="background:linear-gradient(145deg,#ff512f,#dd2476)">${x.vibe.e}</span><span class="tnt"><b>${esc(x.name)}</b><span class="meta">${esc(tx(x.vibe.hot)||T(x.vibe.label))}</span></span></button>`).join('')}</div>`:'';
   const media=(PU.feed?.items||[]).filter(m=>m.place).slice(0,10);
   const watch=media.length?`<div class="tnhead"><b>👀 ${T('See it before you go')}</b></div><div class="pvproof" style="padding:0 2px 6px">${media.map(m=>
     m.type==='live'?`<button data-watch="${esc(m.id)}" style="width:96px;height:128px;background:#3b0d1a"><span class="onair">LIVE</span><span>${esc(m.place)}</span></button>`

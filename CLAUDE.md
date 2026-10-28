@@ -378,7 +378,9 @@ Explore's `#exMore`). History in `data/pulse.json` (`SQ_PULSE_FILE`; counts per 
   `/api/pulse/pick` take ~3 s of CPU with ~500 real events, which (one Ruby thread at a time) stalled every other request for
   ~8 s on each Explore open; now ~0.1 s.
 - Tests: `ruby test_pulse.rb` (41, no server), `ruby test_pulse_api.rb` (17, own copy on :8805, fake events :9917).
-  New strings aren't in the `ES` table yet (they show in English).
+  Spanish: pulse.js's strings are in the `ES` table; the server's English facts and reasons ("Busiest 10 PM–1 AM", "5 min walk",
+  "Much busier than a usual Friday night") are put into Spanish on the phone by `ES_PAT` / `tx()` in pulse.js, so a new phrase in
+  pulse.rb needs a pattern there. Test: `e2e_pulse_es.py` (6, needs real places).
 
 ## V2 (this folder: `~/claude/sidequest-v2`, git branch `v2`; V1 lives untouched in `~/claude/sidequest`)
 
