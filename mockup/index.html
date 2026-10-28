@@ -798,7 +798,7 @@
   /* ================= V3: the map is the app. Everything else lives in one drawer over it, with a dock below. =================
      --ftop: where the drawer's top sits when it's all the way up; --dockh: the dock; --dvis: how much of the screen
      the drawer + dock cover right now (set by setDrawer), so things floating on the map stay above it. */
-  #app.v3{display:block;overflow:clip;--ftop:calc(env(safe-area-inset-top,0px) + 62px);--dockh:calc(60px + env(safe-area-inset-bottom,0px));--dvis:200px;
+  #app.v3{display:block;overflow:clip;--ftop:calc(env(safe-area-inset-top,0px) + 62px);--dockh:calc(60px + max(6px, env(safe-area-inset-bottom,0px) - 16px));--dvis:200px;
     --glass:#0e1430e6;--glass2:#161e3ff0;--hair:#ffffff14}
   #app.v3 .ic{width:20px;height:20px;display:block;flex:none}
   #app.v3 #v-map{position:absolute;inset:0;z-index:0;padding:0;overflow:hidden}
@@ -821,7 +821,9 @@
   #app.v3 .logo{margin:0 auto;font-size:15px;font-weight:800;letter-spacing:-.3px;gap:7px;padding:5px 12px 5px 6px;border-radius:99px;
     background:#0d1226b3;border:1px solid var(--hair);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
   #app.v3 .logo .gem{width:22px;height:22px;border-radius:6px}
-  #app.v3 .hr{margin:0;display:flex;align-items:center}
+  #app.v3 .hr{margin:0;display:flex;align-items:center;flex:none}   /* the bell never shrinks or gets pushed off the edge */
+  #app.v3 header{padding-right:max(12px, env(safe-area-inset-right,0px));padding-left:max(12px, env(safe-area-inset-left,0px))}
+  #app.v3 .logo{min-width:0;flex-shrink:1} #app.v3 .logo #appname{overflow:hidden;text-overflow:ellipsis}   /* when it's tight, the name gives way first */
   #app.v3 .bell{width:44px;height:44px;background:#0d1226cc;border:1px solid var(--hair);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9edff}
   #app.v3 .bell .ic{width:21px;height:21px}
   #app.v3 .bell[hidden]{display:grid!important;visibility:hidden}   /* keeps the name centred for guests */
@@ -871,7 +873,7 @@
 
   /* the dock */
   #dock{position:absolute;left:0;right:0;bottom:0;height:var(--dockh);z-index:640;display:grid;grid-template-columns:repeat(5,1fr);align-items:start;
-    padding:7px 4px env(safe-area-inset-bottom,0px);background:#0a0f22;border-top:1px solid #ffffff12}
+    padding:7px 4px max(6px, env(safe-area-inset-bottom,0px) - 16px);background:#0a0f22;border-top:1px solid #ffffff12}   /* sits 16px into the home-bar area, like iOS tab bars */
   #dock button{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0;font-size:10.5px;font-weight:650;color:#7d86ad;letter-spacing:.1px}
   #dock button .ic{width:24px;height:24px}
   #dock button.on{color:#fff} #dock button.on .ic{color:var(--accent)}
@@ -1012,6 +1014,9 @@
   #exPop .popbar .xbtn{pointer-events:auto}
   #exPop .leaflet-popup-content>*:first-child{padding-right:40px}
   #app.v3[data-pop] #mapChips,#app.v3[data-pop] .glance{display:none}
+  /* drawer down (peek = just the search box): the chips and the glance line would show through the glass dock */
+  #app.v3 #mapChips,#app.v3 .glance{transition:opacity .2s}
+  #app.v3[data-at=peek] #drawer:not(.dragging) #mapChips,#app.v3[data-at=peek] #drawer:not(.dragging) .glance{opacity:0;pointer-events:none}
   .popring{position:absolute;left:-26px;top:-26px;width:52px;height:52px;border-radius:50%;border:3px solid #2ec5ff;box-shadow:0 0 0 6px #2ec5ff33,0 0 24px #2ec5ffaa;
     pointer-events:none;animation:popring 1.6s ease-out infinite}
   @keyframes popring{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.35);opacity:.15}}
@@ -5753,9 +5758,10 @@ const NAVST=[], NAVFWD=[];   // screens to go back to, and screens you came back
 const DRW={at:'peek'};
 function drawerStops(){
   const d=$('#drawer'), H=d.offsetHeight, head=d.querySelector('.dgrab').offsetHeight+d.querySelector('.dhead').offsetHeight;
+  const peekH=d.querySelector('.dgrab').offsetHeight+($('#qForm')?.offsetHeight||head)+10;   // closed: grab bar + search box (owner: about a sixth of the screen with the dock)
   let half=Math.round(H*.44);
   if(POP.p){ const ph=$('#exPop').offsetHeight+28; half=Math.max(Math.round(H*.22),Math.min(H-head-ph,Math.round(H*.78))); }   // a pin's card: just its height
-  return {full:0, half, peek:Math.max(0,H-head)};
+  return {full:0, half, peek:Math.max(0,H-peekH)};
 }
 const WIDE = () => innerWidth>=900;   // a computer: the drawer is a panel down the left, always open
 function setDrawer(at, off){
@@ -8103,6 +8109,7 @@ function scoutPoint(id,label,hold){
   const t=SC_T[id]; if(!t) return; const [sel,view]=t;
   if(view&&$('#v-'+view)?.hidden){ if(view==='meet'&&/data-mt/.test(sel)===false) meetTab=id==='meet_deck'||id==='meet_filter'?'swipe':meetTab; tab(view); if(view==='meet') renderMeet(); }
   if(view==='home'&&$('#drawer main').contains($(sel))){ if(EXC.k) exploreClear(); if(DRW.at==='peek') setDrawer('half'); }
+  else if(view==='home'&&$('#mapChips').contains($(sel))&&DRW.at==='peek') setDrawer('half');   // chips sit under the fold when the drawer is down
   setTimeout(()=>{
     const el=$(sel), pane=el?.closest('[data-mepane]'); if(pane?.hidden) showMeSec(pane.dataset.mepane);
     if(el?.closest('#meEdit')&&$('#meEdit').hidden) showMeSec(meSec||'profile');   // V3: the profile pages open from You

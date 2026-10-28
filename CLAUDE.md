@@ -155,6 +155,10 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Bottom about a sixth (2026-10-28, owner)**: the drawer's closed stop (peek) shows only the grab bar and search box
+  (`drawerStops` `peekH`); chips and the glance line fade in from half up (hidden at rest so they don't show through the
+  glass dock); Scout pointing at a chip lifts the drawer. The dock sits 16 px into the home-bar area
+  (`max(6px, env(safe-area-inset-bottom) - 16px)`). Header: `.hr` (bell) never shrinks; the logo's name gives way first.
 - **Online / Offline next to the logo (2026-10-28)**: `#presTop` in the header beside the logo (signed in only; hidden on
   full pages with the logo), same `setOnline` as You's `#presBtn`, both kept in step by the render that labels them.
 - **Find friends by email / phone (2026-10-28, `contacts.rb`)**: You → Privacy → "Find friends" links your email /
