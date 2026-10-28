@@ -30,6 +30,10 @@ with sync_playwright() as pw:
     # an answer saved before these became pick-many (a plain string) must survive the reload
     p.evaluate("()=>{ S.me.p.groupSize='Small group'; S.me.p.weekend='Up early, outdoors'; save(); }")
     p.reload(wait_until="load"); p.wait_for_timeout(2500)
+    try:   # the app shows a guest the welcome sheet once /api/state is back (slower on a cold server): wait for it, then hide it
+        p.wait_for_function("()=>(typeof AUTHED!=='undefined'&&AUTHED)||S.welcomed||(ONB.step==='welcome'&&!document.querySelector('#onbBg').hidden)", timeout=15000)
+    except Exception:
+        pass
     p.evaluate("()=>{ const o=document.querySelector('#onbBg'); if(o) o.hidden=true; S.toured=true }")
     got = p.evaluate("JSON.stringify([S.me.p.groupSize,S.me.p.weekend])")
     check("old pick-one answers become lists, nothing lost", json.loads(got) == [["Small group"], ["Up early, outdoors"]], got)

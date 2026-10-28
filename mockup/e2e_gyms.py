@@ -30,6 +30,10 @@ with sync_playwright() as pw:
     p.evaluate("h=>fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({h,pw:'password123',adult:true,terms:true})})",
                f"gym{os.getpid() % 10000}")
     p.wait_for_timeout(800); p.reload(wait_until="load"); p.wait_for_timeout(2500)
+    try:   # the app shows a guest the welcome sheet once /api/state is back (slower on a cold server): wait for it, then hide it
+        p.wait_for_function("()=>(typeof AUTHED!=='undefined'&&AUTHED)||S.welcomed||(ONB.step==='welcome'&&!document.querySelector('#onbBg').hidden)", timeout=15000)
+    except Exception:
+        pass
     p.evaluate("()=>{ const o=document.querySelector('#onbBg'); if(o) o.hidden=true; S.toured=true }")
 
     n = p.evaluate("async()=>(await (await fetch('/api/gyms')).json()).gyms.length")

@@ -62,6 +62,10 @@ def user(browser, w=390, h=844):
     pg.evaluate("h=>fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({h,pw:'password123',adult:true,terms:true})})",
                 f"v3t{w}{os.getpid() % 1000}")
     pg.wait_for_timeout(800); pg.reload(wait_until="load"); pg.wait_for_timeout(2500)
+    try:   # the app shows a guest the welcome sheet once /api/state is back (slower on a cold server): wait for it, then hide it
+        pg.wait_for_function("()=>(typeof AUTHED!=='undefined'&&AUTHED)||S.welcomed||(ONB.step==='welcome'&&!document.querySelector('#onbBg').hidden)", timeout=15000)
+    except Exception:
+        pass
     pg.evaluate("()=>{ document.querySelector('#onbBg').hidden=true; S.toured=true; return 1 }")
     return ctx, pg
 

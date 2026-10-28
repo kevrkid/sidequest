@@ -28,6 +28,10 @@ with sync_playwright() as pw:
     p = ctx.new_page()
     p.on("pageerror", lambda e: errors.append(str(e)))
     p.goto(BASE, wait_until="load"); p.wait_for_timeout(2500)
+    try:   # the app shows a guest the welcome sheet once /api/state is back (slower on a cold server): wait for it, then hide it
+        p.wait_for_function("()=>(typeof AUTHED!=='undefined'&&AUTHED)||S.welcomed||(ONB.step==='welcome'&&!document.querySelector('#onbBg').hidden)", timeout=15000)
+    except Exception:
+        pass
     p.evaluate("()=>{ const o=document.querySelector('#onbBg'); if(o) o.hidden=true; S.toured=true }")
     p.wait_for_function("PL.all&&PL.all.length>5000", timeout=20000); p.wait_for_timeout(1500)
     p.evaluate("()=>{ const o=document.querySelector('#onbBg'); if(o) o.hidden=true; S.toured=true }")   # the welcome sheet can come up meanwhile
