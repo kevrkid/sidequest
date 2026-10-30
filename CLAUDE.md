@@ -155,6 +155,13 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Search by kind + What's here (2026-10-30, owner)**: typing a kind of place ("parks", "bars near me", "open bars",
+  "coffee", "gyms", "trails", "pool table", "dog friendly"…) lists those places nearest first (`SKIND` + `searchKind`
+  in index.html; filler like "near me" / "open" is stripped; each row opens on the map); plurals now match everywhere
+  (`stem` in renderSearch). **What's here** (`placefacts.rb`): people answer yes / no about a place or park (pool
+  table, darts, DJs, patio, Wi-Fi, restrooms, dog area…) and when it's busiest; a fact shows when yes > no (last 365
+  days); `/api/place/facts` (read), `/facts/set` (signed in, 60/h, whitelisted keys), `/facts/index` (confirmed facts
+  by place, for search). Box `#pf_<id>` on place and park cards, sheet `pfSheet`. `test_placefacts.rb` (7).
 - **Bottom about a sixth (2026-10-28, owner)**: the drawer's closed stop (peek) shows only the grab bar and search box
   (`drawerStops` `peekH`); chips and the glance line fade in from half up (hidden at rest so they don't show through the
   glass dock); Scout pointing at a chip lifts the drawer. The dock sits 16 px into the home-bar area

@@ -956,6 +956,12 @@
   #meBack button{font-weight:700;font-size:15px;color:var(--accent2);padding:8px 2px}
   #v-me.editing #meTabs{position:sticky;top:0;z-index:5;margin-top:8px!important;   /* opaque: answers scroll under it */
     background:linear-gradient(var(--panel2,#ffffff14),var(--panel2,#ffffff14)),var(--bg);box-shadow:0 -10px 0 var(--bg),0 8px 0 var(--bg)}
+  /* What's here (placefacts): chips on a place card, yes / no rows in the sheet */
+  .pfbox{margin:6px 0 4px;font-size:13px} .pfchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 4px}
+  .pfchips span{padding:4px 9px;border-radius:99px;background:var(--panel2,#ffffff14);border:1px solid var(--hair);font-size:12.5px;font-weight:650}
+  .pfrow{display:flex;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--line);font-weight:600} .pfrow:first-child{border-top:0}
+  .pfyn{display:flex;gap:6px} .pfyn button{padding:6px 12px;border-radius:99px;border:1px solid var(--hair);font-weight:700;font-size:13px;color:var(--text);background:none}
+  .pfyn button.on{background:var(--good);border-color:var(--good);color:#04210f} .pfyn button.on.no{background:#ff453a;border-color:#ff453a;color:#fff}
   /* Apple-style action list: the event ⋯ / share menu and Create → Post */
   .actlist{margin-top:12px;border-radius:16px;overflow:hidden;background:var(--panel2,#ffffff12);border:1px solid var(--hair)}
   .actrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;text-align:left;font-weight:600;font-size:16px;color:var(--text);text-decoration:none;
@@ -1846,7 +1852,21 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa',
+  'Map credits':'Créditos del mapa', 'Pool table':'Mesa de billar', 'Darts':'Dardos', 'DJs':'DJs', 'Trivia night':'Noche de trivia', 'Dance floor':'Pista de baile',
+  'Patio':'Patio', 'Rooftop':'Azotea', 'Sports on TV':'Deportes en TV', 'Games':'Juegos', 'Dog friendly':'Admite perros', 'Cover charge':'Cover',
+  'Wi-Fi':'Wi-Fi', 'Outlets':'Enchufes', 'Good to work from':'Bueno para trabajar', 'Good for groups':'Bueno para grupos', 'Vegetarian options':'Opciones vegetarianas',
+  'Takes reservations':'Acepta reservaciones', 'Restrooms':'Baños', 'Off-leash dog area':'Área para perros sin correa', 'Swimming':'Para nadar', 'Shade':'Sombra',
+  'Parking':'Estacionamiento', 'Sports courts':'Canchas', 'Lit at night':'Iluminado de noche', 'Grills & picnic tables':'Asadores y mesas de pícnic',
+  'Weeknights':'Entre semana de noche', 'Fri & Sat nights':'Viernes y sábado de noche', 'Weekend days':'Fines de semana de día', 'Lunch':'Almuerzo', 'Usually quiet':'Casi siempre tranquilo',
+  "What's here?":'¿Qué hay aquí?', "What's here? Pool table, DJ, patio… tell people":'¿Qué hay aquí? Billar, DJ, patio… cuéntale a la gente', 'Add what you know':'Agrega lo que sepas',
+  'Change what you said':'Cambia lo que dijiste', 'from {n} people':'de {n} personas', 'from 1 person':'de 1 persona', '{n} people said so':'{n} personas lo dijeron', 'Busiest, people say':'Más lleno, según la gente',
+  'Usually quiet, people say':'Casi siempre tranquilo, según la gente', 'Only answer what you know. People deciding where to go see what most people say.':'Responde solo lo que sepas. Quien decide a dónde ir ve lo que dice la mayoría.',
+  'When is it busiest?':'¿Cuándo está más lleno?', 'Parks':'Parques', 'Trails':'Senderos', 'Lakes & rivers':'Lagos y ríos', 'Bars':'Bares', 'Clubs':'Clubes', 'Breweries':'Cervecerías',
+  'Restaurants':'Restaurantes', 'Coffee':'Café', 'Food trucks':'Food trucks', 'Bakeries':'Panaderías', 'Ice cream':'Helados', 'Fast food':'Comida rápida', 'Music venues':'Lugares de música',
+  'Movies':'Cine', 'Theaters':'Teatros', 'Comedy clubs':'Clubes de comedia', 'Games & arcades':'Juegos y arcades', 'Gyms & fitness':'Gimnasios', 'Sights':'Lugares para ver',
+  'Pool tables':'Mesas de billar', 'Patios':'Patios', 'Trivia nights':'Noches de trivia', 'Rooftops':'Azoteas', 'Dance floors':'Pistas de baile', 'nearest first':'lo más cerca primero',
+  'open now':'abierto ahora', 'people say so':'según la gente', "Nobody has told us yet. Open a place you know and tap \u201cWhat's here?\u201d":'Nadie nos ha dicho todavía. Abre un lugar que conozcas y toca “¿Qué hay aquí?”',
+  'Nothing found nearby.':'No hay nada cerca.', "tell people what's here":'contar qué hay aquí',
   'You show as online. Tap to go offline.':'Apareces en línea. Toca para desconectarte.', 'You show as offline. Tap to go online.':'Apareces desconectado. Toca para conectarte.', 'Find friends':'Encontrar amigos', 'Find friends from contacts':'Encontrar amigos en tus contactos',
   'By email or phone number':'Por correo o número de teléfono', 'Email':'Correo', 'Phone':'Teléfono', 'Linked':'Vinculado', 'Unlink':'Desvincular',
   'Link your email or phone so friends who have it can find you. Nobody ever sees them.':'Vincula tu correo o teléfono para que tus amigos que lo tengan te encuentren. Nadie los ve nunca.',
@@ -3056,6 +3076,59 @@ document.addEventListener('click',async e=>{
   catch(err){ toast(esc(err.message),'orange'); }
 });
 const fmtClock = hm => { const [h,m]=hm.split(':').map(Number); return h===0&&!m ? T('midnight') : `${h%12||12}${m?':'+String(m).padStart(2,'0'):''} ${h<12?'AM':'PM'}`; };
+// What's here, from people who go (placefacts.rb): pool table, DJs, patio, Wi-Fi, restrooms, when it's busy…
+const PF_DEF = {pool:['🎱','Pool table'], darts:['🎯','Darts'], dj:['🎧','DJs'], live:['🎸','Live music'], karaoke:['🎤','Karaoke'], trivia:['🧠','Trivia night'],
+  dance:['💃','Dance floor'], patio:['🌿','Patio'], rooftop:['🌇','Rooftop'], tvs:['📺','Sports on TV'], games:['🎮','Games'], dogs:['🐶','Dog friendly'],
+  cover:['💵','Cover charge'], happy:['🍻','Happy hour'], wifi:['📶','Wi-Fi'], outlets:['🔌','Outlets'], work:['💻','Good to work from'], groups:['👥','Good for groups'],
+  veg:['🥗','Vegetarian options'], resv:['📅','Takes reservations'], restrooms:['🚻','Restrooms'], dogpark:['🐕','Off-leash dog area'], swim:['🏊','Swimming'],
+  shade:['🌳','Shade'], parking:['🅿️','Parking'], courts:['🏀','Sports courts'], lit:['💡','Lit at night'], grills:['🔥','Grills & picnic tables'],
+  busy_wkn:['🌙','Weeknights'], busy_fsn:['🎉','Fri & Sat nights'], busy_wkd:['☀️','Weekend days'], busy_lunch:['🥪','Lunch'], busy_happy:['🍻','Happy hour'], quiet:['😌','Usually quiet']};
+const PF_SETS = {bar:['pool','darts','dj','live','karaoke','trivia','dance','patio','rooftop','tvs','games','dogs','cover','happy'],
+  food:['patio','dogs','wifi','outlets','work','groups','veg','live','tvs','happy','resv'], park:['restrooms','dogpark','dogs','swim','shade','parking','courts','lit','grills']};
+const PF_BUSY = ['busy_wkn','busy_fsn','busy_wkd','busy_lunch','busy_happy','quiet'];
+const pfType = kind => kind==='park' ? 'park' : [...BAR_K,...VENUE_KINDS].includes(kind) ? 'bar' : 'food';
+const PF = {got:{}, idx:null, idxAt:0};
+const pfLabel = k => `${PF_DEF[k][0]} ${T(PF_DEF[k][1])}`;
+function pfBox(id, type){
+  const j=PF.got[id]; if(!j) return `<p class="meta" style="margin:0">${T('Loading…')}</p>`;
+  const has=Object.keys(j.facts).filter(k=>PF_DEF[k]&&!PF_BUSY.includes(k)), busy=Object.keys(j.facts).filter(k=>PF_BUSY.includes(k)&&k!=='quiet');
+  return `${has.length?`<div class="pfchips">${has.map(k=>`<span title="${T('{n} people said so',{n:j.facts[k][0]})}">${pfLabel(k)}</span>`).join('')}</div>`:''}
+    ${busy.length?`<div class="meta" style="margin:4px 0">👥 ${T('Busiest, people say')}: <b>${busy.map(k=>esc(T(PF_DEF[k][1]))).join(', ')}</b></div>`:j.facts.quiet?`<div class="meta" style="margin:4px 0">😌 ${T('Usually quiet, people say')}</div>`:''}
+    <button class="linkish" data-pfedit="${esc(id)}" data-pftype="${type}">${has.length||busy.length?(Object.keys(j.mine||{}).length?T('Change what you said'):T('Add what you know')):T("What's here? Pool table, DJ, patio… tell people")}</button>
+    ${j.people?`<span class="meta" style="font-size:11px"> · ${j.people===1?T('from 1 person'):T('from {n} people',{n:j.people})}</span>`:''}`;
+}
+async function pfLoad(id, type){
+  try{ PF.got[id]=await (await fetch(`/api/place/facts?id=${encodeURIComponent(id)}`,{credentials:'same-origin'})).json(); }catch(e){ return; }
+  const el=document.getElementById('pf_'+id); if(el) el.innerHTML=pfBox(id,type);
+}
+function pfSheet(id, type){
+  if(needAccount("tell people what's here")) return;
+  const mine={...(PF.got[id]?.mine||{})}; PF.edit={id, type, mine};
+  const yn=k=>`<div class="pfrow"><span class="grow">${pfLabel(k)}</span><span class="pfyn"><button data-pfv="${k}|y" class="${mine[k]==='y'?'on':''}">${T('Yes')}</button><button data-pfv="${k}|n" class="${mine[k]==='n'?'on no':''}">${T('No')}</button></span></div>`;
+  $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">${T("What's here?")}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <p class="meta">${T('Only answer what you know. People deciding where to go see what most people say.')}</p>
+    <div class="actlist" style="padding:4px 0">${PF_SETS[type].map(yn).join('')}</div>
+    ${type==='park'?'':`<label class="lbl">${T('When is it busiest?')}</label><div class="tagchips">${PF_BUSY.map(k=>`<button class="ichip ${mine[k]==='y'?'on':''}" data-pfbusy="${k}">${pfLabel(k)}</button>`).join('')}</div>`}
+    <button class="btn primary" data-pfsave style="width:100%;margin-top:14px">${T('Save')}</button>`;
+  $('#actBg').hidden=false;
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-pfedit],[data-pfv],[data-pfbusy],[data-pfsave]'); if(!b) return; const d=b.dataset;
+  if(d.pfedit){ e.stopPropagation(); return pfSheet(d.pfedit, d.pftype); }
+  const ed=PF.edit; if(!ed) return;
+  if(d.pfv){ const [k,v]=d.pfv.split('|'); ed.mine[k]=ed.mine[k]===v?'':v;
+    b.parentNode.querySelectorAll('button').forEach(x=>{ const [,xv]=x.dataset.pfv.split('|'); x.classList.toggle('on',ed.mine[k]===xv); x.classList.toggle('no',ed.mine[k]==='n'&&xv==='n'); }); return; }
+  if(d.pfbusy){ const k=d.pfbusy; ed.mine[k]=ed.mine[k]==='y'?'':'y'; b.classList.toggle('on',ed.mine[k]==='y'); return; }
+  if(d.pfsave!==undefined){
+    const keys=[...PF_SETS[ed.type],...(ed.type==='park'?[]:PF_BUSY)], facts={}; keys.forEach(k=>facts[k]=ed.mine[k]||'');
+    try{ PF.got[ed.id]=await api('/api/place/facts/set',{id:ed.id, facts}); PF.idxAt=0; $('#actBg').hidden=true;
+      const el=document.getElementById('pf_'+ed.id); if(el) el.innerHTML=pfBox(ed.id,ed.type); toast(T('Thanks! That helps everyone.'),'green'); }
+    catch(err){ toast(esc(err.message),'orange'); }
+  }
+});
+function pfIndex(){ if(PF.idx&&Date.now()-PF.idxAt<6e4) return Promise.resolve(PF.idx);
+  return fetch('/api/place/facts/index').then(r=>r.json()).then(j=>{ PF.idx=j.facts||{}; PF.idxAt=Date.now(); return PF.idx; }).catch(()=>PF.idx||{}); }
+
 async function placePopup(id, ll){
   const pop=L.popup({offset:[0,-4]}).setLatLng(ll).setContent('<p class="skel">…</p>').openOn(map);
   try{ const j=await (await fetch(`/api/place?id=${encodeURIComponent(id)}&${nearParam()}`)).json(); const p=j.place; if(!p) throw 0;
@@ -3064,6 +3137,7 @@ async function placePopup(id, ll){
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}${p.sq_rating?` <span class="meta">⭐ <b>${p.sq_rating.avg}</b> ${T('on Side Quest')} (${p.sq_rating.n})</span>`:''}</div>
       ${p.speakeasy?`<div class="meta" style="margin:4px 0">🗝️ <b>${T('Speakeasy')}</b>${p.speakeasy===true?'':': '+esc(p.speakeasy)}</div>`:''}${barFood(p)}${p.alcohol?`<div class="meta" style="margin:2px 0">${esc(T(ALC_TXT[p.alcohol]||''))}</div>`:''}
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
+      <div class="pfbox" id="pf_${esc(p.id)}">${pfBox(p.id,pfType(p.kind))}</div>
       <div id="pv_${esc(p.id)}"></div>
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
       <div class="btns" style="margin-top:8px">${p.web?`<a class="btn sm" href="${esc(p.web)}" target="_blank" rel="noopener">${T('Website')} ↗</a>`:''}
@@ -3073,6 +3147,7 @@ async function placePopup(id, ll){
       <div id="gp_${esc(p.id)}"></div>
       <div class="meta" style="font-size:10px;margin-top:6px">${p.src==='overture'?T('From Overture Maps; no hours listed, so check before you go.'):p.src==='tabc'?T('From Texas alcohol license records; check hours before you go.'):T('Hours from OpenStreetMap; may be out of date.')}</div>`);
     const own=storiesAt(p.lat,p.lng,null,p.name); if(own.length) document.getElementById('gp_'+p.id)?.insertAdjacentHTML('beforebegin',photoStrip(own,[]));
+    pfLoad(p.id, pfType(p.kind));
     window.Pulse?.card(p.id);   // the vibe check: how it is now, tonight's busy hours, proof (pulse.js)
     if(CFG.google) googleInfo(p.id,'id',null,{web:!!p.web,phone:!!p.phone});
   }catch(e){ pop.setContent("Couldn't load this place."); }
@@ -3295,9 +3370,10 @@ function areaPopup(a, ll){
     <div id="odph">${photoStrip(storiesAt(a.c[0],a.c[1],null,a.name),[])}</div>
     <div class="tagchips" style="margin:8px 0">${(a.acts||[]).map(x=>`<span class="ichip on" style="cursor:default">${OD_ACTS[x]||esc(x)}</span>`).join('')}</div>
     ${near.length?`<div class="meta" style="margin-bottom:6px">${near.map(sp=>`${OD_SPOT[sp.kind][0]} ${esc(sp.name||OD_SPOT[sp.kind][1])}`).join('<br>')}</div>`:''}
+    <div class="pfbox" id="pf_${esc(a.id)}">${pfBox(a.id,'park')}</div>
     <div class="btns">${trail||river?'':checkBtn('area',a.id,a.c[0],a.c[1])}<a class="btn sm" href="${mapsUrl(a.c[0],a.c[1])}" target="_blank" rel="noopener">Directions ↗</a></div>
     <div class="meta" style="font-size:10px;margin-top:6px">Outline from OpenStreetMap. Check local rules for fishing licenses and boat access.</div>`).openOn(map);
-  areaPhotos(a);
+  areaPhotos(a); pfLoad(a.id,'park');
 }
 // Sights & history (data/sights.json from fetch_sights.rb): landmarks, museums, National Register buildings, Texas
 // historical markers with their plaque text, statues, murals and viewpoints. Dots come as a list; the story per tap.
@@ -6101,7 +6177,9 @@ function renderSearch(){
       + (rec.length?'':`<div class="sgrp">${T('Try')}</div><div class="srecent">${tries.map(x=>`<button data-sq="${esc(x)}">${esc(T(x))}</button>`).join('')}</div>`);
     scoutFaces(); return;
   }
-  const words=fold(ql).split(/\s+/).filter(Boolean), hit=(...xs)=>{ const h=fold(xs.join(' ').toLowerCase()); return words.every(w=>h.includes(w)); };
+  // plurals count: "parks" finds "Park", "breweries" finds "Brewery"
+  const words=fold(ql).split(/\s+/).filter(Boolean), stem=w=>w.length>3&&/ies$/.test(w)?w.slice(0,-3)+'y':w.length>3&&/[^s]s$/.test(w)?w.slice(0,-1):w;
+  const hit=(...xs)=>{ const h=fold(xs.join(' ').toLowerCase()); return words.every(w=>h.includes(w)||h.includes(stem(w))); };
   const ctr=S.sf&&S.sf.area!=='near'?sfArea().c:ME_POS, near=p=>km(ctr,p), grp=(t,rows,max=5)=>{ if(SQ.all===t) max=60;
     return rows.length?`<div class="sgrp">${t}</div>${rows.slice(0,max).map(xrow).join('')}${rows.length>max?`<button class="linkbtn" data-sall="${esc(t)}" style="margin:6px 2px;font-weight:700">${T('Show all {n}',{n:Math.min(rows.length,60)})} ›</button>`:''}`:''; };
   const places=[], evs=[], ppl=[], grps=[];
@@ -6122,10 +6200,50 @@ function renderSearch(){
   const speak = /speak ?eas(y|ies)|hidden bars?|secret bars?|bares? escondidos?/i.test(q) ? `<button class="xrow" data-excat="night" data-exsubgo="speakeasies"><span class="xe">🗝️</span><span class="grow"><b>${T('Speakeasies & hidden bars')}</b><span class="meta">${T('Austin to Georgetown, with how to find the door')}</span></span>${svgI('chev')}</button>` : '';
   const dish = `<button class="xrow" data-xgo="dish|${esc(q)}"><span class="xe">🍴</span><span class="grow"><b>${T('Find “{q}” on menus',{q:esc(q)})}</b><span class="meta">${T('Every menu we’ve read, with prices')}</span></span>${svgI('chev')}</button>`;
   const feed = `<button class="xrow" data-xgo="feed|${esc(q)}"><span class="xe">📝</span><span class="grow"><b>${T('Search posts and the feed')}</b><span class="meta">${esc(q)}</span></span>${svgI('chev')}</button>`;
-  const qs = isQuestion(q);
-  el.innerHTML = (qs?ask(q,T('Ask Scout')):'') + speak + grp(T('Places'),places) + grp(T('Events'),evs) + grp(T('People'),ppl,4) + grp(T('Groups'),grps,3)
+  const qs = isQuestion(q), kindList = searchKind(q, near);
+  el.innerHTML = (qs?ask(q,T('Ask Scout')):'') + speak + kindList + grp(T('Places'),places) + grp(T('Events'),evs) + grp(T('People'),ppl,4) + grp(T('Groups'),grps,3)
     + `<div class="sgrp">${T('More')}</div>` + dish + feed + (qs?'':ask(q,T('Ask Scout')));
   scoutFaces(); watchThumbs();
+}
+// "parks", "bars near me", "coffee", "pool table", "dog friendly": the nearest places of that kind, each opening on the map
+const SKIND = [
+  [/^(parks?|green ?spaces?|nature( areas?)?|parques?)$/,'Parks',{od:['green']}], [/^(trails?|hik(e|es|ing)( trails?)?|bike trails?|walking trails?|senderos?)$/,'Trails',{od:['trail']}],
+  [/^(lakes?|rivers?|swim(ming)?( holes?| spots?)?|lagos?|r[ií]os?)$/,'Lakes & rivers',{od:['water','river']}],
+  [/^(bars?|pubs?|dive bars?|bares?|cantinas?)$/,'Bars',{pl:['bar','pub','beer garden']}], [/^(clubs?|night ?clubs?|dance clubs?|discotecas?|antros?)$/,'Clubs',{pl:['club']}],
+  [/^(breweries|brewery|brewpubs?|cervecer[ií]as?)$/,'Breweries',{pl:['brewery']}], [/^(restaurants?|places to eat|restaurantes?)$/,'Restaurants',{pl:['restaurant','food hall']}],
+  [/^(coffee( shops?)?|cafes?|caf[eé]s?)$/,'Coffee',{pl:['cafe']}], [/^(food trucks?|trucks?)$/,'Food trucks',{pl:['food truck','truck park']}],
+  [/^(bakery|bakeries|panader[ií]as?)$/,'Bakeries',{pl:['bakery']}], [/^(ice cream|helader[ií]as?)$/,'Ice cream',{pl:['ice cream']}], [/^fast food$/,'Fast food',{pl:['fast food']}],
+  [/^(music venues?|venues?|concert halls?)$/,'Music venues',{pl:['music venue']}], [/^(movies?|cinemas?|movie theaters?)$/,'Movies',{pl:['cinema']}],
+  [/^(theaters?|theatres?)$/,'Theaters',{pl:['theater']}], [/^comedy clubs?$/,'Comedy clubs',{pl:['comedy club']}], [/^(arcades?|barcades?|bowling)$/,'Games & arcades',{pl:['games']}],
+  [/^(gyms?|fitness|workout|gimnasios?)$/,'Gyms & fitness',{gym:1}], [/^(museums?|landmarks?|sights?|historic( sites?)?|museos?)$/,'Sights',{sg:1}],
+  [/^(pool( tables?)?|billiards?|pool halls?)$/,'Pool tables',{fact:'pool',name:/billiard|pool hall/i}], [/^darts?$/,'Darts',{fact:'darts'}],
+  [/^(dog[- ]?friendly|dogs?)$/,'Dog friendly',{fact:'dogs'}], [/^(patios?|outdoor seating)$/,'Patios',{fact:'patio',name:/patio/i}],
+  [/^karaoke$/,'Karaoke',{fact:'karaoke',name:/karaoke/i}], [/^trivia( nights?)?$/,'Trivia nights',{fact:'trivia'}], [/^rooftops?( bars?)?$/,'Rooftops',{fact:'rooftop',name:/rooftop/i}],
+  [/^(djs?|dj nights?)$/,'DJs',{fact:'dj'}], [/^(dance floors?|dancing)$/,'Dance floors',{fact:'dance'}], [/^(wi-?fi|places to work|work spots?|laptop)$/,'Good to work from',{fact:'work',also:'wifi'}],
+  [/^(sports bars?|watch the game)$/,'Sports on TV',{fact:'tvs',name:/sports/i}],
+];
+function searchKind(q, near){
+  let ql=fold(q.toLowerCase()).replace(/\b(near ?me|nearby|around( here| me)?|close ?by|in austin|cerca( de m[ií])?)\b/g,' ');
+  const open=/\bopen( now)?\b|\babiertos?\b/.test(ql); ql=ql.replace(/\bopen( now)?\b|\babiertos?\b|\bbest\b|\bgood\b/g,' ').replace(/\s+/g,' ').trim();
+  const m=SKIND.find(([re])=>re.test(ql)); if(!m) return '';
+  const [,title,how]=m, rows=[];
+  if(how.od){ if(!OD.data) return `<div class="sgrp">${T(title)}</div><p class="meta">${T('Loading…')}</p>`;
+    OD.data.areas.forEach(a=>{ if(a.name&&how.od.includes(a.kind)) rows.push({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name, sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:near(a.c)}); }); }
+  if(how.pl) (PL.all||[]).forEach(p=>{ if(how.pl.includes(p[2])&&(!open||placeState(p[5])==='open')) rows.push({go:`pl|${p[0]}`, e:placeE(p[2],p[1]), th:thumbAttr({id:p[0]}), title:p[1], sub:esc(T(p[2])), k:near([p[3],p[4]])}); });
+  if(how.gym) (GYM.list||[]).forEach(g=>{ const [e,l]=gymK(g); rows.push({go:`gym|${g.id}`, e, title:g.name, sub:esc(T(l)), k:near([g.lat,g.lng])}); });
+  if(how.sg) (SG.data||[]).forEach(([id,kind,name,lat,lng,year])=>{ if(kind!=='marker') rows.push({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name, sub:esc(T(SG_KIND[kind]?.[1]||'Sight')), k:near([lat,lng])}); });
+  if(how.fact){
+    if(!PF.idx||Date.now()-PF.idxAt>6e4) pfIndex().then(()=>curTab==='search'&&renderSearch());
+    const ids=new Set([...(PF.idx?.[how.fact]||[]),...(how.also?PF.idx?.[how.also]||[]:[])]);
+    (PL.all||[]).forEach(p=>{ if((ids.has(p[0])||how.name&&how.name.test(p[1]))&&(!open||placeState(p[5])==='open')) rows.push({go:`pl|${p[0]}`, e:placeE(p[2],p[1]), th:thumbAttr({id:p[0]}), title:p[1], sub:esc(ids.has(p[0])?`${T(p[2])} · ${T('people say so')}`:T(p[2])), k:near([p[3],p[4]])}); });
+    (OD.data?.areas||[]).forEach(a=>{ if(ids.has(a.id)) rows.push({go:`od|${a.id}`, e:'🌳', title:a.name, sub:esc(T('people say so')), k:near(a.c)}); });
+  }
+  const seen=new Set(), list=rows.sort((a,b)=>a.k-b.k).filter(x=>{ const key=fold(x.title)+'|'+Math.round(x.k*5); if(seen.has(key)) return false; seen.add(key); return true; });
+  list.forEach(x=>x.d=fmtMi(x.k));
+  const head=`${T(title)}${open?' · '+T('open now'):''} · ${T('nearest first')}`;
+  if(!list.length) return `<div class="sgrp">${esc(head)}</div><p class="meta" style="margin:4px 2px 10px">${how.fact?T("Nobody has told us yet. Open a place you know and tap “What's here?”"):T('Nothing found nearby.')}</p>`;
+  const max=SQ.all===head?60:10;
+  return `<div class="sgrp">${esc(head)}</div>${list.slice(0,max).map(xrow).join('')}${list.length>max?`<button class="linkbtn" data-sall="${esc(head)}" style="margin:6px 2px;font-weight:700">${T('Show all {n}',{n:Math.min(list.length,60)})} ›</button>`:''}`;
 }
 function searchGo(v){
   const [t,...r]=v.split('|'), id=r.join('|'), q=$('#qIn').value.trim();
