@@ -109,6 +109,13 @@ t('the search index lists confirmed facts by place') {
   _, j = guest.get('/api/place/facts/index')
   check(j['facts']['pool'] == ['n1002'] && j['facts']['dj'] == ['n1002'] && j['facts']['restrooms'] == ['w1'] && !j['facts'].key?('darts'), j)   # bo took back the DJ "no
 }
+t('Bars with pool tables / games: only bars people said have them (or whose name says so)') {
+  sleep 0.1
+  _, pool = guest.get('/api/places?cat=pool&limit=80')
+  _, games = guest.get('/api/places?cat=bargames&limit=80')
+  pid = pool['places'].map { |x| x['id'] }; gid = games['places'].map { |x| x['id'] }
+  check(pid.include?('n1002') && !pid.include?('n1003') && gid.include?('n1002') && pool['label'] == 'Bars with pool tables', [pid, gid, pool['label']])
+}
 t('deleting an account takes its answers along') {
   fc.post('/api/account/delete', pw: 'password123')
   _, j = guest.get('/api/place/facts?id=w1')

@@ -34,6 +34,21 @@ def pfact_summary(d, id, h = nil)
     people: votes.size, mine: h && votes.dig(h, 'f') || {} }
 end
 
+# Confirmed facts across every place: { key => [ids] }, rebuilt at most once a minute (search, the pool / games lists)
+def pfact_index
+  PFACT_IDX[:lock].synchronize do
+    if Time.now.to_f - PFACT_IDX[:at] > 60
+      PFACT_IDX[:v] = store(write: false) do |d|
+        (d['pfacts'] || {}).keys.each_with_object({}) do |id, o|
+          pfact_summary(d, id)[:facts].each_key { |k| (o[k] ||= []) << id }
+        end
+      end
+      PFACT_IDX[:at] = Time.now.to_f
+    end
+    PFACT_IDX[:v]
+  end
+end
+
 def mount_placefacts(server)
   route(server, '/api/place/facts', auth: false, get: true) do |_b, h, req|
     id, = pfact_place!(req.query['id'])
@@ -61,16 +76,6 @@ def mount_placefacts(server)
   # Confirmed facts across every place, for search: { key => [ids] } (rebuilt at most once a minute)
   route(server, '/api/place/facts/index', auth: false, get: true) do |_b, _h, _req, res|
     res['Cache-Control'] = 'public, max-age=60'
-    PFACT_IDX[:lock].synchronize do
-      if Time.now.to_f - PFACT_IDX[:at] > 60
-        PFACT_IDX[:v] = store(write: false) do |d|
-          (d['pfacts'] || {}).keys.each_with_object(Hash.new { |x, k| x[k] = [] }) do |id, o|
-            pfact_summary(d, id)[:facts].each_key { |k| o[k] << id }
-          end
-        end
-        PFACT_IDX[:at] = Time.now.to_f
-      end
-      { facts: PFACT_IDX[:v] }
-    end
+    { facts: pfact_index }
   end
 end

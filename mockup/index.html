@@ -1852,7 +1852,8 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'Pool table':'Mesa de billar', 'Darts':'Dardos', 'DJs':'DJs', 'Trivia night':'Noche de trivia', 'Dance floor':'Pista de baile',
+  'Map credits':'Créditos del mapa', '🎱 Pool tables':'🎱 Billar', '🎯 Bar games':'🎯 Juegos en bares',
+  "No bars here are known to have them yet. Open a bar you know and tap \u201cWhat's here?\u201d":'Todavía no sabemos de bares con eso aquí. Abre un bar que conozcas y toca “¿Qué hay aquí?”', 'Pool table':'Mesa de billar', 'Darts':'Dardos', 'DJs':'DJs', 'Trivia night':'Noche de trivia', 'Dance floor':'Pista de baile',
   'Patio':'Patio', 'Rooftop':'Azotea', 'Sports on TV':'Deportes en TV', 'Games':'Juegos', 'Dog friendly':'Admite perros', 'Cover charge':'Cover',
   'Wi-Fi':'Wi-Fi', 'Outlets':'Enchufes', 'Good to work from':'Bueno para trabajar', 'Good for groups':'Bueno para grupos', 'Vegetarian options':'Opciones vegetarianas',
   'Takes reservations':'Acepta reservaciones', 'Restrooms':'Baños', 'Off-leash dog area':'Área para perros sin correa', 'Swimming':'Para nadar', 'Shade':'Sombra',
@@ -3126,6 +3127,7 @@ document.addEventListener('click',async e=>{
     catch(err){ toast(esc(err.message),'orange'); }
   }
 });
+setTimeout(()=>pfIndex(),3000);   // Find a spot's Pool table / Games and search use it
 function pfIndex(){ if(PF.idx&&Date.now()-PF.idxAt<6e4) return Promise.resolve(PF.idx);
   return fetch('/api/place/facts/index').then(r=>r.json()).then(j=>{ PF.idx=j.facts||{}; PF.idxAt=Date.now(); return PF.idx; }).catch(()=>PF.idx||{}); }
 
@@ -6032,7 +6034,7 @@ const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,ba
   sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}, find:{}};   // find: only its own pins
 const EX_SUBS = {
   food: [['all','Everything'],['happy','🍻 Happy hour'],['coffee','☕ Coffee'],['tacos','🌮 Tacos'],['bbq','🍖 BBQ'],['pizza','🍕 Pizza'],['burgers','🍔 Burgers'],['asian','🍜 Asian'],['trucks','🚚 Trucks'],['sweets','🍦 Sweets'],['late','🌙 Late night'],['early','🌅 Breakfast']],
-  night: [['bars','🍸 Bars'],['speakeasies','🗝️ Speakeasies'],['barfood','🍔 Bars with food'],['clubs','🪩 Clubs'],['venues','🎤 Venues & shows'],['music','🎸 Music'],['comedy','😂 Comedy'],['breweries','🍺 Breweries'],['games','🎳 Bowling & games'],['cinema','🎬 Movies'],['theater','🎭 Theater'],['late','🌙 Late eats']],
+  night: [['bars','🍸 Bars'],['speakeasies','🗝️ Speakeasies'],['barfood','🍔 Bars with food'],['pool','🎱 Pool tables'],['bargames','🎯 Bar games'],['clubs','🪩 Clubs'],['venues','🎤 Venues & shows'],['music','🎸 Music'],['comedy','😂 Comedy'],['breweries','🍺 Breweries'],['games','🎳 Bowling & games'],['cinema','🎬 Movies'],['theater','🎭 Theater'],['late','🌙 Late eats']],
   events: [['tonight','Tonight'],['weekend','This weekend'],['week','This week']],
   outdoors: [['all','Everything'],['green','🌳 Parks'],['water','💧 Lakes & rivers'],['trail','🚲 Trails']],
   gyms: [['all','Everything'],['gym','🏋️ Gyms'],['climbing','🧗 Climbing'],['yoga','🧘 Yoga & pilates'],['boxing','🥊 Boxing & martial arts'],['crossfit','🏋️ CrossFit'],['rink','🏒 Ice rinks'],['rec','🏀 Rec centers'],['dance','💃 Dance'],['cycling','🚴 Spin']],
@@ -6078,7 +6080,7 @@ async function renderExCat(fresh){
     if(fresh||!EXC.list) busy();
     if(EXC.sub==='happy'){ await loadHappy(); }
     else {
-      const cats = k==='night'&&(EXC.sub==='bars'||EXC.sub==='barfood') ? ['bars'] : [EXC.sub];
+      const cats = k==='night'&&(EXC.sub==='bars'||EXC.sub==='barfood') ? ['bars'] : [EXC.sub];   // pool / bargames: the server adds what people said (placefacts)
       // venues and breweries mostly have no hours listed: Open now would hide them all, so it doesn't apply there
       try{ const lists=await Promise.all(cats.map(c=>fetch(`/api/places?${new URLSearchParams({cat:c,open:S.foodOpen&&!NOHOURS_SUBS.includes(c)?'1':''})}&${nearParam()}&limit=40`).then(r=>r.json())));
         EXC.list=lists.flatMap(j=>j.places||[]); if(EXC.sub==='barfood') EXC.list=EXC.list.filter(p=>p.food===true); if(k==='food'&&EXC.sub==='all') EXC.list=EXC.list.filter(p=>![...BAR_K,...VENUE_KINDS,'nightclub'].includes(p.kind)); PL.lastList=EXC.list; }
@@ -6091,7 +6093,7 @@ async function renderExCat(fresh){
     const rows = EXC.sub==='happy' ? (HH.list||[]).slice(0,40).map(p=>xrow({go:`pl|${p.id}`, e:'🍻', th:thumbAttr({id:p.id}), title:p.name, sub:`<span class="hhtag ${p.happy?.now?'now':''}">${esc(p.happy?.label||'')}</span> ${esc(p.happy?.deals||'')}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}))
       : EXC.list.map(p=>xrow({go:`pl|${p.id}`, e:placeE(p.kind,p.name,p.cuisine), th:thumbAttr({id:p.id}), title:p.name,
           sub:`<span class="pst ${p.state}" style="font-size:11px;padding:1px 7px">${esc(p.status||'')}</span> ${esc([p.kind,(p.cuisine||[]).slice(0,2).join(', ').replace(/_/g,' ')].filter(Boolean).join(' · '))}${barTag(p)}`, d:p.walk?`🚶 ${p.walk} min`:p.mi!=null?p.mi+' mi':null}));
-    el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${EXC.sub==='barfood'?T('No bars here are known to serve food yet. Open a bar and tell us if it does.'):S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
+    el.innerHTML = head + openT + (rows.join('') || `<p class="xempty">${EXC.sub==='barfood'?T('No bars here are known to serve food yet. Open a bar and tell us if it does.'):EXC.sub==='pool'||EXC.sub==='bargames'?T("No bars here are known to have them yet. Open a bar you know and tap \u201cWhat's here?\u201d"):S.foodOpen?T('Nothing open right now that matches. Turn off "Open now" to see everything.'):T('No spots found here yet.')}</p>`);
     exAfter(el, (EXC.sub==='happy'?HH.list||[]:EXC.list).map(p=>[p.lat,p.lng]), fresh); watchThumbs(); return;
   }
   if(k==='events'){
@@ -6275,7 +6277,7 @@ const SF_HAS = [['food','🍽️','Food'],['drinks','🍸','Drinks'],['coffee','
 const SF_MUSIC = [['jazz','🎷','Jazz'],['blues','🎸','Blues'],['country','🤠','Country'],['rock','🤘','Rock'],['hiphop','🎤','Hip-hop & R&B'],['latin','💃','Latin'],
   ['electronic','🎧','Electronic & dance'],['indie','🎙️','Indie & songwriter'],['punk','⚡','Punk & metal'],['soul','🕺','Soul & funk'],['pop','🎶','Pop & covers'],['classical','🎻','Classical']];
 const SF_THEME = [['brewery','🍺','Brewery'],['wine','🍷','Wine bar'],['cocktail','🍸','Cocktail lounge'],['sports','🏈','Sports bar'],['games','🎮','Games & arcade'],
-  ['garden','🌳','Beer garden'],['rooftop','🌇','Rooftop'],['dive','🤠','Dive & honky-tonk'],['irish','🍀','Irish pub'],['tiki','🌴','Tiki'],['trucks','🚚','Food trucks']];
+  ['pool','🎱','Pool table'],['garden','🌳','Beer garden'],['rooftop','🌇','Rooftop'],['dive','🤠','Dive & honky-tonk'],['irish','🍀','Irish pub'],['tiki','🌴','Tiki'],['trucks','🚚','Food trucks']];
 const MUSIC_RE = {jazz:/\bjazz|bebop|big band/i, blues:/\bblues\b/i, country:/country|honky|americana|western swing|two[- ]step|bluegrass|outlaw/i,
   rock:/\brock\b|rock ?n.? ?roll|garage rock|psych/i, hiphop:/hip[- ]?hop|\brap\b|r&b|\brnb\b/i, latin:/latin|salsa|bachata|cumbia|tejano|reggaet|mariachi|norte[nñ]o|\bbanda\b/i,
   electronic:/\bdjs?\b|\bedm\b|house music|techno|electronic|\brave\b|drum (and|&|n) bass|dance party/i, indie:/indie|singer[- ]songwriter|acoustic/i,
@@ -6292,7 +6294,10 @@ const evText = e => `${e.title} ${e.description||''}`;
 const EV_HAS = {live:e=>e.cat==='live_music', dj:e=>/\bdjs?\b|dj set|turntabl|vinyl night/i.test(evText(e)), karaoke:e=>/karaoke/i.test(evText(e)),
   trivia:e=>/trivia|quiz night/i.test(evText(e)), comedy:e=>e.cat==='comedy'||/stand-?up|comedy|improv/i.test(e.title)};
 const PL_HAS = {food:p=>SF_FOODK.includes(p[2]), drinks:p=>SF_DRINKK.includes(p[2])||THEME_RE.brewery.test(p[1])||THEME_RE.wine.test(p[1]), coffee:p=>p[2]==='cafe'||/coffee|espresso/i.test(p[1])};
-const plTheme = (p,k) => k==='trucks' ? ['food truck','truck park'].includes(p[2]) : k==='garden' ? p[2]==='beer garden'||THEME_RE.garden.test(p[1]) : THEME_RE[k].test(p[1]);
+const pfHas = (k,id) => !!PF.idx?.[k]?.includes(id);   // people said so (What's here)
+const plTheme = (p,k) => k==='trucks' ? ['food truck','truck park'].includes(p[2]) : k==='garden' ? p[2]==='beer garden'||THEME_RE.garden.test(p[1])
+  : k==='pool' ? pfHas('pool',p[0])||/billiard|pool hall|\bcue\b/i.test(p[1]) : k==='games' ? THEME_RE.games.test(p[1])||['pool','darts','games'].some(x=>pfHas(x,p[0]))
+  : k==='sports' ? THEME_RE.sports.test(p[1])||pfHas('tvs',p[0]) : k==='rooftop' ? THEME_RE.rooftop.test(p[1])||pfHas('rooftop',p[0]) : THEME_RE[k].test(p[1]);
 const isFree = e => /^\s*free\b/i.test(e.price||'') || /\bfree (show|admission|entry)\b|\bno cover\b/i.test(evText(e));
 function evSound(e){   // genres from the listing, then the room's usual sound
   const t=evText(e), out=Object.keys(MUSIC_RE).filter(k=>MUSIC_RE[k].test(t));

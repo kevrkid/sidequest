@@ -161,7 +161,9 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   (`stem` in renderSearch). **What's here** (`placefacts.rb`): people answer yes / no about a place or park (pool
   table, darts, DJs, patio, Wi-Fi, restrooms, dog area…) and when it's busiest; a fact shows when yes > no (last 365
   days); `/api/place/facts` (read), `/facts/set` (signed in, 60/h, whitelisted keys), `/facts/index` (confirmed facts
-  by place, for search). Box `#pf_<id>` on place and park cards, sheet `pfSheet`. `test_placefacts.rb` (7).
+  by place, for search, `pfact_index`). Box `#pf_<id>` on place and park cards, sheet `pfSheet`. Nightlife sub-chips
+  🎱 Pool tables / 🎯 Bar games (`Places` cats `pool` / `bargames`: what people said via `Places.flags`, or the name) and
+  Find a spot's Pool table theme use it too. `test_placefacts.rb` (8).
 - **Bottom about a sixth (2026-10-28, owner)**: the drawer's closed stop (peek) shows only the grab bar and search box
   (`drawerStops` `peekH`); chips and the glance line fade in from half up (hidden at rest so they don't show through the
   glass dock); Scout pointing at a chip lifts the drawer. The dock sits 16 px into the home-bar area

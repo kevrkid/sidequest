@@ -1539,6 +1539,7 @@ def mount_app(server)
     qy = req.query
     near = qy['lat'] && qy['lng'] ? [qy['lat'].to_f.round(2), qy['lng'].to_f.round(2)] : nil   # ~1 km: never exact GPS
     cat = qy['cat'].to_s[/\A[a-z]{2,14}\z/]   # ("speakeasies" is 11)
+    Places.flags = pfact_index.transform_values { |ids| Set.new(ids) } if %w[pool bargames].include?(cat)   # what people say bars have
     rows = Places.search(cat: cat, q: qy['q'].to_s[0, 60], near: near, zone: qy['zone'].to_s[0, 20],
                          open_only: qy['open'] == '1', limit: qy['limit'] ? qy['limit'].to_i.clamp(1, 80) : 40)
     if rows.any? { |r| BAR_KINDS.include?(r[:kind]) }   # bars say whether they serve food, and till when
