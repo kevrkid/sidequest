@@ -963,6 +963,16 @@
   .pfyn{display:flex;gap:6px} .pfyn button{padding:6px 12px;border-radius:99px;border:1px solid var(--hair);font-weight:700;font-size:13px;color:var(--text);background:none}
   .pfyn button.on{background:var(--good);border-color:var(--good);color:#04210f} .pfyn button.on.no{background:#ff453a;border-color:#ff453a;color:#fff}
   /* Apple-style action list: the event ⋯ / share menu and Create → Post */
+  #createBg .cinrow{margin:0 0 12px;border-radius:16px;background:var(--panel2,#ffffff12);border:1px solid var(--hair)}
+  /* simple search: what are you looking for? → what kind? */
+  .gdq{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:800;letter-spacing:-.3px;margin:6px 2px 10px}
+  .gdback{font-size:24px;line-height:1;padding:0 6px 2px 0;color:var(--accent2)}
+  .gdgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .gdgrid button{display:flex;align-items:center;gap:10px;padding:14px 12px;border-radius:16px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);text-align:left;font-size:15px}
+  .gdgrid button i{font-style:normal;font-size:24px}
+  .gdopts{display:flex;flex-wrap:wrap;gap:8px} .gdopts button{padding:10px 14px;border-radius:99px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650;font-size:14.5px}
+  .gdmorebtn{display:block;margin:12px 2px 4px;font-weight:700;font-size:13.5px}
+  .wcbar{display:flex;align-items:center;gap:10px;width:100%;text-align:left;color:var(--muted);font-weight:600;cursor:pointer}
   .actlist{margin-top:12px;border-radius:16px;overflow:hidden;background:var(--panel2,#ffffff12);border:1px solid var(--hair)}
   .actrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;text-align:left;font-weight:600;font-size:16px;color:var(--text);text-decoration:none;
     background:none;border:0;border-top:1px solid var(--line);cursor:pointer}
@@ -1229,7 +1239,7 @@
     <section class="view" id="v-search" hidden><div id="searchOut"></div></section>
 
     <section class="view" id="v-feed" hidden>
-      <div class="fhd"><h2 class="grow" data-t="Feed">Feed</h2><div class="seg mini" id="feedMode"><button type="button" data-v="foryou" class="on" data-t="Happening">Happening</button><button type="button" data-v="posts" data-t="Posts">Posts</button></div><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
+      <div class="fhd"><h2 class="grow" data-t="Feed">Feed</h2><div id="feedMode" hidden></div><button class="iconbtn" id="feedMapBtn" title="Show on the map" aria-label="Show on the map"><svg class="ic" aria-hidden="true"><use href="#i-map"/></svg></button><button class="iconbtn" data-fcustom title="Customize" aria-label="Customize"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
       <input id="feedQ" type="search" placeholder="🔎 Search events, posts, people, groups…" autocomplete="off" style="margin:0 0 10px" hidden>
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
@@ -1360,6 +1370,7 @@
 
   <div class="sheet-bg" id="createBg" hidden><div class="sheet">
     <div class="xhead"><b>✨ <span data-t="Create">Create</span></b><button class="xbtn" data-cclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <button class="actrow cinrow" data-cinnear><span class="ai">📍</span><span class="grow"><b data-t="Check in where you are">Check in where you are</b><small data-t="Places within about 150 m of you">Places within about 150 m of you</small></span></button>
     <div class="create-grid" id="createMain">
       <button data-create="share" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Post">Post</b><span data-t="A photo, video or thought: for 24 hours or on your profile">A photo, video or thought: for 24 hours or on your profile</span></button>
       <button data-create="plan" style="background:linear-gradient(145deg,#ff7a18,#ffb800)"><i>📣</i><b data-t="Plan">Plan</b><span data-t="Ask who's free now, or plan something later">Ask who's free now, or plan something later</span></button>
@@ -1852,7 +1863,13 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', '🎱 Pool tables':'🎱 Billar', '🎯 Bar games':'🎯 Juegos en bares',
+  'Map credits':'Créditos del mapa', 'What are you looking for?':'¿Qué buscas?', 'What kind?':'¿De qué tipo?', 'Find something':'Encuentra algo',
+  'More options: area, music, vibe':'Más opciones: zona, música, ambiente', 'Fewer options':'Menos opciones', 'show everything':'ver todo', 'Drinks':'Bebidas',
+  'Music & shows':'Música y shows', 'Events':'Eventos', 'Outdoors':'Aire libre', 'Get active':'Muévete', 'Sightseeing':'Turismo', 'People & groups':'Gente y grupos', 'Food':'Comida', 'Upload a contacts file (.vcf)':'Subir un archivo de contactos (.vcf)',
+  'iPhone: open Contacts, tap Lists, press and hold All Contacts (or a list), tap Export, then save to Files and pick it here.':'iPhone: abre Contactos, toca Listas, mantén presionado Todos los contactos (o una lista), toca Exportar, guárdalo en Archivos y elígelo aquí.',
+  'That file is too big.':'Ese archivo es demasiado grande.', 'No emails or phone numbers found in that file.':'No hay correos ni teléfonos en ese archivo.', 'Checking {n} contacts…':'Revisando {n} contactos…', 'Check in where you are':'Haz check-in donde estás', 'Places within about 150 m of you':'Lugares a unos 150 m de ti',
+  'Finding where you are…':'Buscando dónde estás…', 'Tap the spot you’re at. Friends who follow your check-ins see it, and you earn XP.':'Toca el lugar donde estás. Tus amigos que siguen tus check-ins lo ven, y ganas XP.',
+  "Nothing in Side Quest within about 150 m of you. Get closer to a place, park or event that's on.":'No hay nada en Side Quest a unos 150 m. Acércate a un lugar, parque o evento que esté pasando.', '🎱 Pool tables':'🎱 Billar', '🎯 Bar games':'🎯 Juegos en bares',
   "No bars here are known to have them yet. Open a bar you know and tap \u201cWhat's here?\u201d":'Todavía no sabemos de bares con eso aquí. Abre un bar que conozcas y toca “¿Qué hay aquí?”', 'Pool table':'Mesa de billar', 'Darts':'Dardos', 'DJs':'DJs', 'Trivia night':'Noche de trivia', 'Dance floor':'Pista de baile',
   'Patio':'Patio', 'Rooftop':'Azotea', 'Sports on TV':'Deportes en TV', 'Games':'Juegos', 'Dog friendly':'Admite perros', 'Cover charge':'Cover',
   'Wi-Fi':'Wi-Fi', 'Outlets':'Enchufes', 'Good to work from':'Bueno para trabajar', 'Good for groups':'Bueno para grupos', 'Vegetarian options':'Opciones vegetarianas',
@@ -2717,7 +2734,7 @@ const liveCard = ls => `<div class="card"><div class="kicker">📺 Live now · $
   ${ls.map(s=>`<button class="chip" data-watch="${s.id}" style="display:flex;align-items:center;gap:6px"><span class="onair">LIVE</span>${esc(s.u)} · ${esc(s.title.slice(0,28))}</button>`).join('')}</div></div>`;
 function renderFeed(){
   if(!$('#feedList')) return;
-  if(FEED_MODE.m==='posts') return renderWallView();
+  if(WL.posts===null&&!WL.loading){ WL.loading=true; loadWall().then(()=>{ WL.loading=false; renderFeed(); }); }   // people's posts are woven in
   const items=FEED_LAST=feedItems().filter(x=>x.type!=='live'), f=S.feed;   // V3: live streams are on the map's LIVE pill
   $('#feedQ').hidden=!feedQ;   // V3: searching starts in the drawer's search box; this only shows what the feed is narrowed to
   $('#feedCats').innerHTML = `<button class="chip fwhen" data-fwhen>📅 ${esc(T(WHEN[f.when]))} ▾</button><button class="chip ${!feedFocus?'on':''}" data-ffocus="">All</button>`+Object.entries(CATS)
@@ -2731,12 +2748,19 @@ function renderFeed(){
   const card = x => x.type==='event'?eventCard(x.it,x.r):x.type==='post'?pingCard(x.it):x.type==='person'?personCard(x.it):x.type==='group'
     ?`<div class="kicker" style="margin-top:4px">🏘️ A group you might like</div>${groupCard(x.it,false)}`:liveCard(x.it);
   $('#feedStories').innerHTML = !feedQ&&!feedFocus&&FEED_MODE.m==='foryou' ? storyRail() : '';   // stories first, Instagram-style
-  $('#feedList').innerHTML = (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
+  const guideBar = !feedQ&&!feedFocus ? `<button class="card wcbar gdbar" data-gdopen>🔎<span class="grow">${T('What are you looking for?')}</span>${svgI('chev')}</button>`
+    : feedFocus ? `<button class="card wcbar gdbar" data-ffocus="">✕<span class="grow">${esc(CATS[feedFocus]?.e||'')} ${esc(T(CATS[feedFocus]?.l||''))} · ${T('show everything')}</span></button>` : '';
+  const compose = WL.compose ? wallComposerHtml()
+    : !feedQ&&!feedFocus ? `<button class="card wcbar" data-wcopen>${AUTHED?av(S.me.h,'sm'):'<span class="av emo sm">👤</span>'}<span class="grow">${T('What’s happening around town?')}</span><span>📷</span></button>` : '';
+  $('#feedList').innerHTML = guideBar + compose + (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
       ${plans.slice(0,4).map(e=>`<div class="row" style="margin:6px 0"><span>${evE(e)}</span><span class="grow"><b>${esc(e.title)}</b> <span class="meta">${fmtWhen(e.ts,e.tba)}</span></span>
       ${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')}</div>`:'')
-    + items.slice(0,feedN).map((x,i)=>card(x)+(i%4===2&&WL.top[(i-2)/4]&&!feedQ&&!feedFocus?wallCard(WL.top[(i-2)/4]):'')).join('')
+    + (()=>{ // what's happening and what people post, in one list: a post after every 2 listings, the rest at the end
+        const ps=(WL.posts||[]).filter(p=>!feedFocus&&(!feedQ||[p.t,p.u,p.place?.name].join(' ').toLowerCase().includes(feedQ.toLowerCase())));
+        let k=0; const out=items.slice(0,feedN).map((x,i)=>card(x)+(i%3===1&&ps[k]?wallCard(ps[k++]):'')).join('');
+        return out+(items.length<=feedN?ps.slice(k).map(wallCard).join(''):''); })()
     + (items.length>feedN?`<button class="btn" data-fmore style="width:100%;margin-bottom:12px">Show more (${items.length-feedN})</button>`:'')
-    + (items.length?'':`<p class="sub">Nothing matches${feedQ?` “${esc(feedQ)}”`:''}. Try a longer time range or turn more categories on in ⚙️ Customize.</p>`);
+    + (items.length||(WL.posts||[]).length?'':`<p class="sub">Nothing matches${feedQ?` “${esc(feedQ)}”`:''}. Try a longer time range or turn more categories on in ⚙️ Customize.</p>`);
   renderPicks();
 }
 const segHtml = (id,opts,cur) => `<div class="seg" id="${id}">${opts.map(([v,l])=>`<button type="button" data-v="${v}" class="${String(cur)===String(v)?'on':''}">${l}</button>`).join('')}</div>`;
@@ -2776,7 +2800,7 @@ const PLACE_E = {restaurant:'🍽️','fast food':'🍔','food truck':'🚚','tr
   brewery:'🍺','music venue':'🎸','comedy club':'😂',theater:'🎭',cinema:'🎬',games:'🎳'};
 // Venues (music, comedy, theater, movies, bowling & arcades: from Overture Maps): their own pins on the Nightlife layer, never food dots
 const VENUE_KINDS = ['music venue','comedy club','theater','cinema','games'];
-const NOHOURS_SUBS = ['venues','music','comedy','theater','cinema','games','breweries','speakeasies'];   // Nightlife sub-chips where Open now doesn't filter
+const NOHOURS_SUBS = ['venues','music','comedy','theater','cinema','games','breweries','speakeasies','pool','bargames'];   // Nightlife sub-chips where Open now doesn't filter
 const ALC_TXT = {full:'🍸 Full bar', 'beer & wine':'🍷 Beer & wine', beer:'🍺 Beer'};
 async function loadHotspots(){ const first=!PL.hot; try{ PL.hot=(await (await fetch('/api/places/hotspots')).json()).hotspots; }catch(e){}
   if(first&&PL.hot&&curTab==='home'&&!EXC.k&&!POP.p) renderHome();   // Explore's "Busy right now"
@@ -4955,15 +4979,17 @@ function wallComposerHtml(){
     ${WL.img?`<div class="gpimg"><img src="${WL.img}" alt=""><button class="btn sm" data-wnoimg>✕</button></div>`:''}
     <div id="loc-wp" style="margin-top:8px">${locFieldHtml('wp')}</div>
     <div class="row" style="margin-top:8px;gap:6px"><button class="btn sm" data-wphoto>📷 ${T('Photo')}</button>${segHtml('wVis',[['everyone','🌐'],['friends','👥']],WL.vis)}
-      <span class="grow meta" style="text-align:right">+${(SV.v2&&3)||3} 🪙</span><button class="btn primary sm" data-wpost>${T('Post')}</button></div>
+      <span class="grow meta" style="text-align:right">+${(SV.v2&&3)||3} 🪙</span><button class="btn sm" data-wcclose>${T('Cancel')}</button><button class="btn primary sm" data-wpost>${T('Post')}</button></div>
     <input type="file" id="wFile" accept="image/*" hidden></div>`;
 }
-function renderWallView(){
+function renderWallView(){ WL.compose=true; return renderFeed(); }   // Happening and Posts are one feed now (2026-10-31)
+function renderWallViewOld(){
   const el=$('#feedList'); if(!el) return;
   el.innerHTML=wallComposerHtml()+`<div class="chiprow" style="margin:6px 0 8px">${[['all','✨ Everyone'],['friends','👥 Friends'],['near','📍 Near me']].map(([k,l])=>`<button class="chip ${WL.scope===k?'on':''}" data-wscope="${k}">${esc(T(l))}</button>`).join('')}</div>`
     +(WL.posts===null?`<p class="meta">${T('Loading…')}</p>`:WL.posts.map(wallCard).join('')||`<div class="card meta" style="text-align:center;padding:24px">${WL.scope==='friends'?T('No posts from friends yet.'):WL.scope==='near'?T('No posts near you yet. Be the first.'):T('No posts yet. Be the first!')}</div>`);
 }
 function setFeedMode(m){
+  if(m==='posts'){ WL.compose=true; FEED_MODE.m='foryou'; renderFeed(); loadWall(true).then(renderFeed); return; }   // "Post" opens the composer at the top of the one feed
   FEED_MODE.m=m; document.querySelectorAll('#feedMode button').forEach(b=>b.classList.toggle('on',b.dataset.v===m));
   ['#feedCats','#feedWhen','#feedMeta','#fyStrip','#feedStories'].forEach(s=>{ const x=$(s); if(x) x.hidden=m!=='foryou'; });
   if(m==='posts'){ renderWallView(); loadWall(true).then(()=>{ if(FEED_MODE.m==='posts') renderWallView(); }); }
@@ -4981,19 +5007,21 @@ function redrawWallCard(id, p){ document.querySelectorAll(`#wp-${CSS.escape(id)}
   if(keep){ const i=document.querySelector(`#wp-${CSS.escape(id)} [data-wcform] input`); if(i) i.value=keep; } }); }
 document.addEventListener('click',async e=>{
   const wo=e.target.closest('[data-wopen]'); if(wo){ e.stopPropagation(); $('#actBg').hidden=true; return openWallPost(wo.dataset.wopen); }
-  const b=e.target.closest('#feedMode button,[data-wscope],[data-wphoto],[data-wnoimg],[data-wpost],[data-wlike],[data-wcom],[data-wall],[data-wuncom],[data-wmenu],[data-wdel],[data-wboost],[data-wplace],[data-wsend],[data-wsignup],#wVis button');
+  const b=e.target.closest('#feedMode button,[data-wcopen],[data-wcclose],[data-wscope],[data-wphoto],[data-wnoimg],[data-wpost],[data-wlike],[data-wcom],[data-wall],[data-wuncom],[data-wmenu],[data-wdel],[data-wboost],[data-wplace],[data-wsend],[data-wsignup],#wVis button');
   if(!b) return; const d=b.dataset; const find=id=>(WL.posts||[]).concat(WL.top).find(p=>p.id===id);
   if(b.parentElement?.id==='feedMode') return setFeedMode(d.v);
   if(b.parentElement?.id==='wVis'){ WL.vis=d.v; b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); return; }
   e.stopPropagation();
   if(d.wsignup!==undefined) return needAccount('post');
+  if(d.wcclose!==undefined){ Object.assign(WL,{compose:false,img:null,place:null}); return renderFeed(); }
+  if(d.wcopen!==undefined){ if(needAccount('post')) return; WL.compose=true; renderFeed(); return setTimeout(()=>$('#wText')?.focus(),60); }
   if(d.wscope){ WL.scope=d.wscope; WL.posts=null; renderWallView(); await loadWall(true); return renderWallView(); }
   if(d.wphoto!==undefined) return $('#wFile').click();
   if(d.wnoimg!==undefined){ const t=$('#wText')?.value; WL.img=null; renderWallView(); if(t) $('#wText').value=t; return; }
   if(d.wpost!==undefined){ const t=($('#wText')?.value||'').trim(); if(!t&&!WL.img) return toast('Add a photo or write something.','orange');
     b.disabled=true; b.textContent=T('Posting…');
     try{ const j=await api('/api/wall/post',{t, img:WL.img, place:WL.place, vis:WL.vis}); if(SV.v2){ SV.v2.coins=j.coins; S.coins=j.coins; }
-      Object.assign(WL,{img:null,place:null}); (WL.posts ||= []).unshift(j.post); renderWallView(); renderQuick?.(); toast(`📝 ${T('Posted!')} 🪙 ${j.coins}`,'green',[],2200); }
+      Object.assign(WL,{img:null,place:null,compose:false}); (WL.posts ||= []).unshift(j.post); renderFeed(); renderQuick?.(); toast(`📝 ${T('Posted!')} 🪙 ${j.coins}`,'green',[],2200); }
     catch(err){ b.disabled=false; b.textContent=T('Post'); toast(esc(err.message),'orange'); } return; }
   if(d.wlike){ if(needAccount('like posts')) return; return wallAct(d.wlike,{do:'like'}); }
   if(d.wcom){ if(needAccount('comment')) return; WL.open['c'+d.wcom]=true; const p=find(d.wcom); if(p) redrawWallCard(d.wcom,p); return $(`[data-wcform="${d.wcom}"] input`)?.focus(); }
@@ -5234,6 +5262,9 @@ function openContactFinder(){
   $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📇 ${T('Find friends from contacts')}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
     <p class="meta">${T('Only people who chose to be found by their email or phone show up. Your contacts are checked once and not kept.')}</p>
     ${canPickContacts()?`<button class="btn primary" data-ctpick style="width:100%;margin:6px 0 12px">${T('Choose contacts')}</button>`:''}
+    <button class="btn ${canPickContacts()?'':'primary'}" data-ctfile style="width:100%;margin:6px 0 4px">📇 ${T('Upload a contacts file (.vcf)')}</button>
+    <input type="file" id="ctFile" accept=".vcf,text/vcard,text/x-vcard" hidden>
+    <p class="meta" style="font-size:12px;margin:0 0 12px">${T('iPhone: open Contacts, tap Lists, press and hold All Contacts (or a list), tap Export, then save to Files and pick it here.')}</p>
     <label class="meta" style="font-weight:700">${canPickContacts()?T('Or paste emails or phone numbers'):T('Paste emails or phone numbers, one per line')}</label>
     <textarea id="ctPaste" rows="5" placeholder="friend@example.com&#10;512 555 0123" style="margin-top:4px"></textarea>
     <button class="btn sm" data-ctcheck style="margin-top:8px">${T('Check')}</button>
@@ -5251,8 +5282,24 @@ async function matchContacts(list){   // list: [{name, emails:[], phones:[]}]
     return j;
   }catch(e){ if(out) out.innerHTML=`<p class="meta" style="color:var(--accent)">${esc(e.message)}</p>`; }
 }
-const parsePasted = t => t.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).slice(0,300).map(x=>/@/.test(x)?{emails:[x]}:{phones:[x]});
+// A contacts file (vCard, what iPhone and Android export): names, emails and phone numbers, read here on the phone
+function parseVcf(text){
+  const lines=text.replace(/\r\n?/g,'\n').replace(/\n[ \t]/g,'').split('\n'), out=[]; let c=null;
+  for(const ln of lines){ const u=ln.toUpperCase();
+    if(u.startsWith('BEGIN:VCARD')) c={name:'',emails:[],phones:[]};
+    else if(u.startsWith('END:VCARD')){ if(c&&(c.emails.length||c.phones.length)) out.push(c); c=null; }
+    else if(c){ const i=ln.indexOf(':'); if(i<0) continue; const key=u.slice(0,i).split(';')[0].replace(/^ITEM\d+\./,''), v=ln.slice(i+1).trim();
+      if(key==='FN') c.name=v.replace(/\\,/g,','); else if(key==='EMAIL'&&v) c.emails.push(v); else if(key==='TEL'&&v) c.phones.push(v.replace(/^tel:/i,'')); } }
+  return out.slice(0,1000);
+}
+const parsePasted = t => t.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).slice(0,1000).map(x=>/@/.test(x)?{emails:[x]}:{phones:[x]});
 // Friends search: an exact email or phone finds that person (if they let people find them)
+document.addEventListener('change',async e=>{ if(e.target.id!=='ctFile') return; const f=e.target.files?.[0]; if(!f) return;
+  if(f.size>8e6) return toast(T('That file is too big.'),'orange');
+  const list=parseVcf(await f.text()); e.target.value='';
+  if(!list.length) return toast(T('No emails or phone numbers found in that file.'),'orange');
+  toast(`📇 ${T('Checking {n} contacts…',{n:list.length})}`,'',[],1800); matchContacts(list);
+});
 const looksContact = q => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(q) || q.replace(/\D/g,'').length>=10&&/^[\d\s()+.-]+$/.test(q);
 async function contactSearch(q){
   if(CT.hits[q]!==undefined||!AUTHED) return; CT.hits[q]=null;
@@ -5266,6 +5313,7 @@ document.addEventListener('click',e=>{
   if(d.ctfind!==undefined) return saveContact({find:!(CT.me&&CT.me.find)});
   if(d.ctunlink!==undefined) return saveContact({email:'',phone:'',find:false});
   if(d.ctfinder!==undefined) return openContactFinder();
+  if(d.ctfile!==undefined) return $('#ctFile').click();
   if(d.ctcheck!==undefined){ const l=parsePasted($('#ctPaste').value); if(!l.length) return toast(T('Paste at least one email or phone number.'),'orange'); return matchContacts(l); }
   if(d.ctpick!==undefined) navigator.contacts.select(['name','email','tel'],{multiple:true}).then(cs=>{ if(cs&&cs.length) matchContacts(cs.map(c=>({name:(c.name||[])[0]||'',emails:c.email||[],phones:c.tel||[]}))); }).catch(()=>{});
 });
@@ -6166,13 +6214,58 @@ function openSearchView(){
   loadPlacesMap(); loadSights()?.then(()=>curTab==='search'&&renderSearch()); if(!GYM.list) loadGyms().then(()=>curTab==='search'&&renderSearch()); if(!OD.data) (OD.p ||= fetch('/api/outdoors').then(r=>r.json())).then(j=>{ OD.data=j; renderSearch(); }).catch(()=>{ OD.p=null; });
   renderSearch();
 }
+// Simple search: two plain questions (what are you looking for? what kind?) that land on the right list. Used in the
+// search box's empty state and from Feed's "What are you looking for?" bar; Find a spot's full options are one tap away.
+const GUIDE = {
+  eat:['🍽️','Food',[['🍽️ Anything',{ex:['food','all']}],['🍻 Happy hour',{ex:['food','happy']}],['☕ Coffee',{ex:['food','coffee']}],['🌮 Tacos',{ex:['food','tacos']}],['🍖 BBQ',{ex:['food','bbq']}],
+    ['🍕 Pizza',{ex:['food','pizza']}],['🍔 Burgers',{ex:['food','burgers']}],['🍜 Asian',{ex:['food','asian']}],['🚚 Food trucks',{ex:['food','trucks']}],['🍦 Sweets',{ex:['food','sweets']}],
+    ['🌙 Late night',{ex:['food','late']}],['🌅 Breakfast',{ex:['food','early']}]]],
+  drink:['🍸','Drinks',[['🍸 Bars',{ex:['night','bars']}],['🍹 Cocktails',{sf:'cocktail'}],['🍺 Breweries',{ex:['night','breweries']}],['🍷 Wine',{sf:'wine'}],['🤠 Dive bars',{sf:'dive'}],
+    ['🌇 Rooftops',{sf:'rooftop'}],['🏈 Sports bars',{sf:'sports'}],['🎱 Pool tables',{ex:['night','pool']}],['🎯 Bar games',{ex:['night','bargames']}],['🗝️ Speakeasies',{ex:['night','speakeasies']}],
+    ['🪩 Clubs',{ex:['night','clubs']}],['🍔 Bars with food',{ex:['night','barfood']}]]],
+  music:['🎶','Music & shows',[['🎸 Live music',{feed:'live_music'}],['🎧 DJs & dancing',{sfh:'dj'}],['😂 Comedy',{feed:'comedy'}],['🎤 Karaoke',{sfh:'karaoke'}],['🧠 Trivia',{sfh:'trivia'}],
+    ['🎭 Theater',{feed:'theater'}],['🎬 Movies',{ex:['night','cinema']}],['🎟️ Music venues',{ex:['night','music']}]]],
+  events:['🎉','Events',[['🌙 Tonight',{ex:['events','tonight']}],['📅 This weekend',{ex:['events','weekend']}],['🗓️ This week',{ex:['events','week']}],['🏟️ Sports',{feed:'sports'}],
+    ['🎪 Festivals',{feed:'festival'}],['🎨 Arts',{feed:'arts'}],['🏘️ Community',{feed:'community'}],['🧸 Family',{feed:'family'}]]],
+  outdoors:['🌳','Outdoors',[['🌳 Parks',{ex:['outdoors','green']}],['🚲 Trails',{ex:['outdoors','trail']}],['💧 Lakes & rivers',{ex:['outdoors','water']}],['✨ Everything outside',{ex:['outdoors','all']}]]],
+  active:['🏀','Get active',[['🏀 Pickup games',{feed:'pickup'}],['🏋️ Gyms',{ex:['gyms','gym']}],['🧗 Climbing',{ex:['gyms','climbing']}],['🧘 Yoga',{ex:['gyms','yoga']}],
+    ['🏒 Ice rinks',{ex:['gyms','rink']}],['🥊 Boxing',{ex:['gyms','boxing']}]]],
+  sights:['🏛️','Sightseeing',[['✨ Everything',{ex:['sights','all']}],['🏛️ Landmarks',{ex:['sights','landmark']}],['🖼️ Museums',{ex:['sights','museum']}],['🎨 Art & views',{ex:['sights','art']}],['🪧 History markers',{ex:['sights','marker']}]]],
+  people:['👋','People & groups',[['👋 Meet people',{meet:'swipe'}],['👥 Find friends',{meet:'friends'}],['🏘️ Groups',{meet:'groups'}]]],
+};
+const GD = {cat:null};
+function guideHtml(){
+  if(!GD.cat) return `<div class="gdq">${T('What are you looking for?')}</div><div class="gdgrid">${Object.entries(GUIDE).map(([k,[e,l]])=>`<button data-gdcat="${k}"><i>${e}</i><b>${T(l)}</b></button>`).join('')}</div>`;
+  const [e,l,opts]=GUIDE[GD.cat];
+  return `<div class="gdq"><button class="gdback" data-gdback aria-label="${T('Back')}">‹</button>${e} ${T('What kind?')}</div>
+    <div class="gdopts">${opts.map(([lab],i)=>`<button data-gdgo="${GD.cat}|${i}">${esc(T(lab))}</button>`).join('')}</div>`;
+}
+function guideGo(cat,i){
+  const a=GUIDE[cat][2][i][1]; GD.cat=null; $('#actBg').hidden=true; $('#qIn').value=''; $('#qIn').blur(); try{ track('guide'); }catch(e){}
+  if(a.ex){ tab('home'); return exploreCat(a.ex[0], a.ex[1]); }
+  if(a.sf) return sfPick(f=>{ f.has=[]; f.music=[]; f.theme=[a.sf]; });
+  if(a.sfh) return sfPick(f=>{ f.has=[a.sfh]; f.music=[]; f.theme=[]; });
+  if(a.feed){ feedFocus=a.feed; feedN=30; tab('feed'); return renderFeed(); }
+  if(a.meet){ meetTab=a.meet; DM.open=null; tab('meet'); return renderMeet(); }
+}
+function openGuide(){ GD.cat=null; $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">🔎 ${T('Find something')}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div><div id="gdSheet">${guideHtml()}</div>`; $('#actBg').hidden=false; }
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-gdcat],[data-gdgo],[data-gdback],[data-gdopen],[data-gdmore]'); if(!b) return; const d=b.dataset; e.stopPropagation();
+  if(d.gdopen!==undefined) return openGuide();
+  if(d.gdmore!==undefined){ GD.more=!GD.more; return renderSearch(); }
+  if(d.gdgo){ const [c,i]=d.gdgo.split('|'); return guideGo(c,+i); }
+  GD.cat = d.gdcat || null;
+  const box=b.closest('#gdSheet'); if(box) box.innerHTML=guideHtml(); else renderSearch();
+});
+
 function renderSearch(){
   const el=$('#searchOut'); if(!el) return; const q=$('#qIn').value.trim(), ql=q.toLowerCase();
   const ask = (text, sub, go=text) => `<button class="sask" data-xgo="scout|${esc(go)}"><span class="scwrap" data-scface></span><span class="grow"><b>${esc(sub)}</b><span class="meta">${esc(text)}</span></span>${svgI('chev')}</button>`;
   if(!q){
     const rec=(S.recentQ||[]).slice(0,8), tries=['tacos','live music tonight','happy hour','coffee','trivia','brunch','pickup basketball','swimming'];
     if(!SF.areas) loadAreas().then(()=>curTab==='search'&&!$('#qIn').value.trim()&&renderSearch());
-    el.innerHTML = `<div class="sgrp" style="margin-top:4px">${T('Find a spot')}</div>` + sfHead()
+    el.innerHTML = `<div class="gdwrap">${guideHtml()}</div>`
+      + `<button class="linkbtn gdmorebtn" data-gdmore>${GD.more?T('Fewer options'):T('More options: area, music, vibe')} ${GD.more?'‹':'›'}</button>` + (GD.more?sfHead():'')
       + ask(T('Or tap the mic and just talk'), T('Ask Scout anything'), '')   // empty: opens Scout to talk
       + `<div class="srecent" style="margin-top:10px">${askIdeas().slice(0,3).map(q=>`<button data-xgo="scout|${esc(q)}">✨ ${esc(q)}</button>`).join('')}</div>`
       + (rec.length?`<div class="sgrp">${T('Recent')}</div><div class="srecent">${rec.map(x=>`<button data-sq="${esc(x)}">🕘 ${esc(x)}</button>`).join('')}</div>`:'')
@@ -6851,6 +6944,7 @@ document.addEventListener('click',e=>{
     if(go==='friends'){ meetTab='friends'; tab('meet'); renderMeet(); }
     if(go==='food') openPlaces({cat:'all'}); }
   else if(d.cclose!==undefined){ $('#createBg').hidden=true; $('#createShare').hidden=true; $('#createMain').hidden=false; }
+  else if(d.cinnear!==undefined){ $('#createBg').hidden=true; openCheckinNear(); }
   else if(d.createback!==undefined){ $('#createShare').hidden=true; $('#createMain').hidden=false; }
   else if(d.create==='share'){ $('#createMain').hidden=true; $('#createShare').hidden=false; }   // Post asks: for 24 hours (story) or to keep (post)
   else if(d.create){ $('#createBg').hidden=true; $('#createShare').hidden=true; $('#createMain').hidden=false; const c=d.create;
@@ -8743,6 +8837,25 @@ const checkBtn = (k,id,lat,lng) => `<button class="btn sm" data-checkin2="${k}|$
 // Arriving somewhere: once you've been within ~60 m of an event that's on, a sight or a food & drink place for a
 // minute (not driving past), a toast offers the check-in. Once per spot a day; nothing is sent until you tap.
 const ARR = {at:0, cand:null, since:0};
+// + → Check in where you are: every spot within ~150 m (places, sights, gyms, events on now, parks you're in), nearest first
+async function openCheckinNear(){
+  if(needAccount('check in and earn XP')) return;
+  if(!ME_FIX||Date.now()-ME_FIX>6e4){ S.locOff=false; save(); toast(`📍 ${T('Finding where you are…')}`,'',[],1500);
+    if(!await freshFix()) return LOC.blocked||!navigator.geolocation ? locBlockedHelp() : toast(`📍 ${T("Couldn't find where you are. Step outside or try again in a moment.")}`,'orange',[],4000); }
+  const max=150+Math.min(ME_ACC||0,100), now=Date.now(), out=[], add=(k,id,name,e,lat,lng,sub)=>{ const m=km(ME_POS,[lat,lng])*1000; if(m<=max) out.push({k,id,name,e,lat,lng,sub,m}); };
+  (PL.all||[]).forEach(p=>add('place',p[0],p[1],placeE(p[2],p[1]),p[3],p[4],T(p[2])));
+  (SG.data||[]).forEach(x=>{ if(x[1]!=='marker') add('sight',x[0],x[2],SG_KIND[x[1]]?.[0]||'🏛️',x[3],x[4],T(SG_KIND[x[1]]?.[1]||'Sight')); });
+  (GYM.list||[]).forEach(g=>add('gym',g.id,g.name,gymK(g)[0],g.lat,g.lng,T(gymK(g)[1])));
+  (EV.list||[]).forEach(e=>{ if(e.geo_precise&&e.lat&&now>=e.ts-36e5&&now<=Math.max(e.te,e.ts+36e5)) add('event',e.id,e.title,evE(e),e.lat,e.lng,e.venue||T('On now')); });
+  (OD.data?.areas||[]).forEach(a=>{ if(a.kind!=='green'||!a.name) return; const r=Math.sqrt((a.km2||0)/Math.PI)*1000;   // inside a park: its middle can be far away
+    if(km(ME_POS,a.c)*1000<=r+max) out.push({k:'area',id:a.id,name:a.name,e:'🌳',lat:ME_POS[0],lng:ME_POS[1],sub:T('Park / nature'),m:0}); });
+  out.sort((a,b)=>a.m-b.m);
+  $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">📍 ${T('Check in where you are')}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    ${out.length?`<p class="meta">${T('Tap the spot you’re at. Friends who follow your check-ins see it, and you earn XP.')}</p><div class="actlist">${out.slice(0,15).map(x=>`<button class="actrow" data-checkin2="${x.k}|${esc(x.id)}|${x.lat}|${x.lng}"><span class="ai">${x.e}</span><span class="grow"><b>${esc(x.name)}</b><small>${esc(x.sub||'')}${x.m?` · ${Math.round(x.m)} m`:''}</small></span></button>`).join('')}</div>`
+      :`<p class="meta">${T("Nothing in Side Quest within about 150 m of you. Get closer to a place, park or event that's on.")}</p>`}`;
+  $('#actBg').hidden=false;
+  if(!SG.data) loadSights(); if(!GYM.list) loadGyms(); if(!OD.data) (OD.p ||= fetch('/api/outdoors').then(r=>r.json())).then(j=>OD.data=j).catch(()=>{ OD.p=null; });
+}
 function arriveSpots(){
   const now=Date.now(), out=[];
   (EV.list||[]).forEach(e=>{ if(e.geo_precise&&e.lat&&now>=e.ts-36e5&&now<=Math.max(e.te,e.ts+36e5)) out.push({k:'event',id:e.id,name:e.title,lat:e.lat,lng:e.lng,r:120}); });

@@ -155,6 +155,15 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **2026-10-31 (owner)**: Feed is one list: Happening and Posts merged (no `#feedMode` switch; people's posts woven in
+  after every 2 listings, the rest at the end; a "What's happening around town?" bar opens the composer, `WL.compose`;
+  Create → Post opens it there). **Simple search** (`GUIDE` / `guideHtml` / `guideGo`): "What are you looking for?"
+  (Food, Drinks, Music & shows, Events, Outdoors, Get active, Sightseeing, People & groups) → "What kind?" → the right
+  Explore list, Find a spot theme or Feed category; in the search box's empty state (Find a spot's full options behind
+  "More options") and Feed's top bar (sheet). **+ → Check in where you are** (`openCheckinNear`): every spot within
+  ~150 m (places, sights, gyms, events on now, parks you're in). **Contacts file**: Find friends from contacts takes a
+  .vcf (`parseVcf`, read on the phone; iPhones can't share contacts with websites any other way); match limit 1,000.
+  Pool tables / Bar games ignore Open now (most list no hours).
 - **Search by kind + What's here (2026-10-30, owner)**: typing a kind of place ("parks", "bars near me", "open bars",
   "coffee", "gyms", "trails", "pool table", "dog friendly"…) lists those places nearest first (`SKIND` + `searchKind`
   in index.html; filler like "near me" / "open" is stripped; each row opens on the map); plurals now match everywhere
@@ -174,7 +183,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   phone (`/api/contact/set`); the server keeps only an HMAC of each (key in `data/contact_key`, made once, 0600, never
   deployed over: push.sh skips data/) plus a masked copy for your own screen, in `u['contact']` (never in `state_for`).
   Findable only with "Let people find me by email or phone" on (`find`, off by default). `/api/contact/match` takes up
-  to 300 contacts ({emails, phones}), 10 calls/hour, answers handles + contact positions; blocks hide both ways.
+  to 1,000 contacts ({emails, phones}), 10 calls/hour, answers handles + contact positions; blocks hide both ways.
   Friends search runs it for an exact email / number; Social → Friends → "Find friends from contacts" uses the
   Contact Picker where the browser has one (Android Chrome), else pasting. Not verified yet (no email / SMS service).
   `test_contacts.rb` (11).

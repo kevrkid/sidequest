@@ -5,7 +5,7 @@
 # (typed, or picked from the phone's contacts) and answers only with the handles of people who said yes. Nothing is
 # verified yet (no email / text service), so a match means "this person typed that address", not proof.
 CONTACT_KEY_FILE = File.join(__dir__, 'data', 'contact_key')
-CONTACT_MATCH_MAX = 300   # contacts per request
+CONTACT_MATCH_MAX = 1000   # contacts per request (a whole exported address book)
 CONTACT_MATCH_PER_HOUR = 10
 
 def contact_key
