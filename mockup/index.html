@@ -972,6 +972,7 @@
   .gdgrid button i{font-style:normal;font-size:24px}
   .gdopts{display:flex;flex-wrap:wrap;gap:8px} .gdopts button{padding:10px 14px;border-radius:99px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650;font-size:14.5px}
   .gdmorebtn{display:block;margin:12px 2px 4px;font-weight:700;font-size:13.5px}
+  .schint{margin:6px 0 2px;display:flex;flex-direction:column;gap:6px} .schint button{text-align:left;padding:8px 12px;border-radius:12px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650}
   .wcbar{display:flex;align-items:center;gap:10px;width:100%;text-align:left;color:var(--muted);font-weight:600;cursor:pointer}
   .actlist{margin-top:12px;border-radius:16px;overflow:hidden;background:var(--panel2,#ffffff12);border:1px solid var(--hair)}
   .actrow{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;text-align:left;font-weight:600;font-size:16px;color:var(--text);text-decoration:none;
@@ -1863,7 +1864,8 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'What are you looking for?':'¿Qué buscas?', 'What kind?':'¿De qué tipo?', 'Find something':'Encuentra algo',
+  'Map credits':'Créditos del mapa', 'Here are the nearest {what}{open}. Tap one to see it on the map.':'Aquí están {what}{open} más cerca. Toca uno para verlo en el mapa.',
+  "I couldn't find {what} near you yet.":'Todavía no encontré {what} cerca de ti.', 'While I think: {what} near you':'Mientras pienso: {what} cerca de ti', 'What are you looking for?':'¿Qué buscas?', 'What kind?':'¿De qué tipo?', 'Find something':'Encuentra algo',
   'More options: area, music, vibe':'Más opciones: zona, música, ambiente', 'Fewer options':'Menos opciones', 'show everything':'ver todo', 'Drinks':'Bebidas',
   'Music & shows':'Música y shows', 'Events':'Eventos', 'Outdoors':'Aire libre', 'Get active':'Muévete', 'Sightseeing':'Turismo', 'People & groups':'Gente y grupos', 'Food':'Comida', 'Upload a contacts file (.vcf)':'Subir un archivo de contactos (.vcf)',
   'iPhone: open Contacts, tap Lists, press and hold All Contacts (or a list), tap Export, then save to Files and pick it here.':'iPhone: abre Contactos, toca Listas, mantén presionado Todos los contactos (o una lista), toca Exportar, guárdalo en Archivos y elígelo aquí.',
@@ -6317,12 +6319,14 @@ const SKIND = [
   [/^(djs?|dj nights?)$/,'DJs',{fact:'dj'}], [/^(dance floors?|dancing)$/,'Dance floors',{fact:'dance'}], [/^(wi-?fi|places to work|work spots?|laptop)$/,'Good to work from',{fact:'work',also:'wifi'}],
   [/^(sports bars?|watch the game)$/,'Sports on TV',{fact:'tvs',name:/sports/i}],
 ];
-function searchKind(q, near){
+function kindOf(q){   // "pool tables near me" → which kind of place (SKIND), and whether they want it open now
   let ql=fold(q.toLowerCase()).replace(/\b(near ?me|nearby|around( here| me)?|close ?by|in austin|cerca( de m[ií])?)\b/g,' ');
   const open=/\bopen( now)?\b|\babiertos?\b/.test(ql); ql=ql.replace(/\bopen( now)?\b|\babiertos?\b|\bbest\b|\bgood\b/g,' ').replace(/\s+/g,' ').trim();
-  const m=SKIND.find(([re])=>re.test(ql)); if(!m) return '';
-  const [,title,how]=m, rows=[];
-  if(how.od){ if(!OD.data) return `<div class="sgrp">${T(title)}</div><p class="meta">${T('Loading…')}</p>`;
+  const m=SKIND.find(([re])=>re.test(ql)); return m ? {title:m[1], how:m[2], open} : null;
+}
+function kindRows({how, open}, near){   // the nearest places of that kind, as search rows (search, and Scout's quick answers)
+  const rows=[];
+  if(how.od&&OD.data){
     OD.data.areas.forEach(a=>{ if(a.name&&how.od.includes(a.kind)) rows.push({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name, sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:near(a.c)}); }); }
   if(how.pl) (PL.all||[]).forEach(p=>{ if(how.pl.includes(p[2])&&(!open||placeState(p[5])==='open')) rows.push({go:`pl|${p[0]}`, e:placeE(p[2],p[1]), th:thumbAttr({id:p[0]}), title:p[1], sub:esc(T(p[2])), k:near([p[3],p[4]])}); });
   if(how.gym) (GYM.list||[]).forEach(g=>{ const [e,l]=gymK(g); rows.push({go:`gym|${g.id}`, e, title:g.name, sub:esc(T(l)), k:near([g.lat,g.lng])}); });
@@ -6333,7 +6337,14 @@ function searchKind(q, near){
     (PL.all||[]).forEach(p=>{ if((ids.has(p[0])||how.name&&how.name.test(p[1]))&&(!open||placeState(p[5])==='open')) rows.push({go:`pl|${p[0]}`, e:placeE(p[2],p[1]), th:thumbAttr({id:p[0]}), title:p[1], sub:esc(ids.has(p[0])?`${T(p[2])} · ${T('people say so')}`:T(p[2])), k:near([p[3],p[4]])}); });
     (OD.data?.areas||[]).forEach(a=>{ if(ids.has(a.id)) rows.push({go:`od|${a.id}`, e:'🌳', title:a.name, sub:esc(T('people say so')), k:near(a.c)}); });
   }
-  const seen=new Set(), list=rows.sort((a,b)=>a.k-b.k).filter(x=>{ const key=fold(x.title)+'|'+Math.round(x.k*5); if(seen.has(key)) return false; seen.add(key); return true; });
+  const seen=new Set();
+  return rows.sort((a,b)=>a.k-b.k).filter(x=>{ const key=fold(x.title)+'|'+Math.round(x.k*5); if(seen.has(key)) return false; seen.add(key); return true; });
+}
+function searchKind(q, near){
+  const k=kindOf(q); if(!k) return '';
+  const {title,how,open}=k;
+  if(how.od&&!OD.data) return `<div class="sgrp">${T(title)}</div><p class="meta">${T('Loading…')}</p>`;
+  const list=kindRows(k, near);
   list.forEach(x=>x.d=fmtMi(x.k));
   const head=`${T(title)}${open?' · '+T('open now'):''} · ${T('nearest first')}`;
   if(!list.length) return `<div class="sgrp">${esc(head)}</div><p class="meta" style="margin:4px 2px 10px">${how.fact?T("Nobody has told us yet. Open a place you know and tap “What's here?”"):T('Nothing found nearby.')}</p>`;
@@ -7852,14 +7863,15 @@ async function scoutSpeak(text, force){
   const loud=force||SCT.driving||scS().voice;
   if(!loud||!plain||!CFG.voice) return browserSpeak(plain, loud&&!CFG.voice);   // the phone's voice only when there's no Google voice at all
   const n=SCT.say=(SCT.say||0)+1; try{ speechSynthesis?.cancel(); }catch(e){}
-  // ~200-character pieces on sentence breaks: the first comes back fast, the rest are fetched while it plays
-  const parts=(plain.match(/[^.!?¡¿]+[.!?]+["”’)]*\s*|[^.!?]+$/g)||[plain]).reduce((a,p)=>{ if(a.length&&(a.at(-1)+p).length<200) a[a.length-1]+=p; else a.push(p); return a; },[]).map(x=>x.trim()).filter(Boolean);
+  // the first sentence alone (short = Google answers fastest, so Scout starts talking sooner), then ~200-character
+  // pieces on sentence breaks; the first two are asked for at once, the rest while it plays
+  const parts=(plain.match(/[^.!?¡¿]+[.!?]+["”’)]*\s*|[^.!?]+$/g)||[plain]).reduce((a,p)=>{ if(a.length>1&&(a.at(-1)+p).length<200) a[a.length-1]+=p; else a.push(p); return a; },[]).map(x=>x.trim()).filter(Boolean);
   const get=t=>api('/api/scout/voice',{text:t, voice:scS().voiceName||'puck', lang:S.lang}).then(j=>j.audio).catch(()=>api('/api/scout/voice',{text:t, voice:scS().voiceName||'puck', lang:S.lang}).then(j=>j.audio));
-  scoutTalking(true); let next=get(parts[0]);
+  scoutTalking(true); const asked=[get(parts[0])]; if(parts[1]) asked[1]=get(parts[1]);
   for(let k=0;k<parts.length;k++){
-    let audio; try{ audio=await next; }catch(e){ break; }   // Google's voice didn't answer: stop talking (the words are on screen)
+    let audio; try{ audio=await asked[k]; }catch(e){ break; }   // Google's voice didn't answer: stop talking (the words are on screen)
     if(n!==SCT.say) return;   // a newer answer or a hush
-    if(k+1<parts.length) next=get(parts[k+1]);
+    if(k+2<parts.length) asked[k+2]=get(parts[k+2]);
     const a=SCT.audio; a.src='data:audio/mpeg;base64,'+audio; a.playbackRate=a.defaultPlaybackRate=scoutRate(); a.onplaying=()=>scoutTalking(true); a.onpause=a.onerror=null;
     try{ await a.play(); await new Promise(ok=>{ a.onended=ok; a.onerror=ok; a.onpause=ok; }); }catch(e){ break; }
     if(n!==SCT.say) return;
@@ -8118,11 +8130,29 @@ function renderScoutLog(){
       :`Hey, I'm <b>${esc(s.name)}</b> 🧭 Ask me anything.`}</div>`)
     + s.log.slice(-10).map(m=>{ const i=s.log.indexOf(m);
         return `<div class="scm ${m.who==='me'?'me':'scout'}">${esc(m.text)}</div>${m.plan?planCard(m.plan,{key:'log:'+i, save:m.saved?null:i}):''}`; }).join('')
-    + (SCT.busy?'<div class="scm scout wait">🧭 Thinking…</div>':'');
+    + (SCT.busy?'<div class="scm scout wait">🧭 Thinking…</div>':'')
+    + (SCT.busy&&SCT.hint?`<div class="schint"><div class="meta">${T('While I think: {what} near you',{what:T(SCT.hint.k.title).toLowerCase()})}</div>${SCT.hint.rows.map(x=>`<button data-xgo="${esc(x.go)}">${x.e} ${esc(x.title)} <span class="meta">${fmtMi(x.k)}</span></button>`).join('')}</div>`:'');
   el.scrollTop=el.scrollHeight;
   $('#scoutName').textContent=s.name;
   $('#scoutLeft').textContent = SCT.left!=null&&AUTHED ? `${SCT.left} question${SCT.left===1?'':'s'} left today` : AUTHED ? 'Your guide to Side Quest' : 'Guest mode: the basics';
   $('#scVoice').textContent = s.voice?'🔊':'🔇';
+}
+// Scout, quick: a plain "find me X" ("pool tables near me", "where's a park?", "any bars open") is answered at once from
+// the same lists as search, no Claude needed. A longer question that names a kind of place shows the nearest few while
+// Claude thinks.
+const SC_ASKWORDS = /^(hey |hi |ok |okay )?(scout,? )?(can you |could you |please )?(where('?s| is| are)( (a|an|the|some))?|where can i (find|get)( (a|an|some))?|find( me)?( (a|an|some))?|show( me)?( (a|an|the|some))?|i('m| am) looking for( (a|an|some))?|looking for( (a|an|some))?|i want( to (go to|find))?( (a|an|some))?|take me to( (a|an|the))?|any|are there( any)?|is there( (a|an))?|what are( (some|the))?( good)?|recommend( me)?( (a|an|some))?|suggest( (a|an|some))?)\s+/i;
+function scoutQuick(q){
+  const t=q.trim().replace(/[?.!]+$/,'').replace(/\s*(please|for me|right now|tonight)$/i,''), term=t.replace(SC_ASKWORDS,'').trim();
+  const k=kindOf(term); if(!k) return null;
+  if(k.how.od&&!OD.data||k.how.gym&&!GYM.list||k.how.sg&&!SG.data) return null;   // not loaded yet: let Claude answer
+  return {k, term, rows:kindRows(k, p=>km(ME_POS,p))};
+}
+document.addEventListener('click',e=>{ if(e.target.closest('.schint [data-xgo]')){ $('#scoutBg').hidden=true; tab('home'); } },true);   // a place while Scout thinks: show the map
+function scoutHint(q){   // a kind of place named anywhere in a longer question
+  const w=fold(q.toLowerCase()).replace(/[^a-z0-9 -]/g,' ').split(/\s+/).filter(Boolean);
+  for(let n=3;n>=1;n--) for(let i=0;i+n<=w.length;i++){ const k=kindOf(w.slice(i,i+n).join(' '));
+    if(k&&!(k.how.od&&!OD.data)){ const rows=kindRows(k,p=>km(ME_POS,p)).slice(0,3); if(rows.length) return {k, rows}; } }
+  return null;
 }
 async function scoutAsk(q, byVoice){
   q=String(q).trim().slice(0,300); if(!q||SCT.busy) return; track('scout_ask');
@@ -8131,6 +8161,14 @@ async function scoutAsk(q, byVoice){
     scoutLog('me',q); scoutLog('scout',T('Opening the camera translator. Point it at the text.')); renderScoutLog(); return openLens(); }
   if(/\b(what('?s| is) (this|that)( (building|place|statue|landmark|thing|mural|restaurant|dish))?|identify (this|that)|qu[eé] es (esto|eso))\b/i.test(q)&&q.length<60){   // "what is this?": the camera's Identify
     scoutLog('me',q); scoutLog('scout',T('Opening the camera. Point it at what you want to know about and tap the button.')); renderScoutLog(); return openLens('look'); }
+  const quick=scoutQuick(q);
+  if(quick){ scoutLog('me',q); try{ track('scout_quick'); }catch(e){}
+    const n=quick.rows.length, what=T(quick.k.title).toLowerCase();
+    const say = n ? T('Here are the nearest {what}{open}. Tap one to see it on the map.',{what, open:quick.k.open?' '+T('open now'):''}) : T("I couldn't find {what} near you yet.",{what});
+    scoutLog('scout',say); scoutEx('happy'); renderScoutLog(); scoutSpeak(say, byVoice);
+    if(n) setTimeout(()=>{ $('#scoutBg').hidden=true; tab('home'); $('#qIn').value=quick.term; openSearchView(); renderSearch(); },700);
+    return; }
+  SCT.hint = scoutHint(q);
   const ctl=SCT.req=new AbortController();   // ✕ Cancel / a new tap aborts it
   scoutLog('me',q); SCT.busy=true; scoutEx('thinking'); renderScoutLog(); scoutMicUi(); $('#dvGo').hidden=true; scoutCardClose();
   if(SCT.driving) $('#dvSay').textContent='🧭 Thinking…';

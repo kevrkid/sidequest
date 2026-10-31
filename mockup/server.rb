@@ -206,10 +206,49 @@ API_EFFORT = { 'claude-haiku-5-5' => ENV['SQ_HAIKU_EFFORT'] || 'low',
 # schema nil: the answer comes back as plain text (one turn, fewer tokens: menus). images: JPEG (or PNG) bytes to
 # show Claude with the prompt (the camera's "what is this?"). web: true lets it search and
 # read the web (menus); pages it reads are untrusted, so only the structured answer comes back.
-def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
+def run_claude(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false, warm: false)
   warn "[claude] called inside the store lock (every request waits): #{caller(1, 3).join(' < ')}" if STORE[:lock].owned?
   ENGINE == 'api' ? run_claude_api(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
-                  : run_claude_cli(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web)
+                  : run_claude_cli(prompt, schema, system: system, model: model, timeout: timeout, effort: effort, images: images, web: web, warm: warm)
+end
+
+# A Claude Code process started ahead of time (warm: true, Scout): it boots (~1 s on this server) and waits for its one
+# question on stdin (stream-json input waits as long as needed), so the next question skips the start-up. One ready
+# process per exact command (model, system prompt, schema), refilled after each use, retired after WARM_MAX_AGE idle.
+# Each process still answers exactly one question with no session kept, so nothing carries over between people.
+WARM = { lock: Mutex.new, ready: {} }
+WARM_MAX_AGE = (ENV['SQ_WARM_MAX_AGE'] || 15 * 60).to_i
+def warm_room?   # each waiting process holds ~200 MB: keep none ready when memory is short (Linux; elsewhere always yes)
+  kb = File.read('/proc/meminfo')[/MemAvailable:\s+(\d+)/, 1] rescue nil
+  kb.nil? || kb.to_i > 400 * 1024
+end
+def warm_spawn(cmd, env)
+  stdin, stdout, stderr, thr = Open3.popen3(env, *cmd, chdir: Dir.tmpdir)
+  { stdin: stdin, stdout: stdout, stderr: stderr, thr: thr, at: Time.now.to_f }
+end
+def warm_kill(w)
+  w[:stdin].close rescue nil
+  Process.kill('TERM', w[:thr].pid) rescue nil
+end
+def warm_take(cmd, env)
+  key = Digest::SHA1.hexdigest(cmd.join("\0"))
+  got = nil
+  WARM[:lock].synchronize do
+    now = Time.now.to_f
+    WARM[:ready].delete_if { |k, w| (k != key && now - w[:at] > WARM_MAX_AGE) ? (warm_kill(w); true) : false }   # old commands
+    w = WARM[:ready].delete(key)
+    if w && w[:thr].alive? && now - w[:at] < WARM_MAX_AGE then got = w
+    elsif w then warm_kill(w)
+    end
+  end
+  Thread.new do   # get the next one ready
+    next unless warm_room?
+    nw = warm_spawn(cmd, env)
+    WARM[:lock].synchronize { old = WARM[:ready][key]; WARM[:ready][key] = nw; warm_kill(old) if old }
+  rescue StandardError => e
+    warn "[warm] couldn't start Claude ahead: #{e.message[0, 120]}"
+  end
+  got ? [got, true] : [warm_spawn(cmd, env), false]   # none ready (two at once, or just started): start one now
 end
 
 def claude_content(prompt, images)
@@ -333,32 +372,69 @@ end
 # silently switch billing to the API; set SQ_ENGINE=cli with SQ_USE_API_KEY=1 to run the CLI on an
 # API key instead. --tools "" and an empty MCP config keep it a pure
 # text call; cwd is a temp dir so no project CLAUDE.md gets pulled in.
-def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false)
-  tools = web ? %w[WebSearch WebFetch] : []
-  cmd = [CLAUDE, '-p', '--output-format', images ? 'stream-json' : 'json', '--model', model, '--tools', tools.join(','),
+def claude_cli_cmd(schema, system, model, effort, tools, stream)
+  cmd = [CLAUDE, '-p', '--output-format', stream ? 'stream-json' : 'json', '--model', model, '--tools', tools.join(','),
          '--strict-mcp-config', '--no-session-persistence', '--system-prompt', system]
   cmd += ['--json-schema', schema] if schema   # no schema: plain text back (one turn, fewer tokens: menus)
-  cmd += ['--allowedTools', *tools] if web
+  cmd += ['--allowedTools', *tools] if tools.any?
   cmd += ['--effort', effort] if effort
+  cmd += ['--input-format', 'stream-json', '--verbose'] if stream
+  cmd
+end
+
+# Start Scout's processes when the server starts, so even the first question is quick
+def warm_prime(schema, system, model, effort)
+  return unless ENGINE == 'cli' && warm_room? && ENV['SQ_WARM'] != '0'
+  cmd = claude_cli_cmd(schema, system, model, effort, [], true)
+  env = { 'ANTHROPIC_API_KEY' => ENV['SQ_USE_API_KEY'] == '1' ? ENV['ANTHROPIC_API_KEY'] : nil }
+  w = warm_spawn(cmd, env)
+  WARM[:lock].synchronize { WARM[:ready][Digest::SHA1.hexdigest(cmd.join("\0"))] = w }
+rescue StandardError => e
+  warn "[warm] #{e.message[0, 120]}"
+end
+
+def run_claude_cli(prompt, schema, system: SYSTEM, model: MODEL, timeout: TIMEOUT, effort: nil, images: nil, web: false, warm: false)
+  tools = web ? %w[WebSearch WebFetch] : []
+  stream = images || warm   # stream-json in and out: a photo, or a process started ahead of time (warm_take)
+  cmd = claude_cli_cmd(schema, system, model, effort, tools, stream)
   # a photo goes in as a stream-json message (the plain-text prompt can't carry one); the answer is the last line
-  if images
-    cmd += ['--input-format', 'stream-json', '--verbose']
-    prompt = JSON.generate(type: 'user', message: { role: 'user', content: claude_content(prompt, images) })
+  if stream
+    prompt = JSON.generate(type: 'user', message: { role: 'user', content: images ? claude_content(prompt, images) : [{ type: 'text', text: prompt }] }) + "\n"
   end
   out = err = nil
   env = { 'ANTHROPIC_API_KEY' => ENV['SQ_USE_API_KEY'] == '1' ? ENV['ANTHROPIC_API_KEY'] : nil }
-  Open3.popen3(env, *cmd, chdir: Dir.tmpdir) do |stdin, stdout, stderr, thr|
-    stdin.write(prompt)
-    stdin.close
-    o = Thread.new { stdout.read rescue '' }
-    e = Thread.new { stderr.read rescue '' }
-    unless thr.join(timeout)
-      Process.kill('TERM', thr.pid) rescue nil
+  if warm && !images
+    w, hit = warm_take(cmd, env)
+    Thread.current[:warm_hit] = hit
+    begin
+      w[:stdin].write(prompt); w[:stdin].close
+    rescue StandardError   # it died while waiting: start one now
+      warm_kill(w); w = warm_spawn(cmd, env); w[:stdin].write(prompt); w[:stdin].close
+    end
+    o = Thread.new { w[:stdout].read rescue '' }
+    e = Thread.new { w[:stderr].read rescue '' }
+    unless w[:thr].join(timeout)
+      Process.kill('TERM', w[:thr].pid) rescue nil
       raise "Claude took longer than #{timeout}s"
     end
     out, err = o.value, e.value
+  else
+    Open3.popen3(env, *cmd, chdir: Dir.tmpdir) do |stdin, stdout, stderr, thr|
+      stdin.write(prompt)
+      stdin.close
+      o = Thread.new { stdout.read rescue '' }
+      e = Thread.new { stderr.read rescue '' }
+      unless thr.join(timeout)
+        Process.kill('TERM', thr.pid) rescue nil
+        raise "Claude took longer than #{timeout}s"
+      end
+      out, err = o.value, e.value
+    end
   end
-  out = out.to_s.lines.reverse.find { |l| l.include?('"type":"result"') }.to_s if images
+  if stream   # the answer is the "result" line (or the last JSON line)
+    ls = out.to_s.lines.reverse
+    out = (ls.find { |l| l.include?('"type":"result"') } || ls.find { |l| l.lstrip.start_with?('{') }).to_s
+  end
   j = begin JSON.parse(out) rescue raise("claude gave no JSON: #{(err.to_s + out.to_s)[0, 300]}") end
   raise "claude error: #{j['result'].to_s[0, 300]}" if j['is_error']
   return [j['result'].to_s, j['duration_ms'], j['total_cost_usd'].to_f] unless schema
@@ -2425,7 +2501,7 @@ def mount_routes(server)
     end
     t = Time.now
     begin
-      out, _ms, usd = run_claude(<<~P, SCOUT_SCHEMA, system: scout_system, model: model, timeout: 30, effort: 'low')
+      out, _ms, usd = run_claude(<<~P, SCOUT_SCHEMA, system: scout_system, model: model, timeout: 30, effort: 'low', warm: true)   # same system prompt every time: cached by Claude, and the warm process matches
         The user has named you #{JSON.generate(scout_name(b['name']))}; call yourself that (your personality stays the same).
         #{b['lang'] == 'es' ? 'The app is set to Spanish: answer in friendly Latin American Spanish, the way people talk in Texas (tú, not usted). Keep names of places, events, people and buttons exactly as written. The plan title and notes are in Spanish too.' : ''}
         #{driving ? 'DRIVING MODE IS ON: voice only. One or two short spoken sentences, no `point` or `go` actions, distances in miles, nothing to read or tap.' : ''}
@@ -2464,7 +2540,7 @@ def mount_routes(server)
             { id: op['id'], name: op['name'], dish: out['order']['dish'].to_s.strip[0, 80], stars: out['order']['stars'].to_i.clamp(0, 5) }
     persona_new = SCOUT_PERSONAS.key?(out['persona'].to_s) && out['persona'] != persona ? out['persona'] : nil
     store { |d| scout_remember!(d, h, q, say, out['remember']) }
-    warn "[scout] #{model} #{(Time.now - t).round(1)}s $#{usd.round(4)}: #{q[0, 60]}"
+    warn "[scout] #{model}#{Thread.current[:warm_hit] ? ' warm' : ''} #{(Time.now - t).round(1)}s $#{usd.round(4)}: #{q[0, 60]}"
     lit = acts.select { |a| %w[place directions].include?(a['type']) }.map { |a| places.find { |p| p[:id] == a['target'] } }.compact
     plan = planning ? scout_plan(out['plan'], ctx, places + sights.map { |x| { id: x['id'], name: x['name'], lat: x['lat'], lng: x['lng'] } }) : nil
     shown = acts.select { |a| %w[sight directions].include?(a['type']) }.map { |a| sights.find { |x| x['id'] == a['target'] } }.compact
@@ -2604,6 +2680,8 @@ puts "Side Quest -> http://localhost:#{PORT}  (engine: #{ENGINE == 'api' ? 'Anth
 puts "  mode: #{BETA ? 'PUBLIC BETA' : 'local'} · demo content #{DEMO ? 'on' : 'off'} · sign-up #{INVITES.any? ? "invite-only (#{INVITES.size} codes)" : 'open'}" \
      " · moderation #{MODERATE ? 'on' : 'OFF'} · admin #{ADMIN_TOKEN.empty? ? 'off' : 'on at /admin'}" \
      " · Claude billed to #{ENGINE == 'api' || ENV['SQ_USE_API_KEY'] == '1' ? 'API key' : 'your subscription'}"
+Thread.new { sleep 2; [SCOUT_MODEL, SCOUT_SMART_MODEL].uniq.each { |m| warm_prime(SCOUT_SCHEMA, scout_system, m, 'low') } } unless ENV['SQ_WARM'] == '0'
+puts "  scout warm start: #{ENGINE == 'cli' && ENV['SQ_WARM'] != '0' ? "a Claude process waits ready for Scout (#{[SCOUT_MODEL, SCOUT_SMART_MODEL].uniq.join(', ')})" : 'off'}"
 puts "  scout ears: #{HEAR ? 'whisper.cpp on this server (for phones without working speech recognition)' : "the browser's own (no whisper.cpp)"}"
 puts "  scout voice: #{GOOGLE_TTS_KEY.empty? ? "the phone's own (no SQ_GOOGLE_TTS_KEY)" : "Google (up to #{TTS_DAILY_CHARS} characters a day)"}"
 puts "  sign in with Google: #{GOOGLE_CLIENT_ID.empty? ? 'off (no SQ_GOOGLE_CLIENT_ID)' : GOOGLE_SIGNIN ? 'on' : 'paused (SQ_GOOGLE_SIGNIN=1 turns it on)'}"

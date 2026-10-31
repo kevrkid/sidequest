@@ -31,7 +31,8 @@ File.write(FAKE_CLAUDE, "#!/usr/bin/env ruby\nrequire 'json'\npr = $stdin.read\n
   "if pr.include?('Photo to check') then imgs = JSON.parse(pr)['message']['content'].select { |c| c['type'] == 'image' }.map { |c| c['source']['data'].unpack1('m') }\n" \
   "  bad = imgs.any? { |b| b.include?('BADPHOTO') }; File.open(File.join(#{dir.inspect}, 'photo_checks.txt'), 'a') { |f| f.puts imgs.size }\n" \
   "  puts JSON.generate(type: 'result', structured_output: { verdict: bad ? 'block' : 'allow', reason: bad ? 'This photo shows something not allowed here.' : 'ok' }, duration_ms: 1, total_cost_usd: 0); exit end\n" \
-  "File.write(File.join(#{dir.inspect}, 'last_prompt.txt'), pr)\n" \
+  "txt = (JSON.parse(pr)['message']['content'].map { |c| c['text'] }.join rescue pr)   # warm Scout sends one stream-json message\n" \
+  "File.write(File.join(#{dir.inspect}, 'last_prompt.txt'), txt)\n" \
   "if (l = pr[/^Lines: (\\[.*\\])$/, 1]) then puts JSON.generate(structured_output: { translations: JSON.parse(l).map { |x| 'ES ' + x } }, duration_ms: 1, total_cost_usd: 0); exit end\n" \
   "puts '{\"structured_output\":{\"say\":\"ok\",\"expression\":\"happy\",\"actions\":[]},\"duration_ms\":1,\"total_cost_usd\":0}'\n")
 File.chmod(0o755, FAKE_CLAUDE)

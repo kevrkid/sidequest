@@ -155,6 +155,15 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Scout speed (2026-10-31)**: `run_claude(..., warm: true)` (Scout's main answer) takes a Claude Code process that was
+  started ahead of time in stream-json mode (`warm_take` / `warm_spawn`; ~1 s of start-up saved per question on the
+  server; one ready per exact command, refilled after each use, retired after 15 min, none kept when MemAvailable <
+  400 MB; primed at boot, `SQ_WARM=0` turns it off). Each process still answers one question, no session kept. Scout's
+  system prompt stays identical every time so Claude's prompt cache hits (~8k tokens read from cache). `[scout] haiku
+  warm 2.3s` in the log. Client: `scoutQuick` answers a plain "find me X" (pool tables near me, where's a park, any bars
+  open) instantly from `kindOf` / `kindRows` (the search lists) and opens the list; `scoutHint` shows the nearest 3 of a
+  kind named in a longer question while Claude thinks; `scoutSpeak` says the first sentence alone and asks for the first
+  two pieces at once.
 - **2026-10-31 (owner)**: Feed is one list: Happening and Posts merged (no `#feedMode` switch; people's posts woven in
   after every 2 listings, the rest at the end; a "What's happening around town?" bar opens the composer, `WL.compose`;
   Create → Post opens it there). **Simple search** (`GUIDE` / `guideHtml` / `guideGo`): "What are you looking for?"
