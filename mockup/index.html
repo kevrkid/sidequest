@@ -972,6 +972,8 @@
   .gdgrid button i{font-style:normal;font-size:24px}
   .gdopts{display:flex;flex-wrap:wrap;gap:8px} .gdopts button{padding:10px 14px;border-radius:99px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650;font-size:14.5px}
   .gdmorebtn{display:block;margin:12px 2px 4px;font-weight:700;font-size:13.5px}
+  .fytag{font-weight:700;color:var(--accent);margin-right:4px}
+  .schello{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px} .schello button{padding:7px 12px;border-radius:99px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650;font-size:13.5px}
   .schint{margin:6px 0 2px;display:flex;flex-direction:column;gap:6px} .schint button{text-align:left;padding:8px 12px;border-radius:12px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650}
   .wcbar{display:flex;align-items:center;gap:10px;width:100%;text-align:left;color:var(--muted);font-weight:600;cursor:pointer}
   .actlist{margin-top:12px;border-radius:16px;overflow:hidden;background:var(--panel2,#ffffff12);border:1px solid var(--hair)}
@@ -1864,7 +1866,12 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'Here are the nearest {what}{open}. Tap one to see it on the map.':'Aquí están {what}{open} más cerca. Toca uno para verlo en el mapa.',
+  'Map credits':'Créditos del mapa', 'Top-ranked near you':'Lo mejor calificado cerca', "You've been":'Ya fuiste', 'Good morning! What are you looking for?':'¡Buenos días! ¿Qué buscas?', 'Morning! Coffee, breakfast, or something to do?':'¡Buen día! ¿Café, desayuno o algo que hacer?',
+  'Hi! What sounds good this morning?':'¡Hola! ¿Qué se te antoja esta mañana?', 'Hi! What are you looking for?':'¡Hola! ¿Qué buscas?', 'Hey! What sounds good right now?':'¡Hey! ¿Qué se te antoja ahora?',
+  'Hi there! Food, drinks, or something to do?':'¡Hola! ¿Comida, bebidas o algo que hacer?', 'Hey! What are you in the mood for tonight?':'¡Hey! ¿Qué se te antoja esta noche?',
+  'Hi! Dinner, drinks, or a show?':'¡Hola! ¿Cena, tragos o un show?', 'Hey there! What are you looking for tonight?':'¡Hola! ¿Qué buscas esta noche?', 'Hey night owl! What are you looking for?':'¡Hola, ave nocturna! ¿Qué buscas?',
+  'Hi! Late eats, drinks, or music?':'¡Hola! ¿Comida tarde, tragos o música?', 'Hey! Still going? What sounds good?':'¡Hey! ¿Sigues de fiesta? ¿Qué se te antoja?',
+  '🍽️ Food':'🍽️ Comida', '🍸 Drinks':'🍸 Bebidas', '🍻 Happy hour':'🍻 Happy hour', '🎶 Live music':'🎶 Música en vivo', '🌳 Parks':'🌳 Parques', '✨ Plan my night':'✨ Planea mi noche', 'Here are the nearest {what}{open}. Tap one to see it on the map.':'Aquí están {what}{open} más cerca. Toca uno para verlo en el mapa.',
   "I couldn't find {what} near you yet.":'Todavía no encontré {what} cerca de ti.', 'While I think: {what} near you':'Mientras pienso: {what} cerca de ti', 'What are you looking for?':'¿Qué buscas?', 'What kind?':'¿De qué tipo?', 'Find something':'Encuentra algo',
   'More options: area, music, vibe':'Más opciones: zona, música, ambiente', 'Fewer options':'Menos opciones', 'show everything':'ver todo', 'Drinks':'Bebidas',
   'Music & shows':'Música y shows', 'Events':'Eventos', 'Outdoors':'Aire libre', 'Get active':'Muévete', 'Sightseeing':'Turismo', 'People & groups':'Gente y grupos', 'Food':'Comida', 'Upload a contacts file (.vcf)':'Subir un archivo de contactos (.vcf)',
@@ -2791,6 +2798,7 @@ S.mapL.outdoors ??= true; S.mapL.friendlocs ??= true; S.mapL.heat ??= true;
 for(const [k,v] of Object.entries({clubs:S.mapL.night, bars:S.mapL.night, parks:S.mapL.outdoors, water:S.mapL.outdoors, trails:S.mapL.outdoors,
   spots:S.mapL.outdoors, openonly:false, landmarks:false, markers:false, art:false, markets:true})) S.mapL[k] ??= v;   // sights start off (too busy); the Sights chip or preset turns them on
 if(!S.sightsOffV2){ S.sightsOffV2=true; S.mapL.landmarks=S.mapL.markers=S.mapL.art=false; }   // once, for phones that saved the old default
+if(!S.markersOffV3){ S.markersOffV3=true; S.mapL.markers=false; }   // 2026-10-31 owner: historical markers off by default (Sights → 🪧 Markers or Layers turns them on)
 S.mapWhen ??= 'tonight'; S.mapCats ??= [];   // events shown: tonight / weekend / week, and which types ([] = all)
 const FOOD_TILES = [['happy','🍻','Happy hour'],['late','🌙','Late-night eats'],['early','🌅','Early morning'],['bars','🍸','Bars'],['clubs','🪩','Clubs'],['trucks','🚚','Food trucks'],['coffee','☕','Coffee'],
   ['tacos','🌮','Tacos'],['bbq','🍖','BBQ'],['pizza','🍕','Pizza'],['burgers','🍔','Burgers'],['asian','🍜','Asian'],['sweets','🍦','Sweets'],['all','🍽️','Everything']];
@@ -5985,7 +5993,7 @@ function renderHome(){
   if(POP.p){ $('#exMain').hidden=$('#exCat').hidden=true; return; }
   if(EXC.k){ $('#exMain').hidden=true; $('#exCat').hidden=false; return; }
   $('#exMain').hidden=false; $('#exCat').hidden=true;
-  renderQuick(); renderTonight(); $('#exMore').innerHTML=(window.Pulse?Pulse.rail():'')+happyRail()+openRail()+hotRail()+weekendRail(); $('#exMedia').innerHTML=mediaRail(); bestRail();   // stories live in Feed; plans and level in You
+  renderQuick(); renderTonight(); loadForYou(); $('#exMore').innerHTML=exMoreHtml(); $('#exMedia').innerHTML=mediaRail(); bestRail();   // stories live in Feed; plans and level in You
   const day=new Date().getHours()<15, tn=$('#homeTonight'), mo=$('#exMore');   // daytime: what's open now first; evening: tonight first
   if(day!==(mo.nextElementSibling===tn)) day ? tn.before(mo) : mo.before(tn);
   const next=EV.list.filter(e=>myRsvp(e.id)==='going'&&e.te>Date.now()).sort((a,b)=>a.ts-b.ts)[0];
@@ -6023,11 +6031,53 @@ function askIdeas(){
 }
 // Food & drink open right now, nearest first (fetched at most every 10 minutes).
 const OPENNEAR={list:null, at:0, busy:false};
+// What Explore suggests leans on you (owner, 2026-10-31): the food and kinds of place you've enjoyed and checked in at
+// (/api/foryou, from your check-ins and saves), your interests and "best night out" answers, places you've been,
+// "Best of Austin" rankings (🏆 #2 Tacos) and happy hours on now (bars first), then distance.
+const FY = {ranks:{}, foods:{}, kinds:{}, visited:new Set(), at:0, busy:false};
+function loadForYou(force){
+  if(FY.busy||!force&&Date.now()-FY.at<6e5) return; FY.busy=true;
+  fetch('/api/foryou',{credentials:'same-origin'}).then(r=>r.json()).then(j=>{ FY.ranks=j.ranks||{}; FY.foods=j.foods||{}; FY.kinds=j.kinds||{}; FY.visited=new Set(j.visited||[]); FY.at=Date.now();
+    if(curTab==='home'&&!EXC.k&&!POP.p) renderHome(); }).catch(()=>{}).finally(()=>{ FY.busy=false; });
+}
+const FY_INTEREST = [[/bars? & patios|^bars?$|happy hour|patio/i,['bar','pub','beer garden']],[/food trucks?/i,['food truck','truck park']],[/live music|concert|live shows?|^music$/i,['music venue']],
+  [/comedy/i,['comedy club']],[/dancing|^clubs?$|dj/i,['club']],[/games?|arcade|bowling|pool|billiards/i,['games']],[/breweri|craft beer|beer/i,['brewery']],[/coffee|caf[eé]/i,['cafe']],
+  [/^food$|foodie|restaurants?|brunch|eating out/i,['restaurant']],[/theat(er|re)/i,['theater']],[/movies?|film/i,['cinema']],[/sports bar/i,['bar','pub']],[/dessert|sweets|ice cream/i,['ice cream','bakery']]];
+function fyKinds(){
+  const words=[...(S.me.i||[]), ...[].concat(S.me.p?.nightsOut||[]), ...[].concat(S.me.p?.hobbies||[])].map(String), out=new Set();
+  words.forEach(w=>FY_INTEREST.forEach(([re,ks])=>{ if(re.test(w)) ks.forEach(k=>out.add(k)); })); return out;
+}
+const fyHappy = id => (HH.list||[]).some(h=>h.id===id&&h.happy?.now);
+function fyScore(p){   // p: {id, kind, cuisine, mi}
+  let sc=0; const cu=(p.cuisine||[]).join(' ').toLowerCase().replace(/_/g,' ');
+  Object.entries(FY.foods).forEach(([f,w])=>{ if(f&&(cu.includes(f)||f===p.kind)) sc+=Math.min(w,6)*.6; });
+  sc+=Math.min(FY.kinds[p.kind]||0,6)*.4 + (fyKinds().has(p.kind)?1.5:0) + (FY.visited.has(p.id)?1.2:0);
+  const r=FY.ranks[p.id]; if(r) sc+=1+(11-r[3])*.35;
+  if(fyHappy(p.id)) sc+=BAR_K.includes(p.kind)?2.5:1.2;
+  return sc-(p.mi??3)*.5;
+}
+function fyTag(p){   // the reason, on the card
+  const r=FY.ranks[p.id];
+  return r ? `<span class="fytag">🏆 #${r[3]} ${esc(T(r[2]))}</span>` : fyHappy(p.id) ? `<span class="fytag">🍻 ${T('Happy hour')}</span>` : FY.visited.has(p.id) ? `<span class="fytag">✓ ${T("You've been")}</span>` : '';
+}
+// 🏆 Top-ranked near you: places on the Best of Austin lists close by, the ones that fit you first
+function rankRail(){
+  const L=Object.keys(FY.ranks).map(id=>PL.byId[id]).filter(Boolean).map(x=>({id:x[0], name:x[1], kind:x[2], lat:x[3], lng:x[4], mi:km(ME_POS,[x[3],x[4]])/1.609}))
+    .filter(p=>p.mi<8).map(p=>({...p, s:fyScore(p)})).sort((a,b)=>b.s-a.s).slice(0,10);
+  if(!L.length) return '';
+  PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];
+  return `<div class="tnhead"><b>🏆 ${T('Top-ranked near you')}</b><button class="linkbtn" data-rkopen="">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
+    `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${placeE(p.kind,p.name)}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${fyTag(p)} ${p.mi.toFixed(1)} mi</span></span></button>`).join('')}</div>`;
+}
+function exMoreHtml(){   // happy hour first while it's on (bars lead it), then what fits you
+  const hh=happyRail(), rest=openRail()+rankRail()+hotRail()+weekendRail(), pick=window.Pulse?Pulse.rail():'';
+  return HH.now ? hh+pick+rest : pick+rest+hh;
+}
 function openRail(){
   if(!OPENNEAR.busy&&Date.now()-OPENNEAR.at>6e5){ OPENNEAR.busy=true;
-    fetch(`/api/places?cat=all&open=1&${nearParam()}&limit=12`).then(r=>r.json()).then(j=>{ OPENNEAR.list=j.places||[]; OPENNEAR.at=Date.now(); })
-      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=(window.Pulse?Pulse.rail():'')+happyRail()+openRail()+hotRail()+weekendRail(); }); }
-  const L=(OPENNEAR.list||[]).slice(0,10); if(!L.length) return '';
+    fetch(`/api/places?cat=all&open=1&${nearParam()}&limit=40`).then(r=>r.json()).then(j=>{ OPENNEAR.list=j.places||[]; OPENNEAR.at=Date.now(); })
+      .catch(()=>{}).finally(()=>{ OPENNEAR.busy=false; if(curTab==='home'&&!EXC.k&&!POP.p&&OPENNEAR.list) $('#exMore').innerHTML=exMoreHtml(); }); }
+  const L=(OPENNEAR.list||[]).map(p=>({p,s:fyScore(p)})).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.p); if(!L.length) return '';   // what fits you, not just the closest
   PL.lastList=[...L,...(PL.lastList||[]).filter(p=>!L.some(x=>x.id===p.id))];   // so a tap can fly to it
   return `<div class="tnhead"><b>🍽️ ${T('Open near you')}</b><button class="linkbtn" data-excat="food">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
     `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>${placeE(p.kind,p.name,p.cuisine)}</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${p.mi!=null?p.mi+' mi · ':''}${esc(p.status||'')}</span></span></button>`).join('')}</div>`;
@@ -6041,7 +6091,7 @@ function weekendRail(){
     `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:''}>${evE(e)}</span><span class="tnt"><b>${esc(e.title)}</b><span class="meta">${esc(fmtWhen(e.ts,e.tba))}${e.venue?' · '+esc(e.venue):''}</span></span></button>`).join('')}</div>` : '';
 }
 function happyRail(){
-  const L=(HH.list||[]).filter(p=>p.happy?.now).slice(0,10);
+  const L=(HH.list||[]).filter(p=>p.happy?.now).map(p=>({p,s:(BAR_K.includes(p.kind)?3:0)+fyScore(p)})).sort((a,b)=>b.s-a.s).slice(0,10).map(x=>x.p);   // bars first, then what fits you
   return L.length ? `<div class="tnhead"><b>🍻 ${T('Happy hour now')}</b><button class="linkbtn" data-excat="food" data-exsubgo="happy">${T('See all')} ›</button></div><div class="tnrail">${L.map(p=>
     `<button class="tncard" data-xgo="pl|${esc(p.id)}" style="width:200px"><span class="cat thumb"${thumbAttr({id:p.id})}>🍻</span><span class="tnt"><b>${esc(p.name)}</b><span class="meta">${esc(p.happy.label||'')}${p.mi!=null?' · '+p.mi+' mi':''}</span></span></button>`).join('')}</div>` : '';
 }
@@ -6081,7 +6131,7 @@ const EX_CHIPS = [
   ['zones','🔥','Hot spots'], ['outdoors','🌳','Outdoors'], ['gyms','🏋️','Gyms'], ['sights','🏛️','Sights'],
 ];
 const EX_LAYERS = {food:{food:1,markets:1}, events:{events:1}, night:{clubs:1,bars:1,zones:1,venues:1}, outdoors:{parks:1,water:1,trails:1,spots:1,markets:1}, gyms:{gyms:1},
-  sights:{landmarks:1,markers:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}, find:{}};   // find: only its own pins
+  sights:{landmarks:1,art:1}, friends:{friendlocs:1,posts:1,live:1,stories:1,heat:1}, zones:{zones:1,food:1,clubs:1}, find:{}};   // find: only its own pins
 const EX_SUBS = {
   food: [['all','Everything'],['happy','🍻 Happy hour'],['coffee','☕ Coffee'],['tacos','🌮 Tacos'],['bbq','🍖 BBQ'],['pizza','🍕 Pizza'],['burgers','🍔 Burgers'],['asian','🍜 Asian'],['trucks','🚚 Trucks'],['sweets','🍦 Sweets'],['late','🌙 Late night'],['early','🌅 Breakfast']],
   night: [['bars','🍸 Bars'],['speakeasies','🗝️ Speakeasies'],['barfood','🍔 Bars with food'],['pool','🎱 Pool tables'],['bargames','🎯 Bar games'],['clubs','🪩 Clubs'],['venues','🎤 Venues & shows'],['music','🎸 Music'],['comedy','😂 Comedy'],['breweries','🍺 Breweries'],['games','🎳 Bowling & games'],['cinema','🎬 Movies'],['theater','🎭 Theater'],['late','🌙 Late eats']],
@@ -6168,11 +6218,12 @@ async function renderExCat(fresh){
   if(k==='outdoors'||k==='sights'){
     if(k==='outdoors'&&!OD.data){ busy(); try{ OD.data=await (OD.p ||= fetch('/api/outdoors').then(r=>r.json())); }catch(err){ OD.p=null; } }
     if(k==='sights'&&!SG.data){ busy(); await loadSights(); }
+    if(k==='sights'&&S.mapL.markers!==(EXC.sub==='marker')){ S.mapL.markers=EXC.sub==='marker'; renderSights(); }   // markers only when you pick 🪧 Markers
     if(seq!==EXC.seq) return; const c=mapC();
     const items = k==='outdoors'
       ? (OD.data?.areas||[]).filter(a=>a.name&&(EXC.sub==='all'||a.kind===EXC.sub||EXC.sub==='water'&&a.kind==='river')).map(a=>({go:`od|${a.id}`, e:{green:'🌳',water:'💧',river:'💧',trail:'🚲'}[a.kind]||'🌳', title:a.name,
           sub:esc(T({green:'Park / nature',water:'Lake',river:'River',trail:'Trail'}[a.kind]||'')), k:km(c,a.c), ll:a.c}))
-      : (SG.data||[]).filter(([,kind,name])=>!/, Texas\b|\(.*Texas\)|^Greater /.test(name)).filter(([,kind])=>EXC.sub==='all'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
+      : (SG.data||[]).filter(([,kind,name])=>!/, Texas\b|\(.*Texas\)|^Greater /.test(name)).filter(([,kind])=>EXC.sub==='all'&&kind!=='marker'||kind===EXC.sub||EXC.sub==='art'&&!['landmark','museum','marker'].includes(kind)).map(([id,kind,name,lat,lng,year])=>({go:`sg|${id}`, e:SG_KIND[kind]?.[0]||'🏛️', title:name,
           sub:esc(`${T(SG_KIND[kind]?.[1]||'Sight')}${year?' · '+year:''}`), k:km(c,[lat,lng]), ll:[lat,lng]}));
     el.innerHTML = head + `<p class="meta exnote">${T('Closest to the middle of the map')}</p>` +
       (items.sort((a,b)=>a.k-b.k).slice(0,40).map(x=>xrow({...x, d:fmtMi(x.k)})).join('') || `<p class="xempty">${T('Nothing here yet.')}</p>`);
@@ -7674,15 +7725,15 @@ const MAP_PRESETS={
   night:['🌙 Night out',{events:1,clubs:1,bars:1,zones:1,food:1,openonly:1,posts:1,live:1},'tonight'],
   outdoors:['🌲 Outdoors day',{parks:1,water:1,trails:1,spots:1,posts:1,live:1,markets:1}],
   friends:['👥 Friends',{friendlocs:1,posts:1,live:1,stories:1,heat:1}],
-  sights:['🏛️ Sightseeing',{landmarks:1,markers:1,art:1,parks:1,food:1,posts:1,markets:1}],
-  all:['✨ Everything',{friendlocs:1,heat:1,events:1,clubs:1,bars:1,zones:1,parks:1,water:1,trails:1,spots:1,posts:1,live:1,stories:1,food:1,markets:1,landmarks:1,markers:1,art:1}],
+  sights:['🏛️ Sightseeing',{landmarks:1,art:1,parks:1,food:1,posts:1,markets:1}],
+  all:['✨ Everything',{friendlocs:1,heat:1,events:1,clubs:1,bars:1,zones:1,parks:1,water:1,trails:1,spots:1,posts:1,live:1,stories:1,food:1,markets:1,landmarks:1,art:1}],   // markers only on purpose (too many)
   none:['○ Clear',{}],
 };
 const layerKeys = c => c.subs.filter(s=>!s[2]).map(s=>s[0]);
 const catState = c => { const on=layerKeys(c).filter(k=>S.mapL[k]).length; return on===0?'':on===layerKeys(c).length?'on':'part'; };
 function syncMapL(){ S.mapL.night=S.mapL.clubs||S.mapL.bars; S.mapL.outdoors=S.mapL.parks||S.mapL.water||S.mapL.trails||S.mapL.spots; }   // the old summary flags
 function refreshMapLayers(){ mapHint.armed=true; syncMapL(); save(); renderMapChips(); if(!map) return; renderMarkets(); renderMap(); renderPlacesLayer(); renderHotZones(); renderSights(); renderGyms(); }
-function toggleMapCat(k){ const c=MAP_CATS.find(x=>x.k===k), on=!!catState(c); layerKeys(c).forEach(x=>S.mapL[x]=!on); refreshMapLayers(); mapHint(true); }
+function toggleMapCat(k){ const c=MAP_CATS.find(x=>x.k===k), on=!!catState(c); layerKeys(c).forEach(x=>{ if(!(x==='markers'&&!on)) S.mapL[x]=!on; }); refreshMapLayers(); mapHint(true); }   // turning Sights on leaves historical markers off (their own switch)
 function applyPreset(k){ const [,on,when]=MAP_PRESETS[k];
   MAP_CATS.forEach(c=>c.subs.forEach(([x])=>S.mapL[x]=!!on[x])); if(when) S.mapWhen=when;
   refreshMapLayers(); openMapLayers(); mapHint(true); }
@@ -7847,7 +7898,8 @@ function scoutTalking(on){
 
 /* voice: Google's natural voices through the server when it has them (/api/scout/voice), else the browser's own speech */
 const SCOUT_VOICE_L={puck:'Puck · upbeat', fenrir:'Fenrir · excitable', achird:'Achird · friendly', charon:'Charon · informative', orus:'Orus · firm',
-  zephyr:'Zephyr · bright', aoede:'Aoede · breezy', leda:'Leda · youthful', kore:'Kore · firm', sulafat:'Sulafat · warm'};
+  achernar:'Achernar · soft', vindemiatrix:'Vindemiatrix · gentle', zephyr:'Zephyr · bright', aoede:'Aoede · breezy', leda:'Leda · youthful', kore:'Kore · firm', sulafat:'Sulafat · warm'};
+const SCOUT_VOICE_DEFAULT='achernar';   // a soft female voice (owner, 2026-10-31); a voice you picked stays yours
 const SCOUT_VOICE_M=new Set(['puck','fenrir','achird','charon','orus']);   // the rest are female voices
 const SCOUT_RATES=[[0.85,'🐢 Slower'],[1,'Normal'],[1.2,'🐇 Faster']];
 const scoutRate = () => +scS().rate||1;
@@ -7866,12 +7918,13 @@ async function scoutSpeak(text, force){
   // the first sentence alone (short = Google answers fastest, so Scout starts talking sooner), then ~200-character
   // pieces on sentence breaks; the first two are asked for at once, the rest while it plays
   const parts=(plain.match(/[^.!?¡¿]+[.!?]+["”’)]*\s*|[^.!?]+$/g)||[plain]).reduce((a,p)=>{ if(a.length>1&&(a.at(-1)+p).length<200) a[a.length-1]+=p; else a.push(p); return a; },[]).map(x=>x.trim()).filter(Boolean);
-  const get=t=>api('/api/scout/voice',{text:t, voice:scS().voiceName||'puck', lang:S.lang}).then(j=>j.audio).catch(()=>api('/api/scout/voice',{text:t, voice:scS().voiceName||'puck', lang:S.lang}).then(j=>j.audio));
-  scoutTalking(true); const asked=[get(parts[0])]; if(parts[1]) asked[1]=get(parts[1]);
+  const get=t=>api('/api/scout/voice',{text:t, voice:scS().voiceName||SCOUT_VOICE_DEFAULT, lang:S.lang}).then(j=>j.audio).catch(()=>api('/api/scout/voice',{text:t, voice:scS().voiceName||SCOUT_VOICE_DEFAULT, lang:S.lang}).then(j=>j.audio));
+  const ask=t=>get(t).catch(()=>null);   // a piece asked for early may never be played: its failure must not go unhandled
+  scoutTalking(true); const asked=[ask(parts[0])]; if(parts[1]) asked[1]=ask(parts[1]);
   for(let k=0;k<parts.length;k++){
-    let audio; try{ audio=await asked[k]; }catch(e){ break; }   // Google's voice didn't answer: stop talking (the words are on screen)
+    const audio=await asked[k]; if(!audio) break;   // Google's voice didn't answer: stop talking (the words are on screen)
     if(n!==SCT.say) return;   // a newer answer or a hush
-    if(k+2<parts.length) asked[k+2]=get(parts[k+2]);
+    if(k+2<parts.length) asked[k+2]=ask(parts[k+2]);
     const a=SCT.audio; a.src='data:audio/mpeg;base64,'+audio; a.playbackRate=a.defaultPlaybackRate=scoutRate(); a.onplaying=()=>scoutTalking(true); a.onpause=a.onerror=null;
     try{ await a.play(); await new Promise(ok=>{ a.onended=ok; a.onerror=ok; a.onpause=ok; }); }catch(e){ break; }
     if(n!==SCT.say) return;
@@ -8025,7 +8078,7 @@ async function listenRec(m){
     if(send&&recd&&recd.state!=='inactive'){ SCT.hearing=true; scoutMicUi(); try{ recd.stop(); return; }catch(e){} }   // onstop sends
     release(); try{ recd?.state!=='inactive'&&recd?.stop(); }catch(e){} micDone(m,'','');
   };
-  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
+  try{ const pre=SCT.preStream; SCT.preStream=null; stream=(pre&&await pre)||await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
   catch(e){ micBeep(false); SCT.listening=false; return micDone(m,'',/NotAllowed|Security/.test(e.name)?'not-allowed':'audio-capture'); }
   if(SCT.mic!==m||!m.want){ stream.getTracks().forEach(t=>t.stop()); return; }   // turned off while the phone was asking
   try{ recd=new MediaRecorder(stream, type?{mimeType:type}:undefined); }catch(e){ recd=new MediaRecorder(stream); }
@@ -8130,6 +8183,7 @@ function renderScoutLog(){
       :`Hey, I'm <b>${esc(s.name)}</b> 🧭 Ask me anything.`}</div>`)
     + s.log.slice(-10).map(m=>{ const i=s.log.indexOf(m);
         return `<div class="scm ${m.who==='me'?'me':'scout'}">${esc(m.text)}</div>${m.plan?planCard(m.plan,{key:'log:'+i, save:m.saved?null:i}):''}`; }).join('')
+    + (!SCT.busy&&s.log.length&&s.log.at(-1).who!=='me'&&s.log.at(-1).text===SCT.helloText?`<div class="schello">${SC_HELLO_Q.map(([l,q])=>`<button data-scq="${esc(q)}">${esc(T(l))}</button>`).join('')}</div>`:'')
     + (SCT.busy?'<div class="scm scout wait">🧭 Thinking…</div>':'')
     + (SCT.busy&&SCT.hint?`<div class="schint"><div class="meta">${T('While I think: {what} near you',{what:T(SCT.hint.k.title).toLowerCase()})}</div>${SCT.hint.rows.map(x=>`<button data-xgo="${esc(x.go)}">${x.e} ${esc(x.title)} <span class="meta">${fmtMi(x.k)}</span></button>`).join('')}</div>`:'');
   el.scrollTop=el.scrollHeight;
@@ -8325,12 +8379,38 @@ function openLens(mode){
   const s=document.createElement('script'); s.src='/lens.js'; s.onload=go;
   s.onerror=()=>toast("Couldn't load the translator. Check your connection.",'orange'); document.head.appendChild(s);
 }
+// Opening Scout: a short hello ("Hi! What are you looking for?"), at most every 5 minutes, with a few one-tap answers.
+// With the voice on, Scout says it and starts listening when it's done, so the mic doesn't hear Scout; on phones that
+// record (iPhone) the mic is asked for inside the tap (phones only give it to a tap) and recording starts after.
+const SC_HELLO = {
+  morning:['Good morning! What are you looking for?','Morning! Coffee, breakfast, or something to do?','Hi! What sounds good this morning?'],
+  day:['Hi! What are you looking for?','Hey! What sounds good right now?','Hi there! Food, drinks, or something to do?'],
+  evening:['Hey! What are you in the mood for tonight?','Hi! Dinner, drinks, or a show?','Hey there! What are you looking for tonight?'],
+  late:['Hey night owl! What are you looking for?','Hi! Late eats, drinks, or music?','Hey! Still going? What sounds good?']};
+function scoutHello(){
+  const h=new Date().getHours(), part=h>=5&&h<11?'morning':h<17?'day':h<22?'evening':'late', L=SC_HELLO[part];
+  return T(L[Math.floor(Math.random()*L.length)]);
+}
+const SC_HELLO_Q = [['🍽️ Food','restaurants near me'],['🍸 Drinks','bars near me'],['🍻 Happy hour','Best happy hour near me?'],['🎶 Live music','live music tonight'],['🌳 Parks','parks near me'],['✨ Plan my night','Plan my night']];
 function openScoutVoice(quiet){
   if(!scoutOn()) return scoutOffToast();
   scoutMemLoad();
-  scoutNudgeHide(); $('#scoutBg').hidden=false; renderScoutLog(); renderScoutFind(); scoutFaces(); scoutMicUi();
-  if(!quiet&&(SR||micRec())&&!SCT.busy&&!SCT.listening&&!SCT.mic&&$('#scoutForm').hidden) scoutListen();   // voice first, started inside the tap that opened Scout (phones only give the mic to a tap)
+  scoutNudgeHide(); $('#scoutBg').hidden=false;
+  const wantMic=!quiet&&(SR||micRec())&&!SCT.busy&&!SCT.listening&&!SCT.mic&&$('#scoutForm').hidden;
+  const hello=!SCT.busy&&!SCT.listening&&Date.now()-(SCT.helloAt||0)>5*6e4;
+  if(hello){ SCT.helloAt=Date.now(); SCT.helloText=scoutHello(); scoutLog('scout',SCT.helloText); scoutEx('happy'); }
+  renderScoutLog(); renderScoutFind(); scoutFaces(); scoutMicUi();
+  const loud=scS().voice||SCT.driving;
+  if(hello&&loud){
+    if(wantMic&&micRec()&&!SCT.preStream) SCT.preStream=navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).catch(()=>null);
+    Promise.race([scoutSpeak(SCT.helloText), new Promise(ok=>setTimeout(ok,6000))]).then(()=>{
+      if(wantMic&&!$('#scoutBg').hidden&&!SCT.busy&&!SCT.listening&&!SCT.mic&&$('#scoutForm').hidden) return scoutListen();
+      scoutDropPreStream(); });
+    return;
+  }
+  if(wantMic) scoutListen();   // voice first, started inside the tap that opened Scout (phones only give the mic to a tap)
 }
+function scoutDropPreStream(){ const p=SCT.preStream; SCT.preStream=null; p?.then(st=>st?.getTracks().forEach(t=>t.stop())); }
 // "Need help? Talk to me!": Scout waves with a bubble when you've been idle on Home or the map. Never while driving or
 // with a sheet open; at most 3 a visit, 3 minutes apart; two ✕ in a day and it stays quiet till tomorrow.
 const SC_NUDGES=['Need help? Talk to me! 🎤',"Ask me what's the move tonight 🌙",'Want me to plan your night? Just say it ✨','Looking for tacos open late? Ask me 🌮','Hiking or paddleboarding? I know spots 🌲'];
@@ -8457,8 +8537,8 @@ function renderLook(){
       <div class="row"><b class="grow">🔊 Voice</b><span class="meta">${s.voice?'Reads every answer':'Muted'}</span>
         <button class="toggle ${s.voice?'on':''}" data-sc="voice" role="switch" aria-checked="${s.voice?'true':'false'}" aria-label="Read every answer aloud"></button></div>
       ${CFG.voice?`<p class="meta" style="margin:4px 0 6px">Tap one to hear it. Plays at your phone's volume.</p>
-      <div class="lk-sub">Male</div><div class="chips">${Object.entries(SCOUT_VOICE_L).filter(([k])=>SCOUT_VOICE_M.has(k)).map(([k,l])=>`<button class="ichip ${(s.voiceName||'puck')===k?'on':''}" data-scv="${k}">${l}</button>`).join('')}</div>
-      <div class="lk-sub">Female</div><div class="chips">${Object.entries(SCOUT_VOICE_L).filter(([k])=>!SCOUT_VOICE_M.has(k)).map(([k,l])=>`<button class="ichip ${(s.voiceName||'puck')===k?'on':''}" data-scv="${k}">${l}</button>`).join('')}</div>`
+      <div class="lk-sub">Male</div><div class="chips">${Object.entries(SCOUT_VOICE_L).filter(([k])=>SCOUT_VOICE_M.has(k)).map(([k,l])=>`<button class="ichip ${(s.voiceName||SCOUT_VOICE_DEFAULT)===k?'on':''}" data-scv="${k}">${l}</button>`).join('')}</div>
+      <div class="lk-sub">Female</div><div class="chips">${Object.entries(SCOUT_VOICE_L).filter(([k])=>!SCOUT_VOICE_M.has(k)).map(([k,l])=>`<button class="ichip ${(s.voiceName||SCOUT_VOICE_DEFAULT)===k?'on':''}" data-scv="${k}">${l}</button>`).join('')}</div>`
       :`<p class="meta" style="margin:4px 0 6px">Using your phone's built-in voice.</p>`}
       <div class="lk-sub">Speed</div><div class="chips">${SCOUT_RATES.map(([r,l])=>`<button class="ichip ${scoutRate()===r?'on':''}" data-scrate="${r}">${l}</button>`).join('')}</div>
     </div>
@@ -8863,7 +8943,7 @@ async function checkInAt(k, id, lat, lng){
   if(m>max) return toast(`📍 ${T("You're about {d} away. Get within 150 m to check in.",{d:m>=1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m'})}`,'orange',[],4000);
   try{ const j=await api('/api/checkin',{k,id});
     if(j.again) return toast(`✓ ${T('Already checked in here today.')}`,'',[],2500);
-    if(SV.v2){ SV.v2.xp=j.xp; SV.v2.level=j.level; } renderQuick();
+    if(SV.v2){ SV.v2.xp=j.xp; SV.v2.level=j.level; } renderQuick(); FY.at=0;   // Explore's suggestions learn from it
     const eat=k==='place';   // places are food & drink spots: "what did you get?" now, and Scout asks later if they don't say
     if(eat){ S.scHere={id, name:j.name, at:Date.now()}; save(); }
     toast(`📍 <b>${esc(j.name)}</b> · +${j.xp_gain} XP${j.completed.length?`<br>🏆 ${T('Quest complete')}: ${j.completed.map(q=>esc(q.e+' '+T(q.name))).join(', ')}`:''}`,'green',

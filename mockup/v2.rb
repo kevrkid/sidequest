@@ -537,6 +537,26 @@ end
 
 # ---------------------------------------------------------------------------------------------
 def mount_v2(server)
+  # What Explore's suggestions lean on: ranked places (everyone) and, signed in, the food, kinds of place and places
+  # you've enjoyed (check-ins, saves; older ones fade like taste_for) plus where you've checked in.
+  route(server, '/api/foryou', auth: false, get: true) do |_b, h|
+    out = { ranks: Rankings.place_ranks }
+    next out unless h
+    store(write: false) do |d|
+      now = now_ms
+      foods = Hash.new(0.0); kinds = Hash.new(0.0)
+      places = ((d['taste'] || {})[h] || []).select { |x| x['k'] == 'place' }
+      places.each do |x|
+        w = TASTE_W[x['how']].to_f * 0.5**((now - x['at'].to_i) / (60 * 86_400_000.0))
+        foods[x['food'].to_s.downcase] += w unless x['food'].to_s.empty?
+        (p = Places.find(x['id'])) && kinds[p['kind']] += w
+      end
+      checked = (((d['quest'] || {})[h] || {})['checkins'] || []).select { |c| c['k'] == 'place' }.map { |c| c['id'] }
+      top = ->(m) { m.sort_by { |_, v| -v }.first(8).to_h { |k, v| [k, v.round(2)] } }
+      out.merge(foods: top.(foods), kinds: top.(kinds), visited: (checked + places.map { |x| x['id'] }).uniq.last(150))
+    end
+  end
+
   # Notifications: the inbox, marking things read, and which kinds you want (mute).
   route(server, '/api/notifs') do |b, h|
     store(write: b['read'] || b.key?('mute') ? true : false) do |d|

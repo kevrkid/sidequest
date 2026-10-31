@@ -75,10 +75,28 @@ module Rankings
 
   module_function
 
+  # Each ranked place's best spot in the top 10 of any list: { place_id => [list key, emoji, title, rank] } (for the
+  # "🏆 #2 Best tacos" tags on Explore's cards; recomputed when the rankings file changes)
+  def place_ranks
+    d = data
+    return @ranks if @ranks && @ranks_for.equal?(d)
+    out = {}
+    (d['cats'] || {}).each do |k, c|
+      meta = RANK_CATS[k] or next
+      (c['places'] || []).first(10).each_with_index do |p, i|
+        pid = p['place_id'].to_s
+        next if pid.empty? || (out[pid] && out[pid][3] <= i + 1)
+        out[pid] = [k, meta[1], meta[2], i + 1]
+      end
+    end
+    @ranks_for = d
+    @ranks = out
+  end
+
   def data
     @lock.synchronize do
       mt = File.exist?(RANK_FILE) ? File.mtime(RANK_FILE) : nil
-      if mt != @mt
+      if mt != @mt || @data.nil?   # no file at all: still an empty set of lists, not nil
         @data = (mt && JSON.parse(File.read(RANK_FILE)) rescue nil) || { 'cats' => {} }
         @mt = mt
       end

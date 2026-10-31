@@ -116,6 +116,12 @@ t('Bars with pool tables / games: only bars people said have them (or whose name
   pool_ids = pool['places'].map { |x| x['id'] }; game_ids = games['places'].map { |x| x['id'] }
   check(pool_ids.include?('n1002') && !pool_ids.include?('n1003') && game_ids.include?('n1002') && pool['label'] == 'Bars with pool tables', [pool_ids, game_ids, pool['label']])
 }
+t("Explore's suggestions: a check-in shows up as a place you've been, with its food and kind") {
+  c0, g = guest.get('/api/foryou')
+  fb.post('/api/checkin', k: 'place', id: 'n1001')
+  _, j = fb.get('/api/foryou')
+  check(c0 == 200 && g.key?('ranks') && !g.key?('visited') && j['visited'].include?('n1001') && j['kinds'].key?('food truck') && j['foods'].keys.any? { |f| f =~ /mexican|food truck/ }, [g.keys, j])
+}
 t('deleting an account takes its answers along') {
   fc.post('/api/account/delete', pw: 'password123')
   _, j = guest.get('/api/place/facts?id=w1')

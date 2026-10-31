@@ -454,7 +454,7 @@ SCOUT_BUDGET = (ENV['SQ_SCOUT_BUDGET_USD'] || 10).to_f    # all users, per day; 
 # SQ_TTS_DAILY_CHARS caps a day's speech for everyone (~1M a month stays in Google's free allowance).
 GOOGLE_TTS_KEY = ENV['SQ_GOOGLE_TTS_KEY'].to_s
 TTS_DAILY_CHARS = (ENV['SQ_TTS_DAILY_CHARS'] || 30_000).to_i
-SCOUT_VOICES = %w[Puck Fenrir Achird Charon Orus Zephyr Aoede Leda Kore Sulafat].to_h { |v| [v.downcase, v] }.freeze   # Chirp 3 HD, English and Spanish
+SCOUT_VOICES = %w[Puck Fenrir Achird Charon Orus Achernar Vindemiatrix Zephyr Aoede Leda Kore Sulafat].to_h { |v| [v.downcase, v] }.freeze   # Chirp 3 HD, English and Spanish
 SCOUT_LANGS = { 'en' => 'en-US', 'es' => 'es-US' }.freeze
 # Scout's ears for phones whose own speech recognition doesn't work: whisper.cpp on this server turns a mic recording
 # into words (deploy/install.sh installs it). The audio goes to a temp folder and is deleted as soon as it's read.
@@ -2556,7 +2556,7 @@ def mount_routes(server)
     limit!("tts:#{h || client_ip(req)}", 120, 3600)
     text = b['text'].to_s.strip[0, 600]
     raise 'Nothing to say.' if text.empty?
-    voice = SCOUT_VOICES.key?(b['voice']) ? b['voice'] : 'puck'
+    voice = SCOUT_VOICES.key?(b['voice']) ? b['voice'] : 'achernar'   # soft female by default
     { audio: tts(text, voice, SCOUT_LANGS.key?(b['lang']) ? b['lang'] : 'en') }
   end
 

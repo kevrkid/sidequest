@@ -155,6 +155,17 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Scout hello, voice, suggestions (2026-10-31, owner)**: Scout's default voice is **Achernar (soft female)**
+  (`SCOUT_VOICE_DEFAULT`; server default too; Vindemiatrix "gentle" added; a voice you picked stays). Opening Scout
+  says a time-of-day hello ("Hi! What are you looking for?", `SC_HELLO`, at most every 5 min) with one-tap answers
+  (`SC_HELLO_Q`); with the voice on it speaks first and starts listening after (iPhone: the mic stream is asked for
+  inside the tap, `SCT.preStream`, recording starts later). Explore's suggestions lean on you: `/api/foryou` (ranked
+  places for everyone via `Rankings.place_ranks`; signed in: foods / kinds you've enjoyed and places you've checked in
+  at), `fyScore` (+ interests / "best night out" answers, rank, happy hour now with bars first, minus distance) orders
+  Open near you and Happy hour; new **🏆 Top-ranked near you** row (`rankRail`); `fyTag` says why (🏆 #2 Tacos, 🍻,
+  ✓ You've been); while happy hours are on that row leads (`exMoreHtml`). **Historical markers are off by default**
+  (`S.markersOffV3` once; Sights' Everything, the Sightseeing / Everything presets and the Layers Sights switch leave
+  them off; Sights → 🪧 Markers or their own switch turns them on).
 - **Scout speed (2026-10-31)**: `run_claude(..., warm: true)` (Scout's main answer) takes a Claude Code process that was
   started ahead of time in stream-json mode (`warm_take` / `warm_spawn`; ~1 s of start-up saved per question on the
   server; one ready per exact command, refilled after each use, retired after 15 min, none kept when MemAvailable <
