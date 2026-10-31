@@ -113,8 +113,8 @@ t('Bars with pool tables / games: only bars people said have them (or whose name
   sleep 0.1
   _, pool = guest.get('/api/places?cat=pool&limit=80')
   _, games = guest.get('/api/places?cat=bargames&limit=80')
-  pid = pool['places'].map { |x| x['id'] }; gid = games['places'].map { |x| x['id'] }
-  check(pid.include?('n1002') && !pid.include?('n1003') && gid.include?('n1002') && pool['label'] == 'Bars with pool tables', [pid, gid, pool['label']])
+  pool_ids = pool['places'].map { |x| x['id'] }; game_ids = games['places'].map { |x| x['id'] }
+  check(pool_ids.include?('n1002') && !pool_ids.include?('n1003') && game_ids.include?('n1002') && pool['label'] == 'Bars with pool tables', [pool_ids, game_ids, pool['label']])
 }
 t('deleting an account takes its answers along') {
   fc.post('/api/account/delete', pw: 'password123')

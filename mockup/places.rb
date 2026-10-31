@@ -90,7 +90,7 @@ module Places
   # what people say places have (placefacts.rb), set by the server before a search: { 'pool' => Set[ids], ... }
   BARLIKE = ['bar', 'pub', 'club', 'beer garden', 'brewery', 'games'].freeze
   POOL_RE = /billiard|pool hall|\bcue\b|8[- ]?ball/i
-  GAMES_RE = /arcade|barcade|bowl|billiard|pinball|darts|cidercade|game|pool hall/i
+  GAMES_RE = /arcade|barcade|bowl|billiard|pinball|darts|cidercade|pool hall|shuffleboard|skee|snooker/i   # not escape rooms or VR
   def flags; @flags || {} end
   def flags=(h) @flags = h end
   def flagged?(key, id) (flags[key] || []).include?(id) end
@@ -108,7 +108,7 @@ module Places
     when 'breweries' then kind == 'brewery'
     when 'speakeasies' then !!p['speakeasy']
     when 'pool' then flagged?('pool', p['id']) || (BARLIKE.include?(kind) && p['name'].to_s =~ POOL_RE)
-    when 'bargames' then %w[pool darts games].any? { |k| flagged?(k, p['id']) } || kind == 'games' || (BARLIKE.include?(kind) && p['name'].to_s =~ GAMES_RE)
+    when 'bargames' then %w[pool darts games].any? { |k| flagged?(k, p['id']) } || (BARLIKE.include?(kind) && p['name'].to_s =~ GAMES_RE)
     when 'venues' then VENUE.include?(kind)
     when 'music' then kind == 'music venue'
     when 'comedy' then kind == 'comedy club'
