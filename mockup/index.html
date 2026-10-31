@@ -1062,7 +1062,9 @@
   #drawer .mapchips .chip.on::after{content:"✕";margin-left:7px;font-size:11px;opacity:.6}
   #app.v3[data-cat] .glance,#app.v3[data-tab=search] .glance{display:none}
   .subchips button.tog{border-color:#3ddc9766;color:#bff5dc} .subchips button.tog.on{background:var(--good);border-color:var(--good);color:#04210f}
-  .sfhead{margin:0 0 6px} .sfrow{display:flex;align-items:center;gap:0;margin:0 0 2px}
+  .sfhead{margin:0 0 6px} .sfrow{display:block;margin:0 0 10px}
+  .sfrow .sfl{display:block;width:auto!important;margin:0 0 6px;font-size:13px!important;letter-spacing:0!important;text-transform:none!important;color:var(--text)!important;font-weight:750}
+  .sfwrap{flex-wrap:wrap!important;overflow:visible!important;margin:0!important;padding:0!important;-webkit-mask-image:none!important;mask-image:none!important}
   .sfrow .sfl{flex:none;width:46px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   .sfrow .subchips{flex:1;min-width:0;margin:0 -14px 6px 0;padding:0 14px 0 0}
   .sfareas{margin:0 0 10px 46px} .sfareas input{width:100%;margin:0 0 8px;padding:8px 12px;border-radius:12px;font-size:14px}
@@ -1418,7 +1420,7 @@
     <div class="scvoice"><button class="bigmic" data-sc="mic" id="scMic" aria-label="Talk to Scout"><span class="scwrap" data-scface></span></button>
       <div id="scMicL" class="scmicl">Tap to talk</div><button class="sccancel" data-sc="cancel" id="scCancel" hidden>✕ <span data-t="Cancel">Cancel</span></button><button class="meta" data-sc="type" id="scTypeBtn">⌨️ Type instead</button>
       <div id="scFind" class="scfind"></div>
-      <button class="sc-lens" data-sc="lens"><i>📷</i><span><b data-t="Live Translate">Live Translate</b><small data-t="Point your camera at a sign or menu">Point your camera at a sign or menu</small></span></button>
+      <button class="sc-lens" data-sc="lens" hidden><i>📷</i><span><b data-t="Live Translate">Live Translate</b><small data-t="Point your camera at a sign or menu">Point your camera at a sign or menu</small></span></button>
       <button class="sc-lens look" data-sc="identify"><i>🔍</i><span><b data-t="What is this?">What is this?</b><small data-t="Point at a building, landmark, storefront or dish">Point at a building, landmark, storefront or dish</small></span></button></div>
     <form id="scoutForm" class="row" hidden><input id="scoutIn" maxlength="300" placeholder="Ask about the app, or what's the move…" data-tp="Ask about the app, or what's the move…" autocomplete="off">
       <button class="btn primary" data-t="Ask">Ask</button></form>
@@ -1866,7 +1868,7 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'Top-ranked near you':'Lo mejor calificado cerca', "You've been":'Ya fuiste', 'Good morning! What are you looking for?':'¡Buenos días! ¿Qué buscas?', 'Morning! Coffee, breakfast, or something to do?':'¡Buen día! ¿Café, desayuno o algo que hacer?',
+  'Map credits':'Créditos del mapa', 'What do you want?':'¿Qué quieres?', 'Any vibe?':'¿Algún ambiente?', 'What music?':'¿Qué música?', 'Where?':'¿Dónde?', 'When?':'¿Cuándo?', 'Top-ranked near you':'Lo mejor calificado cerca', "You've been":'Ya fuiste', 'Good morning! What are you looking for?':'¡Buenos días! ¿Qué buscas?', 'Morning! Coffee, breakfast, or something to do?':'¡Buen día! ¿Café, desayuno o algo que hacer?',
   'Hi! What sounds good this morning?':'¡Hola! ¿Qué se te antoja esta mañana?', 'Hi! What are you looking for?':'¡Hola! ¿Qué buscas?', 'Hey! What sounds good right now?':'¡Hey! ¿Qué se te antoja ahora?',
   'Hi there! Food, drinks, or something to do?':'¡Hola! ¿Comida, bebidas o algo que hacer?', 'Hey! What are you in the mood for tonight?':'¡Hey! ¿Qué se te antoja esta noche?',
   'Hi! Dinner, drinks, or a show?':'¡Hola! ¿Cena, tragos o un show?', 'Hey there! What are you looking for tonight?':'¡Hola! ¿Qué buscas esta noche?', 'Hey night owl! What are you looking for?':'¡Hola, ave nocturna! ¿Qué buscas?',
@@ -6496,13 +6498,15 @@ function sfHead(){
     + hot.map(a=>chip(`data-sfa="${esc(a.name)}"`,f.area===a.name?'on':'',a.name)).join('') + chip('data-sfmore',f.areaOpen?'on':'',T('More areas')+' ›');
   const q=SF.aq.toLowerCase(), more = f.areaOpen ? `<div class="sfareas"><input id="sfAreaQ" type="search" placeholder="${esc(T('Neighborhood or town'))}" value="${esc(SF.aq)}" autocomplete="off">
     <div class="sfalist">${(SF.areas||[]).filter(a=>!a.hot&&(!q||a.name.toLowerCase().includes(q))).sort((a,b)=>km(ME_POS,[a.lat,a.lng])-km(ME_POS,[b.lat,b.lng])).map(a=>chip(`data-sfa="${esc(a.name)}"`,f.area===a.name?'on':'',a.name)).join('')}</div></div>` : '';
-  const row=(lab,html)=>`<div class="sfrow"><span class="sfl">${esc(T(lab))}</span><div class="subchips">${html}</div></div>`;
+  const row=(lab,html)=>`<div class="sfrow"><span class="sfl">${esc(T(lab))}</span><div class="subchips sfwrap">${html}</div></div>`;
   const wantEv=f.has.some(k=>EV_HAS[k])||f.music.length||f.has.includes('free');
-  return `<div class="sfhead">${row('Where',areaRow)}${more}
-    ${row('What',SF_HAS.map(([k,e,l])=>chip(`data-sfh="${k}"`,on(f.has,k),`${e} ${T(l)}`)).join(''))}
-    ${row('Music',SF_MUSIC.map(([k,e,l])=>chip(`data-sfm="${k}"`,on(f.music,k),`${e} ${T(l)}`)).join(''))}
-    ${row('Vibe',SF_THEME.map(([k,e,l])=>chip(`data-sft="${k}"`,on(f.theme,k),`${e} ${T(l)}`)).join(''))}
-    ${wantEv?row('When',[['tonight','Tonight'],['weekend','This weekend'],['week','This week']].map(([k,l])=>chip(`data-sfw="${k}"`,f.when===k?'on':'',T(l))).join('')):''}</div>`;
+  // stacked questions with buttons that wrap (no sideways scrolling): what → vibe → music (only for live music / DJ / karaoke) → where → when
+  const musicOn=f.has.some(k=>['live','dj','karaoke'].includes(k))||f.music.length;
+  return `<div class="sfhead">${row('What do you want?',SF_HAS.map(([k,e,l])=>chip(`data-sfh="${k}"`,on(f.has,k),`${e} ${T(l)}`)).join(''))}
+    ${row('Any vibe?',SF_THEME.map(([k,e,l])=>chip(`data-sft="${k}"`,on(f.theme,k),`${e} ${T(l)}`)).join(''))}
+    ${musicOn?row('What music?',SF_MUSIC.map(([k,e,l])=>chip(`data-sfm="${k}"`,on(f.music,k),`${e} ${T(l)}`)).join('')):''}
+    ${row('Where?',areaRow)}${more}
+    ${wantEv?row('When?',[['tonight','Tonight'],['weekend','This weekend'],['week','This week']].map(([k,l])=>chip(`data-sfw="${k}"`,f.when===k?'on':'',T(l))).join('')):''}</div>`;
 }
 // Over the map the picks fold into one row (tap one to drop it); Filters opens all the rows again.
 function sfCompact(){
@@ -8211,7 +8215,7 @@ function scoutHint(q){   // a kind of place named anywhere in a longer question
 async function scoutAsk(q, byVoice){
   q=String(q).trim().slice(0,300); if(!q||SCT.busy) return; track('scout_ask');
   if(!scoutOn()) return scoutOffToast();
-  if(/\b(translat\w*|traduc\w*)\b/i.test(q)&&/\b(sign|menu|label|text|camera|this|that|letrero|men[uú]|c[aá]mara|esto|eso)\b/i.test(q)){   // a sign or a menu: that's the camera's job
+  if(LENS_TRANSLATE&&/\b(translat\w*|traduc\w*)\b/i.test(q)&&/\b(sign|menu|label|text|camera|this|that|letrero|men[uú]|c[aá]mara|esto|eso)\b/i.test(q)){   // a sign or a menu: that's the camera's job
     scoutLog('me',q); scoutLog('scout',T('Opening the camera translator. Point it at the text.')); renderScoutLog(); return openLens(); }
   if(/\b(what('?s| is) (this|that)( (building|place|statue|landmark|thing|mural|restaurant|dish))?|identify (this|that)|qu[eé] es (esto|eso))\b/i.test(q)&&q.length<60){   // "what is this?": the camera's Identify
     scoutLog('me',q); scoutLog('scout',T('Opening the camera. Point it at what you want to know about and tap the button.')); renderScoutLog(); return openLens('look'); }
@@ -8366,7 +8370,9 @@ function scoutTourEnd(){
   if(was!=null&&AUTHED&&!S.lookOffered&&JSON.stringify(scS().look)===JSON.stringify(SC_DEFAULT)){ S.lookOffered=true; save(); setTimeout(scoutOfferLook,800); }
 }
 // Live Translate (lens.js, loaded the first time): the camera reads text on the phone, Claude translates it
+const LENS_TRANSLATE = false;   // Live Translate is off for now (owner, 2026-10-31); "What is this?" (Identify) stays
 function openLens(mode){
+  if(!LENS_TRANSLATE&&mode!=='look') mode='look';
   if(!AUTHED) return needAccount(mode==='look'?'identify things with your camera':'translate with your camera');
   if(SCT.listening) scoutMicOff(false);
   scoutHush(); track(mode==='look'?'look_open':'lens_open');
@@ -8374,7 +8380,7 @@ function openLens(mode){
   const onPlace=(p,what)=>{ $('#scoutBg').hidden=true; if(what==='menu') return openMenu(p.id,p.name);
     if(!PL.lastList.some(x=>x.id===p.id)) PL.lastList.push(p); focusPlace(p.id); };
   const onSight=x=>{ $('#scoutBg').hidden=true; tab('map'); setTimeout(()=>{ map.setView([x.lat,x.lng],17); sightPopup(x.id); },150); };
-  const go=()=>Lens.open({to:S.lang==='es'?'en':undefined, mode, lang:S.lang, onPlace, onSight});
+  const go=()=>Lens.open({to:S.lang==='es'?'en':undefined, mode, lang:S.lang, onPlace, onSight, noTranslate:!LENS_TRANSLATE});
   if(window.Lens) return go();
   const s=document.createElement('script'); s.src='/lens.js'; s.onload=go;
   s.onerror=()=>toast("Couldn't load the translator. Check your connection.",'orange'); document.head.appendChild(s);
@@ -8589,7 +8595,7 @@ document.addEventListener('click',e=>{
   if(a==='voice'){ s.voice=!s.voice; save(); renderScoutLog(); if(!$('#lookBg').hidden) renderLook(); if(s.voice) scoutSpeak("Voice on! I'll talk out loud now.",true); else { scoutHush(); scoutTalking(false); } }
   if(a==='mic') scoutListen();
   if(a==='cancel') scoutCancel();
-  if(a==='lens') openLens();
+  if(a==='lens'&&LENS_TRANSLATE) openLens();
   if(a==='identify') openLens('look');
   if(a==='type'){ const f=$('#scoutForm'); f.hidden=!f.hidden; if(SCT.listening) scoutMicOff(false); scoutMicUi(); if(!f.hidden) $('#scoutIn').focus(); }
   if(a==='drive') scoutDrive(true,false);

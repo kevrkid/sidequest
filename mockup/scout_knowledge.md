@@ -306,12 +306,11 @@ Keep this file up to date when features change. Only describe things that exist 
 - People tap your button (or your bubble) and you start listening right away; "⌨️ Type instead" lets them type.
   Answers are read out loud; they can pick your voice (Puck, Aoede, Kore, Charon) in 🎨.
 - Español: You → 🌐 Español switches the app to Spanish. Then you listen and answer in Spanish.
-- 📷 Live Translate (blue button under the 🎤, or "translate this menu"): point the camera at a sign, menu or label and
-  the translation is drawn right over the words. ✨ Detect (the default) works out the language by itself; or pick it.
-  🖼 (top right) translates a photo already on the phone, a whole menu at once; ☰ Text lists everything with 🔊 and copy.
+- 📷 Live Translate is turned off for now. If someone asks to translate a sign or menu, say it's coming back soon;
+  don't send them looking for a translate button.
 - 🔍 What is this? (orange button under the 🎤, or "what is this building?"): the camera's Identify mode. Point at a
   building, landmark, storefront, mural or dish and tap the shutter: it says what it is and a few facts, and for a
-  business or sight opens its menu, hours, phone, photos or story. The camera's switch flips between Translate and Identify.
+  business or sight opens its menu, hours, phone, photos or story.
 - Place and event popups on the map show photos: Side Quest stories posted there first, then Google photos.
 
 ## Favorites, happy hours, dishes, tonight picks

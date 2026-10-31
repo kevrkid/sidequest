@@ -155,6 +155,11 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Live Translate is off for now (2026-10-31, owner)**: `LENS_TRANSLATE = false` hides Scout's Live Translate button,
+  skips "translate this…" and Scout's lens action; the camera opens as Identify only (`Lens.open({noTranslate})` hides
+  the Translate / Identify switch). Scout's notes say it's coming back. Flip the flag to bring it back.
+  **Find my spot** (search's More options and Scout's panel, `sfHead`): stacked questions with wrapping buttons, no
+  sideways scrolling: What do you want? → Any vibe? → What music? (only after Live music / DJ / Karaoke) → Where? → When?
 - **Scout hello, voice, suggestions (2026-10-31, owner)**: Scout's default voice is **Achernar (soft female)**
   (`SCOUT_VOICE_DEFAULT`; server default too; Vindemiatrix "gentle" added; a voice you picked stays). Opening Scout
   says a time-of-day hello ("Hi! What are you looking for?", `SC_HELLO`, at most every 5 min) with one-tap answers

@@ -102,6 +102,7 @@ const CSS = `
 .lz-card small{display:block;color:#9aa0aa;font-size:13px;white-space:pre-line;margin-bottom:6px;overflow-wrap:anywhere}
 .lz .lz-mini{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.1);flex:none;padding:0;font-size:16px}
 .lz-empty{color:#9aa0aa;text-align:center;padding:24px 0}
+.notr .lz-modes{display:none!important}
 .lz-modes{position:absolute;left:50%;bottom:calc(max(18px,env(safe-area-inset-bottom)) + 98px);transform:translateX(-50%);display:flex;padding:3px;border-radius:999px}
 .lz .lz-modes button{border:0;background:none;border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap}
 .lz .lz-modes button.on{background:#fff;color:#111}
@@ -307,7 +308,7 @@ function open(opts={}){
   if(st.from!=='auto'&&!L[st.from]) st.from='auto'; if(!L[st.to]) st.to='es';
   const translate = opts.translate || defaultTranslate, detect = opts.detect || defaultDetect;
   const rlang = () => st.from==='auto' ? st.det||'en' : st.from;   // the language the reader reads
-  const root=document.createElement('div'); root.className='lz'; root.setAttribute('role','dialog'); root.setAttribute('aria-label','Live Translate');
+  const root=document.createElement('div'); root.className='lz'+(opts.noTranslate?' notr':''); root.setAttribute('role','dialog'); root.setAttribute('aria-label',opts.noTranslate?'Identify':'Live Translate');   // noTranslate: Identify only, no switch
   const opt = (sel, auto) => (auto?`<option value="auto"${sel==='auto'?' selected':''}>✨ Detect</option>`:'')+LANGS.map(l=>`<option value="${l[0]}"${l[0]===sel?' selected':''}>${esc(l[1])}</option>`).join('');
   root.innerHTML = `<video playsinline muted autoplay></video><canvas class="lz-still" hidden></canvas><div class="lz-layer"></div>
     <div class="lz-aim"><i></i><i></i><i></i><i></i><b></b></div>
