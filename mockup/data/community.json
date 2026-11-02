@@ -1,0 +1,1023 @@
+{
+ "checked": "2026-11-01",
+ "groups": [
+  {
+   "id": "cg_austinfrontrunners",
+   "name": "Austin Front Runners",
+   "kind": "run",
+   "e": "🏳️‍🌈",
+   "desc": "Nonprofit LGBTQ+ and allies running and walking club with multiple distances and post-run dinners or brunch.",
+   "when": "Tuesdays & Thursdays 6:00 PM, Saturdays 10:00 AM",
+   "where": "The Rock at Town Lake (north side of the MoPac pedestrian bridge)",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.austinfrontrunners.org/",
+   "sources": [
+    "https://www.austinfrontrunners.org/calendar",
+    "https://www.austinfrontrunners.org/about/runs",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_austinrunnersclub",
+   "name": "Austin Runners Club",
+   "kind": "run",
+   "e": "🏃",
+   "desc": "Austin's nonprofit running club since 1974; membership adds race perks and links you to dozens of affiliated group runs.",
+   "when": "",
+   "where": "Affiliated group runs citywide",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "$30 per year membership",
+   "url": "https://austinrunners.org/",
+   "sources": [
+    "https://austinrunners.org/",
+    "https://austinrunners.org/run-groups/"
+   ]
+  },
+  {
+   "id": "cg_roguerunning",
+   "name": "Rogue Running",
+   "kind": "run",
+   "e": "🏅",
+   "desc": "Long-running Austin coaching outfit offering paid group training programs for beginners through marathoners.",
+   "when": "",
+   "where": "Austin and Cedar Park training groups",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://roguerunning.com/",
+   "sources": [
+    "https://roguerunning.com/"
+   ]
+  },
+  {
+   "id": "cg_atxrundivas",
+   "name": "ATX Run Divas",
+   "kind": "run",
+   "e": "💖",
+   "desc": "Women-only weekly Sunday run focused on safety, community and fun on the run.",
+   "when": "Sundays 8:00 AM (7:30 AM in summer)",
+   "where": "Cosmic Saltillo",
+   "address": "1300 E 4th St, Austin, TX",
+   "lat": 30.26238,
+   "lng": -97.73012,
+   "cost": "",
+   "url": "https://www.instagram.com/atxrundivas/",
+   "sources": [
+    "https://www.instagram.com/atxrundivas/",
+    "https://austinrunners.org/run-groups/",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_onrunclubaustin",
+   "name": "On Run Club Austin",
+   "kind": "run",
+   "e": "👟",
+   "desc": "Weekday morning community run from the On store on South Congress, 2 or 3.5 miles, all paces welcome.",
+   "when": "Wednesdays 6:30 AM",
+   "where": "On store, South Congress",
+   "address": "1506 S Congress Ave, Austin, TX",
+   "lat": 30.24874,
+   "lng": -97.75035,
+   "cost": "",
+   "url": "https://www.strava.com/clubs/OnATX",
+   "sources": [
+    "https://www.strava.com/clubs/OnATX",
+    "https://www.instagram.com/runnertype/",
+    "https://austinrunners.org/run-groups/"
+   ]
+  },
+  {
+   "id": "cg_cooldownrunningaustin",
+   "name": "Cooldown Running (Austin)",
+   "kind": "run",
+   "e": "😎",
+   "desc": "Austin chapter of a national social run club and apparel brand: easy run, then hang out.",
+   "when": "Wednesdays (weekly)",
+   "where": "Varies; check Instagram",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.instagram.com/cooldownrunning/",
+   "sources": [
+    "https://linktr.ee/cooldownrunning",
+    "https://www.instagram.com/cooldownrunning/"
+   ]
+  },
+  {
+   "id": "cg_yourmothersruncrew",
+   "name": "Your Mother's Run Crew",
+   "kind": "run",
+   "e": "👟",
+   "desc": "Female run community in Austin with monthly evening runs alongside New Balance; walkers to runners welcome.",
+   "when": "Monthly, Thursday 6:30 PM",
+   "where": "",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.instagram.com/yourmothersruncrew/",
+   "sources": [
+    "https://www.instagram.com/yourmothersruncrew/",
+    "https://365thingsaustin.com/austin-run-clubs/"
+   ]
+  },
+  {
+   "id": "cg_mindfulmilesrunclub",
+   "name": "Mindful Miles Run Club",
+   "kind": "run",
+   "e": "🧘",
+   "desc": "Austin run club pairing short all-paces runs with stretching and coffee; meetups announced on Instagram.",
+   "when": "",
+   "where": "Varies; check Instagram",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.instagram.com/mmrun_club/",
+   "sources": [
+    "https://www.instagram.com/mmrun_club/"
+   ]
+  },
+  {
+   "id": "cg_comedorrunclub",
+   "name": "Comedor Run Club",
+   "kind": "run",
+   "e": "🍳",
+   "desc": "Downtown 3-5K run club built for Austin hospitality workers, running since 2019; all paces encouraged.",
+   "when": "Mondays & Fridays 10:00 AM",
+   "where": "Downtown Austin",
+   "address": "501 Colorado St, Austin, TX",
+   "lat": 30.26758,
+   "lng": -97.74414,
+   "cost": "",
+   "url": "https://www.comedorrunclub.com/",
+   "sources": [
+    "https://www.comedorrunclub.com/",
+    "https://www.instagram.com/comedorrunclub/"
+   ]
+  },
+  {
+   "id": "cg_artistrunclub",
+   "name": "Artist Run Club",
+   "kind": "run",
+   "e": "🎨",
+   "desc": "Weekly early-morning meetup at a rotating Austin arts venue: art first, then a 3-4 mile run (2-mile option).",
+   "when": "Wednesdays 6:30 AM (run at 7:00)",
+   "where": "Rotating Austin art venues",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.instagram.com/artist.run.club/",
+   "sources": [
+    "https://www.instagram.com/artist.run.club/",
+    "https://artsandculturetx.com/?p=56873"
+   ]
+  },
+  {
+   "id": "cg_eastsidebeerrunners",
+   "name": "East Side Beer Runners",
+   "kind": "run",
+   "e": "🍺",
+   "desc": "Free community running group that loves beer: Wednesday evening runs plus Sunday trail runs.",
+   "when": "Wednesdays 6:30 PM; Sunday trail runs (details posted Saturdays)",
+   "where": "Central Machine Works (Wednesdays)",
+   "address": "4824 E Cesar Chavez St, Austin, TX",
+   "lat": 30.25201,
+   "lng": -97.70152,
+   "cost": "Free",
+   "url": "https://www.instagram.com/esbrunnersatx/",
+   "sources": [
+    "https://www.instagram.com/esbrunnersatx/",
+    "https://austinrunners.org/run-groups/",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_austinbeerworksrunclub",
+   "name": "Austin Beerworks Run Club",
+   "kind": "run",
+   "e": "🍻",
+   "desc": "Weekly brewery run that starts and ends at Austin Beerworks' North Austin taproom, with beers after.",
+   "when": "Wednesdays 6:00 PM",
+   "where": "Austin Beerworks taproom",
+   "address": "3001 Industrial Terrace, Austin, TX 78758",
+   "lat": 30.37957,
+   "lng": -97.72984,
+   "cost": "",
+   "url": "https://austinbeerworks.com/calendar",
+   "sources": [
+    "https://austinbeerworks.com/calendar"
+   ]
+  },
+  {
+   "id": "cg_muellerrunclub",
+   "name": "Mueller Run Club",
+   "kind": "run",
+   "e": "☕",
+   "desc": "All-paces Mueller neighborhood club with a Tuesday social run from a coffee shop and a Thursday track workout.",
+   "when": "Tuesdays 6:30 AM (social); Thursdays 6:30 AM (track)",
+   "where": "Streamway Coffee (Tue); Marshall Middle School track (Thu)",
+   "address": "4209 Airport Blvd, Austin, TX",
+   "lat": 30.29662,
+   "lng": -97.70766,
+   "cost": "",
+   "url": "https://www.instagram.com/muellerrunclub/",
+   "sources": [
+    "https://www.instagram.com/muellerrunclub/",
+    "https://austinrunners.org/run-groups/",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_5run2",
+   "name": "5RUN2",
+   "kind": "run",
+   "e": "⛰️",
+   "desc": "Hill-focused weekday morning running group founded in 2019, starting from Kerbey Lane on South Lamar.",
+   "when": "Wednesdays 6:30 AM",
+   "where": "Kerbey Lane Cafe, South Lamar",
+   "address": "3003 S Lamar Blvd, Austin, TX",
+   "lat": 30.24234,
+   "lng": -97.78334,
+   "cost": "",
+   "url": "https://www.instagram.com/5run2_atx/",
+   "sources": [
+    "https://www.instagram.com/5run2_atx/",
+    "https://austinrunners.org/run-groups/",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_togetherwerunatx",
+   "name": "Together We Run ATX",
+   "kind": "run",
+   "e": "🤝",
+   "desc": "\"All faces and most paces\" morning run group affiliated with the Austin Runners Club.",
+   "when": "Tuesdays 6:00 AM; Saturdays 7:00 AM",
+   "where": "The Salty Donut on S Congress (Tue); Cisco's on E 5th (Sat)",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.instagram.com/together.we.run.atx/",
+   "sources": [
+    "https://www.instagram.com/together.we.run.atx/",
+    "https://austinrunners.org/run-groups/"
+   ]
+  },
+  {
+   "id": "cg_twentysixtwo",
+   "name": "Twenty-Six Two",
+   "kind": "run",
+   "e": "🏁",
+   "desc": "Volunteer-run marathon and half-marathon training group; non-members can join group runs for free.",
+   "when": "Saturday long runs",
+   "where": "",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Group runs free; training $199 up front or $50/month",
+   "url": "https://twentysixtwo.org/",
+   "sources": [
+    "https://twentysixtwo.org/",
+    "https://twentysixtwo.org/cost"
+   ]
+  },
+  {
+   "id": "cg_austinmondaynightrun",
+   "name": "Austin Monday Night Run",
+   "kind": "run",
+   "e": "🌙",
+   "desc": "Long-running Monday evening group run for runners of all stripes in Northwest Austin.",
+   "when": "Monday evenings",
+   "where": "Ready to Run, Far West Blvd",
+   "address": "3616 Far West Blvd, Austin, TX",
+   "lat": 30.35505,
+   "lng": -97.75559,
+   "cost": "",
+   "url": "https://www.instagram.com/atxmondaynight/",
+   "sources": [
+    "https://www.instagram.com/atxmondaynight/",
+    "https://austinrunners.org/run-groups/",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_laketravisrunclub",
+   "name": "Lake Travis Run Club",
+   "kind": "run",
+   "e": "🌊",
+   "desc": "All-paces Lakeway run club with Wednesday track and evening runs, Saturday mornings and monthly field-trip runs.",
+   "when": "Wednesdays 5:15 AM track & 7:00 PM run; Saturdays 7:30 AM",
+   "where": "Lakeway area (Sat: Cafe Lago)",
+   "address": "1200 Lakeway Dr, Lakeway, TX",
+   "lat": 30.3636,
+   "lng": -97.98161,
+   "cost": "",
+   "url": "https://www.instagram.com/laketravisrunclub/",
+   "sources": [
+    "https://www.instagram.com/laketravisrunclub/",
+    "https://austinrunners.org/run-groups/"
+   ]
+  },
+  {
+   "id": "cg_budarunningclub",
+   "name": "Buda Running Club",
+   "kind": "run",
+   "e": "🌅",
+   "desc": "Free early-morning running group in Buda since 2018, all paces welcome.",
+   "when": "Wednesdays & Fridays 5:00 AM; Sundays 6:00 AM",
+   "where": "Summer Moon Coffee, Buda",
+   "address": "316 Main St, Buda, TX",
+   "lat": 30.07704,
+   "lng": -97.84508,
+   "cost": "Free",
+   "url": "https://www.instagram.com/budarunningclub/",
+   "sources": [
+    "https://www.instagram.com/budarunningclub/",
+    "https://austinrunners.org/run-groups/",
+    "https://austinrunners.org/"
+   ]
+  },
+  {
+   "id": "cg_novemberprojectaustin",
+   "name": "November Project Austin",
+   "kind": "run",
+   "e": "💪",
+   "desc": "Free early-morning outdoor fitness workouts for all levels; just show up and sign the waiver.",
+   "when": "Wednesdays & Fridays 6:00 AM",
+   "where": "Waterloo Park (Wed); Butler/Auditorium Shores area, rotating (Fri)",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Free",
+   "url": "https://www.instagram.com/novemberprojectatx/",
+   "sources": [
+    "https://www.instagram.com/novemberprojectatx/",
+    "https://november-project.com/austin-tx/"
+   ]
+  },
+  {
+   "id": "cg_fleetfeetroundrocksocial",
+   "name": "Fleet Feet Round Rock Social Run",
+   "kind": "run",
+   "e": "🏃‍♀️",
+   "desc": "Free weekly Monday evening social run from Fleet Feet's Round Rock store; no sign-up needed.",
+   "when": "Mondays 6:00 PM",
+   "where": "Fleet Feet Round Rock",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Free",
+   "url": "https://www.fleetfeet.com/s/roundrock/training/free-weekly-social-runs",
+   "sources": [
+    "https://www.fleetfeet.com/s/roundrock/training/free-weekly-social-runs"
+   ]
+  },
+  {
+   "id": "cg_austinsportssocialclub",
+   "name": "Austin Sports & Social Club",
+   "kind": "league",
+   "e": "🏐",
+   "desc": "Co-ed adult rec leagues in volleyball, kickball, soccer, pickleball, cornhole and more, for solo players or full teams.",
+   "when": "Seasonal leagues year-round; nights vary by league",
+   "where": "South, North and East Austin, Leander/Cedar Park, Pflugerville",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Individuals ~$59-$119, teams ~$199-$999 per league",
+   "url": "https://www.austinssc.com/",
+   "sources": [
+    "https://www.austinssc.com/",
+    "https://austinssc.leaguelab.com/league/101995/details"
+   ]
+  },
+  {
+   "id": "cg_sportskindaustin",
+   "name": "Sportskind Austin",
+   "kind": "league",
+   "e": "⚽",
+   "desc": "Social adult leagues (basketball, kickball, volleyball, pickleball, soccer, softball, dodgeball) for individuals and teams.",
+   "when": "Seasonal leagues; nights vary by league",
+   "where": "Central, North and South Austin",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "No membership fees; under $15/week; teams ~$325-$1,345, indi",
+   "url": "https://www.sportskind.com/austin",
+   "sources": [
+    "https://www.sportskind.com/austin"
+   ]
+  },
+  {
+   "id": "cg_austincommunitysoccerass",
+   "name": "Austin Community Soccer Association (ACSA)",
+   "kind": "league",
+   "e": "⚽",
+   "desc": "Volunteer-run, all-genders adult 11-a-side soccer league open to all skill levels (formerly Austin Coed Soccer Association).",
+   "when": "Saturdays; Spring 2027 season Feb 13-May 15 (registration opens Jan 1, 2027)",
+   "where": "Onion Creek Soccer Complex and Northeast Metro Park",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Team fee $525-$650 (new teams $675-$750 incl. bond) + $50/ma",
+   "url": "https://www.acsasoccer.org/",
+   "sources": [
+    "https://www.acsasoccer.org/",
+    "https://www.acsasoccer.org/team-registration"
+   ]
+  },
+  {
+   "id": "cg_austinmenssoccerassociat",
+   "name": "Austin Men's Soccer Association (AMSA)",
+   "kind": "league",
+   "e": "⚽",
+   "desc": "Adult men's amateur soccer league for the Austin-Round Rock area, roughly 150 teams across 15 divisions.",
+   "when": "Sundays; Spring 2027 games Feb 8-Apr 26",
+   "where": "Onion Creek Soccer Complex and other fields",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "$60 player registration (2026-27); team fee ~$600-$700 per r",
+   "url": "https://www.austinmenssoccer.com/",
+   "sources": [
+    "https://www.austinmenssoccer.com/",
+    "https://www.austinmenssoccer.com/registration"
+   ]
+  },
+  {
+   "id": "cg_texasrollergirls",
+   "name": "Texas Rollergirls",
+   "kind": "league",
+   "e": "🛼",
+   "desc": "Austin's flat-track roller derby league, a founding member of WFTDA; holds annual tryouts for new skaters.",
+   "when": "Annual tryouts (2026 tryouts were Sept 28)",
+   "where": "Austin",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://texasrollergirls.org/",
+   "sources": [
+    "https://texasrollergirls.org/"
+   ]
+  },
+  {
+   "id": "cg_texasrollerderbytxrd",
+   "name": "Texas Roller Derby (TXRD)",
+   "kind": "league",
+   "e": "🛼",
+   "desc": "Banked-track roller derby league with a Roller Rookies program for 21+ women and gender-expansive skaters; no experience needed.",
+   "when": "Tryouts and workshops announced on the recruitment page",
+   "where": "TXRD warehouse, Buda",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Open skate $10; tryout workshops free; tryouts $20",
+   "url": "https://txrd.com/get-involved/recruitment/",
+   "sources": [
+    "https://txrd.com/get-involved/recruitment/"
+   ]
+  },
+  {
+   "id": "cg_chaparraliceadulthockey",
+   "name": "Chaparral Ice Adult Hockey",
+   "kind": "league",
+   "e": "🏒",
+   "desc": "Austin's year-round ice rink with adult hockey leagues, adult drop-in, stick & puck and learn-to-play classes.",
+   "when": "Drop-in and stick & puck per rink calendar; pre-registration required",
+   "where": "Northcross, North Austin",
+   "address": "2525 W Anderson Ln, Austin, TX 78757",
+   "lat": 30.3555,
+   "lng": -97.7349,
+   "cost": "Adult drop-in $20/session; stick & puck $15",
+   "url": "https://www.chaparralice.com/adult-hockey/",
+   "sources": [
+    "https://www.chaparralice.com/",
+    "https://www.chaparralice.com/adult-hockey/"
+   ]
+  },
+  {
+   "id": "cg_thepondhockeyclubadultle",
+   "name": "The Pond Hockey Club Adult Leagues",
+   "kind": "league",
+   "e": "🏒",
+   "desc": "North Austin rink with adult hockey leagues from competitive A down to intro/developmental and a new-player league.",
+   "when": "Leagues Sun-Sat by division; four seasons a year (fall registration in Sept)",
+   "where": "North Austin",
+   "address": "9402 United Dr, Austin, TX",
+   "lat": 30.3782,
+   "lng": -97.7298,
+   "cost": "",
+   "url": "https://www.pondhockeyclub.com/page/show/1195043-adult-offerings",
+   "sources": [
+    "https://www.pondhockeyclub.com/page/show/1195043-adult-offerings",
+    "https://communityimpact.com/northwest-austin/news/pond-hockey-club-expands-41000-square-feet-spectator-area-regulation-sized-rink-united-drive/"
+   ]
+  },
+  {
+   "id": "cg_cityofaustinpickleballop",
+   "name": "City of Austin Pickleball Open Play",
+   "kind": "league",
+   "e": "🏓",
+   "desc": "Drop-in pickleball open play at City of Austin recreation centers and park courts for all skill levels.",
+   "when": "Varies by site, e.g. Dittmar Rec Tue/Thu 12-3pm, Sat 10am-2pm; Dove Springs Mon/",
+   "where": "Recreation centers and parks citywide",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.austintexas.gov/parks/pickleball",
+   "sources": [
+    "https://www.austintexas.gov/parks/pickleball"
+   ]
+  },
+  {
+   "id": "cg_austinrugbychurch",
+   "name": "Austin Rugby Church",
+   "kind": "league",
+   "e": "🏉",
+   "desc": "Free, casual touch rugby pickup at Zilker Park that anyone can join.",
+   "when": "Sundays 8:30-11:30am, Wednesdays 6:30-8:30pm",
+   "where": "Zilker Park",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Free",
+   "url": "https://sweatpals.com/event/austin-rugby-church/2026-08-09",
+   "sources": [
+    "https://sweatpals.com/event/austin-rugby-church/2026-08-09"
+   ]
+  },
+  {
+   "id": "cg_theunbuzzedclub",
+   "name": "The Unbuzzed Club",
+   "kind": "social",
+   "e": "🧃",
+   "desc": "Alcohol-free social club hosting connection walks, sober socials, wellness classes and holiday parties.",
+   "when": "Monthly Connection Walks and Sober Socials; see events page",
+   "where": "Austin, various venues",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Membership $25/month (events also ticketed individually)",
+   "url": "https://www.theunbuzzedclub.com/",
+   "sources": [
+    "https://www.theunbuzzedclub.com/",
+    "https://www.skool.com/theunbuzzedclub",
+    "https://digital-release.kxan.com/?p=3033782",
+    "https://sweatpals.com/event/coffee-connection-walk-c9794"
+   ]
+  },
+  {
+   "id": "cg_atxgirlhangouts",
+   "name": "ATX Girl Hangouts",
+   "kind": "social",
+   "e": "👯",
+   "desc": "Women's friendship community hosting speed-friending, book swaps, workshops and parties for women 18-50+.",
+   "when": "Several events a month, mostly weeknight evenings",
+   "where": "Austin, rotating venues",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Optional membership $35/month; events ticketed",
+   "url": "https://www.instagram.com/atxgirlhangouts/",
+   "sources": [
+    "https://www.tickettailor.com/events/atxgirlhangouts",
+    "https://discover.circle.so/products/atx-girl-hangouts"
+   ]
+  },
+  {
+   "id": "cg_newtoaustin2030smeetup",
+   "name": "New To Austin 20/30s (Meetup)",
+   "kind": "social",
+   "e": "👋",
+   "desc": "Large Meetup group for newcomers in their 20s and 30s to make friends at social nights around Austin.",
+   "when": "Frequent evening socials, e.g. Social Night at Fast Eddie's",
+   "where": "Austin and Round Rock bars and venues",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.meetup.com/new-in-austin/",
+   "sources": [
+    "https://meetup.com/new-in-austin"
+   ]
+  },
+  {
+   "id": "cg_hillcountryoutdoors",
+   "name": "Hill Country Outdoors",
+   "kind": "social",
+   "e": "🥾",
+   "desc": "Membership outdoor and social club running hikes, paddling, camping trips and social outings since 2001.",
+   "when": "Multiple events weekly, see calendar",
+   "where": "Austin, San Antonio and Texas trips",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.hillcountryoutdoors.com/",
+   "sources": [
+    "https://www.hillcountryoutdoors.com/"
+   ]
+  },
+  {
+   "id": "cg_soberandfunky",
+   "name": "Sober and Funky",
+   "kind": "social",
+   "e": "🍹",
+   "desc": "Austin sober-community events brand with monthly NA trivia and non-alcoholic drink classes.",
+   "when": "Monthly trivia night at Sans Bar",
+   "where": "Sans Bar; Dear Dry Drinkery",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://soberandfunky.com/",
+   "sources": [
+    "https://soberandfunky.com/"
+   ]
+  },
+  {
+   "id": "cg_lonestarhikingclub",
+   "name": "Lone Star Hiking Club",
+   "kind": "outdoors",
+   "e": "🥾",
+   "desc": "Free social group hikes on Austin-area trails for all experience levels, usually followed by food or drinks nearby.",
+   "when": "Most Saturday mornings (9:30 AM), occasional Friday night hikes",
+   "where": "Rotates (e.g., Southeast Metro Park, Lake Georgetown, Emma Long)",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Free",
+   "url": "https://sweatpals.com/host/lonestarhikingclub",
+   "sources": [
+    "https://sweatpals.com/host/lonestarhikingclub",
+    "https://sweatpals.com/event/southeast-metro-park-hike-central-machine-works/2026-11-07"
+   ]
+  },
+  {
+   "id": "cg_austinsierracluboutings",
+   "name": "Austin Sierra Club Outings",
+   "kind": "outdoors",
+   "e": "🏞️",
+   "desc": "Large volunteer-led group running hikes, kayaking, camping and service outings around Austin; open to members and non-members.",
+   "when": "Several outings most weekends",
+   "where": "Rotates (Barton Creek Greenbelt, state parks, etc.)",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "No membership required; some trips have park fees",
+   "url": "https://www.meetup.com/austin-sierra-club-outings/",
+   "sources": [
+    "https://www.meetup.com/austin-sierra-club-outings/"
+   ]
+  },
+  {
+   "id": "cg_austinridgeriders",
+   "name": "Austin Ridge Riders",
+   "kind": "outdoors",
+   "e": "🚵",
+   "desc": "Nonprofit mountain bike club with free Sunday group rides split by skill level, plus advanced rides and trail work days.",
+   "when": "Sundays 9:00 AM",
+   "where": "Walnut Creek Metro Park most Sundays; alternate trail on first Sunday",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Sunday rides free; membership from $5/month",
+   "url": "https://www.austinridgeriders.com/",
+   "sources": [
+    "https://www.austinridgeriders.com/",
+    "https://www.tickettailor.com/events/austinridgeriders",
+    "https://meetup.com/mountainbikes-130"
+   ]
+  },
+  {
+   "id": "cg_breakfastclubatx",
+   "name": "Breakfast Club ATX",
+   "kind": "outdoors",
+   "e": "🚴",
+   "desc": "Huge monthly Saturday morning group bike ride with escorts and a pace group for everyone, plus a women/non-binary BABES ride.",
+   "when": "One Saturday a month, 8:00 AM; BABES ride 1st & 3rd Wednesdays",
+   "where": "Central Machine Works (enter on 5th St)",
+   "address": "4824 E Cesar Chavez St, Austin, TX 78702",
+   "lat": 30.25201,
+   "lng": -97.70152,
+   "cost": "",
+   "url": "https://breakfastclubatx.com/",
+   "sources": [
+    "https://breakfastclubatx.com/",
+    "https://rides.breakfastclubatx.com/events/681",
+    "https://tribeza.com/breakfast-club-austin-cycling-community-bike-ride"
+   ]
+  },
+  {
+   "id": "cg_texasrowingcenterintroto",
+   "name": "Texas Rowing Center Intro to Rowing",
+   "kind": "outdoors",
+   "e": "🚣",
+   "desc": "Six-lesson beginner rowing course on Lady Bird Lake in small groups, leading into the Masters rowing team for members.",
+   "when": "Self-scheduled after purchase",
+   "where": "Texas Rowing Center, on the hike-and-bike trail behind Austin High",
+   "address": "1541 W Cesar Chavez St, Austin, TX 78703",
+   "lat": 30.27207,
+   "lng": -97.76877,
+   "cost": "$299 course (included with $699/6-mo or $999/yr membership)",
+   "url": "https://www.texasrowingcenter.com/adult-rowing",
+   "sources": [
+    "https://www.texasrowingcenter.com/adult-rowing",
+    "https://www.texasrowingcenter.com/"
+   ]
+  },
+  {
+   "id": "cg_austinrowingclublearntor",
+   "name": "Austin Rowing Club Learn to Row",
+   "kind": "outdoors",
+   "e": "🛶",
+   "desc": "Adult (18+) beginner sweep and sculling classes on Lady Bird Lake from a nonprofit rowing club; swimmers only.",
+   "when": "Intro: 8 sessions over 4 weeks; see Mindbody schedule",
+   "where": "Austin Rowing Club boathouse",
+   "address": "74 Trinity St, Austin, TX 78701",
+   "lat": 30.26058,
+   "lng": -97.74177,
+   "cost": "$250 intro sweep; $230 learn to scull",
+   "url": "https://austinrowing.org/adult-programs/learn-to-row/",
+   "sources": [
+    "https://austinrowing.org/adult-programs/learn-to-row/",
+    "https://austinrowing.org/"
+   ]
+  },
+  {
+   "id": "cg_austinboulderingprojectc",
+   "name": "Austin Bouldering Project Climb for Community",
+   "kind": "outdoors",
+   "e": "🧗",
+   "desc": "Recurring community climbing nights at ABP gyms where part of each day pass goes to a local nonprofit; open to non-members.",
+   "when": "1st Friday (Springdale) and 3rd Friday (Westgate) monthly",
+   "where": "ABP Springdale / ABP Westgate",
+   "address": "979 Springdale Rd #150, Austin, TX 78702",
+   "lat": 30.26327,
+   "lng": -97.6963,
+   "cost": "Day pass ($10 of it donated)",
+   "url": "https://boulderingproject.com/atx-community/",
+   "sources": [
+    "https://boulderingproject.com/atx-community/"
+   ]
+  },
+  {
+   "id": "cg_texasladycrushers",
+   "name": "Texas Lady Crushers",
+   "kind": "outdoors",
+   "e": "🪨",
+   "desc": "Climbing community for women and genderqueer people offering meetups, clinics and outdoor retreats for all skill levels.",
+   "when": "Periodic Wednesday evening meetups, 6:30-8:30 PM",
+   "where": "Austin Bouldering Project, Springdale Rd",
+   "address": "",
+   "lat": null,
+   "lng": null,
+   "cost": "Meetups free for ABP members, $10 + tax otherwise",
+   "url": "https://www.texasladycrushers.com/",
+   "sources": [
+    "https://www.texasladycrushers.com/",
+    "https://sweatpals.com/event/texas-lady-crushers-meetup/2026-09-16",
+    "https://boulderingproject.com/atx-community/"
+   ]
+  },
+  {
+   "id": "cg_varsityhikingcityofausti",
+   "name": "Varsity Hiking (City of Austin, 50+)",
+   "kind": "outdoors",
+   "e": "🌄",
+   "desc": "City-run guided hikes around Austin and Central Texas for adults 50 and older, departing from the Camacho Activity Center.",
+   "when": "Alternating Tuesdays, 9:00 AM-12:00 PM",
+   "where": "Lorraine \"Grandma\" Camacho Activity Center",
+   "address": "35 Robert T. Martinez Jr. St, Austin, TX 78702",
+   "lat": null,
+   "lng": null,
+   "cost": "",
+   "url": "https://www.austintexas.gov/parks/locations/lorraine-grandma-camacho-activity-center",
+   "sources": [
+    "https://www.austintexas.gov/parks/locations/lorraine-grandma-camacho-activity-center"
+   ]
+  },
+  {
+   "id": "cg_chessirl",
+   "name": "Chess IRL",
+   "kind": "games",
+   "e": "♟️",
+   "desc": "Free drop-in chess meetup at an East Austin brewery for all skill levels; boards and clocks provided.",
+   "when": "Sundays, 2–6 PM",
+   "where": "Central Machine Works",
+   "address": "4824 E Cesar Chavez St, Austin, TX",
+   "lat": 30.252007,
+   "lng": -97.7015211,
+   "cost": "Free (donations welcome)",
+   "url": "https://www.meetup.com/chess-irl/",
+   "sources": [
+    "https://www.meetup.com/chess-irl/"
+   ]
+  },
+  {
+   "id": "cg_gamesgrubaustin",
+   "name": "Games & Grub Austin",
+   "kind": "games",
+   "e": "🎲",
+   "desc": "Weekly South Austin board game night focused on medium-weight strategy games, with newcomers taught as they go.",
+   "when": "Wednesdays, 6:30 PM",
+   "where": "Pinthouse Brewing (covered patio)",
+   "address": "2201 E Ben White Blvd, Austin, TX",
+   "lat": 30.2153955,
+   "lng": -97.7423608,
+   "cost": "",
+   "url": "https://www.meetup.com/games-and-grub-austin/",
+   "sources": [
+    "https://www.meetup.com/games-and-grub-austin/"
+   ]
+  },
+  {
+   "id": "cg_centraltexasboardgames",
+   "name": "Central Texas Board Games",
+   "kind": "games",
+   "e": "🃏",
+   "desc": "Long-running board game meetup with weekly open gaming, mixing classics and new titles; organizers teach games.",
+   "when": "Sundays 1 PM at Game Kastle; also Thursdays 6:30–11 PM at Wonko's Toys and Games",
+   "where": "Game Kastle Austin",
+   "address": "3407 Wells Branch Pkwy, Suite 800, Austin, TX 78728",
+   "lat": 30.439874,
+   "lng": -97.6972617,
+   "cost": "Sunday: not listed; Thursday at Wonko's: $5",
+   "url": "https://www.meetup.com/central-texas-board-games/",
+   "sources": [
+    "https://www.meetup.com/central-texas-board-games/"
+   ]
+  },
+  {
+   "id": "cg_batcitysaturdaynightboar",
+   "name": "Bat City Saturday Night Board Games",
+   "kind": "games",
+   "e": "🎯",
+   "desc": "Saturday board game night at a comic and game shop; bring your own games or borrow from the demo wall.",
+   "when": "Saturdays, 6–10 PM",
+   "where": "Bat City Games & Comics",
+   "address": "5001 W US-290, Austin, TX 78735",
+   "lat": 30.2330211,
+   "lng": -97.821344,
+   "cost": "No listed fee (buying snacks/drinks encouraged)",
+   "url": "https://www.meetup.com/bat-city-saturday-night-board-games/",
+   "sources": [
+    "https://www.meetup.com/bat-city-saturday-night-board-games/"
+   ]
+  },
+  {
+   "id": "cg_boardwithbooksaustinpubl",
+   "name": "Board with Books (Austin Public Library)",
+   "kind": "games",
+   "e": "📚",
+   "desc": "Free monthly adult board game meetup using the Central Library's game collection; learn a game or teach one.",
+   "when": "Monthly, Thursday 5–8 PM (next: Nov 19, 2026)",
+   "where": "Central Library, The Den (6th floor)",
+   "address": "710 W Cesar Chavez St, Austin, TX",
+   "lat": 30.2660164,
+   "lng": -97.7517064,
+   "cost": "Free",
+   "url": "https://library.austintexas.gov/event/board-games/board-books-7772604",
+   "sources": [
+    "https://library.austintexas.gov/event/board-games/board-books-7772604",
+    "https://library.austintexas.gov/events/gaming"
+   ]
+  },
+  {
+   "id": "cg_bookpeoplebookclubs",
+   "name": "BookPeople Book Clubs",
+   "kind": "games",
+   "e": "📖",
+   "desc": "A dozen free monthly book clubs (sci-fi, horror, romance, Latinx lit and more) open to any reader at BookPeople.",
+   "when": "Monthly; varies by club (most 4 PM Sundays or 7 PM weeknights)",
+   "where": "BookPeople (third floor)",
+   "address": "603 N Lamar Blvd, Austin, TX 78703",
+   "lat": 30.2716347,
+   "lng": -97.7538138,
+   "cost": "Free",
+   "url": "https://www.bookpeople.com/book-clubs",
+   "sources": [
+    "https://www.bookpeople.com/book-clubs"
+   ]
+  },
+  {
+   "id": "cg_austinswingsyndicatethur",
+   "name": "Austin Swing Syndicate Thursday Dance",
+   "kind": "dance",
+   "e": "🎷",
+   "desc": "Weekly swing dance night with a free intro lesson, then social dancing; no partner needed.",
+   "when": "Thursdays; intro lesson 8:15 PM, dancing until midnight",
+   "where": "Cherrywood Center",
+   "address": "1605 E 38th 1/2 St, Austin, TX 78722",
+   "lat": null,
+   "lng": null,
+   "cost": "$8 regular, $20 live band nights (per July 2026 Meetup listi",
+   "url": "https://www.austinswingsyndicate.org/",
+   "sources": [
+    "https://www.austinswingsyndicate.org/contact",
+    "https://www.austinswingsyndicate.org/ask-shimmy",
+    "https://www.meetup.com/swing-dancing-atx/events/313044744"
+   ]
+  },
+  {
+   "id": "cg_gowesttuesdaywestcoastsw",
+   "name": "Go West Tuesday West Coast Swing",
+   "kind": "dance",
+   "e": "💃",
+   "desc": "Weekly West Coast Swing social dance night at Go Dance Studio in North Austin.",
+   "when": "Tuesdays, 8:30–10:30 PM",
+   "where": "Go Dance Studio – North Austin",
+   "address": "2525 W Anderson Ln #530, Austin, TX 78757",
+   "lat": 30.355472,
+   "lng": -97.733537,
+   "cost": "",
+   "url": "https://www.godancestudio.com/calendar",
+   "sources": [
+    "https://www.godancestudio.com/calendar",
+    "https://www.godancestudio.com"
+   ]
+  },
+  {
+   "id": "cg_sensualtuesdayaustininsp",
+   "name": "Sensual Tuesday (Austin Inspired Movement)",
+   "kind": "dance",
+   "e": "🌹",
+   "desc": "Weekly salsa and bachata classes for all levels followed by a salsa, bachata and zouk social.",
+   "when": "Tuesdays; classes 6:45–9:45 PM, social 9:45–11:45 PM",
+   "where": "Rhythm House ATX",
+   "address": "4622 S Lamar Blvd, Austin, TX 78745",
+   "lat": 30.232724,
+   "lng": -97.8058639,
+   "cost": "$19 per class; $7 social only",
+   "url": "https://www.austininspiredmovement.com/group-classes",
+   "sources": [
+    "https://www.austininspiredmovement.com/group-classes"
+   ]
+  },
+  {
+   "id": "cg_brokenspokedancelessons",
+   "name": "Broken Spoke Dance Lessons",
+   "kind": "dance",
+   "e": "🤠",
+   "desc": "Classic honky-tonk group lessons in Texas two-step and Western swing before the band plays; no partner needed.",
+   "when": "Wednesday–Saturday, 8–9 PM (arrive by 7:30 to sign up)",
+   "where": "Broken Spoke",
+   "address": "3201 S Lamar Blvd, Austin, TX 78704",
+   "lat": 30.240878,
+   "lng": -97.78523,
+   "cost": "$10 plus cover",
+   "url": "https://www.brokenspokeaustintx.net/dance-lessons",
+   "sources": [
+    "https://www.brokenspokeaustintx.net/dance-lessons",
+    "https://www.brokenspokeaustintx.net"
+   ]
+  },
+  {
+   "id": "cg_doubleornothingtwostep",
+   "name": "Double or Nothing Two-Step",
+   "kind": "dance",
+   "e": "👢",
+   "desc": "Drop-in country two-step lessons at Austin honky-tonks, beginner to advanced, with live music after; no partner needed.",
+   "when": "Tuesdays and Sundays at Sagebrush; Wednesdays at Donn's Depot",
+   "where": "Sagebrush",
+   "address": "5500 S Congress Ave, Austin, TX 78745",
+   "lat": 30.206216,
+   "lng": -97.7748058,
+   "cost": "Pay at the door (price set by venue)",
+   "url": "https://doubleornothingtwostep.com",
+   "sources": [
+    "https://doubleornothingtwostep.com",
+    "https://www.sagebrushtexas.com"
+   ]
+  },
+  {
+   "id": "cg_fuegofriday",
+   "name": "Fuego Friday",
+   "kind": "dance",
+   "e": "🔥",
+   "desc": "Weekly Friday Latin social dance night in South Austin for social dancers.",
+   "when": "Fridays",
+   "where": "Blue Moon Dance Co.",
+   "address": "3005 S Lamar Blvd #110-A, Austin, TX 78704",
+   "lat": 30.2416098,
+   "lng": -97.7842715,
+   "cost": "",
+   "url": "https://www.instagram.com/fuego_friday_austin/",
+   "sources": [
+    "https://www.instagram.com/fuego_friday_austin/"
+   ]
+  }
+ ]
+}

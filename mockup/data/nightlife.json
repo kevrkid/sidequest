@@ -1,0 +1,369 @@
+{
+ "checked": "2026-11-01",
+ "venues": {
+  "w328605851": {
+   "music": "Dance club; Tuesday: TuezGayz, a long-running queer dance night",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "A dance club for people who don't like dance clubs",
+   "age": "21+",
+   "name": "Barbarella",
+   "url": "https://www.instagram.com/barbarella_atx/",
+   "sources": [
+    "https://www.instagram.com/barbarella_atx/",
+    "https://www.sacurrent.com/?p=298209",
+    "https://www.timeout.com/austin/nightlife/barbarella"
+   ]
+  },
+  "o93629f59399": {
+   "music": "House, techno and electronic DJ nights with touring headliners",
+   "nights": "Event nights, mostly Thu–Sat; shows from 10 PM",
+   "cover": "Ticketed per event via Etix; some nights free with RSVP",
+   "dress": "",
+   "crowd": "No-phones dance club, serious dance-music crowd",
+   "age": "18+ (some events 21+)",
+   "name": "Kingdom",
+   "url": "https://kingdomnightclub.com/",
+   "sources": [
+    "https://kingdomnightclub.com/",
+    "https://www.instagram.com/kingdomaustin/",
+    "https://linktr.ee/kingdomnightclub",
+    "https://www.timeout.com/austin/music/best-dance-clubs-in-austin"
+   ]
+  },
+  "n3849779422": {
+   "music": "Goth, industrial, darkwave, synth-pop and post-punk DJ nights, plus live bands and themed nights (e.g. K-pop, Depeche Mode vs. The Cure)",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "Austin's oldest goth club, alternative crowd since 2001",
+   "age": "18+ or 21+ depending on event",
+   "name": "Elysium",
+   "url": "https://elysiumonline.net",
+   "sources": [
+    "https://www.instagram.com/elysiumaustintx/",
+    "https://ma.to/venue/elysiumaustintx",
+    "https://www.kut.org/texasstandard/2026-08-11/texas-goth-music-culture-elysium-austin-tx",
+    "https://www.timeout.com/austin/music/best-dance-clubs-in-austin"
+   ]
+  },
+  "w382550037": {
+   "closed": true,
+   "name": "Superstition"
+  },
+  "of2d18760b7f": {
+   "music": "",
+   "nights": "Fri–Sat",
+   "cover": "",
+   "dress": "",
+   "crowd": "",
+   "age": "21+",
+   "name": "The Rose Room",
+   "url": "https://www.instagram.com/theroseroomatx/",
+   "sources": [
+    "https://www.instagram.com/theroseroomatx/",
+    "https://discotech.me/austin/the-rose-room/"
+   ]
+  },
+  "o38644b525f0": {
+   "music": "Electronic/dance music events with touring DJs",
+   "nights": "Event nights only (check calendar)",
+   "cover": "Ticketed per event (roughly $25–150)",
+   "dress": "",
+   "crowd": "Large-production electronic music venue",
+   "age": "18+ or 21+ depending on event",
+   "name": "The Concourse Project",
+   "url": "https://www.concourseproject.com",
+   "sources": [
+    "https://www.concourseproject.com/",
+    "https://www.concourseproject.com/faqs/",
+    "https://www.instagram.com/theconcourseproject/"
+   ]
+  },
+  "w328649872": {
+   "music": "Concerts and DJ/dance events; varies by show",
+   "nights": "Event nights only (check calendar)",
+   "cover": "Ticketed per event",
+   "dress": "",
+   "crowd": "Red River music venue",
+   "age": "",
+   "name": "Empire Control Room",
+   "url": "https://www.empireatx.com",
+   "sources": [
+    "https://www.instagram.com/empireatx/",
+    "https://www.bandsintown.com/v/10001155",
+    "https://calendar.austinchronicle.com/best-of/2014/entertainment-critics-picks/best-garage-conversion-12127691"
+   ]
+  },
+  "w328649867": {
+   "music": "Concerts and DJ/dance events; varies by show",
+   "nights": "Event nights only (check calendar)",
+   "cover": "Ticketed per event",
+   "dress": "",
+   "crowd": "Red River music venue",
+   "age": "",
+   "name": "Empire Garage",
+   "url": "https://www.empireatx.com",
+   "sources": [
+    "https://www.instagram.com/empireatx/",
+    "https://www.axs.com/venues/127457",
+    "https://calendar.austinchronicle.com/best-of/2014/entertainment-critics-picks/best-garage-conversion-12127691"
+   ]
+  },
+  "n12513317004": {
+   "music": "High-energy DJ sets",
+   "nights": "",
+   "cover": "",
+   "dress": "Smart casual; no flip-flops, tank tops, swimwear, baggy clothes or offensive prints",
+   "crowd": "Upscale nightclub and terrace with bottle service",
+   "age": "21+",
+   "name": "Mayfair",
+   "url": "https://www.mayfairaustin.com",
+   "sources": [
+    "https://www.mayfairaustin.com/",
+    "https://www.mayfairaustin.com/faqs",
+    "https://www.instagram.com/mayfairaustin/"
+   ]
+  },
+  "w1020979629": {
+   "music": "DJ sets; weekend rooftop drag shows",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "Queer-friendly, multi-level tropical club with a rooftop",
+   "age": "21+",
+   "name": "Coconut Club",
+   "url": "https://www.instagram.com/coconutclub.austin/",
+   "sources": [
+    "https://www.instagram.com/coconutclub.austin/",
+    "https://www.theinfatuation.com/austin/reviews/coconut-club-austin",
+    "https://communityimpact.com/austin/central-austin/2020/01/02/new-bar-and-dance-venue-coconut-club-now-open"
+   ]
+  },
+  "w231123159": {
+   "music": "DJ dance nights and drag shows",
+   "nights": "Daily, 2 PM–2 AM",
+   "cover": "$20 on 18+ nights",
+   "dress": "",
+   "crowd": "Austin's longtime LGBTQ+ bar (since 1990)",
+   "age": "21+; 18+ nights Mon–Sat from 8 PM",
+   "name": "Oilcan Harry's",
+   "url": "https://www.oilcanharrys.com/",
+   "sources": [
+    "https://www.oilcanharrys.com/",
+    "https://en.wikipedia.org/wiki/Oilcan_Harry%27s",
+    "https://digital-release.kxan.com/entertainment-news/oilcan-harrys-celebrates-30th-anniversary-as-austin-lgbtq-nightlife-landmark"
+   ]
+  },
+  "w231123155": {
+   "music": "",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "LGBTQ+ bar serving Austin since 2004",
+   "age": "21+; 18+ Thursdays after 10 PM",
+   "name": "Rain on 4th",
+   "url": "https://www.instagram.com/rainon4th/",
+   "sources": [
+    "https://www.instagram.com/rainon4th/"
+   ]
+  },
+  "w328535182": {
+   "music": "Touring DJs, EDM and themed club nights (e.g. K-pop night)",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "",
+   "age": "Varies by event (some 18+)",
+   "name": "Vulcan Gas Company",
+   "url": "https://vulcanatx.com/",
+   "sources": [
+    "https://vulcanatx.com/",
+    "https://app.discotech.me/events/38252598-kpop-club-night-at-vulcan-gas-company"
+   ]
+  },
+  "w929865592": {
+   "music": "Blues, 'Austin's Home of the Blues since 1975'; Blue Monday series",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "",
+   "age": "Varies by show (21+, 18+ or all ages)",
+   "name": "Antone's Nightclub",
+   "url": "https://www.antonesnightclub.com/",
+   "sources": [
+    "https://www.antonesnightclub.com/"
+   ]
+  },
+  "n3355462801": {
+   "music": "Live bands, drag shows and DJ sets",
+   "nights": "",
+   "cover": "About $10–20 per show",
+   "dress": "",
+   "crowd": "",
+   "age": "18+ or 21+ depending on show",
+   "name": "Chess Club",
+   "url": "https://www.chessclubaustin.com/",
+   "sources": [
+    "https://www.chessclubaustin.com/",
+    "https://www.austinchronicle.com/music/team-behind-barracuda-to-open-chess-club-in-former-plush-location-12141624/"
+   ]
+  },
+  "n3355462828": {
+   "closed": true,
+   "name": "Red 7"
+  },
+  "o96d99b05643": {
+   "music": "Underground electronic / rave DJs",
+   "nights": "",
+   "cover": "$10–20; free with RSVP before 11 PM (launch event)",
+   "dress": "",
+   "crowd": "",
+   "age": "21+",
+   "name": "Otherworld Atx",
+   "url": "",
+   "sources": [
+    "https://app.discotech.me/events/38232047",
+    "https://app.discotech.me/events/38276032-techniqolor-at-otherworld-0913-at-austin-concerts-and-venues"
+   ]
+  },
+  "o91b4c310b0b": {
+   "music": "Country dance hall",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "Austin's only 21+ country dance hall (North Austin/Pflugerville; sister halls in Buda and The Colony)",
+   "age": "21+",
+   "name": "Mavericks Dance Hall",
+   "url": "https://www.mavericksdancehall.com/",
+   "sources": [
+    "https://www.mavericksdancehall.com/"
+   ]
+  },
+  "o9a20f334c66": {
+   "music": "Live music: Sat 8–11:30 PM, Sun 3–6 PM",
+   "nights": "Sat 7 PM–midnight; Sun 2–7 PM",
+   "cover": "Ticketed general admission (advance or day-of); tables $50 for 4, $100 for 8",
+   "dress": "",
+   "crowd": "Hill Country dance hall (now in Driftwood)",
+   "age": "18+",
+   "name": "Mercer Street Dance Hall",
+   "url": "https://www.mercerdancehall.com/",
+   "sources": [
+    "https://www.mercerdancehall.com/"
+   ]
+  },
+  "o7470373b7c5": {
+   "music": "Salsa, merengue, bachata, reggaeton, hip hop and top hits",
+   "nights": "",
+   "cover": "",
+   "dress": "",
+   "crowd": "",
+   "age": "",
+   "name": "Babilonia Austin",
+   "url": "https://www.instagram.com/babiloniaaustin/",
+   "sources": [
+    "https://www.instagram.com/babiloniaaustin/"
+   ]
+  },
+  "o156ef34356d": {
+   "music": "",
+   "nights": "",
+   "cover": "Free entry (per club's Instagram bio; account not updated since 2016)",
+   "dress": "",
+   "crowd": "Self-described after-hours club, 10 PM–5 AM",
+   "age": "",
+   "name": "Club Caribe ATX",
+   "url": "https://www.instagram.com/clubcaribeatx/",
+   "sources": [
+    "https://www.instagram.com/clubcaribeatx/"
+   ]
+  },
+  "oab95d75645a": {
+   "music": "",
+   "nights": "Fri–Sat (weekly Voodoo Room Fridays/Saturdays)",
+   "cover": "",
+   "dress": "",
+   "crowd": "",
+   "age": "",
+   "name": "Voodoo Room",
+   "url": "",
+   "sources": [
+    "https://app.discotech.me/events/38257021-voodoo-room-saturdays-at-voodoo-room"
+   ]
+  },
+  "n3355524476": {
+   "music": "Stand-up comedy club (not music); Sun: Cocktails and Comedy, Mon: new-material night, Wed: The Hump, Thu: Austin All-Stars",
+   "nights": "Sun, Mon, Wed, Thu (plus some Fri/Sat specials)",
+   "cover": "",
+   "dress": "",
+   "crowd": "Long-running Sixth Street stand-up club",
+   "age": "",
+   "name": "The Velveeta Room",
+   "url": "https://thevelveetaroom.com/",
+   "sources": [
+    "https://thevelveetaroom.com/",
+    "https://www.austinchronicle.com/arts/the-velveeta-rooms-head-cheese-11674780/"
+   ]
+  },
+  "oba064a9f3db": {
+   "music": "House and electronic DJ nights",
+   "nights": "Fri–Sat",
+   "cover": "",
+   "dress": "",
+   "crowd": "Intimate downtown nightclub with rooftop",
+   "age": "",
+   "name": "Twins Nightclub",
+   "url": "https://www.instagram.com/twinsclub/",
+   "sources": [
+    "https://linktr.ee/twinsclub",
+    "https://posh.vip/g/twins-night-club",
+    "https://www.instagram.com/twinsnightclub/"
+   ]
+  },
+  "n3513739145": {
+   "music": "Dancehall; two-step and line-dance lessons; Thursday: Latin dancing",
+   "nights": "Wed–Sat (plus Teen Night Saturdays 5–9 PM)",
+   "cover": "$10 for Saturday Teen Night",
+   "dress": "Neat and presentable; no athletic wear, sleeveless shirts, backwards caps, sagging pants or plain white tees",
+   "crowd": "",
+   "age": "",
+   "name": "Wild West Cedar Park",
+   "url": "https://wildwestcedarpark.com/",
+   "sources": [
+    "https://wildwestcedarpark.com/",
+    "https://wildwestcedarpark.com/dress-code/",
+    "https://www.instagram.com/wildwestcp/"
+   ]
+  },
+  "n5921568654": {
+   "music": "Live jazz",
+   "nights": "Tue–Sat (Tue–Thu 7–10 PM, Fri–Sat 7 PM–12 AM)",
+   "cover": "",
+   "dress": "Relaxed, though most guests dress up",
+   "crowd": "Candlelit basement jazz lounge; reservations recommended",
+   "age": "21+",
+   "name": "Parker Jazz Club",
+   "url": "https://www.parkerjazzclub.com",
+   "sources": [
+    "https://www.parkerjazzclub.com/faqs",
+    "https://www.parkerjazzclub.com"
+   ]
+  },
+  "n12251341303": {
+   "music": "Live R&B, soul and blues; Sunday: country",
+   "nights": "Nightly",
+   "cover": "",
+   "dress": "",
+   "crowd": "Retro South Congress soul bar with upstairs Jade Room lounge",
+   "age": "",
+   "name": "C-Boy's Heart & Soul",
+   "url": "https://www.cboys.com/",
+   "sources": [
+    "https://www.cboys.com/",
+    "https://www.timeout.com/austin/bars/c-boys-heart-soul"
+   ]
+  }
+ }
+}

@@ -972,6 +972,9 @@
   .gdgrid button i{font-style:normal;font-size:24px}
   .gdopts{display:flex;flex-wrap:wrap;gap:8px} .gdopts button{padding:10px 14px;border-radius:99px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650;font-size:14.5px}
   .gdmorebtn{display:block;margin:12px 2px 4px;font-weight:700;font-size:13.5px}
+  .cgcard{cursor:pointer;margin-bottom:8px;padding:12px} .cgmeta{margin-top:4px;font-weight:650;color:var(--text)!important;opacity:.8}
+  .nightbox{margin:8px 0;padding:10px 12px;border-radius:14px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-size:13.5px}
+  .nbrow{display:flex;gap:8px;margin:3px 0} .nbrow span:first-child{flex:none;width:20px;text-align:center}
   .fytag{font-weight:700;color:var(--accent);margin-right:4px}
   .schello{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px} .schello button{padding:7px 12px;border-radius:99px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650;font-size:13.5px}
   .schint{margin:6px 0 2px;display:flex;flex-direction:column;gap:6px} .schint button{text-align:left;padding:8px 12px;border-radius:12px;background:var(--panel2,#ffffff12);border:1px solid var(--hair);font-weight:650}
@@ -1868,7 +1871,12 @@ const ES = {
   // the event menu and You list (2026-10-28 cleanup)
   'Your profile':'Tu perfil', 'Privacy':'Privacidad', 'More options':'Más opciones', 'Send in a chat':'Enviar en un chat', 'Plan it with friends':'Planéalo con amigos',
   'Share link':'Compartir enlace', 'Add to calendar':'Añadir al calendario', 'Show on map':'Ver en el mapa', 'Interested ✓':'Me interesa ✓', 'Stories ({n})':'Historias ({n})',
-  'Map credits':'Créditos del mapa', 'What do you want?':'¿Qué quieres?', 'Any vibe?':'¿Algún ambiente?', 'What music?':'¿Qué música?', 'Where?':'¿Dónde?', 'When?':'¿Cuándo?', 'Top-ranked near you':'Lo mejor calificado cerca', "You've been":'Ya fuiste', 'Good morning! What are you looking for?':'¡Buenos días! ¿Qué buscas?', 'Morning! Coffee, breakfast, or something to do?':'¡Buen día! ¿Café, desayuno o algo que hacer?',
+  'Map credits':'Créditos del mapa', 'Around town':'En la ciudad', 'Around town: groups you can join':'En la ciudad: grupos a los que puedes unirte', 'Run clubs':'Clubes de correr',
+  'Social clubs':'Clubes sociales', 'Leagues':'Ligas', 'Games & hobbies':'Juegos y pasatiempos', 'Dance':'Baile', 'None match.':'Ninguno coincide.',
+  'Outside groups, not run by Side Quest: check their page for the latest times.':'Grupos externos, no son de Side Quest: revisa su página para los horarios.',
+  'Outside group, not run by Side Quest.':'Grupo externo, no es de Side Quest.', 'Visit their page':'Ver su página', 'Sources':'Fuentes', "What it's like":'Cómo es',
+  'From the venue and local press; check before you go.':'Del lugar y la prensa local; revisa antes de ir.', '🏃 Run clubs':'🏃 Clubes de correr', '🏆 Sports leagues':'🏆 Ligas deportivas',
+  '🤝 Social clubs':'🤝 Clubes sociales', '💃 Dance socials':'💃 Bailes sociales', 'What do you want?':'¿Qué quieres?', 'Any vibe?':'¿Algún ambiente?', 'What music?':'¿Qué música?', 'Where?':'¿Dónde?', 'When?':'¿Cuándo?', 'Top-ranked near you':'Lo mejor calificado cerca', "You've been":'Ya fuiste', 'Good morning! What are you looking for?':'¡Buenos días! ¿Qué buscas?', 'Morning! Coffee, breakfast, or something to do?':'¡Buen día! ¿Café, desayuno o algo que hacer?',
   'Hi! What sounds good this morning?':'¡Hola! ¿Qué se te antoja esta mañana?', 'Hi! What are you looking for?':'¡Hola! ¿Qué buscas?', 'Hey! What sounds good right now?':'¡Hey! ¿Qué se te antoja ahora?',
   'Hi there! Food, drinks, or something to do?':'¡Hola! ¿Comida, bebidas o algo que hacer?', 'Hey! What are you in the mood for tonight?':'¡Hey! ¿Qué se te antoja esta noche?',
   'Hi! Dinner, drinks, or a show?':'¡Hola! ¿Cena, tragos o un show?', 'Hey there! What are you looking for tonight?':'¡Hola! ¿Qué buscas esta noche?', 'Hey night owl! What are you looking for?':'¡Hola, ave nocturna! ¿Qué buscas?',
@@ -3167,6 +3175,15 @@ setTimeout(()=>pfIndex(),3000);   // Find a spot's Pool table / Games and search
 function pfIndex(){ if(PF.idx&&Date.now()-PF.idxAt<6e4) return Promise.resolve(PF.idx);
   return fetch('/api/place/facts/index').then(r=>r.json()).then(j=>{ PF.idx=j.facts||{}; PF.idxAt=Date.now(); return PF.idx; }).catch(()=>PF.idx||{}); }
 
+// What a club is like (community.rb, data/nightlife.json): from the venue's own pages or two local sources
+function nightBox(p){
+  const n=p.night; if(!n) return '';
+  const rows=[['🎶',n.music],['📅',n.nights],['💵',n.cover],['👔',n.dress],['👥',n.crowd],['🪪',n.age]].filter(([,v])=>v);
+  if(!rows.length) return '';
+  const src=(n.sources||[]).filter(u=>/^https:\/\//.test(u)).slice(0,3);
+  return `<div class="nightbox"><div class="meta" style="font-weight:750;margin-bottom:4px">${T("What it's like")}</div>${rows.map(([e,v])=>`<div class="nbrow"><span>${e}</span><span class="grow">${esc(v)}</span></div>`).join('')}
+    <div class="meta" style="font-size:10.5px;margin-top:4px">${T('From the venue and local press; check before you go.')} ${src.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener">${i+1}</a>`).join(' ')}</div></div>`;
+}
 async function placePopup(id, ll){
   const pop=L.popup({offset:[0,-4]}).setLatLng(ll).setContent('<p class="skel">…</p>').openOn(map);
   try{ const j=await (await fetch(`/api/place?id=${encodeURIComponent(id)}&${nearParam()}`)).json(); const p=j.place; if(!p) throw 0;
@@ -3175,6 +3192,7 @@ async function placePopup(id, ll){
       <div style="margin:6px 0"><span class="pst ${p.state}">${esc(p.status)}</span>${p.zone?` <span class="meta">🔥 ${esc(p.zone)}</span>`:''}${p.sq_rating?` <span class="meta">⭐ <b>${p.sq_rating.avg}</b> ${T('on Side Quest')} (${p.sq_rating.n})</span>`:''}</div>
       ${p.speakeasy?`<div class="meta" style="margin:4px 0">🗝️ <b>${T('Speakeasy')}</b>${p.speakeasy===true?'':': '+esc(p.speakeasy)}</div>`:''}${barFood(p)}${p.alcohol?`<div class="meta" style="margin:2px 0">${esc(T(ALC_TXT[p.alcohol]||''))}</div>`:''}
       ${p.addr?`<div class="meta">${esc(p.addr)}</div>`:''}
+      ${nightBox(p)}
       <div class="pfbox" id="pf_${esc(p.id)}">${pfBox(p.id,pfType(p.kind))}</div>
       <div id="pv_${esc(p.id)}"></div>
       <div class="evrow3 pmain"><a class="btn primary" href="${mapsUrl(p.lat,p.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>${menuBtn(p).replace('btn sm primary','btn')}${p.phone?`<a class="btn" href="tel:${esc(telOf(p.phone))}">📞 ${T('Call')}</a>`:''}${favBtn('place',p.id,p.name)}</div>
@@ -3725,6 +3743,46 @@ function runSearch(cat, q){   // land on the feed with that view applied
 }
 let groupsSec = null;
 function openGroupsMenu(){ meetTab='groups'; tab('meet'); }
+// Around town (community.rb): real groups you can join that live outside Side Quest (run clubs, leagues, social clubs,
+// outdoors, games, dance), each with how to find them and where the facts came from. No members or chat here.
+const CG = {list:null, busy:false, kind:'all'};
+const CG_KINDS = [['all','✨','All'],['run','🏃','Run clubs'],['social','🤝','Social clubs'],['league','🏆','Leagues'],['outdoors','🥾','Outdoors'],['games','🎲','Games & hobbies'],['dance','💃','Dance']];
+function loadCommunity(){
+  if(CG.list||CG.busy) return; CG.busy=true;
+  fetch('/api/community').then(r=>r.json()).then(j=>{ CG.list=(j.groups||[]).map((g,i)=>({...g, id:g.id||('cg'+i)})); CG.checked=j.checked; })
+    .catch(()=>{ CG.list=[]; }).finally(()=>{ CG.busy=false; if(meetTab==='groups'&&!$('#v-meet').hidden) renderMeet(); if(curTab==='search') renderSearch(); });
+}
+function cgCard(g){
+  const meta=[g.when,g.where,g.cost].filter(Boolean).map(esc).join(' · ');
+  return `<div class="card cgcard" data-cgopen="${esc(g.id)}"><div class="row" style="align-items:flex-start"><span class="cat" style="width:38px;height:38px;font-size:19px">${esc(g.e||'👥')}</span>
+    <div class="grow"><b>${esc(g.name)}</b>${g.desc?`<div class="meta" style="margin-top:2px">${esc(g.desc)}</div>`:''}${meta?`<div class="meta cgmeta">${meta}</div>`:''}</div></div></div>`;
+}
+function cgSection(q){
+  loadCommunity(); if(!CG.list) return `<label class="lbl" style="margin-top:18px">🌐 ${T('Around town')}</label><p class="meta">${T('Loading…')}</p>`;
+  if(!CG.list.length) return '';
+  const L=CG.list.filter(g=>(CG.kind==='all'||g.kind===CG.kind)&&qHit(q,g.name,g.desc||'',g.where||'',g.kind));
+  return `<label class="lbl" style="margin-top:18px">🌐 ${T('Around town: groups you can join')}</label>
+    <div class="chiprow">${CG_KINDS.filter(([k])=>k==='all'||CG.list.some(g=>g.kind===k)).map(([k,e,l])=>`<button class="chip ${CG.kind===k?'on':''}" data-cgkind="${k}">${e} ${T(l)}</button>`).join('')}</div>
+    ${L.map(cgCard).join('')||`<p class="meta">${T('None match.')}</p>`}
+    <p class="meta" style="font-size:11px;margin:6px 2px 0">${T('Outside groups, not run by Side Quest: check their page for the latest times.')}</p>`;
+}
+function openCommunity(id){
+  const g=(CG.list||[]).find(x=>x.id===id); if(!g) return;
+  const src=(g.sources||[]).filter(u=>/^https:\/\//.test(u)).slice(0,3);
+  $('#actSheet').innerHTML=`<div class="row"><span style="font-size:28px">${esc(g.e||'👥')}</span><b class="grow" style="font-size:18px">${esc(g.name)}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    ${g.desc?`<p style="margin:10px 0">${esc(g.desc)}</p>`:''}
+    <div class="actlist">${[['🗓',g.when],['📍',[g.where,g.address].filter(Boolean).join(' · ')],['💵',g.cost]].filter(([,v])=>v).map(([e,v])=>`<div class="actrow" style="cursor:default"><span class="ai">${e}</span><span class="grow">${esc(v)}</span></div>`).join('')}</div>
+    <div class="btns" style="margin-top:12px">${/^https:\/\//.test(g.url||'')?`<a class="btn primary" href="${esc(g.url)}" target="_blank" rel="noopener">${T('Visit their page')} ↗</a>`:''}
+      ${g.lat&&g.lng?`<a class="btn" href="${mapsUrl(g.lat,g.lng)}" target="_blank" rel="noopener">🧭 ${T('Directions')}</a>`:''}</div>
+    <p class="meta" style="font-size:11px;margin-top:12px">${T('Outside group, not run by Side Quest.')} ${src.length?T('Sources')+': '+src.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener">${i+1}</a>`).join(' '):''}</p>`;
+  $('#actBg').hidden=false;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-cgkind],[data-cgopen]'); if(!b) return; const d=b.dataset;
+  if(d.cgkind){ CG.kind=d.cgkind; return renderMeet(); }
+  if(d.cgopen) return openCommunity(d.cgopen);
+});
+
 function groupsHtml(){
   const q=meetQ, hit=g=>qHit(q,g.n,g.d,CATS[g.cat]?.l), mine=allGroups().filter(g=>isMember(g.id)&&hit(g)), sec=!q&&groupsSec!=null&&SECTIONS[groupsSec];
   const browse=allGroups().filter(g=>!isMember(g.id)&&(!sec||sec.cats.includes(g.cat))&&hit(g));
@@ -3736,7 +3794,8 @@ function groupsHtml(){
     <label class="lbl" style="margin-top:16px">Your groups</label>${mine.map(small).join('')||`<p class="meta" style="margin:0">${q?`None of yours match “${esc(q)}”.`:'None yet. Find one below.'}</p>`}
     <label class="lbl" style="margin-top:16px">Find a group</label>
     <div class="chiprow"><button class="chip ${groupsSec==null?'on':''}" data-gsec="">All</button>${SECTIONS.map((x,i)=>`<button class="chip ${groupsSec===i?'on':''}" data-gsec="${i}">${x.e} ${x.n}</button>`).join('')}</div>
-    ${browse.map(small).join('')||`<p class="meta">${q?`No groups match “${esc(q)}”. Start one?`:'No groups here yet. Start the first one.'}</p>`}`;
+    ${browse.map(small).join('')||`<p class="meta">${q?`No groups match “${esc(q)}”. Start one?`:'No groups here yet. Start the first one.'}</p>`}
+    ${cgSection(q)}`;
 }
 
 /* ---------- stories: 24h photo or text posts, tagged with an event, groups and people ---------- */
@@ -6286,7 +6345,7 @@ const GUIDE = {
   active:['🏀','Get active',[['🏀 Pickup games',{feed:'pickup'}],['🏋️ Gyms',{ex:['gyms','gym']}],['🧗 Climbing',{ex:['gyms','climbing']}],['🧘 Yoga',{ex:['gyms','yoga']}],
     ['🏒 Ice rinks',{ex:['gyms','rink']}],['🥊 Boxing',{ex:['gyms','boxing']}]]],
   sights:['🏛️','Sightseeing',[['✨ Everything',{ex:['sights','all']}],['🏛️ Landmarks',{ex:['sights','landmark']}],['🖼️ Museums',{ex:['sights','museum']}],['🎨 Art & views',{ex:['sights','art']}],['🪧 History markers',{ex:['sights','marker']}]]],
-  people:['👋','People & groups',[['👋 Meet people',{meet:'swipe'}],['👥 Find friends',{meet:'friends'}],['🏘️ Groups',{meet:'groups'}]]],
+  people:['👋','People & groups',[['👋 Meet people',{meet:'swipe'}],['👥 Find friends',{meet:'friends'}],['🏘️ Groups',{meet:'groups'}],['🏃 Run clubs',{cg:'run'}],['🏆 Sports leagues',{cg:'league'}],['🤝 Social clubs',{cg:'social'}],['💃 Dance socials',{cg:'dance'}]]],
 };
 const GD = {cat:null};
 function guideHtml(){
@@ -6302,6 +6361,7 @@ function guideGo(cat,i){
   if(a.sfh) return sfPick(f=>{ f.has=[a.sfh]; f.music=[]; f.theme=[]; });
   if(a.feed){ feedFocus=a.feed; feedN=30; tab('feed'); return renderFeed(); }
   if(a.meet){ meetTab=a.meet; DM.open=null; tab('meet'); return renderMeet(); }
+  if(a.cg){ CG.kind=a.cg; meetTab='groups'; DM.open=null; tab('meet'); renderMeet(); return setTimeout(()=>document.querySelector('.cgcard')?.closest('.view')?.scrollTo({top:document.querySelector('[data-cgkind]')?.offsetTop-80||0,behavior:'smooth'}),120); }
 }
 function openGuide(){ GD.cat=null; $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:18px">🔎 ${T('Find something')}</b><button class="xbtn" data-actclose aria-label="${T('Close')}"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div><div id="gdSheet">${guideHtml()}</div>`; $('#actBg').hidden=false; }
 document.addEventListener('click',e=>{
@@ -6347,6 +6407,7 @@ function renderSearch(){
   evs.sort((a,b)=>a.ts-b.ts);
   people().forEach(u=>{ if(u.h!==S.me.h&&hit(u.h,(u.i||[]).join(' '))) ppl.push({go:`u|${u.h}`, e:av(u.h), title:'@'+u.h, sub:esc((u.i||[]).slice(0,3).join(' · '))}); });
   allGroups().forEach(g=>{ if(hit(g.n,g.d||'',CATS[g.cat]?.l||'')) grps.push({go:`g|${g.id}`, e:esc(g.e||'🏘️'), title:g.n, sub:gCount(g)===1?T('1 member'):`${gCount(g)} ${T('members')}`}); });
+  loadCommunity(); (CG.list||[]).forEach(g=>{ if(hit(g.name,g.desc||'',g.kind,g.where||'',g.kind==='run'?'running run club':'')) grps.push({go:`cg|${g.id}`, e:esc(g.e||'👥'), title:g.name, sub:esc([T('Around town'),g.when].filter(Boolean).join(' · '))}); });
   const speak = /speak ?eas(y|ies)|hidden bars?|secret bars?|bares? escondidos?/i.test(q) ? `<button class="xrow" data-excat="night" data-exsubgo="speakeasies"><span class="xe">🗝️</span><span class="grow"><b>${T('Speakeasies & hidden bars')}</b><span class="meta">${T('Austin to Georgetown, with how to find the door')}</span></span>${svgI('chev')}</button>` : '';
   const dish = `<button class="xrow" data-xgo="dish|${esc(q)}"><span class="xe">🍴</span><span class="grow"><b>${T('Find “{q}” on menus',{q:esc(q)})}</b><span class="meta">${T('Every menu we’ve read, with prices')}</span></span>${svgI('chev')}</button>`;
   const feed = `<button class="xrow" data-xgo="feed|${esc(q)}"><span class="xe">📝</span><span class="grow"><b>${T('Search posts and the feed')}</b><span class="meta">${esc(q)}</span></span>${svgI('chev')}</button>`;
@@ -6415,6 +6476,7 @@ function searchGo(v){
   if(t==='evmap') return focusOnMap(id);
   if(t==='u') return openProfile(id);
   if(t==='g') return openGroup(id);
+  if(t==='cg') return openCommunity(id);
   $('#qIn').value=''; $('#qIn').blur();
   if(t==='pl') return focusPlace(id);
   if(t==='sg') return focusSight(id);

@@ -49,12 +49,19 @@ module Places
     @lock.synchronize do
       if mtime != @cache[:mtime]
         raw = mtime ? JSON.parse(File.read(FILE)) : { 'places' => [] }
-        list = raw['places'].map { |p| p.merge('week' => Hours.parse(p['hours'])) }
+        gone = closed_ids
+        list = raw['places'].reject { |p| gone.include?(p['id']) }.map { |p| p.merge('week' => Hours.parse(p['hours'])) }   # closed for good: off the map
         @cache = { mtime: mtime, list: list, fetched: raw['fetched'] }
         warn "[places] loaded #{list.size} places (#{list.count { |p| p['week'] }} with readable hours)"
       end
       @cache
     end
+  end
+
+  # Places confirmed closed for good (data/nightlife.json "closed": true, from the venue research), read when places load
+  def closed_ids
+    f = ENV['SQ_NIGHTLIFE_FILE'] || File.join(__dir__, 'data', 'nightlife.json')
+    ((JSON.parse(File.read(f))['venues'] || {}).select { |_id, v| v['closed'] }.keys rescue [])
   end
 
   def now_mow

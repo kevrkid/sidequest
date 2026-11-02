@@ -155,6 +155,14 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Around town + what clubs are like (2026-11-01, owner; `community.rb`)**: `data/community.json` (57 real groups:
+  run clubs, leagues, outdoors, games, dance, social; each with its official page and sources) shows in Social → Groups
+  → "Around town" (kind chips, details sheet `openCommunity`, marked as outside groups: no members or chat), in search
+  (`cg|id`) and the guide (People & groups → Run clubs / Sports leagues / Social clubs / Dance socials).
+  `data/nightlife.json` ({place_id => music, nights, cover, dress, crowd, age, sources}) adds "What it's like" to club
+  cards (`nightBox`); `"closed": true` venues are left off the map (`Places.closed_ids`; Red 7, Superstition). Researched
+  2026-11-01 without Reddit (it blocks AI tools); a fact is kept only from the place's own page or two reputable local
+  sources. push.sh ships both files.
 - **Live Translate is off for now (2026-10-31, owner)**: `LENS_TRANSLATE = false` hides Scout's Live Translate button,
   skips "translate this…" and Scout's lens action; the camera opens as Identify only (`Lens.open({noTranslate})` hides
   the Translate / Identify switch). Scout's notes say it's coming back. Flip the flag to bring it back.
