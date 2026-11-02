@@ -43,6 +43,7 @@ require_relative 'spots'   # "Add location" when posting: every place we know, n
 require_relative 'scout_mind'   # Scout's memory of each person, its personalities, the setup interview, ratings
 require_relative 'community'   # groups to join around town + what nightclubs are like (researched, sourced)
 require_relative 'placefacts'   # what's at a place (pool table, DJ, patio, busy nights…) from people who go
+require_relative 'lifestyle'    # Lifestyle score (active, outdoors, indoors, nights out, drinking…) from what you do
 require_relative 'contacts'   # find friends by email / phone (hashed, opt-in)
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
 require_relative 'pulse'   # V3: vibe check, busy forecasts, trends, the one right place tonight, media worth watching
@@ -2672,7 +2673,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s); mount_gyms(s); mount_contacts(s); mount_placefacts(s); mount_community(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s); mount_gyms(s); mount_contacts(s); mount_placefacts(s); mount_community(s); mount_lifestyle(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

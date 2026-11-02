@@ -355,6 +355,19 @@
   .type-big{font-size:38px;font-weight:800;letter-spacing:4px;background:linear-gradient(90deg,var(--accent2),var(--party));-webkit-background-clip:text;background-clip:text;color:transparent}
   .axis{display:grid;grid-template-columns:70px 1fr 70px;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin:5px 0}
   .axis .bar>b{background:var(--accent2)}
+  /* Lifestyle (Personality page): radar chart + trait bars */
+  .lstop{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-top:2px}
+  .lschart{display:flex;justify-content:center;margin:6px 0 0} .lsradar{width:100%;max-width:280px;height:auto;overflow:visible}
+  .lsradar .lsring{fill:none;stroke:var(--line);stroke-width:1}
+  .lsradar .lsnow{fill:url(#lsg);fill-opacity:.32;stroke:url(#lsg);stroke-width:2.5;stroke-linejoin:round}
+  .lsradar .lsthen{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4;opacity:.8}
+  .lskey{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--muted);margin:2px 0 10px}
+  .lsk{display:inline-block;width:18px;height:0;vertical-align:middle;margin-right:6px;border-top:3px solid #bf5af2} .lsk.then{border-top:2px dashed var(--muted)}
+  .lsrow{display:flex;gap:10px;align-items:flex-start;padding:7px 0} .lse{font-size:20px;width:26px;text-align:center;line-height:1.2}
+  .lsrow .bar{margin-top:6px} .lsn{font-weight:800;font-variant-numeric:tabular-nums;min-width:26px;text-align:right}
+  .lswhy{font-size:11.5px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lsdelta{font-size:11px;font-weight:700;margin-right:8px} .lsdelta.up{color:var(--good)} .lsdelta.down{color:#ff9a8a}
+  .lsh{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
   .toggle{position:relative;width:44px;height:26px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);flex:none}
   .toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.2s}
   .toggle.on{background:var(--good);border-color:var(--good)}
@@ -1293,6 +1306,9 @@
       <h3 style="margin-top:0">Personality · 16 types</h3>
       <div class="card" id="quizCard"></div>
 
+      <h3 data-t="Lifestyle">Lifestyle</h3>
+      <div class="card" id="styleCard"></div>
+
       <h3>Astrology</h3>
       <div class="card">
         <div class="row"><div class="grow"><b>I'm into this stuff</b><div class="meta">Let the engine use zodiac matches and show your signs.</div></div><button class="toggle" id="astroT"></button></div>
@@ -1616,6 +1632,7 @@ const LIFE = [
   {sec:'now', k:'fitness', q:'How active are you?', type:'one', opts:['Every day','Few times a week','Weekend warrior','Not really']},
   {sec:'now', k:'diet', q:'How you eat', type:'many', opts:['Eat anything','Vegetarian','Vegan','Gluten-free','Halal or kosher']},
   {sec:'now', k:'drinks', q:'Drinking', type:'one', opts:['Yes','Socially','Sober','Rather not say']},
+  {sec:'now', k:'cannabis', q:'Cannabis', type:'one', opts:['Never','Sometimes','Regularly','Rather not say']},
   {sec:'now', k:'budget', q:'Usual budget for a night out', type:'one', opts:['Free stuff','$','$$','$$$']},
   {sec:'now', k:'faith', q:'Faith', type:'one', opts:['Religious','Spiritual','Not religious','Rather not say']},
   {sec:'now', k:'politics', q:'Talking politics', type:'one', opts:['Love it','Keep it light','Avoid it']},
@@ -1846,7 +1863,7 @@ const ES = {
   '🔥 Bright zones are busy right now: tap one':'🔥 Las zonas brillantes están animadas: toca una', 'From Side Quest stories':'De historias de Side Quest', 'Photos: Google':'Fotos: Google',
   // V3: find a spot, shared around town
   'Scout':'Scout', 'Scout is on':'Scout activado', 'Off hides the compass button and stops tips and questions.':'Apagado oculta la brújula y deja de dar consejos y preguntas.',
-  'Personality':'Personalidad', 'Match me':'Según mi tipo', 'Easygoing buddy':'Amigo relajado', 'Hype crew':'Pura energía', 'Chill local':'Local tranquilo', 'Planner':'Organizador', 'Storyteller':'Cuentacuentos',
+  'Personality':'Personalidad', 'Lifestyle':'Estilo de vida', 'Your lifestyle':'Tu estilo de vida', 'Habits':'Hábitos', 'Only you':'Solo tú', 'Match me':'Según mi tipo', 'Easygoing buddy':'Amigo relajado', 'Hype crew':'Pura energía', 'Chill local':'Local tranquilo', 'Planner':'Organizador', 'Storyteller':'Cuentacuentos',
   'Warm and casual':'Cálido y casual', 'Upbeat and high-energy':'Alegre y con mucha energía', 'Calm, few words':'Tranquilo, pocas palabras', 'Crisp: times and next steps':'Directo: horarios y siguiente paso', 'Curious, shares stories':'Curioso, cuenta historias',
   'Take the personality quiz (or let Scout ask you) and it matches you.':'Haz el test de personalidad (o deja que Scout te pregunte) y se adapta a ti.',
   'Set up my profile with Scout':'Configurar mi perfil con Scout', 'Set up with Scout':'Configurar con Scout', 'What Scout remembers about you':'Lo que Scout recuerda de ti',
@@ -5399,6 +5416,7 @@ function showMeSec(sec){
   document.querySelectorAll('[data-mepane]').forEach(p=>p.hidden=p.dataset.mepane!==sec);
   if(sec==='profile') renderFavs();
   if(sec==='settings') loadContact();
+  if(sec==='personality') loadLifestyle();
   if(!$('#v-me').hidden&&!was) $('#v-me').scrollTop=0;
 }
 function youHub(){   // back to You's own page (the list)
@@ -5420,7 +5438,7 @@ function renderMe(){
   renderChartCard();
   document.querySelectorAll('#locSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.me.loc));
   document.querySelectorAll('#delaySeg button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.me.delay));
-  renderQuiz(); renderLife(); renderPic(); renderProf(); renderData(); renderQuick();
+  renderQuiz(); renderLifestyle(); renderLife(); renderPic(); renderProf(); renderData(); renderQuick();
   const guest=!AUTHED&&location.protocol.startsWith('http');
   $('#signOut').textContent=guest?'Create account / Sign in':'Sign out'; $('#delAcct').hidden=guest;
   const bl=SV.me?.blocks||[];
@@ -5565,6 +5583,129 @@ function renderQuiz(){
     <div class="bar" style="margin:6px 0 4px"><b style="width:${n/QUIZ.length*100}%"></b></div>
     <div class="quiz">${QUIZ.map((q,i)=>`<q>${i+1}. ${q[0]}</q><div class="likert">${[1,2,3,4,5].map(v=>`<button data-q="${i}" data-a="${v}" class="${S.me.ans[i]===v?'on':''}">${['Nope','','Meh','','Yes!'][v-1]||v}</button>`).join('')}</div>`).join('')}</div>
     <button class="btn primary" id="finishQuiz" style="margin-top:14px;width:100%;${done?'':'opacity:.5'}" ${done?'':'disabled'}>${done?'See my type':`Answer all ${QUIZ.length} (${n} done)`}</button>`;
+}
+
+/* ---------- Lifestyle: a second score beside Personality (its own chart). How active, outdoorsy, sporty, night-owl,
+   indoorsy, foodie, arty and exploring you are, plus habits (drinking, cannabis, diet). It starts from your own answers
+   (About you) and moves with what you do here (/api/lifestyle: check-ins, going, saves, ratings; older things fade, so
+   the chart changes as you do). Only you see it. Cannabis and diet only ever come from your answers. ---------- */
+const LS_TRAITS = [   // key, emoji, label, colour (the radar goes round in this order)
+  ['active','🏃','Active','#30d158'], ['outdoors','🌲','Outdoors','#64d2ff'], ['fan','🏟️','Sports fan','#0a84ff'],
+  ['indoor','🎲','Indoors & games','#5e5ce6'], ['night','🌙','Night owl','#bf5af2'], ['culture','🎭','Arts & culture','#ff375f'],
+  ['foodie','🍜','Foodie','#ff9f0a'], ['explorer','🧭','Explorer','#ffd60a'],
+];
+const LS_QUICK = ['fitness','outdoorsy','schedule','drinks','cannabis','diet'];   // the answers that set your starting point
+const LS = {d:null, at:0, p:null};
+const lsArr = k => [].concat(S.me.p?.[k]||[]);
+const lsN = (k, opts) => lsArr(k).filter(x=>opts.includes(x)).length;
+const lsI = a => a.filter(x=>(S.me.i||[]).includes(x)).length;
+// What you said, 0-100 per trait (null = nothing said that bears on it)
+function lsSelf(){
+  const p=S.me.p||{}, cap=(v,m)=>Math.min(m,v);
+  const mk=(base,bonus)=>base!=null ? Math.max(0,Math.min(100,base+bonus)) : bonus ? Math.min(100,30+bonus) : null;
+  const play=lsArr('sportsPlay').filter(x=>!['Bowling','Pool & darts'].includes(x)).length;
+  const follow=lsArr('sportsFollow').filter(x=>x!=='Not into sports').length, outs=lsArr('outdoorsy').filter(x=>x!=='Not outdoorsy').length;
+  return {
+    active: mk({'Every day':90,'Few times a week':72,'Weekend warrior':50,'Not really':12}[p.fitness],
+      cap(play*8,30)+lsI(['running','climbing','swimming','pickleball','basketball','soccer','hockey','pickup games'])*5
+      +(lsArr('kidWas').includes('Sporty one')?5:0)+(lsN('goals',['Workout buddies','Teammates'])?8:0)),
+    outdoors: mk(lsArr('outdoorsy').includes('Not outdoorsy')&&!outs?5:null,
+      cap(outs*12,50)+(lsArr('weekend').includes('Up early, outdoors')?15:0)+lsI(['outdoors','swimming','climbing','dogs'])*6+(lsArr('pets').includes('Dog')?4:0)),
+    fan: mk(lsArr('sportsFollow').includes('Not into sports')&&!follow?5:null,
+      cap(follow*12,50)+lsI(['sports','hockey','soccer','basketball'])*6+(lsArr('nightsOut').includes('Sports bar')?15:0)),
+    indoor: mk(null, cap(lsN('hobbies',['Video games','Board games','Reading','Movies','Anime','Trivia','Podcasts'])*10,45)
+      +lsN('sportsPlay',['Bowling','Pool & darts'])*8+(lsArr('weekend').includes('Couch & games')?15:0)
+      +lsN('nightsOut',['Trivia','Game night at home'])*8+lsI(['games','board games','pool','trivia','rocket league','books'])*5),
+    night: mk({'Night owl':80,'Early bird':15,'Depends on the day':45}[p.schedule],
+      (lsArr('weekend').includes('Out till 2am')?15:0)+lsN('nightsOut',['Dancing','Karaoke'])*6
+      +(lsArr('liveMusic').includes('DJ nights & dancing')?8:0)+(lsArr('hobbies').includes('Dancing')?5:0)+lsI(['dancing'])*5),
+    culture: mk(null, lsN('hobbies',['Art & making','Photography','Theater','Comedy','Movies','Writing'])*8
+      +lsN('nightsOut',['Comedy','Live music'])*6+lsI(['art','film','theater','comedy','books','live shows','concerts','festivals'])*5
+      +cap(lsArr('liveMusic').filter(x=>x!=='Mostly headphones at home').length*3,12)),
+    foodie: mk(null, lsN('hobbies',['Cooking','Baking','Coffee shops'])*10+lsN('nightsOut',['Food trucks','Dinner with friends'])*8
+      +lsI(['food','coffee'])*8+(hasVal(p.food)?8:0)),
+    explorer: mk(null, (lsArr('goals').includes('Explore the city')?25:0)+(p.inAustin==='New here'?12:0)
+      +(lsArr('weekend').includes('Little of everything')?10:0)+(lsArr('hobbies').includes('Thrifting')?5:0)),
+    drink: p.drinks==='Sober'?0 : mk({Yes:75,Socially:50}[p.drinks], p.drinks==='Rather not say'?0:
+      lsN('hobbies',['Craft beer','Wine','Cocktails'])*6+(lsArr('nightsOut').includes('Bars & patios')?10:0)),
+  };
+}
+// Your answers blended with what you've done: the more you do, the more it counts (about half after 20 things, at
+// most 60%). A trait you haven't done anything for drifts down at half that pace, so a few bar nights don't undo "I
+// work out every day".
+function lsScores(act, total){
+  const self=lsSelf(), w=act?Math.min(.6,total/(total+20)):0, out={};
+  [...LS_TRAITS.map(t=>t[0]),'drink'].forEach(k=>{ const s=self[k], a=act?.[k]??0, wk=a>0?w:w/2;
+    out[k] = s==null ? (act&&a?a:null) : Math.round(s*(1-wk)+a*wk); });
+  if(S.me.p?.drinks==='Sober') out.drink=0;
+  return out;
+}
+async function loadLifestyle(force){
+  if(!AUTHED||!location.protocol.startsWith('http')) return;
+  if(!force&&LS.d&&Date.now()-LS.at<60000) return;
+  if(LS.p) return LS.p;
+  LS.p = api('/api/lifestyle').then(j=>{ LS.d=j; LS.at=Date.now(); renderLifestyle(); renderYou(); })
+    .catch(e=>console.warn('lifestyle:',e.message)).finally(()=>{ LS.p=null; });
+  return LS.p;
+}
+function lsNow(){ const d=LS.d; return lsScores(d&&Object.fromEntries(Object.entries(d.traits).map(([k,v])=>[k,v.a])), d?.total||0); }
+function lsTop(n=2){ const sc=lsNow(); return LS_TRAITS.filter(t=>sc[t[0]]!=null&&sc[t[0]]>=45).sort((a,b)=>sc[b[0]]-sc[a[0]]).slice(0,n); }
+function lsRadar(now, then){
+  const R=92, C=130, n=LS_TRAITS.length, pt=(i,v)=>{ const a=(-90+i*360/n)*Math.PI/180, r=R*Math.max(0,v||0)/100; return [C+r*Math.cos(a), C+r*Math.sin(a)]; };
+  const poly=sc=>LS_TRAITS.map((t,i)=>pt(i,sc[t[0]]).map(x=>x.toFixed(1)).join(',')).join(' ');
+  const rings=[25,50,75,100].map(v=>`<polygon class="lsring" points="${LS_TRAITS.map((t,i)=>pt(i,v).join(',')).join(' ')}"/>`).join('');
+  const spokes=LS_TRAITS.map((t,i)=>{ const [x,y]=pt(i,100); return `<line class="lsring" x1="${C}" y1="${C}" x2="${x}" y2="${y}"/>`; }).join('');
+  const labels=LS_TRAITS.map((t,i)=>{ const [x,y]=pt(i,122); return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="17">${t[1]}</text>`; }).join('');
+  const dots=LS_TRAITS.map((t,i)=>{ const [x,y]=pt(i,now[t[0]]); return now[t[0]]?`<circle cx="${x}" cy="${y}" r="3.5" fill="${t[3]}"/>`:''; }).join('');
+  return `<svg class="lsradar" viewBox="0 0 260 260" role="img" aria-label="${esc(T('Lifestyle chart'))}: ${esc(LS_TRAITS.map(t=>`${T(t[2])} ${now[t[0]]??0}`).join(', '))}">
+    <defs><linearGradient id="lsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9f0a"/><stop offset=".35" stop-color="#ff375f"/>
+      <stop offset=".65" stop-color="#bf5af2"/><stop offset="1" stop-color="#0a84ff"/></linearGradient></defs>
+    ${rings}${spokes}${then?`<polygon class="lsthen" points="${poly(then)}"/>`:''}<polygon class="lsnow" points="${poly(now)}"/>${dots}${labels}</svg>`;
+}
+function renderLifestyle(){
+  const el=$('#styleCard'); if(!el) return;
+  const d=LS.d, act=d&&Object.fromEntries(Object.entries(d.traits).map(([k,v])=>[k,v.a]));
+  const now=lsScores(act, d?.total||0);
+  const old=d?.past?.find(x=>x.at<=Date.now()-27*86400000);   // about four weeks ago
+  const then=old&&old.total>0?lsScores(old.a, old.total):null;
+  const said=lsSelf(), anySaid=Object.values(said).some(v=>v!=null), did=(d?.total||0)>0;
+  const quick=LS_QUICK.map(k=>LIFE.find(f=>f.k===k)).filter(f=>f&&!hasVal(S.me.p?.[f.k]));
+  const qHtml=quick.map(f=>`<div class="q"><div class="row"><b class="grow">${esc(T(f.q))}</b>${visBtn(f.k)}</div>
+    <div class="chips">${f.opts.map(o=>`<button class="ichip" data-life="${f.k}" data-opt="${esc(o)}">${esc(T(o))}</button>`).join('')}</div></div>`).join('');
+  const top=lsTop(3);
+  const head=`<div class="row"><div class="grow"><div class="meta">${T('Your lifestyle')}</div>
+      <div class="lstop">${top.length?top.map(t=>`${t[1]} ${esc(T(t[2]))}`).join(' · '):esc(T('Still getting to know you'))}</div></div>
+    <span class="meta" title="${esc(T('Only you see your lifestyle score'))}">🔒 ${T('Only you')}</span></div>`;
+  if(!anySaid&&!did){
+    el.innerHTML=`${head}<p class="meta">${T("A second score next to your type: how active, outdoorsy, sporty, night-owl, indoorsy, foodie, arty and exploring you are, plus habits. It starts from a few answers and changes as you check in, go to things and save places.")}</p>${qHtml}`;
+    return; }
+  const delta=k=>{ if(!then||now[k]==null||then[k]==null) return ''; const x=now[k]-then[k];
+    return Math.abs(x)<3?'':`<span class="lsdelta ${x>0?'up':'down'}">${x>0?'▲':'▼'}${Math.abs(x)}</span>`; };
+  const why=k=>{ const w=d?.traits?.[k]?.why||[]; return w.length?`<div class="lswhy">${esc(w.join(' · '))}</div>`:''; };
+  const rows=LS_TRAITS.map(([k,e,l,c])=>`<div class="lsrow"><span class="lse">${e}</span><div class="grow"><div class="row"><b class="grow">${esc(T(l))}</b>
+      ${delta(k)}<span class="lsn">${now[k]==null?'–':now[k]}</span></div>
+    <div class="bar"><b style="width:${now[k]||0}%;background:${c}"></b></div>${why(k)}</div></div>`).join('');
+  const p=S.me.p||{};
+  const drinkTxt = p.drinks==='Sober'?T('Sober') : p.drinks==='Rather not say'?T('Rather not say') : now.drink==null?'' : null;
+  const habit=(e,l,v,txt,c,k)=>`<div class="lsrow"><span class="lse">${e}</span><div class="grow"><div class="row"><b class="grow">${esc(T(l))}</b>
+      ${txt!=null?`<span class="meta">${esc(txt||T('Not answered'))}</span>`:`${delta(k)}<span class="lsn">${v}</span>`}</div>
+    ${txt==null?`<div class="bar"><b style="width:${v}%;background:${c}"></b></div>`:''}${k?why(k):''}</div></div>`;
+  const can=p.cannabis, canV={Never:0,Sometimes:45,Regularly:85}[can];
+  const diet=lsArr('diet');
+  el.innerHTML = `${head}
+    <div class="lschart">${lsRadar(now, then)}</div>
+    <div class="lskey"><span><i class="lsk now"></i>${T('Now')}</span>${then?`<span><i class="lsk then"></i>${T('4 weeks ago')}</span>`:''}</div>
+    ${rows}
+    <div class="lsh">${T('Habits')}</div>
+    ${habit('🍻','Drinking',now.drink,drinkTxt,'#ff9f0a','drink')}
+    ${habit('🌿','Cannabis',canV,canV==null?(can||''):null,'#30d158')}
+    <div class="lsrow"><span class="lse">🥗</span><div class="grow"><div class="row"><b class="grow">${T('Diet')}</b>
+      <span class="meta">${diet.length?esc(diet.map(x=>T(x)).join(', ')):T('Not answered')}</span></div></div></div>
+    ${qHtml?`<div class="lsh">${T('Set your starting point')}</div>${qHtml}`:''}
+    <p class="meta" style="margin:12px 0 0">${did
+      ? T('Worked out from your answers and what you do here: check-ins, events you go to, saves and ratings. Recent things count most, so it moves as you do.')
+      : T('From your answers so far. Check in, go to things and save places and it will start to move.')}
+      ${T('Cannabis and diet only come from your answers.')} <button class="linkbtn" data-yedit="about">${T('Edit answers')}</button></p>`;
 }
 
 /* ---------- map ---------- */
@@ -6759,6 +6900,7 @@ function renderYou(){
     // your profile first, each its own row (owner, 2026-10-28: easy to reach)
     row('data-yedit="profile"','user','#0a84ff',T('Profile'),nInt?T('{n} interests',{n:nInt}):T('Add interests')),
     row('data-yedit="personality"','spark','#bf5af2',T('Personality'),S.me.t?S.me.t:T('Take the quiz')),
+    row('data-ystyle','spark','#30d158',T('Lifestyle'),lsTop(1)[0]?`${lsTop(1)[0][1]} ${T(lsTop(1)[0][2])}`:T('See your chart')),
     row('data-yedit="about"','edit','#ff9f0a',T('About you'),`${lifeDone}/${LIFE.length}`),
     row('data-yedit="settings"','lock','#30d158',T('Privacy & account')),
     `<div class="ygroup">${T('More')}</div>`,
@@ -6774,7 +6916,7 @@ function renderYou(){
   ].join('');
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-youhub],[data-yshare],[data-yloc],[data-yscout],[data-ytheme],[data-fmgo],#glance,#youAv,#meTitle');
+  const t=e.target.closest('[data-dock],[data-qback],[data-qmic],[data-qclear],[data-excat],[data-exsub],[data-exopen],[data-xgo],[data-sq],[data-sall],[data-ystat],[data-yfriends],[data-yjoin],[data-yedit],[data-ystyle],[data-youhub],[data-yshare],[data-yloc],[data-yscout],[data-ytheme],[data-fmgo],#glance,#youAv,#meTitle');
   if(!t) return; const d=t.dataset;
   if(d.dock){ const k=d.dock;
     if(k==='create'){ $('#createShare').hidden=true; $('#createMain').hidden=false; return $('#createBg').hidden=false; }
@@ -6800,6 +6942,7 @@ document.addEventListener('click',e=>{
   if(d.ystat) return d.ystat==='friends' ? (meetTab='friends', tab('meet')) : openQuests();
   if(d.yfriends!==undefined){ meetTab='friends'; return tab('meet'); }
   if(d.yedit) return showMeSec(d.yedit);
+  if(d.ystyle!==undefined){ showMeSec('personality'); loadLifestyle(); return scrollToEl('#styleCard'); }
   if(d.youhub!==undefined) return youHub();
   if(t.id==='youAv'||t.id==='meTitle'){ if(AUTHED||!location.protocol.startsWith('http')) showMeSec('profile'); return; }   // your picture / name → your profile
   if(d.ytheme!==undefined){ S.theme={auto:'light',light:'dark'}[S.theme||'auto']||'auto'; save(); applyTheme(); return renderYou(); }   // Auto → Light → Dark

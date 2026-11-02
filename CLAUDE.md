@@ -155,6 +155,16 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Lifestyle score (2026-11-02, owner; `lifestyle.rb`)**: a second score beside Personality with its own radar chart
+  (`#styleCard` under the 16 types on the Personality page; You → Lifestyle row `data-ystyle` scrolls there). Traits
+  `LS_TRAITS`: active, outdoors, fan, indoor, night, culture, foodie, explorer; Habits: drinking (blended), cannabis and
+  diet (answers only, never inferred; new About you question `cannabis`). `lsSelf()` turns About you answers + interests
+  into 0-100 per trait; `/api/lifestyle` (signed in, own data only, nothing stored) scores what they did: check-ins
+  (quest log: places by kind, gyms, parks, sights, `late` tag), going / interested / saves (taste list, event category
+  kept there), ratings; half-life 60 days; `past` = the same scores as of 7-84 days ago. `lsScores` blends: activity
+  weight `total/(total+20)` up to 60%, half that for traits with no activity. Dashed outline = 4 weeks ago, ▲/▼ deltas,
+  "why" names. Starting questions (fitness, outdoors, schedule, drinking, cannabis, diet) show until answered. Only
+  the person sees it; not used for matching yet. Tests: `ruby test_lifestyle.rb` (9).
 - **Around town + what clubs are like (2026-11-01, owner; `community.rb`)**: `data/community.json` (57 real groups:
   run clubs, leagues, outdoors, games, dance, social; each with its official page and sources) shows in Social → Groups
   → "Around town" (kind chips, details sheet `openCommunity`, marked as outside groups: no members or chat), in search

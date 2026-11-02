@@ -135,6 +135,11 @@ Keep this file up to date when features change. Only describe things that exist 
   the top. Four pages, also tabs along the top of each: 👤 Profile (what others see + interests),
   🧬 Personality (quiz + astrology), 📝 About you (47 questions), 🔒 Privacy (location precision,
   broadcast delay, your data, blocked people, terms, sign out, delete account).
+- Lifestyle (You → Lifestyle, or the Personality page under the 16 types): a separate score with its own radar
+  chart: Active, Outdoors, Sports fan, Indoors & games, Night owl, Arts & culture, Foodie, Explorer, plus Habits
+  (drinking, cannabis, diet). It starts from their About you answers and moves with what they do here (check-ins,
+  events they go to, saves, ratings; recent counts most), with a dashed outline for four weeks ago and ▲/▼ changes.
+  Only they see it. Cannabis and diet come only from their own answers, never from activity.
 - Interests; a 20-question personality quiz with 16 types; full astrology (birth date, optional
   time and city → Sun, Moon, Rising, Mercury to Saturn, Chinese zodiac, worked out on the phone,
   never uploaded); 47 "about you" questions in 5 sections, starting with 🎵 Music & interests (music you love,
