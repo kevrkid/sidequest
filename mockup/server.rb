@@ -43,6 +43,7 @@ require_relative 'spots'   # "Add location" when posting: every place we know, n
 require_relative 'scout_mind'   # Scout's memory of each person, its personalities, the setup interview, ratings
 require_relative 'community'   # groups to join around town + what nightclubs are like (researched, sourced)
 require_relative 'placefacts'   # what's at a place (pool table, DJ, patio, busy nights…) from people who go
+require_relative 'outnight'     # "I'm out tonight": friends see what you're down for, tap I'm down
 require_relative 'lifestyle'    # Lifestyle score (active, outdoors, indoors, nights out, drinking…) from what you do
 require_relative 'contacts'   # find friends by email / phone (hashed, opt-in)
 require_relative 'v2'   # V2: notifications, quests, saves, event chat, invites, share pages, analytics
@@ -1227,7 +1228,7 @@ def state_for(d, h)
     out[:me] = { h: h, c: d['users'][h]['c'], blocks: d['users'][h]['blocks'] || [], status: d['users'][h]['status'] || 'online', close: close_of(d, h) }
     q = (d['quest'] || {})[h] || {}
     rq = (d['quest'] || {})[h] || {}
-    out[:v2] = { coins: rq['coins'].to_i, day_streak: day_streak(rq), out: friends_out(d, h), invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
+    out[:v2] = { coins: rq['coins'].to_i, day_streak: day_streak(rq), out: friends_out(d, h), outn: out_view(d, h), invite: invite_code(d, h), unread: ((d['notifs'] || {})[h] || []).count { |n| !n['read'] && !hidden.include?(n['from']) },
                  xp: q['xp'].to_i, level: level_of(q['xp']), saves: ((d['saves'] || {})[h] || []).map { |x| "#{x['k']}:#{x['id']}" } }
     # friends' levels and quest badges (friends only; everyone else just sees the app as before)
     out[:badges] = (friends.to_a + [h]).map { |x| qq = (d['quest'] || {})[x]; qq && [x, { lvl: level_of(qq['xp']), done: (qq['done'] || {}).keys }] }.compact.to_h
@@ -1268,6 +1269,7 @@ def delete_user!(d, h)
   (d['rank_votes'] || {}).each_value { |l| l.each_value { |v| v.delete(h) } }   # would count again if someone took the handle
   (d['barfood'] || {}).each_value { |v| v.delete(h) }
   (d['pfacts'] || {}).each_value { |v| v.delete(h) }
+  (d['outn'] || {}).delete(h); (d['outn'] || {}).each_value { |o| (o['down'] || {}).delete(h) }
   (d['rank_suggest'] || []).reject! { |s| s['h'] == h }
   File.delete(File.join(AVATAR_DIR, "#{h}.jpg")) rescue nil
   d['sessions'].delete_if { |_k, s| s['h'] == h }
@@ -2673,7 +2675,7 @@ if ENV['SQ_LAN']
   servers << WEBrick::HTTPServer.new(Port: LAN_PORT, BindAddress: nil, AccessLog: [], Logger: LOG, RequestCallback: HEADERS,
                                      SSLEnable: true, SSLCertificate: cert, SSLPrivateKey: key)
 end
-servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s); mount_gyms(s); mount_contacts(s); mount_placefacts(s); mount_community(s); mount_lifestyle(s) }
+servers.each { |s| mount_routes(s); mount_app(s); mount_v2(s); mount_lens(s); mount_rankings(s); mount_identify(s); mount_menus(s); mount_barfood(s); mount_spots(s); mount_chats(s); mount_groups(s); mount_friendmap(s); mount_stories_plus(s); mount_plans(s); mount_rewards(s); mount_wall(s); mount_scout_mind(s); mount_pulse(s); mount_gyms(s); mount_contacts(s); mount_placefacts(s); mount_community(s); mount_lifestyle(s); mount_outnight(s) }
 v2_background   # stats flush + event reminders, once for all servers
 
 trap('INT') { servers.each(&:shutdown) }

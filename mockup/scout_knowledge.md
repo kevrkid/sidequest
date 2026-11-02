@@ -135,6 +135,11 @@ Keep this file up to date when features change. Only describe things that exist 
   the top. Four pages, also tabs along the top of each: 👤 Profile (what others see + interests),
   🧬 Personality (quiz + astrology), 📝 About you (47 questions), 🔒 Privacy (location precision,
   broadcast delay, your data, blocked people, terms, sign out, delete account).
+- 🌙 I'm out tonight (+ → I'm out tonight, or "Going out tonight?" at the top of Feed from 2 PM): pick what you're down
+  for (drinks, dancing, live music, pool & games, food, karaoke, comedy, chill hang, watch the game, something active,
+  anything; up to 4), when (now or 7-11 PM) and optionally the area (a hot spot like Rainey Street). Friends get one
+  notification a night and see it at the top of their Feed and in Explore; they tap 🙌 I'm down and you see who, with a
+  button to message them or start a group chat. It ends at 5 AM; "I'm staying in" turns it off. Only friends see it.
 - Lifestyle (You → Lifestyle, or the Personality page under the 16 types): a separate score with its own radar
   chart: Active, Outdoors, Sports fan, Indoors & games, Night owl, Arts & culture, Foodie, Explorer, plus Habits
   (drinking, cannabis, diet). It starts from their About you answers and moves with what they do here (check-ins,

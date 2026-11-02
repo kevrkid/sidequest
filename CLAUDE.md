@@ -155,6 +155,15 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **I'm out tonight (2026-11-02, owner: "popular and keep users engaged"; `outnight.rb`)**: `d['outn'][h]` = acts
+  (`OUT_ACTS` keys, ≤4), when (now / 19-23), zone (a `Places::HOTSPOTS` id, never a map spot), until (next 5 AM), told,
+  down {h: ms}. `/api/out` (friends get one `out` notification per 12 h, even after off/on), `/api/out/off` (until = 0,
+  kept so re-posting doesn't ping), `/api/out/down` {h, on} (friends only; notifies `down`, ref `o:<h>`, push → `/?out=1`).
+  `out_view` rides on `/api/state` as `SV.v2.outn` {me (with who's down), friends (count, mine, friends_down)}; blocks
+  hide both ways; delete_user! clears it. Client: `#feedOut` above stories (`outCardsHtml`: friends' nights with 🙌 I'm
+  down, your card with Edit / Message or group chat, a "Going out tonight?" nudge from 2 PM), Explore's 🌙 Friends out
+  tonight row (`renderTonight`), Create → I'm out tonight, sheet in `#actSheet` (`openOut`, `OUTS`). Notification kind
+  `out` is mutable. Tests: `ruby test_outnight.rb` (9).
 - **Lifestyle score (2026-11-02, owner; `lifestyle.rb`)**: a second score beside Personality with its own radar chart
   (`#styleCard` under the 16 types on the Personality page; You → Lifestyle row `data-ystyle` scrolls there). Traits
   `LS_TRAITS`: active, outdoors, fan, indoor, night, culture, foodie, explorer; Habits: drinking (blended), cannabis and

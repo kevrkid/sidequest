@@ -355,6 +355,11 @@
   .type-big{font-size:38px;font-weight:800;letter-spacing:4px;background:linear-gradient(90deg,var(--accent2),var(--party));-webkit-background-clip:text;background-clip:text;color:transparent}
   .axis{display:grid;grid-template-columns:70px 1fr 70px;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin:5px 0}
   .axis .bar>b{background:var(--accent2)}
+  /* I'm out tonight (Feed top, Explore) */
+  .outwrap{margin-bottom:4px} .outcard{display:block;width:100%;text-align:left} .outcard.cta{display:flex;align-items:center;gap:12px;font:inherit;color:inherit;cursor:pointer}
+  .outcard.on{border-color:#bf5af2aa;background:linear-gradient(135deg,#bf5af222,#0a84ff14)} .outmoon{font-size:26px;margin-right:10px}
+  .outcard.cta .outmoon{margin:0} .outdown{margin-top:8px;font-size:13.5px} .outdown .linkbtn{font-weight:700}
+  .outf{padding:8px 0} .outf+.outf{border-top:1px solid var(--line)} .outf .row{align-items:flex-start;gap:10px}
   /* Lifestyle (Personality page): radar chart + trait bars */
   .lstop{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-top:2px}
   .lschart{display:flex;justify-content:center;margin:6px 0 0} .lsradar{width:100%;max-width:280px;height:auto;overflow:visible}
@@ -1265,6 +1270,7 @@
       <div class="chiprow" id="feedCats"></div>
       <div class="seg" id="feedWhen" style="margin-bottom:8px"></div>
       <p class="meta" id="feedMeta" style="margin:0 0 10px"></p>
+      <div id="feedOut"></div>
       <div id="feedStories"></div>
       <div id="fyStrip"></div>
       <div id="feedList"></div>
@@ -1394,6 +1400,7 @@
 
   <div class="sheet-bg" id="createBg" hidden><div class="sheet">
     <div class="xhead"><b>✨ <span data-t="Create">Create</span></b><button class="xbtn" data-cclose aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <button class="actrow cinrow" data-outopen><span class="ai">🌙</span><span class="grow"><b data-t="I'm out tonight">I'm out tonight</b><small data-t="Tell friends what you're down for">Tell friends what you're down for</small></span></button>
     <button class="actrow cinrow" data-cinnear><span class="ai">📍</span><span class="grow"><b data-t="Check in where you are">Check in where you are</b><small data-t="Places within about 150 m of you">Places within about 150 m of you</small></span></button>
     <div class="create-grid" id="createMain">
       <button data-create="share" style="background:linear-gradient(135deg,#ff3b5c,#ffb800)"><i>📸</i><b data-t="Post">Post</b><span data-t="A photo, video or thought: for 24 hours or on your profile">A photo, video or thought: for 24 hours or on your profile</span></button>
@@ -2788,6 +2795,7 @@ function renderFeed(){
     : feedFocus ? `<button class="card wcbar gdbar" data-ffocus="">✕<span class="grow">${esc(CATS[feedFocus]?.e||'')} ${esc(T(CATS[feedFocus]?.l||''))} · ${T('show everything')}</span></button>` : '';
   const compose = WL.compose ? wallComposerHtml()
     : !feedQ&&!feedFocus ? `<button class="card wcbar" data-wcopen>${AUTHED?av(S.me.h,'sm'):'<span class="av emo sm">👤</span>'}<span class="grow">${T('What’s happening around town?')}</span><span>📷</span></button>` : '';
+  $('#feedOut').innerHTML = !feedQ&&!feedFocus ? outCardsHtml() : '';   // friends out tonight first: the reason to open the app
   $('#feedList').innerHTML = guideBar + compose + (plans.length&&!feedQ?`<div class="card" style="border-color:var(--good)"><div class="kicker">📅 Your plans</div>
       ${plans.slice(0,4).map(e=>`<div class="row" style="margin:6px 0"><span>${evE(e)}</span><span class="grow"><b>${esc(e.title)}</b> <span class="meta">${fmtWhen(e.ts,e.tba)}</span></span>
       ${e.lat?`<button class="btn sm" data-map="${e.id}">Map</button>`:''}</div>`).join('')}</div>`:'')
@@ -5707,6 +5715,76 @@ function renderLifestyle(){
       : T('From your answers so far. Check in, go to things and save places and it will start to move.')}
       ${T('Cannabis and diet only come from your answers.')} <button class="linkbtn" data-yedit="about">${T('Edit answers')}</button></p>`;
 }
+
+/* ---------- "I'm out tonight" (outnight.rb): tell friends you're going out and what you're down for; they tap
+   "I'm down", you hear about it and can start a chat. Ends at 5 AM. Only friends see it; picks only, no free text.
+   SV.v2.outn = {me, friends:[{h, acts, when, zname, downs, mine, friends_down}]}. ---------- */
+const OUT_ACTS = [['drinks','🍻','Drinks'],['dancing','💃','Dancing'],['music','🎸','Live music'],['pool','🎱','Pool & games'],['food','🌮','Food'],
+  ['karaoke','🎤','Karaoke'],['comedy','😂','Comedy'],['chill','🛋️','Chill hang'],['sports','🏟️','Watch the game'],['active','🏃','Something active'],['anything','✨','Anything']];
+const OUT_WHEN = [['now','Now'],['19','7 PM'],['20','8 PM'],['21','9 PM'],['22','10 PM'],['23','11 PM']];
+const OUTS = {acts:[], when:'now', zone:''};
+const outN = () => (AUTHED&&SV.v2?.outn)||{me:null,friends:[]};
+const outActs = a => (a||[]).map(k=>{ const x=OUT_ACTS.find(o=>o[0]===k); return x?`${x[1]} ${T(x[2])}`:''; }).filter(Boolean).join(' · ');
+const outWhen = w => w==='now'?T('out now'):T('from {t}',{t:T((OUT_WHEN.find(x=>x[0]===w)||[])[1]||'')});
+async function openOut(){
+  $('#createBg').hidden=true;
+  if(needAccount("say you're out tonight")) return;
+  const me=outN().me; if(me){ OUTS.acts=[...me.acts]; OUTS.when=me.when; OUTS.zone=me.zone||''; }
+  else if(!OUTS.acts.length){ const h=new Date().getHours(); OUTS.when=h>=19||h<5?'now':'21'; }
+  if(!PL.hot) loadHotspots().then(()=>{ if(!$('#actBg').hidden&&$('#actSheet [data-outsave]')) renderOutSheet(); });
+  renderOutSheet(); $('#actBg').hidden=false;
+}
+function renderOutSheet(){
+  const me=outN().me, nFr=(SV.friends?.list||[]).length, chip=(attr,on,l)=>`<button class="ichip ${on?'on':''}" ${attr}>${l}</button>`;
+  $('#actSheet').innerHTML=`<div class="row"><b class="grow" style="font-size:19px">🌙 ${T("I'm out tonight")}</b><button class="xbtn" data-actclose aria-label="${T('Close')}">${svgI('x')}</button></div>
+    <p class="meta" style="margin:4px 0 12px">${T("Your friends get one heads-up and can tap I'm down. It ends at 5 AM. Only friends see it.")}</p>
+    <b>${T("Down for")}</b> <span class="meta">${T('up to 4')}</span>
+    <div class="chips" style="margin:6px 0 12px">${OUT_ACTS.map(([k,e,l])=>chip(`data-outact="${k}"`,OUTS.acts.includes(k),`${e} ${esc(T(l))}`)).join('')}</div>
+    <b>${T('When')}</b><div class="chips" style="margin:6px 0 12px">${OUT_WHEN.map(([k,l])=>chip(`data-outwhen="${k}"`,OUTS.when===k,esc(T(l)))).join('')}</div>
+    <b>${T('Where')}</b> <span class="meta">${T('optional, just the area')}</span>
+    <div class="chips" style="margin:6px 0 14px">${chip('data-outzone=""',!OUTS.zone,T('Anywhere'))}${(PL.hot||[]).map(z=>chip(`data-outzone="${esc(z.id)}"`,OUTS.zone===z.id,esc(z.name))).join('')}</div>
+    ${nFr?'':`<p class="meta">👥 ${T("You don't have friends on Side Quest yet, so nobody will see it.")} <button class="linkbtn" data-menu="invite">${T('Invite friends')}</button></p>`}
+    <button class="btn primary" data-outsave style="width:100%;padding:13px" ${OUTS.acts.length?'':'disabled'}>${me?T('Update'):T('Tell my friends')}</button>
+    ${me?`<button class="btn" data-outoff style="width:100%;margin-top:8px">${T("I'm staying in")}</button>`:''}`;
+}
+function outCardsHtml(){
+  if(!AUTHED) return '';
+  const {me, friends}=outN(), all=SV.users||[];
+  const mine = me ? `<div class="card outcard on"><div class="row"><span class="outmoon">🌙</span><div class="grow"><b>${T("You're out tonight")}</b>
+        <div class="meta">${esc(outActs(me.acts))} · ${esc(outWhen(me.when))}${me.zname?` · 📍 ${esc(me.zname)}`:''}</div></div>
+        <button class="btn sm" data-outopen>${T('Edit')}</button></div>
+      ${me.down.length?`<div class="outdown">🙌 ${T('{n} down',{n:me.down.length})}: ${me.down.slice(0,6).map(h=>`<button class="linkbtn" data-outchat="${esc(h)}">@${esc(h)}</button>`).join(' ')}</div>
+        <button class="btn sm primary" data-outgroup style="margin-top:8px">💬 ${me.down.length>1?T('Group chat with them'):T('Message @{h}',{h:esc(me.down[0])})}</button>`
+        :`<div class="meta" style="margin-top:6px">${T('Nobody down yet. Your friends were told.')}</div>`}</div>`
+    : !(new Date().getHours()>=14||new Date().getHours()<4) ? ''   // the "Going out tonight?" nudge from 2 PM
+    : `<button class="card outcard cta" data-outopen><span class="outmoon">🌙</span><span class="grow"><b>${T('Going out tonight?')}</b>
+        <span class="meta" style="display:block">${T("Tell your friends what you're down for")}</span></span>${svgI('chev')}</button>`;
+  const fr = friends.map(o=>`<div class="outf"><div class="row">${av(o.h,'sm')}<div class="grow" style="min-width:0"><b>@${esc(o.h)}</b> <span class="meta">${esc(outWhen(o.when))}${o.zname?` · 📍 ${esc(o.zname)}`:''}</span>
+        <div class="meta">${esc(outActs(o.acts))}</div>${o.downs?`<div class="meta">🙌 ${T('{n} down',{n:o.downs})}${o.friends_down.length?` · ${o.friends_down.slice(0,3).map(x=>'@'+esc(x)).join(' ')}`:''}</div>`:''}</div>
+      <button class="btn sm ${o.mine?'':'primary'}" data-outdown="${esc(o.h)}">${o.mine?'✓ '+T("You're down"):'🙌 '+T("I'm down")}</button></div></div>`).join('');
+  return `<div class="outwrap">${fr?`<div class="kicker">🌙 ${T('Friends out tonight')}</div><div class="card">${fr}</div>`:''}${mine}</div>`;
+}
+function outRerender(j){ if(j&&SV.v2) SV.v2.outn=j; if(curTab==='feed') renderFeed(); else if(curTab==='home') renderHome(); renderBell?.(); }
+document.addEventListener('click', async e=>{
+  const b=e.target.closest('[data-outact],[data-outwhen],[data-outzone],[data-outsave],[data-outoff],[data-outopen],[data-outdown],[data-outchat],[data-outgroup]'); if(!b) return;
+  const d=b.dataset;
+  if(d.outopen!==undefined) return openOut();
+  if(d.outact){ const k=d.outact; OUTS.acts = OUTS.acts.includes(k)?OUTS.acts.filter(x=>x!==k):k==='anything'?['anything']:[...OUTS.acts.filter(x=>x!=='anything'),k].slice(-4); return renderOutSheet(); }
+  if(d.outwhen){ OUTS.when=d.outwhen; return renderOutSheet(); }
+  if(d.outzone!==undefined){ OUTS.zone=d.outzone; return renderOutSheet(); }
+  try{
+    if(d.outsave!==undefined){ b.disabled=true; const was=!!outN().me; const j=await api('/api/out',{acts:OUTS.acts,when:OUTS.when,zone:OUTS.zone});
+      $('#actBg').hidden=true; outRerender(j); toast(was?`🌙 ${T('Updated.')}`:`🌙 ${T("Your friends know you're out tonight.")}`,'green'); }
+    else if(d.outoff!==undefined){ const j=await api('/api/out/off'); $('#actBg').hidden=true; OUTS.acts=[]; outRerender(j); toast(T('Okay, staying in.')); }
+    else if(d.outdown){ const h=d.outdown, on=!outN().friends.find(o=>o.h===h)?.mine; b.disabled=true;
+      const j=await api('/api/out/down',{h,on}); outRerender(j);
+      if(on) toast(`🙌 ${T("@{h} knows you're down.",{h:esc(h)})}`,'green',[{l:'💬 '+T('Message'),cls:'primary',f:()=>{ meetTab='msgs'; tab('meet'); openThread(h); }}],6000); }
+    else if(d.outchat){ meetTab='msgs'; tab('meet'); openThread(d.outchat); }
+    else if(d.outgroup!==undefined){ const dn=outN().me?.down||[];
+      if(dn.length===1){ meetTab='msgs'; tab('meet'); return openThread(dn[0]); }
+      b.disabled=true; const j=await api('/api/chat/new',{name:T('Out tonight 🌙'),members:dn.slice(0,30)}); await loadThreads(); meetTab='msgs'; tab('meet'); openThread(j.with); }
+  }catch(err){ b.disabled=false; toast('⚠️ '+esc(err.message),'red'); }
+});
 
 /* ---------- map ---------- */
 let map, layer, mapFilter='all', markers={};
@@ -8924,8 +9002,8 @@ const v2head = (title, close) => `<div class="xhead"><b>${title}</b><button clas
 
 /* ---- 🔔 notifications ---- */
 const NOTIF_KINDS = [['freq','Waves and friend requests'],['friend','New friends'],['going','Friends going to your events'],['invite','Invites'],['dm','Messages'],['group','Posts, comments and requests in your groups'],['chat','Chat replies'],
-  ['down','People down for your hangouts'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)']];
-const NOTIF_E = {group:'🏘️', dm:'💬', freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆', mod:'🛡️'};
+  ['down','People down for your hangouts'],['join','Group joins'],['tag','Story tags'],['like','Story likes'],['remind','Event reminders'],['quest','Quests and weekly recap'],['joined','Friends who join from your invite'],['tonight','Tonight picks for you (5 PM)'],['out','Friends going out tonight']];
+const NOTIF_E = {group:'🏘️', dm:'💬', freq:'👋', friend:'🤝', down:'🙌', going:'🎟️', chat:'💬', join:'👥', tag:'📸', like:'❤️', quest:'🏆', joined:'💌', remind:'⏰', invite:'🎟️', tonight:'🌆', mod:'🛡️', out:'🌙'};
 function renderBell(){
   const b=$('#bellBtn'); if(!b) return; b.hidden=!AUTHED||!SV.on;
   const n=SV.v2?.unread||0; $('#bellN').textContent=n?(n>9?'9+':String(n)):''; b.classList.toggle('has',!!n);
@@ -8963,6 +9041,7 @@ function notifGo(n){
   if((n.t==='chat'||n.t==='group')&&/^g:/.test(n.ref||'')) return openGroup(n.ref.slice(2), n.t==='chat'?'chat':null);
   if(['going','chat','remind','invite'].includes(n.t)&&n.ref) return openEvent(n.ref);
   if(n.t==='quest') return openQuests();
+  if(/^o:/.test(n.ref||'')){ tab('feed'); return renderFeed(); }   // out tonight: a friend's, or who's down for yours
   if(n.t==='down'&&n.ref) return focusOnMap(n.ref);
   if(n.t==='join'&&n.ref) return openGroup?.(n.ref);
   if(n.t==='freq'){ meetTab='friends'; tab('meet'); return renderMeet(); }
@@ -9223,6 +9302,7 @@ function handleDeepLink(){
   if(q.get('quests')) setTimeout(()=>openQuests(),600);
   if(q.get('inbox')) setTimeout(()=>openNotifs(),600);
   if(q.get('tonight')) setTimeout(()=>quick('tonight'),600);
+  if(q.get('out')) setTimeout(()=>{ tab('feed'); renderFeed(); },600);
   if(q.has('rank')) setTimeout(()=>openRankings(q.get('rank')||undefined),600);
   if(q.get('dm')) setTimeout(()=>{ meetTab='msgs'; tab('meet'); openThread(q.get('dm').slice(0,40)); },700);
   if(ref&&/^[a-z0-9_]{3,20}$/.test(ref)&&!AUTHED){ S.ref=ref; S.refK=(q.get('rk')||'').slice(0,12); save(); setTimeout(()=>toast(`💌 ${T('@{h} invited you! Make a free account and you two will be friends.',{h:esc(ref)})}`,'green',[{l:T('Join'),cls:'primary',f:()=>needAccount('join @'+ref)}],8000),900); }
@@ -9239,10 +9319,13 @@ function renderTonight(){
       return {e, s:(aff[e.cat]||0)*2+go.filter(isFriend).length*3+Math.min(go.length,10)*.3+(e.geo_precise?1:0)-km(ME_POS,[e.lat,e.lng])/4}; })
     .sort((a,b)=>b.s-a.s).slice(0,12).map(x=>x.e);
   const out=(AUTHED&&SV.v2?.out)||[];
-  el.hidden=!evs.length&&!out.length;
+  const outn=outN().friends;
+  el.hidden=!evs.length&&!out.length&&!outn.length;
+  const outnHtml=outn.length?`<div class="tnhead"><b>🌙 ${T('Friends out tonight')}</b><button class="linkbtn" data-dock="feed">${T('See all')} ›</button></div><div class="tnrail" style="margin-bottom:8px">${outn.map(o=>`<button class="tncard out" data-dock="feed">${av(o.h,'sm')}
+      <span class="tnt"><b>@${esc(o.h)}</b><span class="meta">${esc(outActs(o.acts.slice(0,2)))} · ${esc(outWhen(o.when))}</span></span></button>`).join('')}</div>`:'';
   const outHtml=out.length?`<div class="tnrail" style="margin-bottom:8px">${out.map(o=>`<button class="tncard out" data-outgo="${o.k}|${esc(o.id)}">${av(o.h,'sm')}
       <span class="tnt"><b>@${esc(o.h)}</b><span class="meta">📍 ${esc(o.name)} · ${agoT(o.at)}</span></span></button>`).join('')}</div>`:'';
-  el.innerHTML=(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>🎫 ${T('Tonight near you')}</b><button class="linkbtn" data-excat="events">${T('See all')} ›</button></div>
+  el.innerHTML=outnHtml+(out.length?`<div class="tnhead"><b>👥 ${T('Friends out now')}</b></div>${outHtml}`:'')+(evs.length?`<div class="tnhead"><b>🎫 ${T('Tonight near you')}</b><button class="linkbtn" data-excat="events">${T('See all')} ›</button></div>
     <div class="tnrail">${evs.map(e=>{ const fr=goingList(e).filter(isFriend).length;
       return `<button class="tncard" data-evopen="${e.id}"><span class="cat thumb"${/^https:\/\//.test(e.image||'')?` style="background-image:url('${esc(evImg(e.image))}')"`:e.venue?thumbAttr({name:e.venue,lat:e.lat,lng:e.lng,loose:!e.geo_precise}):''}>${evE(e)}</span>
         <span class="tnt"><b>${esc(e.title)}</b><span class="meta">${new Date(e.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}${e.venue?' · '+esc(e.venue):''}${fr?` · 👥 ${fr}`:''}</span></span></button>`; }).join('')}</div>`:'');

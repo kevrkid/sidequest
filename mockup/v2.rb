@@ -9,7 +9,7 @@ require_relative 'webpush'
 # ---------------------------------------------------------------------------------------------
 # Notifications: per person, newest last, capped. Never across a block; never about yourself.
 NOTIF_MAX = 120
-NOTIF_TYPES = %w[freq friend down going chat dm group join tag like quest joined remind invite tonight mod].freeze
+NOTIF_TYPES = %w[freq friend down going chat dm group join tag like quest joined remind invite tonight mod out].freeze
 
 def notify!(d, to, type, from: nil, ref: nil, text: nil)
   return unless to && d['users'][to] && to != from && NOTIF_TYPES.include?(type)
@@ -49,6 +49,7 @@ def vapid_public() WebPush.b64u(WebPush.pub_raw(vapid_key)) end
 def push_url(type, ref)
   r = ref.to_s
   return '/?tonight=1' if type == 'tonight'
+  return '/?out=1' if r.start_with?('o:')   # out tonight: a friend's, or who's down for yours
   return "/?dm=#{URI.encode_www_form_component(r)}" if type == 'dm' || r.start_with?('c:')
   return "/?ev=#{r.sub('e:', '')}" if r.start_with?('e:')
   return "/?g=#{r.sub('g:', '')}" if r.start_with?('g:')
@@ -331,7 +332,7 @@ end
 # Analytics: first-party and small. Whitelisted event names, daily totals, and which days each account was active
 # (for daily/weekly actives and 7-day retention). No content, no locations, no device ids. Kept in memory and
 # written to data/stats.json once a minute so it never slows the app down.
-TRACK_EVENTS = %w[open home_next home_tonight event_open event_share event_save event_invite event_chat notif_open
+TRACK_EVENTS = %w[open out_set out_down home_next home_tonight event_open event_share event_save event_invite event_chat notif_open
                   quests_open checkin quest_done saved_open invite_copy share_open sight_open sight_tell plan_save
                   scout_ask scout_cancel mic_cancel map_open search feed_open signup_ref push_on search_open chip_gyms
                   chip_food chip_events chip_night chip_outdoors chip_sights chip_friends chip_zones chip_find find media_open
