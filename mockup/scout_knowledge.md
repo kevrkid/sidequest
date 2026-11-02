@@ -145,6 +145,7 @@ Keep this file up to date when features change. Only describe things that exist 
   (drinking, cannabis, diet). It starts from their About you answers and moves with what they do here (check-ins,
   events they go to, saves, ratings; recent counts most), with a dashed outline for four weeks ago and ▲/▼ changes.
   Only they see it. Cannabis and diet come only from their own answers, never from activity.
+  The card has a Lifestyle quiz (17 quick statements, Nope → Yes!) that sets the starting point with their answers.
 - Interests; a 20-question personality quiz with 16 types; full astrology (birth date, optional
   time and city → Sun, Moon, Rising, Mercury to Saturn, Chinese zodiac, worked out on the phone,
   never uploaded); 47 "about you" questions in 5 sections, starting with 🎵 Music & interests (music you love,

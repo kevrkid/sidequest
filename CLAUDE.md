@@ -172,7 +172,10 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   (quest log: places by kind, gyms, parks, sights, `late` tag), going / interested / saves (taste list, event category
   kept there), ratings; half-life 60 days; `past` = the same scores as of 7-84 days ago. `lsScores` blends: activity
   weight `total/(total+20)` up to 60%, half that for traits with no activity. Dashed outline = 4 weeks ago, ▲/▼ deltas,
-  "why" names. Starting questions (fitness, outdoors, schedule, drinking, cannabis, diet) show until answered. Only
+  "why" names. Starting questions (fitness, outdoors, schedule, drinking, cannabis, diet) show until answered. **Lifestyle quiz** (`LSQ`, 17 statements: 2 per
+  trait + 1 drinking, Nope → Yes!, `dir -1` = reversed; answers on the phone in `S.me.lsq`; `lsQuiz()` 0-100 per trait;
+  `lsSelf()` = quiz 60% + About you answers (`lsAnswers()`) 40%, or whichever exists; "Sober" / "Rather not say" win
+  over the drinking statement). Only
   the person sees it; not used for matching yet. Tests: `ruby test_lifestyle.rb` (9).
 - **Around town + what clubs are like (2026-11-01, owner; `community.rb`)**: `data/community.json` (57 real groups:
   run clubs, leagues, outdoors, games, dance, social; each with its official page and sources) shows in Social → Groups

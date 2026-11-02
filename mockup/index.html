@@ -372,6 +372,8 @@
   .lsrow .bar{margin-top:6px} .lsn{font-weight:800;font-variant-numeric:tabular-nums;min-width:26px;text-align:right}
   .lswhy{font-size:11.5px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lsdelta{font-size:11px;font-weight:700;margin-right:8px} .lsdelta.up{color:var(--good)} .lsdelta.down{color:#ff9a8a}
+  .lsquizbar{display:flex;align-items:center;gap:10px;margin:12px 0 4px;padding:10px 12px;border-radius:14px;background:var(--panel2)}
+  .lsquiz{margin:12px 0 4px}
   .lsh{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
   .toggle{position:relative;width:44px;height:26px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);flex:none}
   .toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.2s}
@@ -5603,12 +5605,36 @@ const LS_TRAITS = [   // key, emoji, label, colour (the radar goes round in this
   ['foodie','🍜','Foodie','#ff9f0a'], ['explorer','🧭','Explorer','#ffd60a'],
 ];
 const LS_QUICK = ['fitness','outdoorsy','schedule','drinks','cannabis','diet'];   // the answers that set your starting point
+// The lifestyle quiz: two statements per trait (one for drinking), Nope → Yes! like the personality quiz; dir -1 = agreeing
+// means less of it. Answers stay on the phone in S.me.lsq {i: 1-5}.
+const LSQ = [
+  ['I work out or play a sport most weeks.','active',1], ["I'd rather join a pickup game than watch one.",'active',1],
+  ['A free Saturday means getting outside: a trail, the lake, a swimming hole.','outdoors',1], ["I'd pick a hike over a movie.",'outdoors',1],
+  ['I never miss a big game, at home or at a bar.','fan',1], ['I plan my week around my teams.','fan',1],
+  ['Board games, video games or trivia are my kind of fun.','indoor',1], ['A cozy night in sounds better than a night out.','indoor',1],
+  ['My nights usually start after 10 PM.','night',1], ["I'm usually in bed before midnight.",'night',-1],
+  ['I go to shows, museums, comedy or theater whenever I can.','culture',1], ['I follow local artists, bands or galleries.','culture',1],
+  ["I'll drive across town for a great meal.",'foodie',1], ['I keep a list of restaurants to try.','foodie',1],
+  ["I'd rather try somewhere new than go back to my usual spot.",'explorer',1], ["I've been to most neighborhoods in town.",'explorer',1],
+  ['Drinks are part of most of my nights out.','drink',1],
+];
+// 0-100 per trait from the quiz (only traits with an answer)
+function lsQuiz(){ const sum={}, n={}, a=S.me.lsq||{};
+  LSQ.forEach(([,k,dir],i)=>{ const v=a[i]; if(!v) return; const x=(v-1)/4*100; sum[k]=(sum[k]||0)+(dir>0?x:100-x); n[k]=(n[k]||0)+1; });
+  return Object.fromEntries(Object.keys(sum).map(k=>[k,Math.round(sum[k]/n[k])])); }
 const LS = {d:null, at:0, p:null};
 const lsArr = k => [].concat(S.me.p?.[k]||[]);
 const lsN = (k, opts) => lsArr(k).filter(x=>opts.includes(x)).length;
 const lsI = a => a.filter(x=>(S.me.i||[]).includes(x)).length;
 // What you said, 0-100 per trait (null = nothing said that bears on it)
+// What you said: the quiz (60%) with your About you answers (40%), or whichever you've answered
 function lsSelf(){
+  const ans=lsAnswers(), q=lsQuiz();
+  Object.entries(q).forEach(([k,v])=>{ if(k==='drink'&&(S.me.p?.drinks==='Sober'||S.me.p?.drinks==='Rather not say')) return;
+    ans[k] = ans[k]==null ? v : Math.round(v*.6+ans[k]*.4); });
+  return ans;
+}
+function lsAnswers(){
   const p=S.me.p||{}, cap=(v,m)=>Math.min(m,v);
   const mk=(base,bonus)=>base!=null ? Math.max(0,Math.min(100,base+bonus)) : bonus ? Math.min(100,30+bonus) : null;
   const play=lsArr('sportsPlay').filter(x=>!['Bowling','Pool & darts'].includes(x)).length;
@@ -5656,6 +5682,22 @@ async function loadLifestyle(force){
     .catch(e=>console.warn('lifestyle:',e.message)).finally(()=>{ LS.p=null; });
   return LS.p;
 }
+function lsQuizHtml(){
+  const a=S.me.lsq||{}, n=LSQ.filter((_,i)=>a[i]).length;
+  if(!LS.quiz) return `<div class="lsquizbar"><div class="grow"><b>${T('Lifestyle quiz')}</b><div class="meta">${n===LSQ.length?T('All {n} answered',{n}):n?T('{n} of {m} answered',{n,m:LSQ.length}):T('{m} quick statements, about a minute',{m:LSQ.length})}</div></div>
+    <button class="btn sm ${n?'':'blue'}" data-lsqopen>${n===LSQ.length?T('Change'):n?T('Keep going'):T('Take it')}</button></div>`;
+  return `<div class="lsquiz"><div class="row"><b class="grow">${T('{n}/{m} answered',{n,m:LSQ.length})}</b><span class="meta">${T('Nope')} ← → ${T('Yes!')}</span></div>
+    <div class="bar" style="margin:6px 0 4px"><b style="width:${n/LSQ.length*100}%"></b></div>
+    <div class="quiz">${LSQ.map((q,i)=>`<q>${i+1}. ${esc(T(q[0]))}</q><div class="likert">${[1,2,3,4,5].map(v=>`<button data-lsq="${i}" data-lsa="${v}" class="${a[i]===v?'on':''}">${T(['Nope','','Meh','','Yes!'][v-1])||v}</button>`).join('')}</div>`).join('')}</div>
+    <button class="btn primary" data-lsqdone style="margin-top:12px;width:100%">${n?T('See my chart'):T('Close')}</button></div>`;
+}
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-lsqopen],[data-lsq],[data-lsqdone]'); if(!b) return; const d=b.dataset;
+  if(d.lsqopen!==undefined){ LS.quiz=true; renderLifestyle(); return scrollToEl('#styleCard .lsquiz'); }
+  if(d.lsqdone!==undefined){ LS.quiz=false; renderLifestyle(); renderYou(); return scrollToEl('#styleCard'); }
+  S.me.lsq ||= {}; const i=+d.lsq, v=+d.lsa; S.me.lsq[i] = S.me.lsq[i]===v ? undefined : v; if(!S.me.lsq[i]) delete S.me.lsq[i];
+  save(); const y=$('#v-me').scrollTop; renderLifestyle(); $('#v-me').scrollTop=y;   // stay where you are while answering
+});
 function lsNow(){ const d=LS.d; return lsScores(d&&Object.fromEntries(Object.entries(d.traits).map(([k,v])=>[k,v.a])), d?.total||0); }
 function lsTop(n=2){ const sc=lsNow(); return LS_TRAITS.filter(t=>sc[t[0]]!=null&&sc[t[0]]>=45).sort((a,b)=>sc[b[0]]-sc[a[0]]).slice(0,n); }
 function lsRadar(now, then){
@@ -5685,7 +5727,7 @@ function renderLifestyle(){
       <div class="lstop">${top.length?top.map(t=>`${t[1]} ${esc(T(t[2]))}`).join(' · '):esc(T('Still getting to know you'))}</div></div>
     <span class="meta" title="${esc(T('Only you see your lifestyle score'))}">🔒 ${T('Only you')}</span></div>`;
   if(!anySaid&&!did){
-    el.innerHTML=`${head}<p class="meta">${T("A second score next to your type: how active, outdoorsy, sporty, night-owl, indoorsy, foodie, arty and exploring you are, plus habits. It starts from a few answers and changes as you check in, go to things and save places.")}</p>${qHtml}`;
+    el.innerHTML=`${head}<p class="meta">${T("A second score next to your type: how active, outdoorsy, sporty, night-owl, indoorsy, foodie, arty and exploring you are, plus habits. It starts from a few answers and changes as you check in, go to things and save places.")}</p>${lsQuizHtml()}${LS.quiz?'':qHtml}`;
     return; }
   const delta=k=>{ if(!then||now[k]==null||then[k]==null) return ''; const x=now[k]-then[k];
     return Math.abs(x)<3?'':`<span class="lsdelta ${x>0?'up':'down'}">${x>0?'▲':'▼'}${Math.abs(x)}</span>`; };
@@ -5709,6 +5751,7 @@ function renderLifestyle(){
     ${habit('🌿','Cannabis',canV,canV==null?(can||''):null,'#30d158')}
     <div class="lsrow"><span class="lse">🥗</span><div class="grow"><div class="row"><b class="grow">${T('Diet')}</b>
       <span class="meta">${diet.length?esc(diet.map(x=>T(x)).join(', ')):T('Not answered')}</span></div></div></div>
+    ${lsQuizHtml()}
     ${qHtml?`<div class="lsh">${T('Set your starting point')}</div>${qHtml}`:''}
     <p class="meta" style="margin:12px 0 0">${did
       ? T('Worked out from your answers and what you do here: check-ins, events you go to, saves and ratings. Recent things count most, so it moves as you do.')
