@@ -175,7 +175,7 @@ Keep this file up to date when features change. Only describe things that exist 
   one from their personality type; or Easygoing buddy, Hype crew, Chill local, Planner, Storyteller), "💬 Set up my
   profile with Scout", and "What Scout remembers about you": every note, with ✕ to forget one, plus Clear chat and
   Forget everything. Name and voice are there too.
-- Setup interview: right after signing up ("💬 Set up my account with Scout") or any time from You → Scout, you chat with them to
+- Setup interview: right after signing up ("💬 Set up with Scout") or any time from You → Scout, you chat with them to
   fill in interests, the personality statements and the about-you questions, one at a time. They can skip anything.
   Answers stay "Matching only" (private) unless they change it in their profile.
 - Ratings: after checking in at a food & drink place the app asks "🍽️ What did you get?": the dish, 1-5 stars, a
