@@ -348,10 +348,15 @@
   #meetTabs button,#meTabs button{padding-inline:4px;font-size:12.5px;white-space:nowrap}
   #meTabs{position:sticky;top:0;z-index:5;box-shadow:0 6px 12px var(--bg)}
 
-  .quiz q{display:block;quotes:none;margin:12px 0 6px;font-weight:600}
+  .quiz q{display:block;quotes:none;margin:18px 0 8px;font-weight:600;font-size:16px;line-height:1.3}
+  #quizCard{scroll-margin-top:84px}   /* its heading stays clear of the sticky Profile / Personality tabs */
+  .onbtxt{font-size:15px;line-height:1.4;color:var(--text);margin:8px 0 0}
+  .onbopt{display:flex;gap:12px;align-items:center;width:100%;padding:12px 14px;text-align:left;font-size:16px;line-height:1.25}
+  .onbopt b{display:block} .onbopt small{display:block;margin-top:3px;font-size:14px;font-weight:500;line-height:1.3}
+  .onbic{flex:none;font-size:22px}
   .likert{display:flex;gap:6px}
-  .likert button{flex:1;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:7px 0;font-weight:700;font-size:12px;color:var(--muted)}
-  .likert button.on{background:var(--accent2);color:#021824;border-color:var(--accent2)}
+  .likert button{flex:1 1 0;min-width:0;min-height:44px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:6px 2px;font-weight:700;font-size:13px;line-height:1.15;color:var(--text)}
+  .likert button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
   .type-big{font-size:38px;font-weight:800;letter-spacing:4px;background:linear-gradient(90deg,var(--accent2),var(--party));-webkit-background-clip:text;background-clip:text;color:transparent}
   .axis{display:grid;grid-template-columns:70px 1fr 70px;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin:5px 0}
   .axis .bar>b{background:var(--accent2)}
@@ -1311,7 +1316,7 @@
 
       </div>
       <div data-mepane="personality" hidden>
-      <h3 style="margin-top:0">Personality · 16 types</h3>
+      <h3 style="margin-top:0" data-t="Personality type">Personality type</h3>
       <div class="card" id="quizCard"></div>
 
       <h3 data-t="Lifestyle">Lifestyle</h3>
@@ -1580,17 +1585,18 @@ const ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpi
 const ELEM = {Aries:'fire',Leo:'fire',Sagittarius:'fire',Taurus:'earth',Virgo:'earth',Capricorn:'earth',
   Gemini:'air',Libra:'air',Aquarius:'air',Cancer:'water',Scorpio:'water',Pisces:'water'};
 // 20 statements, 5 per axis, mixed keying so agreeing with everything doesn't skew the result.
+const AGREE = ['No','Not really','Not sure','Kind of','Yes'];   // the five answers, both quizzes
 const QUIZ = [
-  ['I recharge by being around people.','E',1],["I'm more into what could be than what is.",'N',1],
-  ['I decide with my head more than my heart.','T',1],['I like having the night planned out.','J',1],
-  ['After a big night out I need a quiet day.','E',-1],['I trust experience over theory.','N',-1],
-  ["I'll change plans to keep the peace.",'T',-1],['The best nights are the unplanned ones.','J',-1],
-  ["I'll start a conversation with a total stranger.",'E',1],['I get lost in daydreams and big ideas.','N',1],
-  ['Honest feedback beats kind feedback.','T',1],['I finish things well before the deadline.','J',1],
+  ['Being around people gives me energy.','E',1],["I think more about what could happen than what's happening now.",'N',1],
+  ['I decide with my head more than my heart.','T',1],['I like to plan my night ahead of time.','J',1],
+  ['After a big night out I need a quiet day.','E',-1],["I trust what I've tried myself more than new ideas.",'N',-1],
+  ["I'll change my plans to avoid an argument.",'T',-1],["My best nights are the ones I didn't plan.",'J',-1],
+  ["I'm happy to start talking to a stranger.",'E',1],['I often daydream about big ideas.','N',1],
+  ["I'd rather hear the honest truth than something nice.",'T',1],["I finish things long before they're due.",'J',1],
   ["I'd rather hang with two close friends than a big crowd.",'E',-1],['I notice small details other people miss.','N',-1],
-  ["I feel other people's moods like they're my own.",'T',-1],['I keep my options open as long as I can.','J',-1],
-  ['I think out loud.','E',1],["I'd rather try something new than perfect something old.",'N',1],
-  ['I enjoy a good debate, even with friends.','T',1],['A to-do list makes me happy.','J',1],
+  ["When people around me are upset, I feel it too.",'T',-1],['I wait as long as I can before I decide.','J',-1],
+  ['I talk through my ideas out loud.','E',1],["I'd rather try something new than get better at something I already do.",'N',1],
+  ['I like a good debate, even with friends.','T',1],['A to-do list makes me happy.','J',1],
 ];
 const TYPES = {
   INTJ:['The Mastermind','plans five moves ahead'], INTP:['The Tinkerer','takes ideas apart for fun'],
@@ -1880,6 +1886,13 @@ const ES = {
   'What you ordered':'Lo que pediste', 'Clear chat':'Borrar chat', 'Forget everything':'Olvidar todo', 'Forget this':'Olvidar esto',
   'Forget everything Scout knows about you? This clears your notes, chat and orders.':'¿Olvidar todo lo que Scout sabe de ti? Se borran tus notas, el chat y tus pedidos.',
   'Scout is off.':'Scout está apagado.', 'Scout is off. Turn it back on in You → Scout.':'Scout está apagado. Actívalo en Tú → Scout.', 'Scout is back on.':'Scout está activado.',
+  'No':'No', 'Not really':'No mucho', 'Not sure':'No sé', 'Kind of':'Algo', 'Yes':'Sí', 'How much do you agree with each one?':'¿Qué tan de acuerdo estás con cada una?',
+  'Find your personality type':'Descubre tu tipo de personalidad', "Answer 20 short questions. It takes about 3 minutes. We'll show you which of the 16 personality types fits you, and use it to find people you'd get along with.":'Responde 20 preguntas cortas. Toma unos 3 minutos. Te mostramos cuál de los 16 tipos de personalidad va contigo y lo usamos para encontrar gente con quien te lleves bien.',
+  "This is a short version of the 16 personality types. It's for fun and for meeting people. It isn't a medical test.":'Es una versión corta de los 16 tipos de personalidad. Es para divertirse y conocer gente. No es una prueba médica.', 'Personality type':'Tipo de personalidad',
+  "Find things to do around Austin, and people to do them with. You don't need an account to look around.":'Encuentra qué hacer en Austin y con quién hacerlo. No necesitas cuenta para mirar.', 'What do you like?':'¿Qué te gusta?', "(optional: we'll show you more of it)":'(opcional: te mostraremos más de eso)', "Pick at least 3 so we can show you things you'll enjoy.":'Elige al menos 3 para mostrarte cosas que te gusten.',
+  'Welcome to Side Quest, @{h}!':'¡Bienvenido a Side Quest, @{h}!', "Let's set up your account so we can suggest things you'll like and people you'll get along with.":'Vamos a configurar tu cuenta para sugerirte cosas que te gusten y gente con quien te lleves bien.',
+  'Set up my account with Scout':'Configurar mi cuenta con Scout', 'Scout is your AI assistant. It asks a few easy questions.':'Scout es tu asistente de IA. Te hace unas preguntas fáciles.', 'Take the personality quiz':'Hacer el test de personalidad', '20 short questions, about 3 minutes. See which of the 16 personality types fits you.':'20 preguntas cortas, unos 3 minutos. Mira cuál de los 16 tipos de personalidad va contigo.',
+  'Answer questions about me':'Responder preguntas sobre mí', 'Music, hobbies and more. You choose what other people can see.':'Música, pasatiempos y más. Tú eliges lo que otros pueden ver.', 'Skip for now':'Omitir por ahora', 'Stay safe:':'Cuídate:', "Meet in public places. Tell a friend where you're going. To report or block someone, tap ⋯ on their post or profile.":'Queda en lugares públicos. Dile a un amigo adónde vas. Para reportar o bloquear a alguien, toca ⋯ en su publicación o perfil.',
   'Hi! Help me set up my profile.':'¡Hola! Ayúdame a configurar mi perfil.', 'Your type':'Tu tipo', 'Scout matched its personality to you.':'Scout adaptó su personalidad a ti.',
   'What did you get?':'¿Qué pediste?', 'on Side Quest':'en Side Quest', 'Rate':'Calificar', 'How was it?':'¿Qué tal estuvo?', 'e.g. brisket tacos, a margarita':'p. ej. tacos de brisket, una margarita', 'A note for yourself (optional)':'Una nota para ti (opcional)',
   'Others only see the average stars. What you got stays yours, and Scout remembers it for next time.':'Los demás solo ven el promedio de estrellas. Lo que pediste es tuyo, y Scout lo recuerda para la próxima.',
@@ -4399,8 +4412,8 @@ function renderOnb(){
     <button class="btn primary" data-onbnext style="width:100%;margin-top:18px;padding:13px" ${o.busy?'disabled':''}>${o.busy?'One sec…':signup?'Create account':'Sign in'}</button></form>
     <div style="text-align:center;margin-top:10px"><button type="button" class="meta" data-onbclose style="font-size:13px">Keep looking around without an account</button></div>`;
   if(o.step==='welcome') html=`<button class="btn sm" data-langtoggle style="float:right">🌐 ${T('Español')}</button><b style="font-size:22px">Welcome to Side Quest</b>${CFG.beta?' <span class="badge broadcast">beta</span>':''}
-    <p class="meta" style="font-size:13px">Find things to do around Austin, and people to do them with. Look around first. No account needed.</p>
-    <label class="lbl">What are you into? <span class="meta">(optional, shapes your feed)</span></label>
+    <p class="onbtxt">${T("Find things to do around Austin, and people to do them with. You don't need an account to look around.")}</p>
+    <label class="lbl">${T('What do you like?')} <span class="meta">${T("(optional: we'll show you more of it)")}</span></label>
     ${onbIq()}<div class="chips" id="onbIList">${onbIList()}</div>
     <button class="btn primary" data-onbguest style="width:100%;margin-top:18px;padding:13px">Start exploring →</button>
     <div class="row" style="justify-content:center;gap:16px;margin-top:12px"><button class="meta" data-onbmode="signup" style="font-size:13px">Create account</button>
@@ -4409,14 +4422,18 @@ function renderOnb(){
     <p class="meta" style="font-size:13px">It takes 20 seconds. Everything you've done so far (interests, quiz, RSVPs) comes with you.</p>
     <div style="display:grid;gap:8px;margin-top:14px"><button class="btn primary" data-onbmode="signup" style="padding:13px">Create account</button>
       <button class="btn" data-onbmode="login">I have an account · Sign in</button><button class="btn" data-onbclose>Not now</button></div>`;
-  if(o.step===2) html=`<b style="font-size:22px">What are you into?</b><p class="meta" style="font-size:13px">Pick at least 3. Your feed starts from these.</p>
+  if(o.step===2) html=`<b style="font-size:22px">${T('What do you like?')}</b><p class="onbtxt">${T("Pick at least 3 so we can show you things you'll enjoy.")}</p>
     ${onbIq()}<div class="chips" id="onbIList">${onbIList()}</div>
     <button class="btn primary" data-onbnext style="width:100%;margin-top:18px;padding:13px;${o.i.length<3?'opacity:.5':''}" ${o.i.length<3?'disabled':''}>${o.i.length<3?`Pick ${3-o.i.length} more`:'Next'}</button>`;
-  if(o.step===3) html=`<b style="font-size:22px">You're in, @${esc(o.h)} 🎉</b>
-    <p class="meta" style="font-size:13px">${T("Want sharper picks and better matches? Chat with Scout for a few minutes, or fill it in yourself. You choose what's shared.")}</p>
-    <div class="card" style="margin:12px 0 0;font-size:13px">🛡️ <b>Stay safe:</b> meet in public places, tell a friend where you're going, and use ⋯ on any post or person to report or block.</div>
-    <div style="display:grid;gap:8px;margin-top:12px"><button class="btn primary" data-onbgo="scout">💬 ${T('Set up with Scout')}</button><button class="btn blue" data-onbgo="quiz">🧬 Take the 16-type personality quiz</button>
-      <button class="btn" data-onbgo="about">📝 Answer the "about you" questions</button><button class="btn" data-onbgo="feed">Show me what's on →</button></div>`;
+  if(o.step===3){ const opt=(go,cls,ic,t,sub)=>`<button class="btn onbopt ${cls}" data-onbgo="${go}"><span class="onbic" aria-hidden="true">${ic}</span><span><b>${T(t)}</b><small>${T(sub)}</small></span></button>`;
+    html=`<b style="font-size:24px;line-height:1.2;display:block;overflow-wrap:anywhere">${T('Welcome to Side Quest, @{h}!',{h:esc(o.h)})} 🎉</b>
+    <p class="onbtxt">${T("Let's set up your account so we can suggest things you'll like and people you'll get along with.")}</p>
+    <div style="display:grid;gap:8px;margin-top:14px">
+      ${opt('scout','primary','💬','Set up my account with Scout','Scout is your AI assistant. It asks a few easy questions.')}
+      ${opt('quiz','','🧬','Take the personality quiz','20 short questions, about 3 minutes. See which of the 16 personality types fits you.')}
+      ${opt('about','','📝','Answer questions about me','Music, hobbies and more. You choose what other people can see.')}
+      <button class="btn" data-onbgo="feed" style="padding:12px;font-size:15px">${T('Skip for now')}</button></div>
+    <p class="onbtxt" style="margin-top:14px;font-size:14px">🛡️ <b>${T('Stay safe:')}</b> ${T("Meet in public places. Tell a friend where you're going. To report or block someone, tap ⋯ on their post or profile.")}</p>`; }
   $('#onb').innerHTML=html; $('#onbBg').hidden=false;
   if($('#gsiBtn')) mountGoogleButton($('#gsiBtn'), signup);
 }
@@ -4456,7 +4473,7 @@ async function onbNext(){
       if(ONB.mode==='signup'){
         await api('/api/signup',{h, ...(ONB.google?{google:ONB.google}:{pw}), c:ONB.c, invite:$('#onbI')?.value||'', adult:true, terms:true,
           ref:S.ref||'', rk:S.refK||'', ref_friend:!!S.ref&&($('#onbRef')?$('#onbRef').checked:true)});
-        setTimeout(()=>toast(`🏆 <b>${T("You're level 1.")}</b> ${T('Check in at places around town to level up: a historical marker, a taco spot, a park.')}`,'green',[{l:T('See quests'),cls:'blue',f:openQuests}],7000),5000); ONB.google=null;
+        setTimeout(levelOneToast,5000); ONB.google=null;
         AUTHED=true; ONB.busy=false; await loadState(); onAuthed();
         if(S.me.h==='guest'){ S.me.h=h; S.me.c=ONB.c; }
         else { S=DEFAULT(); S.me.h=h; S.me.c=ONB.c; }
@@ -4476,6 +4493,10 @@ async function onbNext(){
     if(ONB.why){ renderAll(); return backToIt(); }
     ONB.step=3; renderOnb(); renderAll();
   }
+}
+function levelOneToast(tries=0){   // after sign-up; never on top of the welcome, the quiz or Scout
+  if(!$('#onbBg').hidden||!$('#scoutBg').hidden||S.quizOpen){ if(tries<40) setTimeout(()=>levelOneToast(tries+1),15000); return; }
+  toast(`🏆 <b>${T("You're level 1.")}</b> ${T('Check in at places around town to level up: a historical marker, a taco spot, a park.')}`,'green',[{l:T('See quests'),cls:'blue',f:openQuests}],7000);
 }
 function backToIt(){   // they signed up to do something: take them right back to it
   const why=ONB.why; ONB.why=null; $('#onbBg').hidden=true;
@@ -5585,13 +5606,13 @@ function renderQuiz(){
     $('#quizCard').innerHTML = `<div class="row"><div class="grow"><div class="meta">Your type</div><div class="type-big">${S.me.t}</div>
         <div><b>${name}</b> <span class="meta">${blurb}</span></div></div><div style="text-align:right">${visBtn('type')}<br><button class="btn sm" id="retake" style="margin-top:8px">Retake</button></div></div>
       ${n?Object.entries(AXES).map(([k,a])=>{const pct=Math.max(4,Math.min(96,50+sc[k]*5));return `<div class="axis"><span>${a[2]}</span><div class="bar"><b style="width:${pct}%"></b></div><span style="text-align:right">${a[3]}</span></div>`}).join(''):''}
-      <p class="meta" style="margin:10px 0 0">A 20-question take on the 16 types. For fun and for finding your people, not a clinical test.</p>`;
+      <p class="meta" style="margin:10px 0 0">${T("This is a short version of the 16 personality types. It's for fun and for meeting people. It isn't a medical test.")}</p>`;
     return; }
-  if(!S.quizOpen){ $('#quizCard').innerHTML=`<b>Find your type</b><p class="meta">20 quick statements, about 3 minutes. Your answers place you on 4 scales and one of 16 types, which helps the engine spot people you'd click with.</p>
-    <button class="btn blue" id="startQuiz">Take the quiz</button>${pick}`; return; }
-  $('#quizCard').innerHTML = `<div class="row"><b class="grow">${n}/${QUIZ.length} answered</b><span class="meta">Nope ← → Yes!</span></div>
+  if(!S.quizOpen){ $('#quizCard').innerHTML=`<b style="font-size:16px">${T('Find your personality type')}</b><p class="onbtxt">${T("Answer 20 short questions. It takes about 3 minutes. We'll show you which of the 16 personality types fits you, and use it to find people you'd get along with.")}</p>
+    <button class="btn primary" id="startQuiz">${T('Take the quiz')}</button>${pick}`; return; }
+  $('#quizCard').innerHTML = `<b style="font-size:16px">${T('How much do you agree with each one?')}</b><div class="onbtxt" style="margin-top:2px">${T('{n} of {m} answered',{n,m:QUIZ.length})}</div>
     <div class="bar" style="margin:6px 0 4px"><b style="width:${n/QUIZ.length*100}%"></b></div>
-    <div class="quiz">${QUIZ.map((q,i)=>`<q>${i+1}. ${q[0]}</q><div class="likert">${[1,2,3,4,5].map(v=>`<button data-q="${i}" data-a="${v}" class="${S.me.ans[i]===v?'on':''}">${['Nope','','Meh','','Yes!'][v-1]||v}</button>`).join('')}</div>`).join('')}</div>
+    <div class="quiz">${QUIZ.map((q,i)=>`<q>${i+1}. ${q[0]}</q><div class="likert">${[1,2,3,4,5].map(v=>`<button data-q="${i}" data-a="${v}" class="${S.me.ans[i]===v?'on':''}">${T(AGREE[v-1])}</button>`).join('')}</div>`).join('')}</div>
     <button class="btn primary" id="finishQuiz" style="margin-top:14px;width:100%;${done?'':'opacity:.5'}" ${done?'':'disabled'}>${done?'See my type':`Answer all ${QUIZ.length} (${n} done)`}</button>`;
 }
 
@@ -5686,9 +5707,9 @@ function lsQuizHtml(){
   const a=S.me.lsq||{}, n=LSQ.filter((_,i)=>a[i]).length;
   if(!LS.quiz) return `<div class="lsquizbar"><div class="grow"><b>${T('Lifestyle quiz')}</b><div class="meta">${n===LSQ.length?T('All {n} answered',{n}):n?T('{n} of {m} answered',{n,m:LSQ.length}):T('{m} quick statements, about a minute',{m:LSQ.length})}</div></div>
     <button class="btn sm ${n?'':'blue'}" data-lsqopen>${n===LSQ.length?T('Change'):n?T('Keep going'):T('Take it')}</button></div>`;
-  return `<div class="lsquiz"><div class="row"><b class="grow">${T('{n}/{m} answered',{n,m:LSQ.length})}</b><span class="meta">${T('Nope')} ← → ${T('Yes!')}</span></div>
+  return `<div class="lsquiz"><b style="font-size:16px">${T('How much do you agree with each one?')}</b><div class="onbtxt" style="margin-top:2px">${T('{n} of {m} answered',{n,m:LSQ.length})}</div>
     <div class="bar" style="margin:6px 0 4px"><b style="width:${n/LSQ.length*100}%"></b></div>
-    <div class="quiz">${LSQ.map((q,i)=>`<q>${i+1}. ${esc(T(q[0]))}</q><div class="likert">${[1,2,3,4,5].map(v=>`<button data-lsq="${i}" data-lsa="${v}" class="${a[i]===v?'on':''}">${T(['Nope','','Meh','','Yes!'][v-1])||v}</button>`).join('')}</div>`).join('')}</div>
+    <div class="quiz">${LSQ.map((q,i)=>`<q>${i+1}. ${esc(T(q[0]))}</q><div class="likert">${[1,2,3,4,5].map(v=>`<button data-lsq="${i}" data-lsa="${v}" class="${a[i]===v?'on':''}">${T(AGREE[v-1])}</button>`).join('')}</div>`).join('')}</div>
     <button class="btn primary" data-lsqdone style="margin-top:12px;width:100%">${n?T('See my chart'):T('Close')}</button></div>`;
 }
 document.addEventListener('click', e=>{
@@ -8482,7 +8503,7 @@ const SC_FAQ = [
   [/tonight|what'?s the move|whats the move|weekend|event|bored|to do/i, "Tap Tonight for everything on tonight, nearest first. Make a free account and I can pick the best ones for you.", 'excited', [['point','chip_tonight',"Tonight's events"]]],
   [/map|near|around|where/i, "The map is always right here. Tap a chip to see one thing at a time, or search for anything up top.", 'happy', [['point','chips','Pick one']]],
   [/search|find|look for/i, "Type anything in the search box: a place, an event, a person, a group or a dish. Or just ask me.", 'happy', [['point','search','Search']]],
-  [/quiz|personality|type/i, "The 20-question personality quiz sharpens your matches. It takes about two minutes!", 'happy', [['point','me_quiz','The quiz']]],
+  [/quiz|personality|type/i, "The 20-question personality quiz sharpens your matches. It takes about three minutes!", 'happy', [['point','me_quiz','The quiz']]],
   [/astro|zodiac|chart|sign|horoscope/i, "Add your birthday for your Sun, Moon and Rising signs. It's worked out on your phone and never shown unless you choose.", 'happy', [['point','me_astro','Turn on astrology']]],
   [/privacy|who (can )?sees?|visib|private/i, "Every profile answer has its own tag: matching only (the default, never shown), friends, everyone, or only you.", 'calm', [['point','profile','Your profile']]],
   [/block|report|safe|creep|harass|scared|unsafe/i, "Tap ⋯ on any post, story or profile to report or block. And always meet in public and tell a friend where you're going.", 'calm', []],

@@ -119,6 +119,7 @@ body:has(#app.v3){background:#04050b}
 #app.v3 .btn{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.22);border-radius:14px}
 #app.v3 .btn.sm{border-radius:12px}
+#app.v3 .btn.blue{color:var(--text)}   /* the glass replaces .btn.blue's blue fill, so its dark text would sit on dark glass */
 #app.v3 .btn.primary{background:var(--siri);background-size:150% 150%;color:#fff;border-color:transparent;text-shadow:0 1px 2px rgba(0,0,0,.25);
   box-shadow:0 8px 20px -8px rgba(255,55,95,.8),inset 0 1px 0 rgba(255,255,255,.45)}
 #app.v3 .btn:active,#app.v3 .chip:active{transform:scale(.96)}

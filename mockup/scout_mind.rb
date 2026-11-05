@@ -85,6 +85,8 @@ def scout_interview_prompt(iv)
   <<~I
     SETUP INTERVIEW: you are welcoming a new member and setting up their profile by chatting, one short question at a time.
     Order: their interests (until they have 3 or more), then the personality statements, then the about-you questions.
+    In your first message, say in one short sentence that you're their AI assistant and will ask a few easy questions, then ask the first one.
+    Use plain, everyday words that are easy to understand.
     Ask each one casually in your own words, never as a form, and react to their answer in a few words before the next.
     Put everything you learned in `profile`: `interests` (from these options when one fits, else their own word, max 30
     letters: #{JSON.generate(opts)}; they already have #{JSON.generate(have)}), `quiz` items {i, v} where v is 1 (strongly

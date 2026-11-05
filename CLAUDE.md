@@ -155,6 +155,7 @@ at `sidequest.cc.middlematter.com` on the owner's Hetzner box.
   you" (`renderPicks()` → `#fyStrip`: Claude's `/api/picks` when signed in, else `rulePicks()`);
   Home's "Picks for you" opens it. (The old separate For you screen and "Ask the engine" box are gone;
   Scout answers questions.)
+- **Easier welcome and quiz (2026-11-04, owner)**: the sign-up sheet's last step (`renderOnb` step 3) names Scout as the AI assistant and offers Set up my account with Scout / Take the personality quiz / Answer questions about me (`.onbopt`) / Skip for now, in full-colour text (`.onbtxt`). Both quizzes answer No / Not really / Not sure / Kind of / Yes (`AGREE`; picked = inverted, not blue); QUIZ statements were reworded in plain English, same order, axes and direction (answers are saved by position). `#app.v3 .btn.blue` uses `--text`: the glass drops `.btn.blue`'s blue fill, which left navy text on dark glass. `levelOneToast` waits until the welcome, the quiz and Scout are closed. `e2e_test.py` (`data-create='flare'`) and `e2e_v3.py` (`#mapChips` click under the dock) already stop early on the commit before this; they need updating.
 - **I'm out tonight (2026-11-02, owner: "popular and keep users engaged"; `outnight.rb`)**: `d['outn'][h]` = acts
   (`OUT_ACTS` keys, ≤4), when (now / 19-23), zone (a `Places::HOTSPOTS` id, never a map spot), until (next 5 AM), told,
   down {h: ms}. `/api/out` (friends get one `out` notification per 12 h, even after off/on), `/api/out/off` (until = 0,
