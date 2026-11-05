@@ -19,10 +19,10 @@ const css = `
 .pvproof button em{position:absolute;inset:6px 5px auto;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;font-style:normal;font-weight:700;font-size:10.5px;line-height:1.25;overflow:hidden;text-align:left;text-shadow:0 1px 3px #000}
 .pvproof .onair{position:absolute;top:4px;left:4px}
 .pvask{margin-top:10px}.pvask .pvq{font-size:12px;margin-bottom:6px;color:var(--muted,#9aa3b8)}
-.pvbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pvbtns button{padding:8px 0;border-radius:10px;border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.04);color:inherit;font-size:12px}.pvbtns button b{display:block;font-size:18px}
-.pvtags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.pvtags button{font-size:11px;padding:4px 9px;border-radius:99px;border:1px solid rgba(255,255,255,.14);background:none;color:inherit}
-.pvtags button.on,.pvbtns button.on{border-color:var(--accent,#ff7a18);background:rgba(255,122,24,.16)}
+.pvbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pvbtns button{padding:8px 0;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel2);color:inherit;font-size:12px}.pvbtns button b{display:block;font-size:18px}
+.pvtags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.pvtags button{font-size:11px;padding:4px 9px;border-radius:99px;border:1px solid var(--line);background:none;color:inherit}
+.pvtags button.on,.pvbtns button.on{border-color:var(--text);background:var(--text);color:var(--bg);font-weight:700}
 .pvsrc{font-size:10px;color:var(--muted,#9aa3b8);margin-top:6px}
 .pumove{margin:6px 0 4px;padding:12px;border-radius:16px;background:linear-gradient(145deg,rgba(255,122,24,.16),rgba(221,36,118,.12));border:1px solid rgba(255,122,24,.3)}
 .pumove .puwant{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}.pumove .puwant button{font-size:12px;padding:5px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.16);background:none;color:inherit}
@@ -85,8 +85,8 @@ function askHtml(p){
   if(!here) return '';
   const tags=PU.tags?.[p.id]||[];
   return `<div class="pvask"><div class="pvq">${T('You\'re here: how is it right now?')}</div>
-    <div class="pvbtns">${VOTES.map(([k,e,l])=>`<button data-pvvote="${k}" data-pvid="${esc(p.id)}"><b>${e}</b>${T(l)}</button>`).join('')}</div>
-    <div class="pvtags">${TAGS.map(([k,l])=>`<button data-pvtag="${k}" data-pvid="${esc(p.id)}" class="${tags.includes(k)?'on':''}">${T(l)}</button>`).join('')}</div></div>`;
+    <div class="pvbtns">${VOTES.map(([k,e,l])=>`<button data-pvvote="${k}" data-pvid="${esc(p.id)}" class="${PU.mine?.[p.id]===k?'on':''}" aria-pressed="${PU.mine?.[p.id]===k}"><b>${e}</b>${T(l)}</button>`).join('')}</div>
+    <div class="pvtags">${TAGS.map(([k,l])=>`<button data-pvtag="${k}" data-pvid="${esc(p.id)}" class="${tags.includes(k)?'on':''}" aria-pressed="${tags.includes(k)}">${T(l)}</button>`).join('')}</div></div>`;
 }
 function cardHtml(j){
   const v=j.vibe, f=j.facts||{};
@@ -107,18 +107,26 @@ async function card(id){
   const el=document.getElementById('pv_'+id); if(!el) return;
   el.className='pvibe'; el.innerHTML=`<p class="skel">${T('Checking the vibe…')}</p>`;
   try{ const j=await get(`/api/pulse/place?id=${encodeURIComponent(id)}`); PU.place[id]=j;
+    if(j.mine){ PU.mine ||= {}; PU.tags ||= {}; PU.mine[id]=j.mine.v; PU.tags[id]=j.mine.tags||[]; }   // your report here still counts: show it picked
     const el2=document.getElementById('pv_'+id); if(el2) el2.innerHTML=cardHtml(j);
   }catch(e){ el.remove(); }
 }
 
-async function vote(id, v){
+// Your pick lights up at once and goes back if the server says no (too far away, daily limit).
+function markVote(id, v){
+  document.querySelectorAll(`#pv_${CSS.escape(id)} [data-pvvote]`).forEach(b=>{ const on=b.dataset.pvvote===v; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on); });
+}
+async function vote(id, v, quiet){
   if(!AUTHED){ needAccount('tell people how it is'); return; }
+  PU.mine ||= {}; const was=PU.mine[id];
+  if(was===v && !quiet) return;   // already your pick: nothing new to send
+  PU.mine[id]=v; markVote(id,v);
   // the server checks you're there too: your spot rounded to ~100 m
   try{ const r=await api('/api/pulse/vibe',{id, v, tags:PU.tags?.[id]||[], lat:+ME_POS[0].toFixed(3), lng:+ME_POS[1].toFixed(3)});
-    toast(`${r.vibe.e} ${T('Thanks! People deciding where to go will see it.')}`);
+    if(!quiet) toast(`${r.vibe.e} ${T('Thanks! People deciding where to go will see it.')}`);
     const j=PU.place[id]; if(j){ j.vibe=r.vibe; const el=document.getElementById('pv_'+id); if(el) el.innerHTML=cardHtml(j); }
     PU.pickAt=0; PU.nearAt=0;
-  }catch(e){ toast(esc(e.message),'err'); }
+  }catch(e){ if(PU.mine[id]===v){ if(was) PU.mine[id]=was; else delete PU.mine[id]; markVote(id,was); } toast(esc(e.message),'err'); }
 }
 
 // ---- Explore: your move tonight, rising now, see it before you go ----
@@ -168,7 +176,9 @@ document.addEventListener('click', e=>{
   e.stopPropagation();
   if(t.dataset.pvvote) return vote(t.dataset.pvid, t.dataset.pvvote);
   if(t.dataset.pvtag){ const id=t.dataset.pvid, k=t.dataset.pvtag; PU.tags ||= {}; const L=PU.tags[id] ||= [];
-    L.includes(k) ? L.splice(L.indexOf(k),1) : L.length<3 && L.push(k); t.classList.toggle('on', L.includes(k)); return; }
+    L.includes(k) ? L.splice(L.indexOf(k),1) : L.length<3 && L.push(k); t.classList.toggle('on', L.includes(k)); t.setAttribute('aria-pressed',L.includes(k));
+    if(PU.mine?.[id]){ clearTimeout(PU.tagT); PU.tagT=setTimeout(()=>vote(id,PU.mine[id],true),800); }   // tags tapped after the vote go with it
+    return; }
   if(t.dataset.puwant){ S.pulseWant=t.dataset.puwant; save?.(); PU.pickAt=0; return refresh(); }
   if(t.dataset.pukind){ S.pulseKind=t.dataset.pukind; save?.(); PU.pickAt=0; return refresh(); }
   if(t.dataset.pvst){

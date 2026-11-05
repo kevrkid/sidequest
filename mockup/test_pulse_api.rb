@@ -114,6 +114,16 @@ t('vibe reports: members only, checked, and they move the level') do
   "#{r['vibe']['e']} #{r['vibe']['label']} (#{r['vibe']['level']})"
 end
 
+t('your vibe report comes back to you, and only you, so the card can show it picked') do
+  _, r = cy.get("/api/pulse/place?id=#{BAR}")
+  check(r['mine'] && r['mine']['v'] == 'chill', r['mine'])
+  _, r = eve.get("/api/pulse/place?id=#{BAR}")
+  check(r['mine'].nil?, r['mine'])
+  _, r = guest.get("/api/pulse/place?id=#{BAR}")
+  check(r['mine'].nil?, r['mine'])
+  'chill for the reporter; nothing for anyone else'
+end
+
 t('vibe reports only count from someone who is there (checked on the server)') do
   c, r = eve.post('/api/pulse/vibe', id: BAR, v: 'dead')
   check(c == 400 && r['error'].to_s.include?('location'), [c, r])

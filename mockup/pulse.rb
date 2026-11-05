@@ -618,9 +618,11 @@ def mount_pulse(server)
     p = Places.find(req.query['id'].to_s) or raise "That place isn't in Side Quest."
     now = Time.now
     events = events_list
+    mine = h && PULSE_MEM[:lock].synchronize { PULSE_MEM[:vibes].find { |x| x['u'] == h && x['pid'] == p['id'] && x['at'] > now_ms - 45 * 60_000 } }
     store(write: false) do |d|
       sigs = pulse_unblocked(d, h, pulse_signals(d).select { |s| s['pid'] == p['id'] })
       out = pulse_view(p, sigs, now: now, detail: true)
+      out[:mine] = { v: mine['v'], tags: mine['tags'] } if mine   # only ever your own report
       out[:events] = pulse_events_at(p, pulse_events_soon(events, now)).first(3).map { |e| e.slice('uid', 'title', 'start', 'category') }
       out
     end

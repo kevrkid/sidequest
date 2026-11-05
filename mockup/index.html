@@ -1894,6 +1894,7 @@ const ES = {
   'Your AI assistant asks a few questions.':'Tu asistente de IA te hace unas preguntas.', 'Take the 16-type personality quiz':'Haz el test de 16 personalidades', '20 questions, about 3 minutes.':'20 preguntas, unos 3 minutos.',
   'Tell us about you':'Cuéntanos de ti', "Music, hobbies and more. You choose what's shared.":'Música, pasatiempos y más. Tú eliges qué se comparte.', 'Skip for now':'Omitir por ahora', 'Stay safe:':'Cuídate:', "Meet in public. Tell a friend where you're going. Tap ⋯ to report or block.":'Queda en lugares públicos. Dile a un amigo adónde vas. Toca ⋯ para reportar o bloquear.',
   'Your habits and interests, scored. Updates as you check in, go out and save places.':'Tus hábitos e intereses, con puntaje. Se actualiza cuando registras visitas, sales y guardas lugares.', '{m} questions, about a minute':'{m} preguntas, cerca de un minuto',
+  'Requested':'Solicitado', 'Friend':'Amigo', '+ Add friend':'+ Agregar amigo',
   'Hi! Help me set up my profile.':'¡Hola! Ayúdame a configurar mi perfil.', 'Your type':'Tu tipo', 'Scout matched its personality to you.':'Scout adaptó su personalidad a ti.',
   'What did you get?':'¿Qué pediste?', 'on Side Quest':'en Side Quest', 'Rate':'Calificar', 'How was it?':'¿Qué tal estuvo?', 'e.g. brisket tacos, a margarita':'p. ej. tacos de brisket, una margarita', 'A note for yourself (optional)':'Una nota para ti (opcional)',
   'Others only see the average stars. What you got stays yours, and Scout remembers it for next time.':'Los demás solo ven el promedio de estrellas. Lo que pediste es tuyo, y Scout lo recuerda para la próxima.',
@@ -2366,6 +2367,7 @@ async function loadState(){
     if(AUTHED&&SV.v2?.coins!=null) S.coins=SV.v2.coins;   // coins live on the server once you have an account   // your picture, from any phone (not while a change is still saving)
     // friends come from the server (two-way); demo people stay local
     if(AUTHED&&SV.friends) S.friends=[...new Set([...SV.friends.list, ...S.friends.filter(h=>USERS.some(u=>u.h===h))])];
+    const lvf=$('#lvFriend'), lvs=lvf&&streamById(LIVE.watch); if(lvs) lvf.innerHTML=lvFriendHtml(lvs.u);   // the live screen's friend button
   }catch(e){ SV.on=false; }
   return true;
 }
@@ -4496,7 +4498,7 @@ async function onbNext(){
   }
 }
 function levelOneToast(tries=0){   // after sign-up; never on top of the welcome, the quiz or Scout
-  if(!$('#onbBg').hidden||!$('#scoutBg').hidden||S.quizOpen){ if(tries<40) setTimeout(()=>levelOneToast(tries+1),15000); return; }
+  if(!$('#onbBg').hidden||!$('#scoutBg').hidden||SCT.tour!=null||S.quizOpen){ if(tries<40) setTimeout(()=>levelOneToast(tries+1),15000); return; }
   toast(`🏆 <b>${T("You're level 1.")}</b> ${T('Check in at places to level up.')}`,'green',[{l:T('See quests'),cls:'blue',f:openQuests}],7000);
 }
 function backToIt(){   // they signed up to do something: take them right back to it
@@ -7898,6 +7900,10 @@ function renderLive(){
         <button class="btn sm primary" data-watch="${s.id}">Watch & request</button></div></div>`).join('')}
     <div class="engine-note">💡 Try it for real: open <b>${esc(location.origin+location.pathname)}?as=lowkey_lu</b> in a second tab, go live in this one, and the other tab gets your actual camera feed.</div>`;
 }
+// Add the person you're watching. Drawn on its own so the video and a half-typed request are left alone.
+const lvFriendHtml = h => h===S.me.h ? '' : isFriend(h) ? `<span class="badge friends">${T('Friend')}</span>`
+  : (SV.friends?.outgoing||[]).includes(h) ? `<span class="badge">${T('Requested')}</span>`
+  : `<button class="btn sm primary" data-add="${esc(h)}" style="white-space:nowrap">${T('+ Add friend')}</button>`;
 function renderWatch(root){
   const s=streamById(LIVE.watch); if(!s){ LIVE.mode='list'; return renderLive(); }
   root.innerHTML = `<div class="row" style="margin:6px 0 10px"><button class="btn sm" data-lvback>← Live</button><span class="grow"></span><span class="badge" id="coinBadge">🪙 ${S.coins}</span></div>
@@ -7906,10 +7912,10 @@ function renderWatch(root){
       <div class="ov">📷 ${esc(s.cam)}${s.remote?'':' · demo stream'}</div></div>
     <div class="row" style="margin:12px 0">${av(s.u)}<div class="grow"><b>${esc(s.title)}</b>
       <div class="meta">${esc(s.u)} · 📍 ${esc(venue(s.v)?.name||'Somewhere nearby')}${s.delay?` · location on a ${s.delay}-min delay`:''}</div></div>
-      ${isFriend(s.u)?'<span class="badge friends">friend</span>':''}
+      <span id="lvFriend" style="flex:none">${lvFriendHtml(s.u)}</span>
       <button class="btn sm" data-more="stream|${esc(s.id)}|${esc(s.u)}" aria-label="Report or block" title="Report or block" style="padding:4px 9px">⋯</button></div>
     ${s.who==='off'?'<div class="card meta">Requests are off for this stream.</div>':`<form class="card" id="reqForm">
-      <b>Send ${esc(s.u)} a request</b>${s.who==='friends'&&!s.remote&&!isFriend(s.u)?'<p class="meta" style="margin:4px 0 0">Friends only. Add them in Meet → Friends first.</p>':''}
+      <b>Send ${esc(s.u)} a request</b>${s.who==='friends'&&!s.remote&&!isFriend(s.u)?'<p class="meta" style="margin:4px 0 0">Friends only. Add them first.</p>':''}
       <div class="seg" id="rKind" style="margin:10px 0"><button type="button" data-v="visit" class="on">📍 Visit a place</button><button type="button" data-v="task">🎯 Do a task</button></div>
       <div id="rPlace"><div id="loc-rq">${locFieldHtml('rq')}</div></div>
       <input id="rText" maxlength="160" style="margin-top:8px" placeholder="Why go? e.g. rate the brisket on stream" autocomplete="off" required>
